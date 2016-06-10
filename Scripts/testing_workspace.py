@@ -1,7 +1,7 @@
 from expanalysis.results import Result, get_filters
 from expanalysis.experiments.processing import extract_row, post_process_data, post_process_exp, extract_experiment, calc_DVs, extract_DVs,flag_data,  generate_reference
 from expanalysis.experiments.stats import results_check
-from expanalysis.experiments.utils import result_filter
+from expanalysis.experiments.utils import result_filter, anonymize_data
 from expanalysis.experiments.jspsych import calc_time_taken, print_time, get_post_task_responses
 import pandas as pd
 import numpy as np
@@ -81,7 +81,19 @@ def order_by_time(data):
     for x in num_exps:
         order += range(x)
     data.insert(data.columns.get_loc('data'), 'experiment_order', order)
-    
+
+def check_timing(df):
+    df.loc[:, 'time_diff'] = df['time_elapsed'].diff()
+    timing_cols = pd.concat([df['block_duration'], df.get('feedback_duration'), df['timing_post_trial'].shift(1)], axis = 1)
+    df.loc[:, 'expected_time'] = timing_cols.sum(axis = 1)
+    df.loc[:, 'timing_error'] = abs(df['time_diff'] - df['expected_time'])
+    errors = [df[df['timing_error'] < 500]['timing_error'].mean(), df[df['timing_error'] < 500]['timing_error'].max()]
+    return errors
+
+def export_to_csv(data, clean = False):
+    for exp in np.unique(data['experiment_exp_id']):
+        extract_experiment(data,exp, clean = clean).to_csv('/home/ian/' + exp + '.csv')
+        
 #***************************************************
 # ********* Load Data **********************
 #**************************************************        
@@ -98,7 +110,7 @@ for col in drop_columns:
 f = open('/home/ian/Experiments/expfactory/docs/expfactory_token.txt')
 access_token = f.read().strip()      
 data_loc = '/home/ian/Experiments/expfactory/Self_Regulation_Ontology/Data/Pilot_Results'     
-source_data = load_data(access_token, data_loc, filters = filters, source = 'web')
+source_data = load_data(access_token, data_loc, filters = filters, source = 'file')
 
 #filter and process data
 first_update_time = '2016-04-17T04:24:37.041870Z'
@@ -106,14 +118,14 @@ second_update_time = '2016-05-14T04:24:37.041870Z'
 third_update_time = '2016-06-01T04:24:37.041870Z'
 
 data = result_filter(source_data, battery = 'Self Regulation Pilot', finishtime = second_update_time)
+worker_lookup = anonymize_data(data)
 calc_time_taken(data)
 get_post_task_responses(data)
 post_process_data(data)
 flag_data(data,'/home/ian/Experiments/expfactory/Self_Regulation_Ontology/post_process_reference.pkl')
 
 
-for exp in np.unique(data['experiment_exp_id']):
-    extract_experiment(data,exp).to_csv('/home/ian/' + exp + '.csv')
+
 # ************************************
 # ********* DVs **********************
 # ************************************
@@ -180,7 +192,7 @@ data.groupby('worker_id')['finishtime'].count()
 flagged = data.query('flagged == True')
 
 #generate reference
-ref_worker = 'A11YS0T8MV3Q7C' #this guy works for everything except shift task
+ref_worker = 's028' #this guy works for everything except shift task
 file_base = '/home/ian/Experiments/expfactory/Self_Regulation_Ontology/post_process_reference'
 generate_reference(result_filter(data, worker = ref_worker), file_base)
 exp_dic = pd.read_pickle(file_base + '.pkl')
