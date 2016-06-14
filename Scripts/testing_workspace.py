@@ -86,14 +86,34 @@ def check_timing(df):
     df.loc[:, 'time_diff'] = df['time_elapsed'].diff()
     timing_cols = pd.concat([df['block_duration'], df.get('feedback_duration'), df['timing_post_trial'].shift(1)], axis = 1)
     df.loc[:, 'expected_time'] = timing_cols.sum(axis = 1)
-    df.loc[:, 'timing_error'] = abs(df['time_diff'] - df['expected_time'])
-    errors = [df[df['timing_error'] < 500]['timing_error'].mean(), df[df['timing_error'] < 500]['timing_error'].max()]
+    df.loc[:, 'timing_error'] = df['time_diff'] - df['expected_time']
+    errors = [df[abs(df['timing_error']) < 500]['timing_error'].mean(), df[df['timing_error'] < 500]['timing_error'].max()]
     return errors
 
 def export_to_csv(data, clean = False):
     for exp in np.unique(data['experiment_exp_id']):
         extract_experiment(data,exp, clean = clean).to_csv('/home/ian/' + exp + '.csv')
-        
+
+def get_demographics(df):
+    race = (df.query('text == "What is your race?"').groupby('worker_id')['response'].unique()).value_counts()
+    hispanic = (df.query('text == "Are you of Hispanic, Latino or Spanish origin?"'))['response_text'].value_counts() 
+    sex = (df.query('text == "What is your sex?"'))['response_text'].value_counts() 
+    age_col = df.query('text == "How old are you?"')['response'].astype(float)
+    age_vars = [age_col.min(), age_col.max(), age_col.mean()]    
+    return {'age': age_vars, 'sex': sex, 'race': race, 'hispanic': hispanic}  
+    
+    
+def get_worker_demographics(worker_id, data):
+    df = data[(data['worker_id'] == worker_id) & (data['experiment_exp_id'] == 'demographics_survey')]
+    if len(df) == 1:
+        race = df.query('text == "What is your race?"')['response'].unique()
+        hispanic = df.query('text == "Are you of Hispanic, Latino or Spanish origin?"')['response_text']
+        sex = df.query('text == "What is your sex?"')['response_text']
+        age = float(df.query('text == "How old are you?"')['response'])
+        return {'age': age, 'sex': sex, 'race': race, 'hispanic': hispanic}
+    else:
+        return np.nan
+    
 #***************************************************
 # ********* Load Data **********************
 #**************************************************        
@@ -115,9 +135,9 @@ source_data = load_data(access_token, data_loc, filters = filters, source = 'fil
 #filter and process data
 first_update_time = '2016-04-17T04:24:37.041870Z'
 second_update_time = '2016-05-14T04:24:37.041870Z'
-third_update_time = '2016-06-01T04:24:37.041870Z'
+third_update_time = '2016-06-09T04:24:37.041870Z'
 
-data = result_filter(source_data, battery = 'Self Regulation Pilot', finishtime = second_update_time)
+data = result_filter(source_data, battery = ['Self Regulation Pilot', 'Self Regulation Subset Battery'], finishtime = first_update_time)
 worker_lookup = anonymize_data(data)
 calc_time_taken(data)
 get_post_task_responses(data)
@@ -188,7 +208,8 @@ summary = results_check(data, silent = True, plot = True)
 # ************************************
 # ********* Misc Code for Reference **********************
 # ************************************
-data.groupby('worker_id')['finishtime'].count()
+worker_count = pd.concat([data.groupby('worker_id')['finishtime'].count(), \
+    data.groupby('worker_id')['battery_name'].unique()], axis = 1)
 flagged = data.query('flagged == True')
 
 #generate reference
