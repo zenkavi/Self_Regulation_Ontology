@@ -2,7 +2,7 @@ from expanalysis.results import Result, get_filters
 from expanalysis.experiments.processing import extract_row, post_process_data, post_process_exp, extract_experiment, calc_DVs, extract_DVs,flag_data,  generate_reference
 from expanalysis.experiments.stats import results_check
 from expanalysis.experiments.utils import result_filter, anonymize_data
-from expanalysis.experiments.jspsych import calc_time_taken, print_time, get_post_task_responses
+from expanalysis.experiments.jspsych import calc_time_taken, get_post_task_responses
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -113,7 +113,21 @@ def get_worker_demographics(worker_id, data):
         return {'age': age, 'sex': sex, 'race': race, 'hispanic': hispanic}
     else:
         return np.nan
-    
+
+def print_time(data, time_col = 'ontask_time'):
+    '''Prints time taken for each experiment in minutes
+    :param time_col: Dataframe column of time in seconds
+    '''
+    df = data.copy()    
+    assert time_col in df, \
+        '"%s" has not been calculated yet. Use calc_time_taken method' % (time_col)
+    #drop rows where time can't be calculated
+    df = df.dropna(subset = [time_col])
+    time = (df.groupby('experiment_exp_id')[time_col].mean()/60.0).round(2)
+    print(time)
+    return time
+
+
 #***************************************************
 # ********* Load Data **********************
 #**************************************************        
@@ -134,17 +148,20 @@ source_data = load_data(access_token, data_loc, filters = filters, source = 'fil
 
 #filter and process data
 first_update_time = '2016-04-17T04:24:37.041870Z'
-second_update_time = '2016-05-14T04:24:37.041870Z'
+second_update_time = '2016-06-01T04:24:37.041870Z'
 third_update_time = '2016-06-09T04:24:37.041870Z'
 
-data = result_filter(source_data, battery = ['Self Regulation Pilot', 'Self Regulation Subset Battery'], finishtime = first_update_time)
+data = result_filter(source_data, battery = ['Self Regulation Pilot', 'Self Regulation Subset Battery'])
+data = data[data.worker_id.str.contains('A')]
 worker_lookup = anonymize_data(data)
 calc_time_taken(data)
 get_post_task_responses(data)
 post_process_data(data)
 flag_data(data,'/home/ian/Experiments/expfactory/Self_Regulation_Ontology/post_process_reference.pkl')
 
-
+for exp in data['experiment_exp_id'].unique():
+    extract_experiment(data, exp, clean = False).to_csv('/home/ian/' + exp + '_raw.csv')
+    extract_experiment(data, exp).to_csv('/home/ian/' + exp + '_post.csv')
 
 # ************************************
 # ********* DVs **********************
@@ -167,7 +184,7 @@ thresh_df = DV_df.filter(regex = 'thresh')
 #memory
 memory_df = DV_df.filter(regex = '.*span.*[^avg_rt]$|.*n_back.*[^avg_rt]$|keep_track')
 
-plot_df = subset
+plot_df = EZ_df
 plot_df.columns = [' '.join(x.split('_')) for x in  plot_df.columns]
 fig = dendroheatmap(plot_df.corr())
 fig.savefig('/home/ian/rt_df.png')
