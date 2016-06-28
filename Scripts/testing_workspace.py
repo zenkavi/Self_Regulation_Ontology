@@ -151,17 +151,13 @@ first_update_time = '2016-04-17T04:24:37.041870Z'
 second_update_time = '2016-06-01T04:24:37.041870Z'
 third_update_time = '2016-06-09T04:24:37.041870Z'
 
-data = result_filter(source_data, battery = ['Self Regulation Pilot', 'Self Regulation Subset Battery'])
-data = data[data.worker_id.str.contains('A')]
+data = result_filter(source_data, battery = ['Self Regulation Pilot', 'Self Regulation Subset Battery'], finishtime = first_update_time)
+data = data[data.worker_id.str.contains('A')] # only use amazon workers
 worker_lookup = anonymize_data(data)
 calc_time_taken(data)
 get_post_task_responses(data)
 post_process_data(data)
 flag_data(data,'/home/ian/Experiments/expfactory/Self_Regulation_Ontology/post_process_reference.pkl')
-
-for exp in data['experiment_exp_id'].unique():
-    extract_experiment(data, exp, clean = False).to_csv('/home/ian/' + exp + '_raw.csv')
-    extract_experiment(data, exp).to_csv('/home/ian/' + exp + '_post.csv')
 
 # ************************************
 # ********* DVs **********************
@@ -172,17 +168,6 @@ DV_df.drop(DV_df.filter(regex='missed_percent').columns, axis = 1, inplace = Tru
 subset = DV_df.drop(DV_df.filter(regex='avg_rt|std_rt|overall_accuracy|EZ').columns, axis = 1)
 
 EZ_df = DV_df.filter(regex = 'thresh|drift')
-#rt!
-rt_df = DV_df.filter(regex = 'avg_rt')
-
-#drift
-drift_df = DV_df.filter(regex = 'drift')
-
-#thresh
-thresh_df = DV_df.filter(regex = 'thresh')
-
-#memory
-memory_df = DV_df.filter(regex = '.*span.*[^avg_rt]$|.*n_back.*[^avg_rt]$|keep_track')
 
 plot_df = EZ_df
 plot_df.columns = [' '.join(x.split('_')) for x in  plot_df.columns]
