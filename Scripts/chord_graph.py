@@ -70,7 +70,7 @@ p2.y_range = Range1d(-1.1, 1.1)
 p2.bezier('x0', 'y0', 'x1', 'y1', 'cx0', 'cy0', 'cx1', 'cy1',
           source=beziers,
           line_cap='round',
-          line_width=connectome.flatten()**2*5) # Add the width
+          line_width=connectome.flatten()) # Add the width
 
 p2.circle('x', 'y', size=8, fill_color="#6D6A75", line_color=None, source=dots)
 

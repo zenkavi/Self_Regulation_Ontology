@@ -159,13 +159,18 @@ get_post_task_responses(data)
 post_process_data(data)
 flag_data(data,'/home/ian/Experiments/expfactory/Self_Regulation_Ontology/post_process_reference.pkl')
 
+
+
+for exp in data.experiment_exp_id.unique():
+    extract_experiment(data,exp).to_csv('/home/ian/tmp/' + exp + '_post.csv')
+    extract_experiment(data,exp, clean = False).to_csv('/home/ian/tmp/' + exp + '_raw.csv')
 # ************************************
 # ********* DVs **********************
 # ************************************
 DV_df = extract_DVs(data)
 DV_df.drop(DV_df.filter(regex='missed_percent').columns, axis = 1, inplace = True)
 
-subset = DV_df.drop(DV_df.filter(regex='avg_rt|std_rt|overall_accuracy|EZ').columns, axis = 1)
+subset = DV_df.drop(DV_df.filter(regex='avg_rt|std_rt|overall_accuracy').columns, axis = 1)
 
 EZ_df = DV_df.filter(regex = 'thresh|drift')
 
