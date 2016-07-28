@@ -1,7 +1,7 @@
 from expanalysis.results import get_filters
 from expanalysis.experiments.processing import extract_row, post_process_data, post_process_exp, extract_experiment, calc_DVs, extract_DVs,flag_data,  get_DV, generate_reference
 from expanalysis.experiments.stats import results_check
-from expanalysis.experiments.utils import result_filter, anonymize_data
+from expanalysis.experiments.utils import result_filter
 from expanalysis.experiments.jspsych import calc_time_taken, get_post_task_responses
 import pandas as pd
 import numpy as np
@@ -10,7 +10,8 @@ from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from util import *
-    
+import json
+
 #***************************************************
 # ********* Load Data **********************
 #**************************************************        
@@ -23,31 +24,44 @@ drop_columns = ['battery_description', 'experiment_reference', 'experiment_versi
 for col in drop_columns:
     filters[col] = {'drop': True}
 
-                  
+#load Data            
 f = open('/home/ian/Experiments/expfactory/docs/expfactory_token.txt')
 access_token = f.read().strip()      
 data_loc = '/home/ian/Experiments/expfactory/Self_Regulation_Ontology/Data/Battery_Results'     
 data_source = load_data(access_token, data_loc, filters = filters, source = 'web', battery = 'Self Regulation Battery')
-data = data_source.query('worker_id not in ["A254JKSDNE44AM", "A1O51P5O9MC5LX"]')
+data = data_source.query('worker_id not in ["A254JKSDNE44AM", "A1O51P5O9MC5LX"]') # Sandbox workers
+data.reset_index(drop = False, inplace = True)
 
+# preprocess and save
+post_process_data(data)
+data.to_json('/home/ian/Experiments/expfactory/Self_Regulation_Ontology/Data/Battery_Results_data_post.json')
+
+# calculate DVs
+DV_df = extract_DVs(data)
+DV_df.to_json('/home/ian/Experiments/expfactory/Self_Regulation_Ontology/Data/Battery_Results_DV.json')
+
+# read preprocessed data
+data = pd.read_json('/home/ian/Experiments/expfactory/Self_Regulation_Ontology/Data/Battery_Results_data_post.json')
+
+#anonymize data and write anonymize lookup
 worker_lookup = anonymize_data(data)
-calc_bonuses(data)
+json.dump(worker_lookup, open('/home/ian/Experiments/expfactory/Self_Regulation_Ontology/Data/worker_lookup.json','w'))
+
+# add a few extras
+bonuses = get_bonuses(data)
 calc_time_taken(data)
 get_post_task_responses(data)
-post_process_data(data)
 all_data = data # validation and discovery
 
+# only get discovery data
 subject_assignment = pd.read_csv('/home/ian/Experiments/expfactory/Self_Regulation_Ontology/subject_assignment.csv')
-data = list(subject_assignment.query('dataset == "discovery"').iloc[:,0])
+discovery_sample = list(subject_assignment.query('dataset == "discovery"').iloc[:,0])
 data = data.query('worker_id in %s' % discovery_sample)
 #flag_data(data,'/home/ian/Experiments/expfactory/Self_Regulation_Ontology/post_process_reference.pkl')
 
 # ************************************
 # ********* Save Components of Data **
 # ************************************
-for exp in ['stop_signal','stim_selective_stop_signal','motor_selective_stop_signal']:
-    get_DV(data,exp)
-
 items = []
 exps = []
 for exp in data.experiment_exp_id.unique():
@@ -57,6 +71,7 @@ for exp in data.experiment_exp_id.unique():
         exps += [exp] * len(survey.text.unique())
 items_df = pd.DataFrame({'survey': exps, 'items': items})
 items_df.to_csv('/home/ian/tmp/items.csv')
+
 # ************************************
 # ********* DVs **********************
 # ************************************
@@ -67,16 +82,14 @@ np.mean([i['Release_clicks'] for i in dv[0].values()])
 sns.plt.hist([i['alerting_rt'] for i in dv[0].values()])
 
 # get all DVs
-DV_df = extract_DVs(data)
-DV_df.drop(DV_df.filter(regex='missed_percent').columns, axis = 1, inplace = True)
 
-subset = DV_df.drop(DV_df.filter(regex='avg_rt|std_rt|overall_accuracy').columns, axis = 1)
-survey_df = DV_df.filter(regex = 'survey')
+subset = DV_df.drop(DV_df.filter(regex='missed_percent|avg_rt|std_rt|overall_accuracy').columns, axis = 1)
+survey_df = subset.filter(regex = 'survey')
 
-EZ_df = DV_df.filter(regex = 'thresh|drift')
+EZ_df = subset.filter(regex = 'thresh|drift')
 rt_df = DV_df.filter(regex = 'avg_rt')
 
-plot_df = survey_df
+plot_df = rt_df
 plot_df.columns = [' '.join(x.split('_')) for x in  plot_df.columns]
 fig = dendroheatmap(plot_df.corr(), labels = True)
 fig.savefig('/home/ian/EZ_df.png')

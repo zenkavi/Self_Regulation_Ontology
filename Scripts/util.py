@@ -1,7 +1,7 @@
 '''
 Utility functions for the ontology project
 '''
-
+import json
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -33,6 +33,11 @@ subject_order = set_discovery_sample(n, discovery_n, seed)
 subject_assignment_df = pd.DataFrame({'dataset': subject_order}, index = subjects)
 subject_assignment_df.to_csv('../subject_assignment.csv')
 
+def anonymize_data(data):
+    workers = data.groupby('worker_id').finishtime.min().sort_values().index
+    new_ids = ['s' + str(x).zfill(3) for x in range(len(workers))]
+    data.replace(workers, new_ids, inplace = True)
+    return {x:y for x,y in zip(new_ids, workers)}
 
 #***************************************************
 # ********* Helper Functions **********************
@@ -129,7 +134,7 @@ def load_data(access_token, data_loc, source = 'file', filters = None, battery =
             data = result_filter(data, battery = battery)
         #results.export(data_loc + '.json')
         data.to_json(data_loc + '_data.json')
-    data.reset_index(inplace = True)
+    data.reset_index(drop = False, inplace = True)
     return data                    
     
 def order_by_time(data):
@@ -187,13 +192,79 @@ def print_time(data, time_col = 'ontask_time'):
 
 def calc_bonuses(data):
     bonus_experiments = ['angling_risk_task_always_sunny', 'two_stage_decision',
-                         'columbia_card_task_hot', 'columbia_card_task_cold', 'hierarchical_rule']
+                         'columbia_card_task_hot', 'columbia_card_task_cold', 'hierarchical_rule',
+                         'kirby','discount_titrate','bickel_titrator']
     bonuses = []
     for i,row in data.iterrows():
         if row['experiment_exp_id'] in bonus_experiments:
-            bonus = extract_row(row, clean = False).iloc[-1].get('performance_var','error')
+            df = extract_row(row, clean = False)
+            bonus = df.iloc[-1].get('performance_var','error')
+            if pd.isnull(bonus):
+                bonus = df.iloc[-5].get('performance_var','error')
+            if isinstance(bonus,unicode):
+                bonus = json.loads(bonus)['amount']
             bonuses.append(bonus)
         else:
             bonuses.append(np.nan)
-    data['bonus'] = bonuses
+    data.loc[:,'bonus'] = bonuses
+    data.loc[:,'bonus_zscore'] = data['bonus']
+    means = data.groupby('experiment_exp_id').bonus_numeric.mean()
+    std = data.groupby('experiment_exp_id').bonus_numeric.std()
+    for exp in bonus_experiments:
+        data.loc[data.experiment_exp_id == exp,'bonus_zscore'] = (data[data.experiment_exp_id == exp].bonus_numeric-means[exp])/std[exp]
+
+def get_bonuses(data):
+    if 'bonus_zscore' not in data.columns:
+        calc_bonuses(data)
+    workers_finished = data.groupby('worker_id').count().finishtime==63
+    index = list(workers_finished[workers_finished].index)
+    tmp_data = data.query('worker_id in %s' % index)
+    bonuses = tmp_data.groupby('worker_id').bonus_zscore.sum()
+    bonuses = (bonuses-bonuses.min())/(bonuses.max()-bonuses.min())*10+5
+    bonuses = bonuses.map(lambda x: round(x,1))
+    return bonuses
+    
+def get_dummy_pay(data):
+    assert 'ontask_time' in data.columns, \
+        'Task time not found. Must run "calc_time_taken" first.' 
+    all_exps = data.experiment_exp_id.unique()
+    num_completed = data.groupby('worker_id').count().finishtime
+    exps_completed = data.groupby('worker_id').experiment_exp_id.unique()
+    exps_not_completed = exps_completed.map(lambda x: list(set(all_exps) - set(x) - set(['selection_optimization_compensation'])))
+    almost_completed = num_completed[(num_completed<63) & (num_completed >=60)]
+    not_completed = num_completed[num_completed < 60]
+    task_time = data.groupby('experiment_exp_id').ontask_time.mean()/60+2 # +2 for generic instruction time
+    time_spent = exps_completed.map(lambda x: np.sum([task_time[i] if task_time[i]==task_time[i] else 3 for i in x])/60)
+    time_missed = exps_not_completed.map(lambda x: np.sum([task_time[i] if task_time[i]==task_time[i] else 3 for i in x])/60)
+    prorate_pay = 60-time_missed[almost_completed.index]*6
+    reduced_pay = time_spent[not_completed.index]*2 + np.floor(time_spent[not_completed.index])
+    return pd.concat([reduced_pay,prorate_pay]).map(lambda x: round(x,1))
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
