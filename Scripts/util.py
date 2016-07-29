@@ -118,7 +118,7 @@ def heatmap(df):
     ax.set_xticklabels(df.columns, rotation=-90, rotation_mode = "anchor", ha = 'left') 
     return fig               
                            
-def load_data(access_token, data_loc, source = 'file', filters = None, battery = None):
+def load_data(data_loc, access_token = None, source = 'file', filters = None, battery = None):
     if source == 'file':
         #results = Result(filters = filters)
         #results.load_results(data_loc)
@@ -208,10 +208,10 @@ def calc_bonuses(data):
             bonuses.append(np.nan)
     data.loc[:,'bonus'] = bonuses
     data.loc[:,'bonus_zscore'] = data['bonus']
-    means = data.groupby('experiment_exp_id').bonus_numeric.mean()
-    std = data.groupby('experiment_exp_id').bonus_numeric.std()
+    means = data.groupby('experiment_exp_id').bonus.mean()
+    std = data.groupby('experiment_exp_id').bonus.std()
     for exp in bonus_experiments:
-        data.loc[data.experiment_exp_id == exp,'bonus_zscore'] = (data[data.experiment_exp_id == exp].bonus_numeric-means[exp])/std[exp]
+        data.loc[data.experiment_exp_id == exp,'bonus_zscore'] = (data[data.experiment_exp_id == exp].bonus-means[exp])/std[exp]
 
 def get_bonuses(data):
     if 'bonus_zscore' not in data.columns:

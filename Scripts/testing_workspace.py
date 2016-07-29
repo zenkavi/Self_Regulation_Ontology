@@ -2,7 +2,6 @@ from expanalysis.results import get_filters
 from expanalysis.experiments.processing import extract_row, post_process_data, post_process_exp, extract_experiment, calc_DVs, extract_DVs,flag_data,  get_DV, generate_reference
 from expanalysis.experiments.stats import results_check
 from expanalysis.experiments.utils import result_filter
-from expanalysis.experiments.jspsych import calc_time_taken, get_post_task_responses
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -15,25 +14,20 @@ import json
 #***************************************************
 # ********* Load Data **********************
 #**************************************************        
-#load Data             
-data_source = load_data(access_token, data_loc, filters = filters, source = 'file', battery = 'Self Regulation Battery')
+#load Data
+data_loc = '/home/ian/Experiments/expfactory/Self_Regulation_Ontology/Data/Battery_Results'                  
+data_source = load_data(data_loc, source = 'file', battery = 'Self Regulation Battery')
 data = data_source.query('worker_id not in ["A254JKSDNE44AM", "A1O51P5O9MC5LX"]') # Sandbox workers
 data.reset_index(drop = False, inplace = True)
-# add a few extras
-bonuses = get_bonuses(data)
-calc_time_taken(data)
-get_post_task_responses(data)
 
-# preprocess and save
-post_process_data(data)
-data.to_json('/home/ian/Experiments/expfactory/Self_Regulation_Ontology/Data/Battery_Results_data_post.json')
+# read preprocessed data
+data = pd.read_json('/home/ian/Experiments/expfactory/Self_Regulation_Ontology/Data/Battery_Results_data_post.json')
+
 
 # calculate DVs and save
 DV_df = extract_DVs(data)
 DV_df.to_json('/home/ian/Experiments/expfactory/Self_Regulation_Ontology/Data/Battery_Results_DV.json')
 
-# read preprocessed data
-data = pd.read_json('/home/ian/Experiments/expfactory/Self_Regulation_Ontology/Data/Battery_Results_data_post.json')
 
 #anonymize data and write anonymize lookup
 worker_lookup = anonymize_data(data)

@@ -2,3 +2,4 @@ Data
 .*
 *.pyl
 .ipynb_checkpoints
+*.pyc
