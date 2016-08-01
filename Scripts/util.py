@@ -134,6 +134,7 @@ def load_data(data_loc, access_token = None, source = 'file', filters = None, ba
             data = result_filter(data, battery = battery)
         #results.export(data_loc + '.json')
         data.to_json(data_loc + '_data.json')
+        print('Finished saving raw data')
     data.reset_index(drop = False, inplace = True)
     return data                    
     
@@ -219,9 +220,13 @@ def get_bonuses(data):
     workers_finished = data.groupby('worker_id').count().finishtime==63
     index = list(workers_finished[workers_finished].index)
     tmp_data = data.query('worker_id in %s' % index)
-    bonuses = tmp_data.groupby('worker_id').bonus_zscore.sum()
-    bonuses = (bonuses-bonuses.min())/(bonuses.max()-bonuses.min())*10+5
+    tmp_bonuses = tmp_data.groupby('worker_id').bonus_zscore.sum()
+    min_score = tmp_bonuses.min()
+    max_score = tmp_bonuses.max()
+    bonuses = data.groupby('worker_id').bonus_zscore.sum()
+    bonuses = (bonuses-min_score)/(max_score-min_score)*10+5
     bonuses = bonuses.map(lambda x: round(x,1))
+    print('Finished getting bonuses')
     return bonuses
     
 def get_dummy_pay(data):
@@ -238,7 +243,9 @@ def get_dummy_pay(data):
     time_missed = exps_not_completed.map(lambda x: np.sum([task_time[i] if task_time[i]==task_time[i] else 3 for i in x])/60)
     prorate_pay = 60-time_missed[almost_completed.index]*6
     reduced_pay = time_spent[not_completed.index]*2 + np.floor(time_spent[not_completed.index])
-    return pd.concat([reduced_pay,prorate_pay]).map(lambda x: round(x,1))
+    pay= pd.concat([reduced_pay,prorate_pay]).map(lambda x: round(x,1)).to_frame(name = 'base')
+    pay['bonuses'] = get_bonuses(data)
+    return pay
     
     
     
@@ -249,16 +256,7 @@ def get_dummy_pay(data):
     
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
     
     
     

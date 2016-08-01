@@ -6,6 +6,9 @@ from expanalysis.experiments.processing import post_process_data
 
 job = raw_input('Type "download", "post" or "both": ')
 
+token, data_dir = [line.rstrip('\n').split()[1] for line in open('../Self_Regulation_Settings.txt')]
+data_file = data_dir + 'Battery_Results'
+
 if job == 'download' or job == "both":
     #***************************************************
     # ********* Load Data **********************
@@ -22,18 +25,16 @@ if job == 'download' or job == "both":
     #***************************************************
     # ********* Download Data**********************
     #**************************************************  
-    #load Data            
-    f = open('/home/ian/Experiments/expfactory/docs/expfactory_token.txt')
+    #load Data
+    f = open(token)
     access_token = f.read().strip()      
-    data_loc = '/home/ian/Experiments/expfactory/Self_Regulation_Ontology/Data/Battery_Results'     
-    data_source = load_data(data_loc, access_token, filters = filters, source = 'web', battery = 'Self Regulation Battery')
-    
+    data_source = load_data(data_file, access_token, filters = filters, source = 'web', battery = 'Self Regulation Battery')
 if job == "post" or job == "both":
     #Process Data
     if job == "post":
         #load Data
-        data_loc = '/home/ian/Experiments/expfactory/Self_Regulation_Ontology/Data/Battery_Results'                  
-        data_source = load_data(data_loc, source = 'file', battery = 'Self Regulation Battery')
+        data_source = load_data(data_file, source = 'file', battery = 'Self Regulation Battery')
+        print('Finished loading raw data')
     data = data_source.query('worker_id not in ["A254JKSDNE44AM", "A1O51P5O9MC5LX"]') # Sandbox workers
     data.reset_index(drop = False, inplace = True)
     # add a few extras
@@ -43,4 +44,5 @@ if job == "post" or job == "both":
     
     # preprocess and save
     post_process_data(data)
-    data.to_json('/home/ian/Experiments/expfactory/Self_Regulation_Ontology/Data/Battery_Results_data_post.json')
+    data.to_json(data_file + '_data_post.json')
+    print('Finished saving post-processed data')
