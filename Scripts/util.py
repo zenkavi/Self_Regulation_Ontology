@@ -248,7 +248,53 @@ def get_dummy_pay(data):
     return pay
     
     
+def get_credit(data):
+    credit_array = []
+    for i,row in data.iterrows():
+        if row['experiment_template'] in 'jspsych':
+            df = extract_row(row, clean = False)
+            credit_var = df.iloc[-1].get('credit_var',999)
+            if credit_var != None:
+                credit_array.append(float(credit_var))
+            else:
+                credit_array.append(np.nan)
+        else:
+            credit_array.append(np.nan)
+    data.loc[:,'credit'] = credit_array
     
+def quality_check(data):
+    passed_QC = []
+    rt_thresh_lookup = {
+        'simple_reaction_time': 150    
+    }
+    acc_thresh_lookup = {
+        'choice_reaction_time': .8
+    }
+    missed_thresh_lookup = {
+    
+    }
+    for i,row in data.iterrows():
+        QC = True
+        if row['experiment_template'] in 'jspsych':
+            exp_id = row['experiment_exp_id']
+            rt_thresh = rt_thresh_lookup.get(exp_id,300)
+            acc_thresh = acc_thresh_lookup.get(exp_id,0)
+            missed_thresh = missed_thresh_lookup.get(exp_id,.15)
+            df = extract_row(row)
+            if exp_id not in ['psychological_refractory_period_two_choices', 'two_stage_decision']:
+                if (df['rt'].median < rt_thresh) or \
+                   (np.mean(df.get('correct',1)) < acc_thresh) or \
+                   (np.mean(df['rt'] == -1) > missed_thresh):
+                       QC = False
+            else:
+                if (df['choice1_rt'].median < rt_thresh) or \
+               (np.mean(df.get('choice1_correct',1)) < acc_thresh) or \
+               (((df['choice1_rt']==-1) | (df['choice2_rt'] <= -1)).mean() > missed_thresh):
+                   QC = False
+        passed_QC.append(QC)
+    data.loc[:,'passed_QC'] = passed_QC
+           
+        
     
     
     
