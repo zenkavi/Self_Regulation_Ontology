@@ -72,7 +72,7 @@ def anonymize_data(data):
         else:
             new_ids.append(worker)
     
-    data = data.replace(workers, new_ids)
+    data.replace(workers, new_ids,inplace = True)
     return {x:y for x,y in zip(new_ids, workers)}
 
 #***************************************************
