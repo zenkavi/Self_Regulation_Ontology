@@ -29,16 +29,16 @@ if job == 'download' or job == "both":
     f = open(token)
     access_token = f.read().strip()     
     action = raw_input('Overwrite data or append new data to previous file? Type "overwrite" or "append"')
-    data_source = load_data(data_file, access_token, filters = filters, action = action, battery = 'Self Regulation Battery', url = "http://www.expfactory.org/api/results/?page=300")
+    data_source = load_data(data_file, access_token, filters = filters, action = action, battery = 'Self Regulation Battery')
 
 if job == "post" or job == "both":
     #Process Data
     if job == "post":
         #load Data
-        data_source = load_data(data_file, source = 'file', battery = 'Self Regulation Battery')
+        data_source = load_data(data_file, action = 'file', battery = 'Self Regulation Battery')
         print('Finished loading raw data')
     data = data_source.query('worker_id not in ["A254JKSDNE44AM", "A1O51P5O9MC5LX"]') # Sandbox workers
-    data.reset_index(drop = False, inplace = True)
+    data.reset_index(drop = True, inplace = True)
     # add a few extras
     bonuses = get_bonuses(data)
     calc_time_taken(data)

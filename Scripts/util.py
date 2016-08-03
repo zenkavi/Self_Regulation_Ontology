@@ -256,7 +256,6 @@ def heatmap(df):
  
 def load_data(data_loc, access_token = None, action = 'file', filters = None, battery = None, save = True, url = None):
     sys.stdout = Logger()
-    files = glob.glob(data_loc + '_data*')
     if action == 'file':
     	data = pd.read_json(data_loc + '_data.json')
     elif action == 'overwrite':
@@ -276,13 +275,14 @@ def load_data(data_loc, access_token = None, action = 'file', filters = None, ba
             data = pd.concat([old_data,new_data]).drop_duplicates(subset = 'finishtime')
         except IOError:
             print('No url found in internal_settings file. Cannot append')
+            action = 'file'
             data = pd.read_json(data_loc + '_data.json')
-    data.reset_index(drop = False, inplace = True)
+    data.reset_index(drop = True, inplace = True)
     if action != 'file':
         if save == True:
             data.to_json(data_loc + '_data.json')
             print('Finished saving')
-        final_url = sys.stdout.get_log().split('\n')[-2].split()[1]
+        final_url = sys.stdout.get_log().split('\n')[-4].split()[1]
         append_to_json('../internal_settings.json', {'last_used_url': final_url})
     return data                 
     
