@@ -7,6 +7,13 @@ from util import load_data, get_bonuses, anonymize_data
 
 job = raw_input('Type "download", "post" or "both": ')
 sample = 'discovery'
+if job == 'more':
+    job = raw_input('Type "download", "post" or "both": ')
+    sample = raw_input('Type "discovery", "validation" or "incomplete". Use commas to separate multiple samples or "all": ')
+    if sample == 'all':
+        sample = ['discovery','validation','incomplete']
+    else:
+        sample = sample.split(',')
 token, data_dir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
 data_file = data_dir + 'mturk'
 
@@ -48,19 +55,29 @@ if job == "post" or job == "both":
     #anonymize data and write anonymize lookup
     worker_lookup = anonymize_data(data)
     json.dump(worker_lookup, open(data_dir + 'worker_lookup.json','w'))
-    
-    if sample == 'discovery':
+    subject_assignment = pd.read_csv('../subject_assignment.csv')
+    discovery_sample = list(subject_assignment.query('dataset == "discovery"').iloc[:,0])
+    validation_sample = list(subject_assignment.query('dataset == "validation"').iloc[:,0])
+        
+    # preprocess and save each sample individually
+    if 'discovery' in sample:
         # only get discovery data
-        subject_assignment = pd.read_csv('../subject_assignment.csv')
-        discovery_sample = list(subject_assignment.query('dataset == "discovery"').iloc[:,0])
-        data = data.query('worker_id in %s' % discovery_sample)
-    elif sample == 'validation':
+        discovery_data = data.query('worker_id in %s' % discovery_sample)
+        post_process_data(discovery_data)
+        discovery_data.to_json(data_file + '_discovery_data_post.json')
+        print('Finished saving post-processed discovery data')
+    if 'validation' in sample:
         # only get validation data
-        subject_assignment = pd.read_csv('../subject_assignment.csv')
-        discovery_sample = list(subject_assignment.query('dataset == "discovery"').iloc[:,0])
-        data = data.query('worker_id not in %s' % discovery_sample)
+        validation_data = data.query('worker_id in %s' % validation_sample)
+        post_process_data(validation_data)
+        validation_data.to_json(data_file + '_validation_data_post.json')
+        print('Finished saving post-processed validation data')
+    if 'incomplete' in sample:
+        # only get validation data
+        incomplete_data = data.query('worker_id not in %s' % (validation_sample + discovery_sample))
+        post_process_data(incomplete_data)
+        incomplete_data.to_json(data_file + '_incomplete_data_post.json')
+        print('Finished saving post-processed incomplete data')
 
-    # preprocess and save
-    post_process_data(data)
-    data.to_json(data_file + '_' + sample + '_data_post.json')
-    print('Finished saving post-processed data')
+    
+    
