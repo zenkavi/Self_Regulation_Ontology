@@ -1,5 +1,5 @@
 Data
-.*
+.fuse*
 *.pyl
 .ipynb_checkpoints
 *.pyc
