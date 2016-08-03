@@ -252,8 +252,8 @@ def heatmap(df):
     ax.yaxis.tick_right()
     ax.set_yticklabels(df.columns[::-1], rotation=0, rotation_mode="anchor", fontsize = 'large')
     ax.set_xticklabels(df.columns, rotation=-90, rotation_mode = "anchor", ha = 'left') 
-    return fig               
-                        environment   
+    return fig
+ 
 def load_data(data_loc, access_token = None, action = 'file', filters = None, battery = None, save = True, url = None):
     sys.stdout = Logger()
     files = glob.glob(data_loc + '_data*')
