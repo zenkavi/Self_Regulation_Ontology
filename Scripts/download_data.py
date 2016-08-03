@@ -8,7 +8,7 @@ from util import load_data, get_bonuses, anonymize_data
 job = raw_input('Type "download", "post" or "both": ')
 sample = 'discovery'
 token, data_dir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
-data_file = data_dir + 'Battery_Results'
+data_file = data_dir + 'mturk'
 
 if job == 'download' or job == "both":
     #***************************************************
@@ -62,5 +62,5 @@ if job == "post" or job == "both":
 
     # preprocess and save
     post_process_data(data)
-    data.to_json(data_file + '_data_post.json')
+    data.to_json(data_file + '_' + sample + '_data_post.json')
     print('Finished saving post-processed data')

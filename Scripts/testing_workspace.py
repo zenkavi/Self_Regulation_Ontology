@@ -19,7 +19,7 @@ from util import *
 #**************************************************        
 #load Data
 token, data_dir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
-data_file = data_dir + 'Battery_Results'
+data_file = data_dir + 'mturk'
 
 # read preprocessed data
 data = pd.read_json(data_file + '_data_post.json')
