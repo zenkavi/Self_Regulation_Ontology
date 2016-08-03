@@ -4,3 +4,4 @@ Data
 .ipynb_checkpoints
 *.pyc
 Self_Regulation_Settings.txt
+internal_settings.json
