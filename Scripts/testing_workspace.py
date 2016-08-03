@@ -2,43 +2,47 @@ from expanalysis.results import get_filters
 from expanalysis.experiments.processing import extract_row, post_process_data, post_process_exp, extract_experiment, calc_DVs, extract_DVs,flag_data,  get_DV, generate_reference
 from expanalysis.experiments.stats import results_check
 from expanalysis.experiments.utils import result_filter
-import pandas as pd
-import numpy as np
-import seaborn as sns
-from sklearn.decomposition import PCA
+import json
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from sklearn.decomposition import PCA
 from util import *
-import json
+
+
+
 
 #***************************************************
 # ********* Load Data **********************
 #**************************************************        
 #load Data
-token, data_dir = [line.rstrip('\n').split()[1] for line in open('../Self_Regulation_Settings.txt')]
+token, data_dir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
 data_file = data_dir + 'Battery_Results'
-data_source = load_data(data_file, source = 'file', battery = 'Self Regulation Battery')
+data_source = load_data(data_file, action = 'file')
 data = data_source.query('worker_id not in ["A254JKSDNE44AM", "A1O51P5O9MC5LX"]') # Sandbox workers
 data.reset_index(drop = False, inplace = True)
 
 # read preprocessed data
 data = pd.read_json(data_file + '_data_post.json')
 
-
-# calculate DVs and save
-DV_df = extract_DVs(data)
-DV_df.to_json(data_file + '_DV.json')
-
-
 #anonymize data and write anonymize lookup
 worker_lookup = anonymize_data(data)
 json.dump(worker_lookup, open(data_dir + 'worker_lookup.json','w'))
 all_data = data # validation and discovery
 
+
+# calculate DVs and save
+DV_df = extract_DVs(data)
+DV_df.to_json(data_file + '_DV.json')
+DV_df = pd.read_json(data_file + '_DV.json')
+
 # only get discovery data
-subject_assignment = pd.read_csv('/home/ian/Experiments/expfactory/Self_Regulation_Ontology/subject_assignment.csv')
+subject_assignment = pd.read_csv('../subject_assignment.csv')
 discovery_sample = list(subject_assignment.query('dataset == "discovery"').iloc[:,0])
 data = data.query('worker_id in %s' % discovery_sample)
+DV_df = DV_df.query('index in %s' % discovery_sample)
 #flag_data(data,'/home/ian/Experiments/expfactory/Self_Regulation_Ontology/post_process_reference.pkl')
 
 # ************************************
@@ -71,7 +75,7 @@ survey_df = subset.filter(regex = 'survey')
 EZ_df = subset.filter(regex = 'thresh|drift')
 rt_df = DV_df.filter(regex = 'avg_rt')
 
-plot_df = rt_df
+plot_df = survey_df
 plot_df.columns = [' '.join(x.split('_')) for x in  plot_df.columns]
 fig = dendroheatmap(plot_df.corr(), labels = True)
 fig.savefig('/home/ian/EZ_df.png')

@@ -1,3 +1,3 @@
 #Store a file like this called "Self_Regulation"Settings.txt" in Self_Regulation_Ontology base directory. Replace lines below with full paths to the corresponding directories and remove this comment so "expfactory_tokenL ..." is the first line.
-expfactory_token: location of your expfactory token
-data_directory: location of where you want data stored
+expfactory_token:location of your expfactory token
+data_directory:location of where you want data stored
