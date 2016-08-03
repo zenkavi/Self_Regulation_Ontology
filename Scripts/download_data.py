@@ -1,11 +1,12 @@
 from expanalysis.experiments.jspsych import calc_time_taken, get_post_task_responses
 from expanalysis.experiments.processing import post_process_data
 from expanalysis.results import get_filters
+import json
 import pandas as pd
-from util import load_data, get_bonuses
+from util import load_data, get_bonuses, anonymize_data
 
 job = raw_input('Type "download", "post" or "both": ')
-
+sample = 'discovery'
 token, data_dir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
 data_file = data_dir + 'Battery_Results'
 
@@ -44,6 +45,21 @@ if job == "post" or job == "both":
     calc_time_taken(data)
     get_post_task_responses(data)
     
+    #anonymize data and write anonymize lookup
+    worker_lookup = anonymize_data(data)
+    json.dump(worker_lookup, open(data_dir + 'worker_lookup.json','w'))
+    
+    if sample == 'discovery':
+        # only get discovery data
+        subject_assignment = pd.read_csv('../subject_assignment.csv')
+        discovery_sample = list(subject_assignment.query('dataset == "discovery"').iloc[:,0])
+        data = data.query('worker_id in %s' % discovery_sample)
+    elif sample == 'validation':
+        # only get validation data
+        subject_assignment = pd.read_csv('../subject_assignment.csv')
+        discovery_sample = list(subject_assignment.query('dataset == "discovery"').iloc[:,0])
+        data = data.query('worker_id not in %s' % discovery_sample)
+
     # preprocess and save
     post_process_data(data)
     data.to_json(data_file + '_data_post.json')

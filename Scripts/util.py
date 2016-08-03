@@ -59,9 +59,20 @@ subject_assignment_df = pd.DataFrame({'dataset': subject_order}, index = subject
 subject_assignment_df.to_csv('../subject_assignment.csv')
 
 def anonymize_data(data):
-    workers = data.groupby('worker_id').finishtime.min().sort_values().index
-    new_ids = ['s' + str(x).zfill(3) for x in range(len(workers))]
-    data.replace(workers, new_ids, inplace = True)
+    complete_workers = (data.groupby('worker_id').count().finishtime==63)
+    complete_workers = list(complete_workers[complete_workers].index)
+    workers = data.groupby('worker_id').finishtime.max().sort_values().index
+    # make new ids
+    new_ids = []
+    id_index = 1
+    for worker in workers:
+        if worker in complete_workers:
+            new_ids.append('s' + str(id_index).zfill(3))
+            id_index += 1
+        else:
+            new_ids.append(worker)
+    
+    data = data.replace(workers, new_ids)
     return {x:y for x,y in zip(new_ids, workers)}
 
 #***************************************************
@@ -202,7 +213,7 @@ def get_demographics(df):
     race = (df.query('text == "What is your race?"').groupby('worker_id')['response'].unique()).value_counts()
     hispanic = (df.query('text == "Are you of Hispanic, Latino or Spanish origin?"'))['response_text'].value_counts() 
     sex = (df.query('text == "What is your sex?"'))['response_text'].value_counts() 
-    age_col = df.query('text == "How old are you?"')['response'].astype(float)
+    age_col = df.query('text == "How old are you (in years)?"')['response'].astype(float)
     age_vars = [age_col.min(), age_col.max(), age_col.mean()]    
     return {'age': age_vars, 'sex': sex, 'race': race, 'hispanic': hispanic}  
     
@@ -282,7 +293,7 @@ def load_data(data_loc, access_token = None, action = 'file', filters = None, ba
         if save == True:
             data.to_json(data_loc + '_data.json')
             print('Finished saving')
-        final_url = sys.stdout.get_log().split('\n')[-4].split()[1]
+        final_url = sys.stdout.get_log().split('\n')[-5].split()[1]
         append_to_json('../internal_settings.json', {'last_used_url': final_url})
     return data                 
     

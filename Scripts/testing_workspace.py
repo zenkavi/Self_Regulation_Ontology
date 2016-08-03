@@ -20,23 +20,22 @@ from util import *
 #load Data
 token, data_dir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
 data_file = data_dir + 'Battery_Results'
-data_source = load_data(data_file, action = 'file')
-data = data_source.query('worker_id not in ["A254JKSDNE44AM", "A1O51P5O9MC5LX"]') # Sandbox workers
-data.reset_index(drop = False, inplace = True)
 
 # read preprocessed data
 data = pd.read_json(data_file + '_data_post.json')
 
-#anonymize data and write anonymize lookup
-worker_lookup = anonymize_data(data)
-json.dump(worker_lookup, open(data_dir + 'worker_lookup.json','w'))
-all_data = data # validation and discovery
+
 
 
 # calculate DVs and save
 DV_df = extract_DVs(data)
 DV_df.to_json(data_file + '_DV.json')
 DV_df = pd.read_json(data_file + '_DV.json')
+
+#anonymize data and write anonymize lookup
+worker_lookup = anonymize_data(data)
+json.dump(worker_lookup, open(data_dir + 'worker_lookup.json','w'))
+all_data = data # validation and discovery
 
 # only get discovery data
 subject_assignment = pd.read_csv('../subject_assignment.csv')
