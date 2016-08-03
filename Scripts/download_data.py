@@ -62,19 +62,19 @@ if job == "post" or job == "both":
     # preprocess and save each sample individually
     if 'discovery' in sample:
         # only get discovery data
-        discovery_data = data.query('worker_id in %s' % discovery_sample)
+        discovery_data = data.query('worker_id in %s' % discovery_sample).reset_index(drop = True, inplace = True)
         post_process_data(discovery_data)
         discovery_data.to_json(data_file + '_discovery_data_post.json')
         print('Finished saving post-processed discovery data')
     if 'validation' in sample:
         # only get validation data
-        validation_data = data.query('worker_id in %s' % validation_sample)
+        validation_data = data.query('worker_id in %s' % validation_sample).reset_index(drop = True, inplace = True)
         post_process_data(validation_data)
         validation_data.to_json(data_file + '_validation_data_post.json')
         print('Finished saving post-processed validation data')
     if 'incomplete' in sample:
         # only get validation data
-        incomplete_data = data.query('worker_id not in %s' % (validation_sample + discovery_sample))
+        incomplete_data = data.query('worker_id not in %s' % (validation_sample + discovery_sample)).reset_index(drop = True, inplace = True)
         post_process_data(incomplete_data)
         incomplete_data.to_json(data_file + '_incomplete_data_post.json')
         print('Finished saving post-processed incomplete data')
