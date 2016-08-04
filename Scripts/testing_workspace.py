@@ -16,33 +16,31 @@ from util import *
 
 #***************************************************
 # ********* Load Data **********************
-#**************************************************        
+#************************************************** 
+try:
+    worker_lookup = json.load(open('../Data/worker_lookup.json','r'))
+    inverse_lookup = {v: k for k, v in worker_lookup.items()}
+except IOError:
+    print('no worker lookup found!')
+    
 #load Data
 token, data_dir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
 data_file = data_dir + 'mturk'
 
 # read preprocessed data
-data = pd.read_json(data_file + '_data_post.json')
-
-
-
+data = pd.read_json(data_file + '_discovery_data_post.json')
+try:
+    incomplete_data = pd.read_json(data_file + '_incomplete_data_post.json')
+    validation_data = pd.read_json(data_file + '_validation_data_post.json')
+    all_data = pd.concat([data,incomplete_data,validation_data])
+except:
+    print('Only discovery data found, as it should be!')
 
 # calculate DVs and save
 DV_df = extract_DVs(data)
 DV_df.to_json(data_file + '_DV.json')
 DV_df = pd.read_json(data_file + '_DV.json')
 
-#anonymize data and write anonymize lookup
-worker_lookup = anonymize_data(data)
-json.dump(worker_lookup, open(data_dir + 'worker_lookup.json','w'))
-all_data = data # validation and discovery
-
-# only get discovery data
-subject_assignment = pd.read_csv('../subject_assignment.csv')
-discovery_sample = list(subject_assignment.query('dataset == "discovery"').iloc[:,0])
-data = data.query('worker_id in %s' % discovery_sample)
-DV_df = DV_df.query('index in %s' % discovery_sample)
-#flag_data(data,'/home/ian/Experiments/expfactory/Self_Regulation_Ontology/post_process_reference.pkl')
 
 # ************************************
 # ********* Save Components of Data **
