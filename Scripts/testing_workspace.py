@@ -36,6 +36,11 @@ try:
 except:
     print('Only discovery data found, as it should be!')
 
+#get pay
+#workers = ...set up this array
+pay = get_pay(all_data)
+pay_list = [pay.total.get(inverse_lookup.get(w,'not found'),'not_found') if pay.base.get(inverse_lookup.get(w,'not found'),'not_found') != 60 else pay.bonuses.get(inverse_lookup.get(w,'not found'),'not_found') for w in workers]
+
 # calculate DVs and save
 DV_df = extract_DVs(data)
 DV_df.to_json(data_file + '_DV.json')

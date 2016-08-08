@@ -188,9 +188,10 @@ def get_bonuses(data):
     tmp_bonuses = tmp_data.groupby('worker_id').bonus_zscore.sum()
     min_score = tmp_bonuses.min()
     max_score = tmp_bonuses.max()
+    num_tasks_bonused = data.groupby('worker_id').bonus_zscore.count()
     bonuses = data.groupby('worker_id').bonus_zscore.sum()
     bonuses = (bonuses-min_score)/(max_score-min_score)*10+5
-    bonuses = bonuses.map(lambda x: round(x,1))
+    bonuses = bonuses.map(lambda x: round(x,1))*num_tasks_bonused/8
     print('Finished getting bonuses')
     return bonuses
 
@@ -218,22 +219,28 @@ def get_demographics(df):
     return {'age': age_vars, 'sex': sex, 'race': race, 'hispanic': hispanic}  
     
     
-def get_dummy_pay(data):
+def get_pay(data):
     assert 'ontask_time' in data.columns, \
         'Task time not found. Must run "calc_time_taken" first.' 
     all_exps = data.experiment_exp_id.unique()
-    num_completed = data.groupby('worker_id').count().finishtime
     exps_completed = data.groupby('worker_id').experiment_exp_id.unique()
     exps_not_completed = exps_completed.map(lambda x: list(set(all_exps) - set(x) - set(['selection_optimization_compensation'])))
-    almost_completed = num_completed[(num_completed<63) & (num_completed >=60)]
-    not_completed = num_completed[num_completed < 60]
+    completed = exps_completed[exps_completed.map(lambda x: len(x)==63)]
+    almost_completed = exps_not_completed[exps_not_completed.map(lambda x: x == ['angling_risk_task_always_sunny'])]
+    not_completed = exps_not_completed[exps_not_completed.map(lambda x: len(x)>0 and x != ['angling_risk_task_always_sunny'])]
+    # remove stray completions
+    not_completed.loc[[i for i in not_completed.index if 's0' not in i]]
+    # calculate time taken
     task_time = data.groupby('experiment_exp_id').ontask_time.mean()/60+2 # +2 for generic instruction time
     time_spent = exps_completed.map(lambda x: np.sum([task_time[i] if task_time[i]==task_time[i] else 3 for i in x])/60)
     time_missed = exps_not_completed.map(lambda x: np.sum([task_time[i] if task_time[i]==task_time[i] else 3 for i in x])/60)
+    # calculate pay
+    completed_pay = pd.Series(data = 60, index = completed.index)
     prorate_pay = 60-time_missed[almost_completed.index]*6
-    reduced_pay = time_spent[not_completed.index]*2 + np.floor(time_spent[not_completed.index])
-    pay= pd.concat([reduced_pay,prorate_pay]).map(lambda x: round(x,1)).to_frame(name = 'base')
+    reduced_pay = time_spent[not_completed.index]*2 + np.floor(time_spent[not_completed.index])*2
+    pay= pd.concat([completed_pay, reduced_pay,prorate_pay]).map(lambda x: round(x,1)).to_frame(name = 'base')
     pay['bonuses'] = get_bonuses(data)
+    pay['total'] = pay.sum(axis = 1)
     return pay
     
 def get_worker_demographics(worker_id, data):
@@ -293,7 +300,7 @@ def load_data(data_loc, access_token = None, action = 'file', filters = None, ba
         if save == True:
             data.to_json(data_loc + '_data.json')
             print('Finished saving')
-        final_url = sys.stdout.get_log().split('\n')[-5].split()[1]
+        final_url = sys.stdout.get_log().split('\n')[-8].split()[1]
         append_to_json('../internal_settings.json', {'last_used_url': final_url})
     return data                 
     
