@@ -1,12 +1,10 @@
 '''
 Utility functions for the ontology project
 '''
-import cPickle
 import cStringIO
 from expanalysis.experiments.processing import extract_row, extract_experiment
 from expanalysis.results import Result
 from expanalysis.experiments.utils import result_filter
-import glob
 import json
 import matplotlib.pyplot as plt
 import numpy as np
@@ -59,7 +57,7 @@ subject_assignment_df = pd.DataFrame({'dataset': subject_order}, index = subject
 subject_assignment_df.to_csv('../subject_assignment.csv')
 
 def anonymize_data(data):
-    complete_workers = (data.groupby('worker_id').count().finishtime==63)
+    complete_workers = (data.groupby('worker_id').count().finishtime>=63)
     complete_workers = list(complete_workers[complete_workers].index)
     workers = data.groupby('worker_id').finishtime.max().sort_values().index
     # make new ids
@@ -200,7 +198,7 @@ def get_credit(data):
     for i,row in data.iterrows():
         if row['experiment_template'] in 'jspsych':
             df = extract_row(row, clean = False)
-            credit_var = df.iloc[-1].get('credit_var',999)
+            credit_var = df.iloc[-1].get('credit_var',np.nan)
             if credit_var != None:
                 credit_array.append(float(credit_var))
             else:
@@ -225,7 +223,7 @@ def get_pay(data):
     all_exps = data.experiment_exp_id.unique()
     exps_completed = data.groupby('worker_id').experiment_exp_id.unique()
     exps_not_completed = exps_completed.map(lambda x: list(set(all_exps) - set(x) - set(['selection_optimization_compensation'])))
-    completed = exps_completed[exps_completed.map(lambda x: len(x)==63)]
+    completed = exps_completed[exps_completed.map(lambda x: len(x)>=63)]
     almost_completed = exps_not_completed[exps_not_completed.map(lambda x: x == ['angling_risk_task_always_sunny'])]
     not_completed = exps_not_completed[exps_not_completed.map(lambda x: len(x)>0 and x != ['angling_risk_task_always_sunny'])]
     # remove stray completions
@@ -256,11 +254,8 @@ def get_worker_demographics(worker_id, data):
     
 def heatmap(df):
     """
-    :df: plot hierarchical clustering and heatmap
+    :df: plot heatmap
     """
-    #clustering
-    
-    #dendrogram
     plt.Figure(figsize = [16,16])
     sns.set_style("white")
     fig = plt.figure(figsize = [12,12])
@@ -300,7 +295,7 @@ def load_data(data_loc, access_token = None, action = 'file', filters = None, ba
         if save == True:
             data.to_json(data_loc + '_data.json')
             print('Finished saving')
-        final_url = sys.stdout.get_log().split('\n')[-8].split()[1]
+        final_url = sys.stdout.get_log().split('\n')[-150].split()[1]
         append_to_json('../internal_settings.json', {'last_used_url': final_url})
     return data                 
     
@@ -334,26 +329,31 @@ def quality_check(data):
         'choice_reaction_time': .8
     }
     missed_thresh_lookup = {
-    
     }
+    
     for i,row in data.iterrows():
         QC = True
         if row['experiment_template'] in 'jspsych':
             exp_id = row['experiment_exp_id']
             rt_thresh = rt_thresh_lookup.get(exp_id,300)
             acc_thresh = acc_thresh_lookup.get(exp_id,0)
-            missed_thresh = missed_thresh_lookup.get(exp_id,.15)
+            missed_thresh = missed_thresh_lookup.get(exp_id,.25)
             df = extract_row(row)
             if exp_id not in ['psychological_refractory_period_two_choices', 'two_stage_decision']:
                 if (df['rt'].median < rt_thresh) or \
                    (np.mean(df.get('correct',1)) < acc_thresh) or \
                    (np.mean(df['rt'] == -1) > missed_thresh):
                        QC = False
-            else:
+            elif exp_id == 'psychological_refractory_period_two_choices':
                 if (df['choice1_rt'].median < rt_thresh) or \
-               (np.mean(df.get('choice1_correct',1)) < acc_thresh) or \
-               (((df['choice1_rt']==-1) | (df['choice2_rt'] <= -1)).mean() > missed_thresh):
-                   QC = False
+                   (np.mean(df['choice1_correct']) < acc_thresh) or \
+                   (((df['choice1_rt']==-1) | (df['choice2_rt'] <= -1)).mean() > missed_thresh):
+                       QC = False
+            elif exp_id == 'two_stage_decision':
+                if (df['rt_first'].median < rt_thresh) or \
+                    (df['rt_second'].median < rt_thresh) or \
+                   ((df.trial_id == "incomplete_trial").mean() > missed_thresh):
+                       QC = False
         passed_QC.append(QC)
     data.loc[:,'passed_QC'] = passed_QC
            

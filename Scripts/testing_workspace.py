@@ -18,7 +18,7 @@ from util import *
 # ********* Load Data **********************
 #************************************************** 
 try:
-    worker_lookup = json.load(open('../Data/worker_lookup.json','r'))
+    worker_lookup = json.load(open("../Data/worker_lookup.json",'r'))
     inverse_lookup = {v: k for k, v in worker_lookup.items()}
 except IOError:
     print('no worker lookup found!')

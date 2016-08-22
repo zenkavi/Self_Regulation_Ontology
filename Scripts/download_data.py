@@ -3,7 +3,7 @@ from expanalysis.experiments.processing import post_process_data
 from expanalysis.results import get_filters
 import json
 import pandas as pd
-from util import load_data, get_bonuses, anonymize_data
+from util import load_data, get_bonuses, anonymize_data, quality_check
 
 job = raw_input('Type "download", "post" or "both": ')
 sample = 'discovery'
@@ -51,6 +51,7 @@ if job == "post" or job == "both":
     bonuses = get_bonuses(data)
     calc_time_taken(data)
     get_post_task_responses(data)
+    quality_check(data)    
     
     #anonymize data and write anonymize lookup
     worker_lookup = anonymize_data(data)
