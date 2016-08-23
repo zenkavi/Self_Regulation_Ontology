@@ -295,13 +295,10 @@ def load_data(data_loc, access_token = None, action = 'file', filters = None, ba
     # remove a few mistakes from data
     data = data.query('worker_id not in ["A254JKSDNE44AM", "A1O51P5O9MC5LX"]') # Sandbox workers
     data.reset_index(drop = True, inplace = True)
-    #anonymize data
-    worker_lookup = anonymize_data(data)
     
     # if saving, save the data and the lookup file for anonymized workers
     if save == True:
         data.to_json(data_loc + 'mturk_data.json')
-        json.dump(worker_lookup, open(data_loc + 'worker_lookup.json','w'))
         print('Finished saving')
     final_url = sys.stdout.get_log().split('\n')[-150].split()[1]
     append_to_json('../internal_settings.json', {'last_used_url': final_url})

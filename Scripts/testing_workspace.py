@@ -29,7 +29,7 @@ except IOError:
     print('no worker counts found!')
     
 try:
-    worker_counts = json.load(open("../Data/worker_pay.json",'r'))
+    worker_pay = pd.read_json("../Data/worker_pay.json",'r')
 except IOError:
     print('no worker pay found!')
     
@@ -40,7 +40,7 @@ token, data_dir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Reg
 data = pd.read_json(data_dir + 'mturk_discovery_data_post.json')
 
 # get DV df
-DV_df = pd.read_json(data_file + 'mturk_DV.json')
+DV_df = pd.read_json(data_dir + 'mturk_discovery_DV.json')
 
 
 # ************************************

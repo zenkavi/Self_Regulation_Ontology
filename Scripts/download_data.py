@@ -3,7 +3,7 @@ from expanalysis.experiments.processing import post_process_data, extract_DVs
 from expanalysis.results import get_filters
 import json
 import pandas as pd
-from util import get_bonuses, get_pay, load_data
+from util import anonymize_data, get_bonuses, get_pay, load_data
 
 # get options
 job = raw_input('Type "download", "extras", "post" or "all": ')
@@ -49,6 +49,10 @@ if job in ['extras', 'all']:
         data = pd.read_json(data_dir + 'mturk_data.json')
         data.reset_index(drop = True, inplace = True)
         print('Finished loading raw data')
+    
+    #anonymize data
+    worker_lookup = anonymize_data(data)
+    json.dump(worker_lookup, open(data_dir + 'worker_lookup.json','w'))
     
     # record subject completion statistics
     (data.groupby('worker_id').count().finishtime).to_json(data_dir + 'worker_counts.json')
@@ -103,7 +107,7 @@ if job in ['post', 'all']:
     if 'discovery' in sample:
         #calculate DVs
         DV_df = extract_DVs(discovery_data)
-        DV_df.to_json(data_dir + 'mturk_DV.json')
+        DV_df.to_json(data_dir + 'mturk_discovery_DV.json')
 
     
     
