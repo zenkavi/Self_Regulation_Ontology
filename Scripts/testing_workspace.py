@@ -39,16 +39,8 @@ token, data_dir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Reg
 # read preprocessed data
 data = pd.read_json(data_dir + 'mturk_discovery_data_post.json')
 
-
-#get pay
-#workers = ...set up this array
-pay = get_pay(all_data)
-pay_list = [pay.total.get(inverse_lookup.get(w,'not found'),'not_found') if pay.base.get(inverse_lookup.get(w,'not found'),'not_found') != 60 else pay.bonuses.get(inverse_lookup.get(w,'not found'),'not_found') for w in workers]
-
-# calculate DVs and save
-DV_df = extract_DVs(data)
-DV_df.to_json(data_file + '_DV.json')
-DV_df = pd.read_json(data_file + '_DV.json')
+# get DV df
+DV_df = pd.read_json(data_file + 'mturk_DV.json')
 
 
 # ************************************
@@ -115,24 +107,7 @@ ax.scatter(Xt[:, 0], Xt[:, 1], Xt[:, 2], c = ['r' if selection in x else 'b' for
 
 
 sns.plt.plot(pca.explained_variance_ratio_)
-
 summary = results_check(data, silent = True, plot = True)
 
 
-# ************************************
-# ********* Misc Code for Reference **********************
-# ************************************
-worker_count = pd.concat([data.groupby('worker_id')['finishtime'].count(), \
-    data.groupby('worker_id')['battery_name'].unique()], axis = 1)
-flagged = data.query('flagged == True')
-
-#generate reference
-ref_worker = 's028' #this guy works for everything except shift task
-file_base = '/home/ian/Experiments/expfactory/Self_Regulation_Ontology/post_process_reference'
-generate_reference(result_filter(data, worker = ref_worker), file_base)
-exp_dic = pd.read_pickle(file_base + '.pkl')
-pd.to_pickle(exp_dic, file_base + '.pkl')
-
-    
-  
 
