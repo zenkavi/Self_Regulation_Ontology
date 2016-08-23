@@ -20,7 +20,7 @@ if job in ['download', 'more']:
         
 token, data_dir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
 
-if job == 'download' or job == "both":
+if job == 'download' or job == "all":
     #***************************************************
     # ********* Load Data **********************
     #**************************************************        

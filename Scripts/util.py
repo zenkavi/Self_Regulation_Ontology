@@ -279,7 +279,7 @@ def load_data(data_loc, access_token = None, action = 'file', filters = None, ba
     elif action == 'append':
         try:
             url = json.load(open('../internal_settings.json','r'))['last_used_url']
-            old_data = pd.read_json(data_loc + '_data.json')
+            old_data = pd.read_json(data_loc + 'mturk_data.json')
             results = Result(access_token, filters = filters, url = url)
             new_data = results.data
             if battery:
