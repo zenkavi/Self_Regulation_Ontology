@@ -13,6 +13,7 @@ import seaborn as sns
 from scipy.cluster.hierarchy import linkage
 from scipy.cluster.hierarchy import dendrogram
 import sys
+from time import time
 
 # Used to capture print
 class Logger(object):
@@ -69,7 +70,6 @@ def anonymize_data(data):
             id_index += 1
         else:
             new_ids.append(worker)
-    
     data.replace(workers, new_ids,inplace = True)
     return {x:y for x,y in zip(new_ids, workers)}
 
@@ -268,10 +268,9 @@ def heatmap(df):
     return fig
  
 def load_data(data_loc, access_token = None, action = 'file', filters = None, battery = None, save = True, url = None):
+    start_time = time()
     sys.stdout = Logger()
-    if action == 'file':
-    	data = pd.read_json(data_loc + '_data.json')
-    elif action == 'overwrite':
+    if action == 'overwrite':
         #Load Results from Database
         results = Result(access_token, filters = filters, url = url)
         data = results.data
@@ -289,14 +288,23 @@ def load_data(data_loc, access_token = None, action = 'file', filters = None, ba
         except IOError:
             print('No url found in internal_settings file. Cannot append')
             action = 'file'
-            data = pd.read_json(data_loc + '_data.json')
+            data = pd.read_json(data_loc + 'mturk_data.json')
+            
+    data = data.query('worker_id not in ["A254JKSDNE44AM", "A1O51P5O9MC5LX"]') # Sandbox workers
     data.reset_index(drop = True, inplace = True)
-    if action != 'file':
-        if save == True:
-            data.to_json(data_loc + '_data.json')
-            print('Finished saving')
-        final_url = sys.stdout.get_log().split('\n')[-150].split()[1]
-        append_to_json('../internal_settings.json', {'last_used_url': final_url})
+    #anonymize data
+    worker_lookup = anonymize_data(data)
+    
+    # if saving, save the data and the lookup file for anonymized workers
+    if save == True:
+        data.to_json(data_loc + 'mturk_data.json')
+        json.dump(worker_lookup, open(data_loc + 'worker_lookup.json','w'))
+        print('Finished saving')
+    final_url = sys.stdout.get_log().split('\n')[-150].split()[1]
+    append_to_json('../internal_settings.json', {'last_used_url': final_url})
+    
+    finish_time = (time() - start_time)/60
+    print('Finished loading data. Time taken: ' + finish_time)
     return data                 
     
 def order_by_time(data):
@@ -321,6 +329,7 @@ def print_time(data, time_col = 'ontask_time'):
     return time
     
 def quality_check(data):
+    start_time = time()
     passed_QC = []
     rt_thresh_lookup = {
         'simple_reaction_time': 150    
@@ -360,7 +369,8 @@ def quality_check(data):
                        QC = False
         passed_QC.append(QC)
     data.loc[:,'passed_QC'] = passed_QC
-    print('Finished QC')
+    finish_time = (time() - start_time)/60
+    print('Finished QC. Time taken: ' + finish_time)
            
         
     

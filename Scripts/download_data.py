@@ -5,17 +5,20 @@ import json
 import pandas as pd
 from util import load_data, get_bonuses, anonymize_data, quality_check
 
-job = raw_input('Type "download", "post" or "both": ')
+# get options
+job = raw_input('Type "download", "extras", "post" or "all": ')
 sample = 'discovery'
 if job == 'more':
-    job = raw_input('Type "download", "post" or "both": ')
+    job = raw_input('More: Type "download", "extras", "post" or "both": ')
     sample = raw_input('Type "discovery", "validation" or "incomplete". Use commas to separate multiple samples or "all": ')
     if sample == 'all':
         sample = ['discovery','validation','incomplete']
     else:
         sample = sample.split(',')
+if job in ['download', 'more']:
+    action = raw_input('Overwrite data or append new data to previous file? Type "overwrite" or "append"')       
+        
 token, data_dir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
-data_file = data_dir + 'mturk'
 
 if job == 'download' or job == "both":
     #***************************************************
@@ -36,29 +39,37 @@ if job == 'download' or job == "both":
     #load Data
     f = open(token)
     access_token = f.read().strip()     
-    action = raw_input('Overwrite data or append new data to previous file? Type "overwrite" or "append"')
-    data_source = load_data(data_file, access_token, filters = filters, action = action, battery = 'Self Regulation Battery')
+    data_source = load_data(data_dir, access_token, filters = filters, action = action, battery = 'Self Regulation Battery')
 
-if job == "post" or job == "both":
+if job in ['extras', 'all']:
     #Process Data
-    if job == "post":
+    if job == "extras":
         #load Data
-        data_source = load_data(data_file, action = 'file', battery = 'Self Regulation Battery')
+        data = pd.read_json(data_dir + 'mturk_data.json')
+        data.reset_index(drop = True, inplace = True)
         print('Finished loading raw data')
-    data = data_source.query('worker_id not in ["A254JKSDNE44AM", "A1O51P5O9MC5LX"]') # Sandbox workers
-    data.reset_index(drop = True, inplace = True)
+        
+    # record subject completion statistics
+    (data.groupby('worker_id').count().finishtime).to_json(data_dir + 'worker_counts.json')
+    
     # add a few extras
     bonuses = get_bonuses(data)
     calc_time_taken(data)
     get_post_task_responses(data)
     quality_check(data)    
     
-    #anonymize data and write anonymize lookup
-    worker_lookup = anonymize_data(data)
-    json.dump(worker_lookup, open(data_dir + 'worker_lookup.json','w'))
+    data.to_json(data_dir + 'mturk_data_extras.json')
     
-    # record subject completion statistics
-    (data.groupby('worker_id').count().finishtime).to_json(data_dir + 'worker_counts.json')
+if job in ['post', 'all']:
+    #Process Data
+    if job == "post":
+        #load Data
+        try:
+            data = pd.read_json(data_dir + 'mturk_data_extras.json')
+        except ValueError:
+            data = pd.read_json(data_dir + 'mturk_data.json')
+        data.reset_index(drop = True, inplace = True)
+        print('Finished loading raw data')
     
     #get subject assignment
     subject_assignment = pd.read_csv('../subject_assignment.csv')
@@ -70,25 +81,25 @@ if job == "post" or job == "both":
         # only get discovery data
         discovery_data = data.query('worker_id in %s' % discovery_sample).reset_index(drop = True)
         post_process_data(discovery_data)
-        discovery_data.to_json(data_file + '_discovery_data_post.json')
+        discovery_data.to_json(data_dir + 'mturk_discovery_data_post.json')
         print('Finished saving post-processed discovery data')
     if 'validation' in sample:
         # only get validation data
         validation_data = data.query('worker_id in %s' % validation_sample).reset_index(drop = True)
         post_process_data(validation_data)
-        validation_data.to_json(data_file + '_validation_data_post.json')
+        validation_data.to_json(data_dir + 'mturk_validation_data_post.json')
         print('Finished saving post-processed validation data')
     if 'incomplete' in sample:
         # only get validation data
         incomplete_data = data.query('worker_id not in %s' % (validation_sample + discovery_sample)).reset_index(drop = True)
         post_process_data(incomplete_data)
-        incomplete_data.to_json(data_file + '_incomplete_data_post.json')
+        incomplete_data.to_json(data_dir + 'mturk_incomplete_data_post.json')
         print('Finished saving post-processed incomplete data')
     
     if 'discovery' in sample:
         #calculate DVs
         DV_df = extract_DVs(discovery_data)
-        DV_df.to_json(data_file + '_DV.json')
+        DV_df.to_json(data_dir + 'mturk_DV.json')
 
     
     
