@@ -1,5 +1,5 @@
 from expanalysis.experiments.jspsych import calc_time_taken, get_post_task_responses
-from expanalysis.experiments.processing import post_process_data
+from expanalysis.experiments.processing import post_process_data, extract_DVs
 from expanalysis.results import get_filters
 import json
 import pandas as pd
@@ -56,6 +56,11 @@ if job == "post" or job == "both":
     #anonymize data and write anonymize lookup
     worker_lookup = anonymize_data(data)
     json.dump(worker_lookup, open(data_dir + 'worker_lookup.json','w'))
+    
+    # record subject completion statistics
+    (data.groupby('worker_id').count().finishtime).to_json(data_dir + 'worker_counts.json')
+    
+    #get subject assignment
     subject_assignment = pd.read_csv('../subject_assignment.csv')
     discovery_sample = list(subject_assignment.query('dataset == "discovery"').iloc[:,0])
     validation_sample = list(subject_assignment.query('dataset == "validation"').iloc[:,0])
@@ -79,6 +84,11 @@ if job == "post" or job == "both":
         post_process_data(incomplete_data)
         incomplete_data.to_json(data_file + '_incomplete_data_post.json')
         print('Finished saving post-processed incomplete data')
+    
+    if 'discovery' in sample:
+        #calculate DVs
+        DV_df = extract_DVs(discovery_data)
+        DV_df.to_json(data_file + '_DV.json')
 
     
     

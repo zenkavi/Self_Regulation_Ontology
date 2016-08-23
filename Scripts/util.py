@@ -327,9 +327,10 @@ def quality_check(data):
     }
     acc_thresh_lookup = {
         'digit_span': 0,
+        'hierarchical_rule': 0,
         'probabilistic_selection': 0,
         'shift_task': 0,
-        'spatial': 0
+        'spatial_span': 0
     }
     missed_thresh_lookup = {
     }
