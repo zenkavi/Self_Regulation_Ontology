@@ -304,7 +304,7 @@ def load_data(data_loc, access_token = None, action = 'file', filters = None, ba
     append_to_json('../internal_settings.json', {'last_used_url': final_url})
     
     finish_time = (time() - start_time)/60
-    print('Finished loading data. Time taken: ' + finish_time)
+    print('Finished loading data. Time taken: ' + str(finish_time))
     return data                 
     
 def order_by_time(data):
@@ -370,7 +370,7 @@ def quality_check(data):
         passed_QC.append(QC)
     data.loc[:,'passed_QC'] = passed_QC
     finish_time = (time() - start_time)/60
-    print('Finished QC. Time taken: ' + finish_time)
+    print('Finished QC. Time taken: ' + str(finish_time))
            
         
     
