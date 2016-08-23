@@ -236,6 +236,8 @@ def get_pay(data):
     completed_pay = pd.Series(data = 60, index = completed.index)
     prorate_pay = 60-time_missed[almost_completed.index]*6
     reduced_pay = time_spent[not_completed.index]*2 + np.floor(time_spent[not_completed.index])*2
+    #remove anyone who was double counted
+    reduced_pay.drop(list(completed_pay.index) + list(prorate_pay.index), inplace = True, errors = 'ignore')
     pay= pd.concat([completed_pay, reduced_pay,prorate_pay]).map(lambda x: round(x,1)).to_frame(name = 'base')
     pay['bonuses'] = get_bonuses(data)
     pay['total'] = pay.sum(axis = 1)
@@ -289,7 +291,8 @@ def load_data(data_loc, access_token = None, action = 'file', filters = None, ba
             print('No url found in internal_settings file. Cannot append')
             action = 'file'
             data = pd.read_json(data_loc + 'mturk_data.json')
-            
+    
+    # remove a few mistakes from data
     data = data.query('worker_id not in ["A254JKSDNE44AM", "A1O51P5O9MC5LX"]') # Sandbox workers
     data.reset_index(drop = True, inplace = True)
     #anonymize data
