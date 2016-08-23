@@ -22,19 +22,23 @@ try:
     inverse_lookup = {v: k for k, v in worker_lookup.items()}
 except IOError:
     print('no worker lookup found!')
+
+try:
+    worker_counts = json.load(open("../Data/worker_counts.json",'r'))
+except IOError:
+    print('no worker counts found!')
+    
+try:
+    worker_counts = json.load(open("../Data/worker_pay.json",'r'))
+except IOError:
+    print('no worker pay found!')
     
 #load Data
 token, data_dir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
-data_file = data_dir + 'mturk'
 
 # read preprocessed data
-data = pd.read_json(data_file + '_discovery_data_post.json')
-try:
-    incomplete_data = pd.read_json(data_file + '_incomplete_data_post.json')
-    validation_data = pd.read_json(data_file + '_validation_data_post.json')
-    all_data = pd.concat([data,incomplete_data,validation_data])
-except:
-    print('Only discovery data found, as it should be!')
+data = pd.read_json(data_dir + 'mturk_discovery_data_post.json')
+
 
 #get pay
 #workers = ...set up this array

@@ -3,7 +3,7 @@ from expanalysis.experiments.processing import post_process_data, extract_DVs
 from expanalysis.results import get_filters
 import json
 import pandas as pd
-from util import load_data, get_bonuses, anonymize_data, quality_check
+from util import get_bonuses, get_pay, load_data
 
 # get options
 job = raw_input('Type "download", "extras", "post" or "all": ')
@@ -39,8 +39,9 @@ if job == 'download' or job == "all":
     #load Data
     f = open(token)
     access_token = f.read().strip()     
-    data_source = load_data(data_dir, access_token, filters = filters, action = action, battery = 'Self Regulation Battery')
-
+    data = load_data(data_dir, access_token, filters = filters, action = action, battery = 'Self Regulation Battery')
+    data.reset_index(drop = True, inplace = True)
+    
 if job in ['extras', 'all']:
     #Process Data
     if job == "extras":
@@ -48,17 +49,20 @@ if job in ['extras', 'all']:
         data = pd.read_json(data_dir + 'mturk_data.json')
         data.reset_index(drop = True, inplace = True)
         print('Finished loading raw data')
-        
+    
     # record subject completion statistics
     (data.groupby('worker_id').count().finishtime).to_json(data_dir + 'worker_counts.json')
     
     # add a few extras
     bonuses = get_bonuses(data)
     calc_time_taken(data)
-    get_post_task_responses(data)
-    quality_check(data)    
-    
+    get_post_task_responses(data)   
     data.to_json(data_dir + 'mturk_data_extras.json')
+    
+    # calculate pay
+    pay = get_pay(data)
+    pay.to_json(data_dir + 'worker_pay.json')
+    print('Finished saving worker pay')
     
 if job in ['post', 'all']:
     #Process Data

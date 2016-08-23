@@ -345,6 +345,9 @@ def quality_check(data):
     }
     
     for i,row in data.iterrows():
+        if (i%100 == 0):
+            print i
+            
         QC = True
         if row['experiment_template'] in 'jspsych':
             exp_id = row['experiment_exp_id']
