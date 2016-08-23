@@ -326,7 +326,10 @@ def quality_check(data):
         'simple_reaction_time': 150    
     }
     acc_thresh_lookup = {
-        'choice_reaction_time': .8
+        'digit_span': 0,
+        'probabilistic_selection': 0,
+        'shift_task': 0,
+        'spatial': 0
     }
     missed_thresh_lookup = {
     }
@@ -336,7 +339,7 @@ def quality_check(data):
         if row['experiment_template'] in 'jspsych':
             exp_id = row['experiment_exp_id']
             rt_thresh = rt_thresh_lookup.get(exp_id,300)
-            acc_thresh = acc_thresh_lookup.get(exp_id,0)
+            acc_thresh = acc_thresh_lookup.get(exp_id,.6)
             missed_thresh = missed_thresh_lookup.get(exp_id,.25)
             df = extract_row(row)
             if exp_id not in ['psychological_refractory_period_two_choices', 'two_stage_decision']:
@@ -356,6 +359,7 @@ def quality_check(data):
                        QC = False
         passed_QC.append(QC)
     data.loc[:,'passed_QC'] = passed_QC
+    print('Finished QC')
            
         
     
