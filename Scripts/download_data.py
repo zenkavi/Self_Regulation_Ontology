@@ -15,7 +15,7 @@ if job == 'more':
         sample = ['discovery','validation','incomplete']
     else:
         sample = sample.split(',')
-if job in ['download', 'more']:
+if job in ['download', 'all']:
     action = raw_input('Overwrite data or append new data to previous file? Type "overwrite" or "append"')       
         
 token, data_dir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
