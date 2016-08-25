@@ -66,9 +66,10 @@ np.mean([i['Release_clicks'] for i in dv[0].values()])
 sns.plt.hist([i['alerting_rt'] for i in dv[0].values()])
 
 # get all DVs
-
-subset = DV_df.drop(DV_df.filter(regex='missed_percent|avg_rt|std_rt|overall_accuracy').columns, axis = 1)
+drop_vars = 'missed_percent|avg_rt|std_rt|overall_accuracy|post_error_slowing'
+subset = DV_df.drop(DV_df.filter(regex=drop_vars).columns, axis = 1)
 survey_df = subset.filter(regex = 'survey')
+survey_df = survey_df.drop(survey_df.filter(regex = 'demographics').columns, axis = 1)
 
 EZ_df = subset.filter(regex = 'thresh|drift')
 rt_df = DV_df.filter(regex = 'avg_rt')
