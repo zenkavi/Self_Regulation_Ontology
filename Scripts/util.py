@@ -1,7 +1,10 @@
 '''
 Utility functions for the ontology project
 '''
-import cStringIO
+try:
+    import cStringIO as StringIO
+except ImportError:
+    from io import StringIO
 from expanalysis.experiments.processing import extract_row, extract_experiment
 from expanalysis.results import Result
 from expanalysis.experiments.utils import result_filter
@@ -19,7 +22,7 @@ from time import time
 class Logger(object):
     def __init__(self):
         self.terminal = sys.stdout
-        self.log = cStringIO.StringIO()
+        self.log = StringIO.StringIO()
 
     def write(self, message):
         self.terminal.write(message)
@@ -346,7 +349,7 @@ def quality_check(data):
     
     for i,row in data.iterrows():
         if (i%100 == 0):
-            print i
+            print(i)
             
         QC = True
         if row['experiment_template'] in 'jspsych':
