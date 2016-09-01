@@ -219,6 +219,31 @@ def get_demographics(df):
     age_vars = [age_col.min(), age_col.max(), age_col.mean()]    
     return {'age': age_vars, 'sex': sex, 'race': race, 'hispanic': hispanic}  
     
+
+def get_items(data):
+    excluded_surveys = ['holt_laury_survey', 'sensation_seeking_survey']
+    items = []
+    responses = []
+    responses_text = []
+    options = []
+    workers = []
+    exps = []
+    for exp in data.experiment_exp_id.unique():
+        if 'survey' in exp and exp not in excluded_surveys:
+            survey = extract_experiment(data,exp)
+            try:
+                responses += list(survey.response.map(lambda x: float(x)))
+            except ValueError:
+                continue
+            items += list(survey.text)
+            responses_text += list(survey.response_text)
+            options += list(survey.options)
+            workers += list(survey.worker_id)
+            exps += [exp] * len(survey.text)
+    items_df = pd.DataFrame({'survey': exps, 'worker': workers, 'item_text': items, 'coded_response': responses,
+                             'response_text': responses_text, 'options': options}, dtype = float)
+    return items_df
+    
     
 def get_pay(data):
     assert 'ontask_time' in data.columns, \

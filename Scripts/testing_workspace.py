@@ -32,7 +32,12 @@ try:
     worker_pay = pd.read_json("../Data/worker_pay.json",'r')
 except IOError:
     print('no worker pay found!')
-    
+
+#get pay
+pay = worker_pay
+workers = []
+pay_list = [pay.total.get(inverse_lookup.get(w,'not found'),'not_found') if pay.base.get(inverse_lookup.get(w,'not found'),'not_found') != 60 else pay.bonuses.get(inverse_lookup.get(w,'not found'),'not_found') for w in workers]
+
 #load Data
 token, data_dir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
 
@@ -46,14 +51,7 @@ DV_df = pd.read_json(data_dir + 'mturk_discovery_DV.json')
 # ************************************
 # ********* Save Components of Data **
 # ************************************
-items = []
-exps = []
-for exp in data.experiment_exp_id.unique():
-    if 'survey' in exp:
-        survey = extract_experiment(data,exp)
-        items += list(survey.text.unique())
-        exps += [exp] * len(survey.text.unique())
-items_df = pd.DataFrame({'survey': exps, 'items': items})
+items = get_items(data)
 items_df.to_csv('/home/ian/tmp/items.csv')
 
 # ************************************
@@ -66,7 +64,7 @@ np.mean([i['Release_clicks'] for i in dv[0].values()])
 sns.plt.hist([i['alerting_rt'] for i in dv[0].values()])
 
 # get all DVs
-drop_vars = 'missed_percent|avg_rt|std_rt|overall_accuracy|post_error_slowing'
+drop_vars = 'missed_percent|tower|demographics|avg_rt|std_rt|overall_accuracy|post_error_slowing'
 subset = DV_df.drop(DV_df.filter(regex=drop_vars).columns, axis = 1)
 survey_df = subset.filter(regex = 'survey')
 survey_df = survey_df.drop(survey_df.filter(regex = 'demographics').columns, axis = 1)
@@ -74,7 +72,7 @@ survey_df = survey_df.drop(survey_df.filter(regex = 'demographics').columns, axi
 EZ_df = subset.filter(regex = 'thresh|drift')
 rt_df = DV_df.filter(regex = 'avg_rt')
 
-plot_df = survey_df
+plot_df = subset
 plot_df.columns = [' '.join(x.split('_')) for x in  plot_df.columns]
 fig = dendroheatmap(plot_df.corr(), labels = True)
 fig.savefig('/home/ian/EZ_df.png')
