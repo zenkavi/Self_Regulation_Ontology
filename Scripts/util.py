@@ -1,12 +1,13 @@
 '''
 Utility functions for the ontology project
 '''
-import cPickle
-import cStringIO
+try:
+    import cStringIO as StringIO
+except ImportError:
+    from io import StringIO
 from expanalysis.experiments.processing import extract_row, extract_experiment
 from expanalysis.results import Result
 from expanalysis.experiments.utils import result_filter
-import glob
 import json
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,12 +16,13 @@ import seaborn as sns
 from scipy.cluster.hierarchy import linkage
 from scipy.cluster.hierarchy import dendrogram
 import sys
+from time import time
 
 # Used to capture print
 class Logger(object):
     def __init__(self):
         self.terminal = sys.stdout
-        self.log = cStringIO.StringIO()
+        self.log = StringIO.StringIO()
 
     def write(self, message):
         self.terminal.write(message)
@@ -50,16 +52,10 @@ def set_discovery_sample(n, discovery_n, seed = None):
     np.random.shuffle(sample)
     return sample
 
-seed = 1960
-n = 500
-discovery_n = 200
-subjects = ['s' + str(i).zfill(3) for i in range(1,n+1)]
-subject_order = set_discovery_sample(n, discovery_n, seed)
-subject_assignment_df = pd.DataFrame({'dataset': subject_order}, index = subjects)
-subject_assignment_df.to_csv('../subject_assignment.csv')
+
 
 def anonymize_data(data):
-    complete_workers = (data.groupby('worker_id').count().finishtime==63)
+    complete_workers = (data.groupby('worker_id').count().finishtime>=63)
     complete_workers = list(complete_workers[complete_workers].index)
     workers = data.groupby('worker_id').finishtime.max().sort_values().index
     # make new ids
@@ -71,7 +67,6 @@ def anonymize_data(data):
             id_index += 1
         else:
             new_ids.append(worker)
-    
     data.replace(workers, new_ids,inplace = True)
     return {x:y for x,y in zip(new_ids, workers)}
 
@@ -200,7 +195,7 @@ def get_credit(data):
     for i,row in data.iterrows():
         if row['experiment_template'] in 'jspsych':
             df = extract_row(row, clean = False)
-            credit_var = df.iloc[-1].get('credit_var',999)
+            credit_var = df.iloc[-1].get('credit_var',np.nan)
             if credit_var != None:
                 credit_array.append(float(credit_var))
             else:
@@ -218,6 +213,31 @@ def get_demographics(df):
     age_vars = [age_col.min(), age_col.max(), age_col.mean()]    
     return {'age': age_vars, 'sex': sex, 'race': race, 'hispanic': hispanic}  
     
+
+def get_items(data):
+    excluded_surveys = ['holt_laury_survey', 'sensation_seeking_survey']
+    items = []
+    responses = []
+    responses_text = []
+    options = []
+    workers = []
+    exps = []
+    for exp in data.experiment_exp_id.unique():
+        if 'survey' in exp and exp not in excluded_surveys:
+            survey = extract_experiment(data,exp)
+            try:
+                responses += list(survey.response.map(lambda x: float(x)))
+            except ValueError:
+                continue
+            items += list(survey.text)
+            responses_text += list(survey.response_text)
+            options += list(survey.options)
+            workers += list(survey.worker_id)
+            exps += [exp] * len(survey.text)
+    items_df = pd.DataFrame({'survey': exps, 'worker': workers, 'item_text': items, 'coded_response': responses,
+                             'response_text': responses_text, 'options': options}, dtype = float)
+    return items_df
+    
     
 def get_pay(data):
     assert 'ontask_time' in data.columns, \
@@ -225,7 +245,7 @@ def get_pay(data):
     all_exps = data.experiment_exp_id.unique()
     exps_completed = data.groupby('worker_id').experiment_exp_id.unique()
     exps_not_completed = exps_completed.map(lambda x: list(set(all_exps) - set(x) - set(['selection_optimization_compensation'])))
-    completed = exps_completed[exps_completed.map(lambda x: len(x)==63)]
+    completed = exps_completed[exps_completed.map(lambda x: len(x)>=63)]
     almost_completed = exps_not_completed[exps_not_completed.map(lambda x: x == ['angling_risk_task_always_sunny'])]
     not_completed = exps_not_completed[exps_not_completed.map(lambda x: len(x)>0 and x != ['angling_risk_task_always_sunny'])]
     # remove stray completions
@@ -238,6 +258,8 @@ def get_pay(data):
     completed_pay = pd.Series(data = 60, index = completed.index)
     prorate_pay = 60-time_missed[almost_completed.index]*6
     reduced_pay = time_spent[not_completed.index]*2 + np.floor(time_spent[not_completed.index])*2
+    #remove anyone who was double counted
+    reduced_pay.drop(list(completed_pay.index) + list(prorate_pay.index), inplace = True, errors = 'ignore')
     pay= pd.concat([completed_pay, reduced_pay,prorate_pay]).map(lambda x: round(x,1)).to_frame(name = 'base')
     pay['bonuses'] = get_bonuses(data)
     pay['total'] = pay.sum(axis = 1)
@@ -256,11 +278,8 @@ def get_worker_demographics(worker_id, data):
     
 def heatmap(df):
     """
-    :df: plot hierarchical clustering and heatmap
+    :df: plot heatmap
     """
-    #clustering
-    
-    #dendrogram
     plt.Figure(figsize = [16,16])
     sns.set_style("white")
     fig = plt.figure(figsize = [12,12])
@@ -273,10 +292,9 @@ def heatmap(df):
     return fig
  
 def load_data(data_loc, access_token = None, action = 'file', filters = None, battery = None, save = True, url = None):
+    start_time = time()
     sys.stdout = Logger()
-    if action == 'file':
-    	data = pd.read_json(data_loc + '_data.json')
-    elif action == 'overwrite':
+    if action == 'overwrite':
         #Load Results from Database
         results = Result(access_token, filters = filters, url = url)
         data = results.data
@@ -285,7 +303,7 @@ def load_data(data_loc, access_token = None, action = 'file', filters = None, ba
     elif action == 'append':
         try:
             url = json.load(open('../internal_settings.json','r'))['last_used_url']
-            old_data = pd.read_json(data_loc + '_data.json')
+            old_data = pd.read_json(data_loc + 'mturk_data.json')
             results = Result(access_token, filters = filters, url = url)
             new_data = results.data
             if battery:
@@ -294,14 +312,21 @@ def load_data(data_loc, access_token = None, action = 'file', filters = None, ba
         except IOError:
             print('No url found in internal_settings file. Cannot append')
             action = 'file'
-            data = pd.read_json(data_loc + '_data.json')
+            data = pd.read_json(data_loc + 'mturk_data.json')
+    
+    # remove a few mistakes from data
+    data = data.query('worker_id not in ["A254JKSDNE44AM", "A1O51P5O9MC5LX"]') # Sandbox workers
     data.reset_index(drop = True, inplace = True)
-    if action != 'file':
-        if save == True:
-            data.to_json(data_loc + '_data.json')
-            print('Finished saving')
-        final_url = sys.stdout.get_log().split('\n')[-8].split()[1]
-        append_to_json('../internal_settings.json', {'last_used_url': final_url})
+    
+    # if saving, save the data and the lookup file for anonymized workers
+    if save == True:
+        data.to_json(data_loc + 'mturk_data.json')
+        print('Finished saving')
+    final_url = sys.stdout.get_log().split('\n')[-150].split()[1]
+    append_to_json('../internal_settings.json', {'last_used_url': final_url})
+    
+    finish_time = (time() - start_time)/60
+    print('Finished loading data. Time taken: ' + str(finish_time))
     return data                 
     
 def order_by_time(data):
@@ -326,36 +351,51 @@ def print_time(data, time_col = 'ontask_time'):
     return time
     
 def quality_check(data):
+    start_time = time()
     passed_QC = []
     rt_thresh_lookup = {
         'simple_reaction_time': 150    
     }
     acc_thresh_lookup = {
-        'choice_reaction_time': .8
+        'digit_span': 0,
+        'hierarchical_rule': 0,
+        'probabilistic_selection': 0,
+        'shift_task': 0,
+        'spatial_span': 0
     }
     missed_thresh_lookup = {
-    
     }
+    
     for i,row in data.iterrows():
+        if (i%100 == 0):
+            print(i)
+            
         QC = True
         if row['experiment_template'] in 'jspsych':
             exp_id = row['experiment_exp_id']
             rt_thresh = rt_thresh_lookup.get(exp_id,300)
-            acc_thresh = acc_thresh_lookup.get(exp_id,0)
-            missed_thresh = missed_thresh_lookup.get(exp_id,.15)
+            acc_thresh = acc_thresh_lookup.get(exp_id,.6)
+            missed_thresh = missed_thresh_lookup.get(exp_id,.25)
             df = extract_row(row)
             if exp_id not in ['psychological_refractory_period_two_choices', 'two_stage_decision']:
                 if (df['rt'].median < rt_thresh) or \
                    (np.mean(df.get('correct',1)) < acc_thresh) or \
                    (np.mean(df['rt'] == -1) > missed_thresh):
                        QC = False
-            else:
+            elif exp_id == 'psychological_refractory_period_two_choices':
                 if (df['choice1_rt'].median < rt_thresh) or \
-               (np.mean(df.get('choice1_correct',1)) < acc_thresh) or \
-               (((df['choice1_rt']==-1) | (df['choice2_rt'] <= -1)).mean() > missed_thresh):
-                   QC = False
+                   (np.mean(df['choice1_correct']) < acc_thresh) or \
+                   (((df['choice1_rt']==-1) | (df['choice2_rt'] <= -1)).mean() > missed_thresh):
+                       QC = False
+            elif exp_id == 'two_stage_decision':
+                if (df['rt_first'].median < rt_thresh) or \
+                    (df['rt_second'].median < rt_thresh) or \
+                   ((df.trial_id == "incomplete_trial").mean() > missed_thresh):
+                       QC = False
         passed_QC.append(QC)
     data.loc[:,'passed_QC'] = passed_QC
+    finish_time = (time() - start_time)/60
+    print('Finished QC. Time taken: ' + str(finish_time))
            
         
     

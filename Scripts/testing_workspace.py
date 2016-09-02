@@ -11,53 +11,53 @@ import seaborn as sns
 from sklearn.decomposition import PCA
 from util import *
 
-
-
+# set discovery sample
+seed = 1960
+n = 500
+discovery_n = 200
+subjects = ['s' + str(i).zfill(3) for i in range(1,n+1)]
+subject_order = set_discovery_sample(n, discovery_n, seed)
+subject_assignment_df = pd.DataFrame({'dataset': subject_order}, index = subjects)
+subject_assignment_df.to_csv('../subject_assignment.csv')
 
 #***************************************************
 # ********* Load Data **********************
 #************************************************** 
 try:
-    worker_lookup = json.load(open('../Data/worker_lookup.json','r'))
+    worker_lookup = json.load(open("../Data/worker_lookup.json",'r'))
     inverse_lookup = {v: k for k, v in worker_lookup.items()}
 except IOError:
     print('no worker lookup found!')
-    
-#load Data
-token, data_dir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
-data_file = data_dir + 'mturk'
 
-# read preprocessed data
-data = pd.read_json(data_file + '_discovery_data_post.json')
 try:
-    incomplete_data = pd.read_json(data_file + '_incomplete_data_post.json')
-    validation_data = pd.read_json(data_file + '_validation_data_post.json')
-    all_data = pd.concat([data,incomplete_data,validation_data])
-except:
-    print('Only discovery data found, as it should be!')
+    worker_counts = json.load(open("../Data/worker_counts.json",'r'))
+except IOError:
+    print('no worker counts found!')
+    
+try:
+    worker_pay = pd.read_json("../Data/worker_pay.json",'r')
+except IOError:
+    print('no worker pay found!')
 
 #get pay
-#workers = ...set up this array
-pay = get_pay(all_data)
+pay = worker_pay
+workers = []
 pay_list = [pay.total.get(inverse_lookup.get(w,'not found'),'not_found') if pay.base.get(inverse_lookup.get(w,'not found'),'not_found') != 60 else pay.bonuses.get(inverse_lookup.get(w,'not found'),'not_found') for w in workers]
 
-# calculate DVs and save
-DV_df = extract_DVs(data)
-DV_df.to_json(data_file + '_DV.json')
-DV_df = pd.read_json(data_file + '_DV.json')
+#load Data
+token, data_dir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
+
+# read preprocessed data
+data = pd.read_json(data_dir + 'mturk_discovery_data_post.json')
+
+# get DV df
+DV_df = pd.read_json(data_dir + 'mturk_discovery_DV.json')
 
 
 # ************************************
 # ********* Save Components of Data **
 # ************************************
-items = []
-exps = []
-for exp in data.experiment_exp_id.unique():
-    if 'survey' in exp:
-        survey = extract_experiment(data,exp)
-        items += list(survey.text.unique())
-        exps += [exp] * len(survey.text.unique())
-items_df = pd.DataFrame({'survey': exps, 'items': items})
+items = get_items(data)
 items_df.to_csv('/home/ian/tmp/items.csv')
 
 # ************************************
@@ -70,14 +70,15 @@ np.mean([i['Release_clicks'] for i in dv[0].values()])
 sns.plt.hist([i['alerting_rt'] for i in dv[0].values()])
 
 # get all DVs
-
-subset = DV_df.drop(DV_df.filter(regex='missed_percent|avg_rt|std_rt|overall_accuracy').columns, axis = 1)
+drop_vars = 'missed_percent|tower|demographics|avg_rt|std_rt|overall_accuracy|post_error_slowing'
+subset = DV_df.drop(DV_df.filter(regex=drop_vars).columns, axis = 1)
 survey_df = subset.filter(regex = 'survey')
+survey_df = survey_df.drop(survey_df.filter(regex = 'demographics').columns, axis = 1)
 
 EZ_df = subset.filter(regex = 'thresh|drift')
 rt_df = DV_df.filter(regex = 'avg_rt')
 
-plot_df = survey_df
+plot_df = subset
 plot_df.columns = [' '.join(x.split('_')) for x in  plot_df.columns]
 fig = dendroheatmap(plot_df.corr(), labels = True)
 fig.savefig('/home/ian/EZ_df.png')
@@ -111,24 +112,7 @@ ax.scatter(Xt[:, 0], Xt[:, 1], Xt[:, 2], c = ['r' if selection in x else 'b' for
 
 
 sns.plt.plot(pca.explained_variance_ratio_)
-
 summary = results_check(data, silent = True, plot = True)
 
 
-# ************************************
-# ********* Misc Code for Reference **********************
-# ************************************
-worker_count = pd.concat([data.groupby('worker_id')['finishtime'].count(), \
-    data.groupby('worker_id')['battery_name'].unique()], axis = 1)
-flagged = data.query('flagged == True')
-
-#generate reference
-ref_worker = 's028' #this guy works for everything except shift task
-file_base = '/home/ian/Experiments/expfactory/Self_Regulation_Ontology/post_process_reference'
-generate_reference(result_filter(data, worker = ref_worker), file_base)
-exp_dic = pd.read_pickle(file_base + '.pkl')
-pd.to_pickle(exp_dic, file_base + '.pkl')
-
-    
-  
 
