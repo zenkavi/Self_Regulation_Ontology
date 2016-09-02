@@ -7,6 +7,7 @@ This is a temporary script file.
 
 import numpy,pandas
 import os
+import json
 
 survey_longnames={'eating_survey':'Eating survey', 
                   'erq_survey':'Emotion regulation questionnaire', 
@@ -73,7 +74,8 @@ def get_survey_items(data):
  
 
 
-def save_metadata(survey_items,outdir='/Users/poldrack/code/Self_Regulation_Ontology/metadata'):
+def save_metadata(survey_items,
+                  outdir='/Users/poldrack/code/Self_Regulation_Ontology/metadata'):
 
     if not os.path.exists(outdir):
         os.mkdir(outdir)
@@ -84,9 +86,9 @@ def save_metadata(survey_items,outdir='/Users/poldrack/code/Self_Regulation_Onto
             "TermURL": survey_termurls[k]}}
         for i in survey_items[k]:
             r=survey_items[k][i]
-            h.update(r['text+'].encode('utf-8'))
             itemoptions=eval(r.options)
             itemid='_'.join(itemoptions[0]['id'].split('_')[:-1])
+            assert itemid not in survey_dict  # check for duplicates
             survey_dict[itemid]={}
             survey_dict[itemid]['Description']=r.item_text
             survey_dict[itemid]['Levels']={}
@@ -96,8 +98,36 @@ def save_metadata(survey_items,outdir='/Users/poldrack/code/Self_Regulation_Onto
             json.dump(survey_dict, outfile, sort_keys = True, indent = 4,
                   ensure_ascii=False)
         survey_metadata[k]=survey_dict
+    return survey_metadata
 
+def add_survey_item_labels(data):
+    item_ids=[]
+    for i,r in data.iterrows():
+        itemoptions=eval(r.options)
+        item_ids.append('_'.join(itemoptions[0]['id'].split('_')[:-1]))
+    data['item_id']=item_ids
+    return data
+        
+def save_data(data,survey_metadata,
+              outdir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses/surveydata'):
+    
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
+    
+    for k in survey_metadata.keys():
+        matchdata=data.query("survey=='%s'"%k)
+        unique_items=list(matchdata.item_id.unique())
+        surveydata=pandas.DataFrame({'worker':list(matchdata.worker.unique())})
+        for i in unique_items:
+            matchitem=matchdata.query('item_id=="%s"'%i)
+            matchitem=pandas.DataFrame({'worker':matchitem.worker,i:matchitem.coded_response})
+            surveydata=surveydata.merge(matchitem,on='worker')           
+        surveydata.to_csv(os.path.join(outdir,'%s.tsv'%k),sep='\t',index=False)
+        
 if __name__=='__main__':        
     data,basedir=get_data()
     survey_items=get_survey_items(data)
-    save_metadata(survey_items)
+    survey_metadata=save_metadata(survey_items)
+    data=add_survey_item_labels(data)
+    save_data(data,survey_metadata)
+    
