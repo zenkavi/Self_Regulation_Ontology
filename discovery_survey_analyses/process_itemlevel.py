@@ -72,11 +72,9 @@ def get_survey_items(data):
     return survey_items
  
 
-data,basedir=get_data()
-survey_items=get_survey_items()
 
-# def save_metadata(survey_items,outdir='/Users/poldrack/code/Self_Regulation_Ontology/metadata'):
-if 1:
+def save_metadata(survey_items,outdir='/Users/poldrack/code/Self_Regulation_Ontology/metadata'):
+
     if not os.path.exists(outdir):
         os.mkdir(outdir)
     survey_metadata={}
@@ -98,4 +96,8 @@ if 1:
             json.dump(survey_dict, outfile, sort_keys = True, indent = 4,
                   ensure_ascii=False)
         survey_metadata[k]=survey_dict
-        
+
+if __name__=='__main__':        
+    data,basedir=get_data()
+    survey_items=get_survey_items(data)
+    save_metadata(survey_items)
