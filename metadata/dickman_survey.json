@@ -1,0 +1,167 @@
+{
+    "MeasurementToolMetadata": {
+        "Description": "Dickman impulsivity survey",
+        "TermURL": "http://www.cognitiveatlas.org/term/id/trm_55a6a95f66508"
+    },
+    "dickman_survey_10": {
+        "Description": "I often say and do things without considering the consequences.",
+        "Levels": {
+            "1": "False",
+            "2": "True"
+        }
+    },
+    "dickman_survey_11": {
+        "Description": "I frequently make appointments without thinking about whether I will be able to keep them.",
+        "Levels": {
+            "1": "False",
+            "2": "True"
+        }
+    },
+    "dickman_survey_12": {
+        "Description": "I am uncomfortable when l have to make up my mind rapidly.",
+        "Levels": {
+            "1": "True",
+            "2": "False"
+        }
+    },
+    "dickman_survey_13": {
+        "Description": "I don't like to do things quickly, even when I am doing something that is not very difficult.",
+        "Levels": {
+            "1": "True",
+            "2": "False"
+        }
+    },
+    "dickman_survey_14": {
+        "Description": "I frequently buy things without thinking about whether or not I can really afford them.",
+        "Levels": {
+            "1": "False",
+            "2": "True"
+        }
+    },
+    "dickman_survey_15": {
+        "Description": "I am good at careful reasoning.",
+        "Levels": {
+            "1": "True",
+            "2": "False"
+        }
+    },
+    "dickman_survey_16": {
+        "Description": "I like to take part in really fast-paced conversations, where you don't have much time to think before you speak.",
+        "Levels": {
+            "1": "False",
+            "2": "True"
+        }
+    },
+    "dickman_survey_17": {
+        "Description": "I like sports and games in which you have to choose your next move very quickly.",
+        "Levels": {
+            "1": "False",
+            "2": "True"
+        }
+    },
+    "dickman_survey_18": {
+        "Description": "Many times the plans I make don't work out because I havent gone over them carefully enough in advance.",
+        "Levels": {
+            "1": "False",
+            "2": "True"
+        }
+    },
+    "dickman_survey_19": {
+        "Description": "I often get into trouble because I don't think before I act.",
+        "Levels": {
+            "1": "False",
+            "2": "True"
+        }
+    },
+    "dickman_survey_2": {
+        "Description": "Often, I don't spend enough time thinking over a situation before I act.",
+        "Levels": {
+            "1": "False",
+            "2": "True"
+        }
+    },
+    "dickman_survey_20": {
+        "Description": "Most of the time, I can put my thoughts into words very rapidly.",
+        "Levels": {
+            "1": "False",
+            "2": "True"
+        }
+    },
+    "dickman_survey_21": {
+        "Description": "People have admired me because I can think quickly.",
+        "Levels": {
+            "1": "False",
+            "2": "True"
+        }
+    },
+    "dickman_survey_22": {
+        "Description": "I will often say whatever comes into my head without thinking first.",
+        "Levels": {
+            "1": "False",
+            "2": "True"
+        }
+    },
+    "dickman_survey_23": {
+        "Description": "Before making any important decision, I carefully weigh the pros and cons.",
+        "Levels": {
+            "1": "True",
+            "2": "False"
+        }
+    },
+    "dickman_survey_24": {
+        "Description": "I rarely get involved in projects without first considering the potential problems.",
+        "Levels": {
+            "1": "True",
+            "2": "False"
+        }
+    },
+    "dickman_survey_3": {
+        "Description": "I try to avoid activities where you have to act without much time to think first.",
+        "Levels": {
+            "1": "True",
+            "2": "False"
+        }
+    },
+    "dickman_survey_4": {
+        "Description": "I don't like to make decisions quickly, even simple decisions, such as choosing what to wear, or what to have for dinner.",
+        "Levels": {
+            "1": "True",
+            "2": "False"
+        }
+    },
+    "dickman_survey_5": {
+        "Description": "I enjoy working out problems slowly and carefully.",
+        "Levels": {
+            "1": "True",
+            "2": "False"
+        }
+    },
+    "dickman_survey_6": {
+        "Description": "I am good at taking advantage of unexpected opportunities,where you have to do something immediately or lose your chance.",
+        "Levels": {
+            "1": "False",
+            "2": "True"
+        }
+    },
+    "dickman_survey_7": {
+        "Description": "I would enjoy working at a job that required me to make a lot of split-second decisions.",
+        "Levels": {
+            "1": "False",
+            "2": "True"
+        }
+    },
+    "dickman_survey_8": {
+        "Description": "I often make up my mind without taking the time to consider the situation from all angles.",
+        "Levels": {
+            "1": "False",
+            "2": "True"
+        }
+    },
+    "dickman_survey_9": {
+        "Description": "I have often missed out on opportunities because I couldn't make up my mind fast enough.",
+        "Levels": {
+            "1": "True",
+            "2": "False"
+        }
+    }
+}
