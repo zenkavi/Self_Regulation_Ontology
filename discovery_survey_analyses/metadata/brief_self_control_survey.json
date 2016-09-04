@@ -1,0 +1,136 @@
+{
+    "MeasurementToolMetadata": {
+        "Description": "Brief self-control survey",
+        "TermURL": "http://www.cognitiveatlas.org/term/id/trm_56a915461cd91"
+    },
+    "brief_self_control_survey_10": {
+        "Description": "Pleasure and fun sometimes keep me from getting work done.",
+        "Levels": {
+            "1": "Very much: 5",
+            "2": "4",
+            "3": "3",
+            "4": "2",
+            "5": "Not at all: 1"
+        }
+    },
+    "brief_self_control_survey_11": {
+        "Description": "I have trouble concentrating.",
+        "Levels": {
+            "1": "Very much: 5",
+            "2": "4",
+            "3": "3",
+            "4": "2",
+            "5": "Not at all: 1"
+        }
+    },
+    "brief_self_control_survey_12": {
+        "Description": "I am able to work effectively toward long-term goals.",
+        "Levels": {
+            "1": "Not at all: 1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "Very much: 5"
+        }
+    },
+    "brief_self_control_survey_13": {
+        "Description": "Sometimes I can't stop myself from doing something, even if I know it is wrong.",
+        "Levels": {
+            "1": "Very much: 5",
+            "2": "4",
+            "3": "3",
+            "4": "2",
+            "5": "Not at all: 1"
+        }
+    },
+    "brief_self_control_survey_14": {
+        "Description": "I often act without thinking through all the alternatives.",
+        "Levels": {
+            "1": "Very much: 5",
+            "2": "4",
+            "3": "3",
+            "4": "2",
+            "5": "Not at all: 1"
+        }
+    },
+    "brief_self_control_survey_2": {
+        "Description": "I am good at resisting temptation.",
+        "Levels": {
+            "1": "Not at all: 1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "Very much: 5"
+        }
+    },
+    "brief_self_control_survey_3": {
+        "Description": "I have a hard time breaking bad habits.",
+        "Levels": {
+            "1": "Very much: 5",
+            "2": "4",
+            "3": "3",
+            "4": "2",
+            "5": "Not at all: 1"
+        }
+    },
+    "brief_self_control_survey_4": {
+        "Description": "I am lazy.",
+        "Levels": {
+            "1": "Very much: 5",
+            "2": "4",
+            "3": "3",
+            "4": "2",
+            "5": "Not at all: 1"
+        }
+    },
+    "brief_self_control_survey_5": {
+        "Description": "I say inappropriate things.",
+        "Levels": {
+            "1": "Very much: 5",
+            "2": "4",
+            "3": "3",
+            "4": "2",
+            "5": "Not at all: 1"
+        }
+    },
+    "brief_self_control_survey_6": {
+        "Description": "I do certain things that are bad for me, if they are fun.",
+        "Levels": {
+            "1": "Very much: 5",
+            "2": "4",
+            "3": "3",
+            "4": "2",
+            "5": "Not at all: 1"
+        }
+    },
+    "brief_self_control_survey_7": {
+        "Description": "I refuse things that are bad for me.",
+        "Levels": {
+            "1": "Not at all: 1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "Very much: 5"
+        }
+    },
+    "brief_self_control_survey_8": {
+        "Description": "I wish I had more self-discipline.",
+        "Levels": {
+            "1": "Very much: 5",
+            "2": "4",
+            "3": "3",
+            "4": "2",
+            "5": "Not at all: 1"
+        }
+    },
+    "brief_self_control_survey_9": {
+        "Description": "People would say that I have iron self-discipline.",
+        "Levels": {
+            "1": "Not at all: 1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "Very much: 5"
+        }
+    }
+}

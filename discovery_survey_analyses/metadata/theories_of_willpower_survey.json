@@ -1,0 +1,138 @@
+{
+    "MeasurementToolMetadata": {
+        "Description": "Theories of willpower survey",
+        "TermURL": "http://www.cognitiveatlas.org/term/id/trm_56a91a3082c31"
+    },
+    "theories_of_willpower_survey_10": {
+        "Description": "If you have just resisted a strong temptation, you feel strengthened and you can withstand any new temptations.",
+        "Levels": {
+            "1": "Strongly agree",
+            "2": "Moderately agree",
+            "3": "Slightly agree",
+            "4": "Slightly disagree",
+            "5": "Moderately disagree",
+            "6": "Strongly disagree"
+        }
+    },
+    "theories_of_willpower_survey_11": {
+        "Description": "It is particularly difficult to resist a temptation after resisting another temptation right before.",
+        "Levels": {
+            "1": "Strongly disagree",
+            "2": "Moderately disagree",
+            "3": "Slightly disagree",
+            "4": "Slightly agree",
+            "5": "Moderately agree",
+            "6": "Strongly agree"
+        }
+    },
+    "theories_of_willpower_survey_12": {
+        "Description": "Resisting temptations activates your willpower and you become even better able to face new upcoming temptations.",
+        "Levels": {
+            "1": "Strongly agree",
+            "2": "Moderately agree",
+            "3": "Slightly agree",
+            "4": "Slightly disagree",
+            "5": "Moderately disagree",
+            "6": "Strongly disagree"
+        }
+    },
+    "theories_of_willpower_survey_13": {
+        "Description": "Your capacity to resist temptations is not limited. Even after you have resisted a strong temptation you can control yourself right afterwards.",
+        "Levels": {
+            "1": "Strongly agree",
+            "2": "Moderately agree",
+            "3": "Slightly agree",
+            "4": "Slightly disagree",
+            "5": "Moderately disagree",
+            "6": "Strongly disagree"
+        }
+    },
+    "theories_of_willpower_survey_2": {
+        "Description": "Strenuous mental activity exhausts your resources, which you need to refuel afterwards (e.g. through taking breaks, doing nothing, watching television, eating snacks).",
+        "Levels": {
+            "1": "Strongly disagree",
+            "2": "Moderately disagree",
+            "3": "Slightly disagree",
+            "4": "Slightly agree",
+            "5": "Moderately agree",
+            "6": "Strongly agree"
+        }
+    },
+    "theories_of_willpower_survey_3": {
+        "Description": "After a strenuous mental activity, your energy is depleted and you must rest to get it refuelled again.",
+        "Levels": {
+            "1": "Strongly disagree",
+            "2": "Moderately disagree",
+            "3": "Slightly disagree",
+            "4": "Slightly agree",
+            "5": "Moderately agree",
+            "6": "Strongly agree"
+        }
+    },
+    "theories_of_willpower_survey_4": {
+        "Description": "When you have been working on a strenuous mental task, you feel energized and you are able to immediately start with another demanding activity.",
+        "Levels": {
+            "1": "Strongly agree",
+            "2": "Moderately agree",
+            "3": "Slightly agree",
+            "4": "Slightly disagree",
+            "5": "Moderately disagree",
+            "6": "Strongly disagree"
+        }
+    },
+    "theories_of_willpower_survey_5": {
+        "Description": "Your mental stamina fuels itself. Even after strenuous mental exertion, you can continue doing more of it.",
+        "Levels": {
+            "1": "Strongly agree",
+            "2": "Moderately agree",
+            "3": "Slightly agree",
+            "4": "Slightly disagree",
+            "5": "Moderately disagree",
+            "6": "Strongly disagree"
+        }
+    },
+    "theories_of_willpower_survey_6": {
+        "Description": "When you have completed a strenuous mental activity, you cannot start another activity immediately with the same concentration because you have to recover your mental energy again.",
+        "Levels": {
+            "1": "Strongly disagree",
+            "2": "Moderately disagree",
+            "3": "Slightly disagree",
+            "4": "Slightly agree",
+            "5": "Moderately agree",
+            "6": "Strongly agree"
+        }
+    },
+    "theories_of_willpower_survey_7": {
+        "Description": "After a strenuous mental activity, you feel energized for further challenging activities.",
+        "Levels": {
+            "1": "Strongly agree",
+            "2": "Moderately agree",
+            "3": "Slightly agree",
+            "4": "Slightly disagree",
+            "5": "Moderately disagree",
+            "6": "Strongly disagree"
+        }
+    },
+    "theories_of_willpower_survey_8": {
+        "Description": "Resisting temptations makes you feel more vulnerable to the next temptations that come along.",
+        "Levels": {
+            "1": "Strongly disagree",
+            "2": "Moderately disagree",
+            "3": "Slightly disagree",
+            "4": "Slightly agree",
+            "5": "Moderately agree",
+            "6": "Strongly agree"
+        }
+    },
+    "theories_of_willpower_survey_9": {
+        "Description": "When situations accumulate that challenge you with temptations, it gets more and more difficult to resist the temptations.",
+        "Levels": {
+            "1": "Strongly disagree",
+            "2": "Moderately disagree",
+            "3": "Slightly disagree",
+            "4": "Slightly agree",
+            "5": "Moderately agree",
+            "6": "Strongly agree"
+        }
+    }
+}

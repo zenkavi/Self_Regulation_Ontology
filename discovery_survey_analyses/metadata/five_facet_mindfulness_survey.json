@@ -1,0 +1,396 @@
+{
+    "MeasurementToolMetadata": {
+        "Description": "Five facet mindfulness survey",
+        "TermURL": "http://www.cognitiveatlas.org/term/id/trm_56ab12e0f1a61"
+    },
+    "five_facet_mindfulness_survey_10": {
+        "Description": "I watch my feelings without getting lost in them. ",
+        "Levels": {
+            "1": "never or very rarely true",
+            "2": "rarely true",
+            "3": "sometimes true",
+            "4": "often true",
+            "5": "very often or always true"
+        }
+    },
+    "five_facet_mindfulness_survey_11": {
+        "Description": "I tell myself I shouldnt be feeling the way Im feeling. ",
+        "Levels": {
+            "1": "very often or always true",
+            "2": "often true",
+            "3": "sometimes true",
+            "4": "rarely true",
+            "5": "never or very rarely true"
+        }
+    },
+    "five_facet_mindfulness_survey_12": {
+        "Description": "I notice how foods and drinks affect my thoughts, bodily sensations, and emotions. ",
+        "Levels": {
+            "1": "never or very rarely true",
+            "2": "rarely true",
+            "3": "sometimes true",
+            "4": "often true",
+            "5": "very often or always true"
+        }
+    },
+    "five_facet_mindfulness_survey_13": {
+        "Description": "Its hard for me to find the words to describe what Im thinking. ",
+        "Levels": {
+            "1": "very often or always true",
+            "2": "often true",
+            "3": "sometimes true",
+            "4": "rarely true",
+            "5": "never or very rarely true"
+        }
+    },
+    "five_facet_mindfulness_survey_14": {
+        "Description": "I am easily distracted. ",
+        "Levels": {
+            "1": "very often or always true",
+            "2": "often true",
+            "3": "sometimes true",
+            "4": "rarely true",
+            "5": "never or very rarely true"
+        }
+    },
+    "five_facet_mindfulness_survey_15": {
+        "Description": "I believe some of my thoughts are abnormal or bad and I shouldnt think that way.",
+        "Levels": {
+            "1": "very often or always true",
+            "2": "often true",
+            "3": "sometimes true",
+            "4": "rarely true",
+            "5": "never or very rarely true"
+        }
+    },
+    "five_facet_mindfulness_survey_16": {
+        "Description": "I pay attention to sensations, such as the wind in my hair or sun on my face. ",
+        "Levels": {
+            "1": "never or very rarely true",
+            "2": "rarely true",
+            "3": "sometimes true",
+            "4": "often true",
+            "5": "very often or always true"
+        }
+    },
+    "five_facet_mindfulness_survey_17": {
+        "Description": "I have trouble thinking of the right words to express how I feel about things.",
+        "Levels": {
+            "1": "very often or always true",
+            "2": "often true",
+            "3": "sometimes true",
+            "4": "rarely true",
+            "5": "never or very rarely true"
+        }
+    },
+    "five_facet_mindfulness_survey_18": {
+        "Description": "I make judgments about whether my thoughts are good or bad. ",
+        "Levels": {
+            "1": "very often or always true",
+            "2": "often true",
+            "3": "sometimes true",
+            "4": "rarely true",
+            "5": "never or very rarely true"
+        }
+    },
+    "five_facet_mindfulness_survey_19": {
+        "Description": "I find it difficult to stay focused on whats happening in the present. ",
+        "Levels": {
+            "1": "very often or always true",
+            "2": "often true",
+            "3": "sometimes true",
+            "4": "rarely true",
+            "5": "never or very rarely true"
+        }
+    },
+    "five_facet_mindfulness_survey_2": {
+        "Description": "When Im walking, I deliberately notice the sensations of my body moving. ",
+        "Levels": {
+            "1": "never or very rarely true",
+            "2": "rarely true",
+            "3": "sometimes true",
+            "4": "often true",
+            "5": "very often or always true"
+        }
+    },
+    "five_facet_mindfulness_survey_20": {
+        "Description": "When I have distressing thoughts or images, I step back and am aware of the thought or image without getting taken over by it. ",
+        "Levels": {
+            "1": "never or very rarely true",
+            "2": "rarely true",
+            "3": "sometimes true",
+            "4": "often true",
+            "5": "very often or always true"
+        }
+    },
+    "five_facet_mindfulness_survey_21": {
+        "Description": "I pay attention to sounds, such as clocks ticking, birds chirping, or cars passing. ",
+        "Levels": {
+            "1": "never or very rarely true",
+            "2": "rarely true",
+            "3": "sometimes true",
+            "4": "often true",
+            "5": "very often or always true"
+        }
+    },
+    "five_facet_mindfulness_survey_22": {
+        "Description": "In difficult situations, I can pause without immediately reacting. ",
+        "Levels": {
+            "1": "never or very rarely true",
+            "2": "rarely true",
+            "3": "sometimes true",
+            "4": "often true",
+            "5": "very often or always true"
+        }
+    },
+    "five_facet_mindfulness_survey_23": {
+        "Description": "When I have a sensation in my body, its difficult for me to describe it because I cant find the right words. ",
+        "Levels": {
+            "1": "very often or always true",
+            "2": "often true",
+            "3": "sometimes true",
+            "4": "rarely true",
+            "5": "never or very rarely true"
+        }
+    },
+    "five_facet_mindfulness_survey_24": {
+        "Description": "It seems I am running on automatic without much awareness of what Im doing. ",
+        "Levels": {
+            "1": "very often or always true",
+            "2": "often true",
+            "3": "sometimes true",
+            "4": "rarely true",
+            "5": "never or very rarely true"
+        }
+    },
+    "five_facet_mindfulness_survey_25": {
+        "Description": "When I have distressing thoughts or images, I feel calm soon after.",
+        "Levels": {
+            "1": "never or very rarely true",
+            "2": "rarely true",
+            "3": "sometimes true",
+            "4": "often true",
+            "5": "very often or always true"
+        }
+    },
+    "five_facet_mindfulness_survey_26": {
+        "Description": "I tell myself that I shouldnt be thinking the way Im thinking. ",
+        "Levels": {
+            "1": "very often or always true",
+            "2": "often true",
+            "3": "sometimes true",
+            "4": "rarely true",
+            "5": "never or very rarely true"
+        }
+    },
+    "five_facet_mindfulness_survey_27": {
+        "Description": "I notice the smells and aromas of things. ",
+        "Levels": {
+            "1": "never or very rarely true",
+            "2": "rarely true",
+            "3": "sometimes true",
+            "4": "often true",
+            "5": "very often or always true"
+        }
+    },
+    "five_facet_mindfulness_survey_28": {
+        "Description": "Even when Im feeling terribly upset, I can find a way to put it into words. ",
+        "Levels": {
+            "1": "never or very rarely true",
+            "2": "rarely true",
+            "3": "sometimes true",
+            "4": "often true",
+            "5": "very often or always true"
+        }
+    },
+    "five_facet_mindfulness_survey_29": {
+        "Description": "I rush through activities without being really attentive to them. ",
+        "Levels": {
+            "1": "very often or always true",
+            "2": "often true",
+            "3": "sometimes true",
+            "4": "rarely true",
+            "5": "never or very rarely true"
+        }
+    },
+    "five_facet_mindfulness_survey_3": {
+        "Description": "Im good at finding words to describe my feelings. ",
+        "Levels": {
+            "1": "never or very rarely true",
+            "2": "rarely true",
+            "3": "sometimes true",
+            "4": "often true",
+            "5": "very often or always true"
+        }
+    },
+    "five_facet_mindfulness_survey_30": {
+        "Description": "When I have distressing thoughts or images I am able just to notice them without reacting. ",
+        "Levels": {
+            "1": "never or very rarely true",
+            "2": "rarely true",
+            "3": "sometimes true",
+            "4": "often true",
+            "5": "very often or always true"
+        }
+    },
+    "five_facet_mindfulness_survey_31": {
+        "Description": "I think some of my emotions are bad or inappropriate and I shouldnt feel them. ",
+        "Levels": {
+            "1": "very often or always true",
+            "2": "often true",
+            "3": "sometimes true",
+            "4": "rarely true",
+            "5": "never or very rarely true"
+        }
+    },
+    "five_facet_mindfulness_survey_32": {
+        "Description": "I notice visual elements in art or nature, such as colors, shapes, textures, or patterns of light and shadow. ",
+        "Levels": {
+            "1": "never or very rarely true",
+            "2": "rarely true",
+            "3": "sometimes true",
+            "4": "often true",
+            "5": "very often or always true"
+        }
+    },
+    "five_facet_mindfulness_survey_33": {
+        "Description": "My natural tendency is to put my experiences into words. ",
+        "Levels": {
+            "1": "never or very rarely true",
+            "2": "rarely true",
+            "3": "sometimes true",
+            "4": "often true",
+            "5": "very often or always true"
+        }
+    },
+    "five_facet_mindfulness_survey_34": {
+        "Description": "When I have distressing thoughts or images, I just notice them and let them go. ",
+        "Levels": {
+            "1": "never or very rarely true",
+            "2": "rarely true",
+            "3": "sometimes true",
+            "4": "often true",
+            "5": "very often or always true"
+        }
+    },
+    "five_facet_mindfulness_survey_35": {
+        "Description": "I do jobs or tasks automatically without being aware of what Im doing. ",
+        "Levels": {
+            "1": "very often or always true",
+            "2": "often true",
+            "3": "sometimes true",
+            "4": "rarely true",
+            "5": "never or very rarely true"
+        }
+    },
+    "five_facet_mindfulness_survey_36": {
+        "Description": "When I have distressing thoughts or images, I judge myself as good or bad, depending what the thought/image is about. ",
+        "Levels": {
+            "1": "very often or always true",
+            "2": "often true",
+            "3": "sometimes true",
+            "4": "rarely true",
+            "5": "never or very rarely true"
+        }
+    },
+    "five_facet_mindfulness_survey_37": {
+        "Description": "I pay attention to how my emotions affect my thoughts and behavior. ",
+        "Levels": {
+            "1": "never or very rarely true",
+            "2": "rarely true",
+            "3": "sometimes true",
+            "4": "often true",
+            "5": "very often or always true"
+        }
+    },
+    "five_facet_mindfulness_survey_38": {
+        "Description": "I can usually describe how I feel at the moment in considerable detail. ",
+        "Levels": {
+            "1": "never or very rarely true",
+            "2": "rarely true",
+            "3": "sometimes true",
+            "4": "often true",
+            "5": "very often or always true"
+        }
+    },
+    "five_facet_mindfulness_survey_39": {
+        "Description": "I find myself doing things without paying attention. ",
+        "Levels": {
+            "1": "very often or always true",
+            "2": "often true",
+            "3": "sometimes true",
+            "4": "rarely true",
+            "5": "never or very rarely true"
+        }
+    },
+    "five_facet_mindfulness_survey_4": {
+        "Description": "I criticize myself for having irrational or inappropriate emotions. ",
+        "Levels": {
+            "1": "very often or always true",
+            "2": "often true",
+            "3": "sometimes true",
+            "4": "rarely true",
+            "5": "never or very rarely true"
+        }
+    },
+    "five_facet_mindfulness_survey_40": {
+        "Description": "I disapprove of myself when I have irrational ideas. ",
+        "Levels": {
+            "1": "very often or always true",
+            "2": "often true",
+            "3": "sometimes true",
+            "4": "rarely true",
+            "5": "never or very rarely true"
+        }
+    },
+    "five_facet_mindfulness_survey_5": {
+        "Description": "I perceive my feelings and emotions without having to react to them. ",
+        "Levels": {
+            "1": "never or very rarely true",
+            "2": "rarely true",
+            "3": "sometimes true",
+            "4": "often true",
+            "5": "very often or always true"
+        }
+    },
+    "five_facet_mindfulness_survey_6": {
+        "Description": "When I do things, my mind wanders off and Im easily distracted. ",
+        "Levels": {
+            "1": "very often or always true",
+            "2": "often true",
+            "3": "sometimes true",
+            "4": "rarely true",
+            "5": "never or very rarely true"
+        }
+    },
+    "five_facet_mindfulness_survey_7": {
+        "Description": "When I take a shower or bath, I stay alert to the sensations of water on my body. ",
+        "Levels": {
+            "1": "never or very rarely true",
+            "2": "rarely true",
+            "3": "sometimes true",
+            "4": "often true",
+            "5": "very often or always true"
+        }
+    },
+    "five_facet_mindfulness_survey_8": {
+        "Description": "I can easily put my beliefs, opinions, and expectations into words. ",
+        "Levels": {
+            "1": "never or very rarely true",
+            "2": "rarely true",
+            "3": "sometimes true",
+            "4": "often true",
+            "5": "very often or always true"
+        }
+    },
+    "five_facet_mindfulness_survey_9": {
+        "Description": "I dont pay attention to what Im doing because Im daydreaming, worrying, or otherwise distracted. ",
+        "Levels": {
+            "1": "very often or always true",
+            "2": "often true",
+            "3": "sometimes true",
+            "4": "rarely true",
+            "5": "never or very rarely true"
+        }
+    }
+}
