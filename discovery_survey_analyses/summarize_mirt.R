@@ -1,7 +1,11 @@
 # summarize results from mirt analysis
 library(mirt)
-for (ncomps in c(1,2,3,4,5,6,8)) {
+compnums=c(1,2,3,4,5,6,8,9,10)
+converged=array(dim=length(compnums))
+for (i in 1:length(compnums)) {
+  ncomps=compnums[i]
   load(sprintf('mirt_%ddims.Rdata',ncomps))
+  converged[i]=m@OptimInfo$converged
   s=summary(m,verbose=FALSE)
   scores=s$rotF
   write.table(scores,file=sprintf('mirt_scores_%ddims.tsv',ncomps),sep='\t',quote=FALSE,col.names=FALSE)
