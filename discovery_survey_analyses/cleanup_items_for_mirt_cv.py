@@ -11,6 +11,7 @@ Created on Fri Sep  2 15:04:04 2016
 
 import os
 import pandas,numpy
+import scipy.stats
 
 
 import os,glob
@@ -48,12 +49,17 @@ def truncate_dist(u,h,d,min_freq=4,verbose=False):
     """
     u=numpy.array(u)
     h=numpy.array(h)
+    dmode=scipy.stats.mode(d,nan_policy='omit')[0][0]
     if numpy.sum(h<min_freq)==0:
         return d,False
     badvals=numpy.where(h<min_freq)[0]
     if verbose:
         print(c,'found %d bad vals'%len(badvals),'resp',u,u[badvals],'freq',h[badvals])
     if len(badvals)==1:
+        if len(u)==2:
+            # if it's dichotomous, then drop it
+            print('dropping',c)
+            return d,True
         # is it at an extreme?
         if u[badvals[0]]==u[0]:
             d.loc[d==u[badvals[0]]]=u[1]
@@ -63,7 +69,7 @@ def truncate_dist(u,h,d,min_freq=4,verbose=False):
         else:
             if verbose:
                     print('midval - replacing with NaN!')
-            d.loc[d==u[badvals[0]]]=numpy.nan
+            d.loc[d==u[badvals[0]]]=dmode
             #raise Exception("Can't deal with sole middle values!")
         return d,False
     elif len(badvals)==2:
@@ -77,14 +83,16 @@ def truncate_dist(u,h,d,min_freq=4,verbose=False):
         else:
             if verbose:
                     print('midval - replacing with NaN!')
-            d.loc[d==u[badvals[0]]]=numpy.nan
-            d.loc[d==u[badvals[1]]]=numpy.nan
+            d.loc[d==u[badvals[0]]]=dmode
+            d.loc[d==u[badvals[1]]]=dmode
         return d,False
     else:
         print('dropping',c)
         return d,True
         
     
+min_freq = 8
+
 fixdata=data.copy()
 dropped={}
 for c in data.columns:
@@ -93,10 +101,10 @@ for c in data.columns:
     u=data[c].unique()
     u.sort()
     h=[numpy.sum(data[c]==i) for i in u]
-    f,dropflag=truncate_dist(u,h,fixdata[c],verbose=True)
+    f,dropflag=truncate_dist(u,h,fixdata[c],verbose=True,min_freq=min_freq)
     fixdata[c]=f
     if dropflag:
         del fixdata[c]
         dropped[c]=(u,h)
     
-fixdata.to_csv('surveydata_fixed.csv',index=False)         
+fixdata.to_csv('surveydata_fixed_minfreq%d.csv'%min_freq,index=False)         
