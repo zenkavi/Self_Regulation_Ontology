@@ -98,7 +98,7 @@ def save_metadata(survey_items,
             json.dump(survey_dict, outfile, sort_keys = True, indent = 4,
                   ensure_ascii=False)
         survey_metadata[k]=survey_dict
-    return survey_metadata
+    return survey_metadata,outdir
 
 def add_survey_item_labels(data):
     item_ids=[]
@@ -123,11 +123,12 @@ def save_data(data,survey_metadata,
             matchitem=pandas.DataFrame({'worker':matchitem.worker,i:matchitem.coded_response})
             surveydata=surveydata.merge(matchitem,on='worker')           
         surveydata.to_csv(os.path.join(outdir,'%s.tsv'%k),sep='\t',index=False)
+    return outdir
         
 if __name__=='__main__':        
     data,basedir=get_data()
     survey_items=get_survey_items(data)
-    survey_metadata=save_metadata(survey_items)
+    survey_metadata,metadatdir=save_metadata(survey_items)
     data=add_survey_item_labels(data)
-    save_data(data,survey_metadata)
+    datadir=save_data(data,survey_metadata)
     
