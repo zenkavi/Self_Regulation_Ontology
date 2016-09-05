@@ -215,7 +215,7 @@ def get_demographics(df):
     
 
 def get_items(data):
-    excluded_surveys = ['holt_laury_survey', 'sensation_seeking_survey']
+    excluded_surveys = ['holt_laury_survey', 'selection_optimization_compensation_survey', 'sensation_seeking_survey']
     items = []
     responses = []
     responses_text = []

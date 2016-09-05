@@ -57,8 +57,11 @@ DV_df = pd.read_json(data_dir + 'mturk_discovery_DV.json')
 # ************************************
 # ********* Save Components of Data **
 # ************************************
-items = get_items(data)
+items_df = get_items(data)
+items_df['text+'] = items_df.item_text + ';' + items_df.survey
+items_pivot_df = items_df.pivot('worker','text+','coded_response')
 items_df.to_csv('/home/ian/tmp/items.csv')
+items_pivot_df.to_csv('/home/ian/tmp/items_pivot.csv')
 
 # ************************************
 # ********* DVs **********************
