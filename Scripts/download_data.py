@@ -39,7 +39,8 @@ if job == 'download' or job == "all":
     #**************************************************  
     #load Data
     f = open(token)
-    access_token = f.read().strip()     
+    access_token = f.read().strip()    
+    os.remove(data_dir + 'mturk_data.json')
     data = load_data(data_dir, access_token, filters = filters, action = action, battery = 'Self Regulation Battery')
     data.reset_index(drop = True, inplace = True)
     
