@@ -41,7 +41,7 @@ if job == 'download' or job == "all":
     f = open(token)
     access_token = f.read().strip()  
     try:
-        os.remove(data_dir + 'mturk_data.json')
+        os.remove(data_dir + 'mturk_extras.json')
     except OSError:
         pass
     data = load_data(data_dir, access_token, filters = filters, action = action, battery = 'Self Regulation Battery')
