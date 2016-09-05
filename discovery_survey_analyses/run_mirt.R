@@ -12,7 +12,7 @@ ncomps=7
 
 d=read.csv('surveydata.csv')
 d$worker=NULL
-m=mirt(d,ncomps,verbose=FALSE,method='MHRM')
+m=mirt(d,ncomps,technical=list(MAXQUAD=100000,NCYCLES=5000),verbose=FALSE,method='MHRM')
 
 s=summary(m)
 
