@@ -11,6 +11,12 @@ def write_metadata(metadata,fname,
             json.dump(metadata, outfile, sort_keys = True, indent = 4,
                   ensure_ascii=False)
     return outdir
+def load_metadata(variable,
+    outdir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses/metadata'):
+
+    with open(os.path.join(outdir,'%s.json'%variable)) as outfile:
+            metadata=json.load(outfile)
+    return metadata
 
 def metadata_subtract_one(md):
     LevelsOrig=md['Levels'].copy()
