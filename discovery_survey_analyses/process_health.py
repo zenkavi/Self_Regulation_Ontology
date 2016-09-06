@@ -9,6 +9,8 @@ import numpy,pandas
 import os
 import json
 
+from metadata_utils import write_metadata,metadata_reverse_scale
+
 
 def get_data(basedir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses'):
 
@@ -24,7 +26,10 @@ def get_demog_items(data):
     demog_items={}
     for i,r in data.iterrows():
         if not r.text in demog_items.keys():
-            demog_items[r.text]=r
+            if r.text.find('If')==0:
+                demog_items[r.id+'-'+r.text]=r
+            else:
+                demog_items[r.text]=r
     return demog_items
 
 
@@ -50,15 +55,13 @@ def setup_itemid_dict():
     id_to_name['k6_survey_18']='NeurologicalDiagnosesDescribe'
     nominalvars.append('k6_survey_18')
     id_to_name['k6_survey_19']='DiseaseDiagnoses'
+    nominalvars.append('k6_survey_19')
     id_to_name['k6_survey_20']='DiseaseDiagnosesOther'
     nominalvars.append('k6_survey_20')
     return id_to_name,nominalvars
 
-def save_metadata(demog_items,
-                  outdir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses/metadata'):
-
-    if not os.path.exists(outdir):
-        os.mkdir(outdir)
+def get_metadata(demog_items):
+    all_itemids=[]
     id_to_name,nominalvars=setup_itemid_dict()
     demog_dict={"MeasurementToolMetadata": {"Description": 'Health',
             "TermURL": ''}}
@@ -91,10 +94,7 @@ def save_metadata(demog_items,
             demog_dict_renamed[k]=demog_dict[k]
         else:
             demog_dict_renamed[id_to_name[k]]=demog_dict[k]
-    with open(os.path.join(outdir,'health.json'), 'w') as outfile:
-            json.dump(demog_dict_renamed, outfile, sort_keys = True, indent = 4,
-                  ensure_ascii=False)
-    return demog_dict_renamed,outdir
+    return demog_dict_renamed
 
 def add_demog_item_labels(data):
     item_ids=[]
@@ -103,7 +103,7 @@ def add_demog_item_labels(data):
     data['item_id']=item_ids
     return data
 
-def fix_item(d,v):
+def fix_item(d,v,metadata):
     """
     clean up responses
     """
@@ -117,8 +117,8 @@ def fix_item(d,v):
         tmp=numpy.array([float(i) for i in d])
         d.iloc[:]=tmp*-1 + 5
         print('reversed scale:',v,vname)
-
-    return d
+        metadata=metadata_reverse_scale(metadata)
+    return d,metadata
 
 def save_demog_data(data,survey_metadata,
               outdir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses/surveydata'):
@@ -132,7 +132,7 @@ def save_demog_data(data,survey_metadata,
         qresult=data.query('item_id=="%s"'%i)
         matchitem=qresult.response
         matchitem.index=qresult['worker']
-        matchitem=fix_item(matchitem,i)
+        matchitem,survey_metadata[id_to_name[i]]=fix_item(matchitem,i,survey_metadata[id_to_name[i]])
         surveydata.ix[matchitem.index,i]=matchitem
 
     surveydata_renamed=surveydata.rename(columns=id_to_name)
@@ -148,6 +148,7 @@ if __name__=='__main__':
     id_to_name,nominalvars=setup_itemid_dict()
     data,basedir=get_data()
     demog_items=get_demog_items(data)
-    demog_metadata,metadatdir=save_metadata(demog_items)
+    demog_metadata=get_metadata(demog_items)
     data=add_demog_item_labels(data)
     datadir,surveydata_renamed=save_demog_data(data,demog_metadata)
+    metadatadir=write_metadata(demog_metadata,'health.json')
