@@ -136,11 +136,11 @@ def save_demog_data(data,survey_metadata,
         surveydata.ix[matchitem.index,i]=matchitem
 
     surveydata_renamed=surveydata.rename(columns=id_to_name)
-    surveydata_renamed.to_csv(os.path.join(outdir,'health.tsv'),sep='\t',index=False)
+    surveydata_renamed.to_csv(os.path.join(outdir,'health.tsv'),sep='\t')
     for v in nominalvars:
         del surveydata[v]
     surveydata_renamed_ord=surveydata.rename(columns=id_to_name)
-    surveydata_renamed_ord.to_csv(os.path.join(outdir,'health_ordinal.tsv'),sep='\t',index=False)
+    surveydata_renamed_ord.to_csv(os.path.join(outdir,'health_ordinal.tsv'),sep='\t')
 
     return outdir,surveydata_renamed
 
