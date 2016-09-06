@@ -51,7 +51,6 @@ def setup_itemid_dict():
     id_to_name['demographics_survey_14']='ChildrenNumber'
     id_to_name['demographics_survey_15']='HouseholdIncome'
     id_to_name['demographics_survey_16']='RetirementAccount'
-    nominalvars.append('demographics_survey_16')
     id_to_name['demographics_survey_17']='RetirementPercentStocks'
     id_to_name['demographics_survey_18']='RentOwn'
     nominalvars.append('demographics_survey_18')
@@ -77,11 +76,8 @@ def setup_itemid_dict():
     nominalvars.append('demographics_survey_34')
     return id_to_name,nominalvars
 
-def save_metadata(demog_items,
-                  outdir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses/metadata'):
+def get_metadata(demog_items):
 
-    if not os.path.exists(outdir):
-        os.mkdir(outdir)
     id_to_name,nominalvars=setup_itemid_dict()
 
     demog_dict={"MeasurementToolMetadata": {"Description": 'Demographics',
@@ -115,10 +111,17 @@ def save_metadata(demog_items,
             demog_dict_renamed[k]=demog_dict[k]
         else:
             demog_dict_renamed[id_to_name[k]]=demog_dict[k]
-    with open(os.path.join(outdir,'demographics.json'), 'w') as outfile:
-            json.dump(demog_dict_renamed, outfile, sort_keys = True, indent = 4,
+    return demog_dict_renamed
+
+def write_metadata(metadata,fname='demographics.json',
+    outdir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses/metadata'):
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
+    with open(os.path.join(outdir,fname), 'w') as outfile:
+            json.dump(metadata, outfile, sort_keys = True, indent = 4,
                   ensure_ascii=False)
-    return demog_dict_renamed,outdir
+    return outdir
+
 
 def add_demog_item_labels(data):
     item_ids=[]
@@ -127,9 +130,42 @@ def add_demog_item_labels(data):
     data['item_id']=item_ids
     return data
 
-def fix_item(d,v):
+def metadata_subtract_one(md):
+    LevelsOrig=md['Levels'].copy()
+    NewLevels={}
+    for l in LevelsOrig:
+        NewLevels['%d'%int(int(l)-1)]=LevelsOrig[l]
+    md['LevelsOrig']=LevelsOrig
+    md['Levels']=NewLevels
+    return md
+
+def metadata_replace_zero_with_nan(md):
+    LevelsOrig=md['Levels'].copy()
+    NewLevels={}
+    for l in LevelsOrig:
+        if not l.find('0')>-1:
+            NewLevels[l]=LevelsOrig[l]
+        else:
+            NewLevels['n/a']=LevelsOrig[l]
+    md['LevelsOrig']=LevelsOrig
+    md['Levels']=NewLevels
+    return md
+
+def metadata_change_two_to_zero_for_no(md):
+    LevelsOrig=md['Levels'].copy()
+    NewLevels={}
+    for l in LevelsOrig:
+        if l.find('2')>-1:
+            NewLevels['0']=LevelsOrig[l]
+        else:
+            NewLevels[l]=LevelsOrig[l]
+    md['LevelsOrig']=LevelsOrig
+    md['Levels']=NewLevels
+    return md
+
+def fix_item(d,v,metadata):
     """
-    clean up responses
+    clean up responses and fix associated metadata
     """
 
     id_to_name,nominalvars=setup_itemid_dict()
@@ -142,6 +178,9 @@ def fix_item(d,v):
         tmp=[int(i) for i in d]
         d.iloc[:]=numpy.array(tmp)-1
         print('subtrated one:',v,vname)
+
+        metadata=metadata_subtract_one(metadata)
+
     # replace zero for "prefer not to say" with nan
     replace_zero_with_nan=['CarDebt','CreditCardDebt','EducationDebt',
                             'MortgageDebt','OtherDebtAmount']
@@ -150,6 +189,7 @@ def fix_item(d,v):
         tmp[tmp==0]=numpy.nan
         d.iloc[:]=tmp
         print('replaced %d zeros with nan:'%numpy.sum(numpy.isnan(tmp)),v,vname)
+        metadata=metadata_replace_zero_with_nan(metadata)
 
     # replace 2 for "no" with zero
     change_two_to_zero_for_no=['RetirementAccount']
@@ -158,8 +198,9 @@ def fix_item(d,v):
         tmp[tmp==2]=0
         d.iloc[:]=tmp
         print('changed two to zero for no:',v,vname)
+        metadata=metadata_change_two_to_zero_for_no(metadata)
 
-    return d
+    return d,metadata
 
 def save_demog_data(data,survey_metadata,
               outdir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses/surveydata'):
@@ -173,7 +214,7 @@ def save_demog_data(data,survey_metadata,
         qresult=data.query('item_id=="%s"'%i)
         matchitem=qresult.response
         matchitem.index=qresult['worker']
-        matchitem=fix_item(matchitem,i)
+        matchitem,survey_metadata[id_to_name[i]]=fix_item(matchitem,i,survey_metadata[id_to_name[i]])
         surveydata.ix[matchitem.index,i]=matchitem
 
     surveydata_renamed=surveydata.rename(columns=id_to_name)
@@ -189,6 +230,7 @@ if __name__=='__main__':
     id_to_name,nominalvars=setup_itemid_dict()
     data,basedir=get_data()
     demog_items=get_demog_items(data)
-    demog_metadata,metadatdir=save_metadata(demog_items)
+    demog_metadata=get_metadata(demog_items)
     data=add_demog_item_labels(data)
     datadir,surveydata_renamed=save_demog_data(data,demog_metadata)
+    metadatadir=write_metadata(demog_metadata)
