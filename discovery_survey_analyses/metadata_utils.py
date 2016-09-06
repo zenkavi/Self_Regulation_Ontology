@@ -16,7 +16,7 @@ def metadata_subtract_one(md):
     LevelsOrig=md['Levels'].copy()
     NewLevels={}
     for l in LevelsOrig:
-        NewLevels['%d'%int(int(l)*-1+5)]=LevelsOrig[l]
+        NewLevels['%d'%int(int(l)-1)]=LevelsOrig[l]
     md['LevelsOrig']=LevelsOrig
     md['Levels']=NewLevels
     return md
@@ -25,7 +25,7 @@ def metadata_reverse_scale(md):
     LevelsOrig=md['Levels'].copy()
     NewLevels={}
     for l in LevelsOrig:
-        NewLevels['%d'%int(int(l)*-1 + 5)]=LevelsOrig[l]
+        NewLevels['%d'%int(int(l)*-1 + len(LevelsOrig))]=LevelsOrig[l]
     md['LevelsOrig']=LevelsOrig
     md['Levels']=NewLevels
     return md
