@@ -9,11 +9,13 @@ import numpy,pandas
 import os
 import json
 
+from metadata_utils import metadata_subtract_one,metadata_replace_zero_with_nan
+from metadata_utils import metadata_change_two_to_zero_for_no
+from metadata_utils import write_metadata
 
 def get_data(basedir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses'):
 
     datafile=os.path.join(basedir,'alcohol_drugs.csv')
-
     data=pandas.read_csv(datafile,index_col=0)
     data=data.rename(columns={'worker_id':'worker'})
     return data,basedir
@@ -70,11 +72,8 @@ def setup_itemid_dict():
     id_to_name['alcohol_drugs_survey_38']='MedicalProblemsDueToDrugUse'
     return id_to_name,nominalvars
 
-def save_metadata(demog_items,
-                  outdir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses/metadata'):
+def get_metadata(demog_items):
 
-    if not os.path.exists(outdir):
-        os.mkdir(outdir)
     id_to_name,nominalvars=setup_itemid_dict()
     demog_dict={"MeasurementToolMetadata": {"Description": 'Health',
             "TermURL": ''}}
@@ -107,10 +106,7 @@ def save_metadata(demog_items,
             demog_dict_renamed[k]=demog_dict[k]
         else:
             demog_dict_renamed[id_to_name[k]]=demog_dict[k]
-    with open(os.path.join(outdir,'alcohol_drugs.json'), 'w') as outfile:
-            json.dump(demog_dict_renamed, outfile, sort_keys = True, indent = 4,
-                  ensure_ascii=False)
-    return demog_dict_renamed,outdir
+    return demog_dict_renamed
 
 def add_demog_item_labels(data):
     item_ids=[]
@@ -119,7 +115,7 @@ def add_demog_item_labels(data):
     data['item_id']=item_ids
     return data
 
-def fix_item(d,v):
+def fix_item(d,v,metadata):
     """
     clean up responses
     """
@@ -150,7 +146,7 @@ def fix_item(d,v):
         d.iloc[:]=tmp
         print('changed two to zero for no:',v,vname)
 
-    return d
+    return d,metadata
 
 def save_demog_data(data,survey_metadata,
               outdir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses/surveydata'):
@@ -164,15 +160,15 @@ def save_demog_data(data,survey_metadata,
         qresult=data.query('item_id=="%s"'%i)
         matchitem=qresult.response
         matchitem.index=qresult['worker']
-        matchitem=fix_item(matchitem,i)
+        matchitem,survey_metadata[id_to_name[i]]=fix_item(matchitem,i,survey_metadata[id_to_name[i]])
         surveydata.ix[matchitem.index,i]=matchitem
 
     surveydata_renamed=surveydata.rename(columns=id_to_name)
-    surveydata_renamed.to_csv(os.path.join(outdir,'alcohol_drugs.tsv'),sep='\t',index=False)
+    surveydata_renamed.to_csv(os.path.join(outdir,'alcohol_drugs.tsv'),sep='\t')
     for v in nominalvars:
         del surveydata[v]
     surveydata_renamed_ord=surveydata.rename(columns=id_to_name)
-    surveydata_renamed_ord.to_csv(os.path.join(outdir,'alcohol_drugs_ordinal.tsv'),sep='\t',index=False)
+    surveydata_renamed_ord.to_csv(os.path.join(outdir,'alcohol_drugs_ordinal.tsv'),sep='\t')
 
     return outdir,surveydata_renamed
 
@@ -180,6 +176,7 @@ if __name__=='__main__':
     id_to_name,nominalvars=setup_itemid_dict()
     data,basedir=get_data()
     demog_items=get_demog_items(data)
-    demog_metadata,metadatdir=save_metadata(demog_items)
+    demog_metadata=get_metadata(demog_items)
     data=add_demog_item_labels(data)
     datadir,surveydata_renamed=save_demog_data(data,demog_metadata)
+    metadatadir=write_metadata(demog_metadata,'alcohol_drugs.json')
