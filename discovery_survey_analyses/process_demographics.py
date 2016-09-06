@@ -9,6 +9,8 @@ import numpy,pandas
 import os
 import json
 
+from metadata_utils import metadata_subtract_one,metadata_replace_zero_with_nan
+from metadata_utils import metadata_change_two_to_zero_for_no
 
 def get_data(basedir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses'):
 
@@ -17,8 +19,6 @@ def get_data(basedir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_su
     data=pandas.read_csv(datafile,index_col=0)
     data=data.rename(columns={'worker_id':'worker'})
     return data,basedir
-
-
 
 def get_demog_items(data):
     demog_items={}
@@ -130,38 +130,6 @@ def add_demog_item_labels(data):
     data['item_id']=item_ids
     return data
 
-def metadata_subtract_one(md):
-    LevelsOrig=md['Levels'].copy()
-    NewLevels={}
-    for l in LevelsOrig:
-        NewLevels['%d'%int(int(l)-1)]=LevelsOrig[l]
-    md['LevelsOrig']=LevelsOrig
-    md['Levels']=NewLevels
-    return md
-
-def metadata_replace_zero_with_nan(md):
-    LevelsOrig=md['Levels'].copy()
-    NewLevels={}
-    for l in LevelsOrig:
-        if not l.find('0')>-1:
-            NewLevels[l]=LevelsOrig[l]
-        else:
-            NewLevels['n/a']=LevelsOrig[l]
-    md['LevelsOrig']=LevelsOrig
-    md['Levels']=NewLevels
-    return md
-
-def metadata_change_two_to_zero_for_no(md):
-    LevelsOrig=md['Levels'].copy()
-    NewLevels={}
-    for l in LevelsOrig:
-        if l.find('2')>-1:
-            NewLevels['0']=LevelsOrig[l]
-        else:
-            NewLevels[l]=LevelsOrig[l]
-    md['LevelsOrig']=LevelsOrig
-    md['Levels']=NewLevels
-    return md
 
 def fix_item(d,v,metadata):
     """
