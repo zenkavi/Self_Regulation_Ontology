@@ -193,4 +193,4 @@ if __name__=='__main__':
     demog_metadata=get_metadata(demog_items)
     data=add_demog_item_labels(data)
     datadir,surveydata_renamed=save_demog_data(data,demog_metadata)
-    metadatadir=write_metadata(demog_metadata)
+    metadatadir=write_metadata(demog_metadata,'demographics.json')
