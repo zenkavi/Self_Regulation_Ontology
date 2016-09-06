@@ -11,6 +11,7 @@ import json
 
 from metadata_utils import metadata_subtract_one,metadata_replace_zero_with_nan
 from metadata_utils import metadata_change_two_to_zero_for_no
+from metadata_utils import write_metadata
 
 def get_data(basedir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses'):
 
@@ -26,7 +27,6 @@ def get_demog_items(data):
         if not r.text in demog_items.keys():
             demog_items[r.text]=r
     return demog_items
-
 
 def setup_itemid_dict():
     nominalvars=[]
@@ -113,14 +113,6 @@ def get_metadata(demog_items):
             demog_dict_renamed[id_to_name[k]]=demog_dict[k]
     return demog_dict_renamed
 
-def write_metadata(metadata,fname='demographics.json',
-    outdir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses/metadata'):
-    if not os.path.exists(outdir):
-        os.mkdir(outdir)
-    with open(os.path.join(outdir,fname), 'w') as outfile:
-            json.dump(metadata, outfile, sort_keys = True, indent = 4,
-                  ensure_ascii=False)
-    return outdir
 
 
 def add_demog_item_labels(data):
