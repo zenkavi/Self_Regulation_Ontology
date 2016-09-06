@@ -127,38 +127,36 @@ def add_demog_item_labels(data):
     data['item_id']=item_ids
     return data
 
-def fix_item(d):
+def fix_item(d,v):
     """
     clean up responses
     """
-    v=d.columns.tolist()
-    v.remove('worker')
-    assert len(v)==1
+
     id_to_name,nominalvars=setup_itemid_dict()
-    vname=id_to_name[v[0]]
+    vname=id_to_name[v]
     # variables that need to have one subtracted
     subtract_one=['ArrestedChargedLifeCount','ChildrenNumber',
                     'RelationshipNumber','TrafficAccidentsLifeCount',
                     'TrafficTicketsLastYearCount']
     if vname in subtract_one:
-        tmp=[int(i) for i in d[v[0]]]
-        d[v[0]]=numpy.array(tmp)-1
+        tmp=[int(i) for i in d]
+        d.iloc[:]=numpy.array(tmp)-1
         print('subtrated one:',v,vname)
     # replace zero for "prefer not to say" with nan
     replace_zero_with_nan=['CarDebt','CreditCardDebt','EducationDebt',
                             'MortgageDebt','OtherDebtAmount']
     if vname in replace_zero_with_nan:
-        tmp=numpy.array([float(i) for i in d[v[0]]])
+        tmp=numpy.array([float(i) for i in d.iloc[:]])
         tmp[tmp==0]=numpy.nan
-        d[v[0]]=tmp
+        d.iloc[:]=tmp
         print('replaced %d zeros with nan:'%numpy.sum(numpy.isnan(tmp)),v,vname)
 
     # replace 2 for "no" with zero
     change_two_to_zero_for_no=['RetirementAccount']
     if vname in change_two_to_zero_for_no:
-        tmp=numpy.array([float(i) for i in d[v[0]]])
+        tmp=numpy.array([float(i) for i in d.iloc[:]])
         tmp[tmp==2]=0
-        d[v[0]]=tmp
+        d.iloc[:]=tmp
         print('changed two to zero for no:',v,vname)
 
     return d
@@ -170,21 +168,22 @@ def save_demog_data(data,survey_metadata,
         os.mkdir(outdir)
 
     unique_items=list(data.item_id.unique())
-    surveydata=pandas.DataFrame({'worker':list(data.worker.unique())})
+    surveydata=pandas.DataFrame(index=list(data.worker.unique()))
     for i in unique_items:
-        matchitem=data.query('item_id=="%s"'%i)
-        matchitem=pandas.DataFrame({'worker':matchitem.worker,i:matchitem.response})
-        matchitem=fix_item(matchitem)
-        surveydata=surveydata.merge(matchitem,on='worker',how='outer')
+        qresult=data.query('item_id=="%s"'%i)
+        matchitem=qresult.response
+        matchitem.index=qresult['worker']
+        matchitem=fix_item(matchitem,i)
+        surveydata.ix[matchitem.index,i]=matchitem
 
     surveydata_renamed=surveydata.rename(columns=id_to_name)
     surveydata_renamed.to_csv(os.path.join(outdir,'demographics.tsv'),sep='\t',index=False)
     for v in nominalvars:
         del surveydata[v]
-    surveydata_renamed=surveydata.rename(columns=id_to_name)
-    surveydata_renamed.to_csv(os.path.join(outdir,'demographics_ordinal.tsv'),sep='\t',index=False)
+    surveydata_renamed_ord=surveydata.rename(columns=id_to_name)
+    surveydata_renamed_ord.to_csv(os.path.join(outdir,'demographics_ordinal.tsv'),sep='\t',index=False)
 
-    return outdir
+    return outdir,surveydata_renamed
 
 if __name__=='__main__':
     id_to_name,nominalvars=setup_itemid_dict()
@@ -192,4 +191,4 @@ if __name__=='__main__':
     demog_items=get_demog_items(data)
     demog_metadata,metadatdir=save_metadata(demog_items)
     data=add_demog_item_labels(data)
-    datadir=save_demog_data(data,demog_metadata)
+    datadir,surveydata_renamed=save_demog_data(data,demog_metadata)
