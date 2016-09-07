@@ -118,10 +118,10 @@ def fix_item(d,v,metadata):
     vname=id_to_name[v]
     # variables that need to have scale reversed - from 5-1 to 1-5
     reverse_scale=['DaysPhysicalHealthFeelings','Depressed','EverythingIsEffort',
-                'Hopeless','Nervous','RestlessFidgety','Worthless']
+                'Hopeless','Nervous','RestlessFidgety','Worthless',"Last30DaysUsual"]
     if vname in reverse_scale:
         tmp=numpy.array([float(i) for i in d])
-        d.iloc[:]=tmp*-1 + 5
+        d.iloc[:]=tmp*-1 + len(tmp)
         print('reversed scale:',v,vname)
         metadata=metadata_reverse_scale(metadata)
     return d,metadata
