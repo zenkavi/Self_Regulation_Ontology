@@ -68,7 +68,6 @@ if job in ['extras', 'all']:
     bonuses = get_bonuses(data)
     calc_time_taken(data)
     get_post_task_responses(data)   
-    quality_check(data)
     
     # save data
     os.remove(data_dir + 'mturk_data.json')
@@ -100,18 +99,21 @@ if job in ['post', 'all']:
         # only get discovery data
         discovery_data = data.query('worker_id in %s' % discovery_sample).reset_index(drop = True)
         post_process_data(discovery_data)
+        quality_check(discovery_data)
         discovery_data.to_json(data_dir + 'mturk_discovery_data_post.json')
         print('Finished saving post-processed discovery data')
     if 'validation' in sample:
         # only get validation data
         validation_data = data.query('worker_id in %s' % validation_sample).reset_index(drop = True)
         post_process_data(validation_data)
+        quality_check(validation_data)
         validation_data.to_json(data_dir + 'mturk_validation_data_post.json')
         print('Finished saving post-processed validation data')
     if 'incomplete' in sample:
         # only get validation data
         incomplete_data = data.query('worker_id not in %s' % (validation_sample + discovery_sample)).reset_index(drop = True)
         post_process_data(incomplete_data)
+        quality_check(incomplete_data)
         incomplete_data.to_json(data_dir + 'mturk_incomplete_data_post.json')
         print('Finished saving post-processed incomplete data')
     

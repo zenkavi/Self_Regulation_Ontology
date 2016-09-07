@@ -377,7 +377,63 @@ def quality_check(data):
     print('Finished QC. Time taken: ' + str(finish_time))
            
         
+def quality_check(data):
+    start_time = time()
+    passed_QC = []
+    rt_thresh_lookup = {
+        'angling_risk_task_always_sunny': 0,
+        'simple_reaction_time': 150    
+    }
+    acc_thresh_lookup = {
+        'digit_span': 0,
+        'hierarchical_rule': 0,
+        'probabilistic_selection': 0,
+        'shift_task': 0,
+        'spatial_span': 0
+    }
+    missed_thresh_lookup = {
+    }
+    data.loc[:,'passed_QC'] = True
+    for exp in data.experiment_exp_id.unique():
+        df = extract_experiment(data, exp)
+        rt_thresh = rt_thresh_lookup.get(exp_id,200)
+        acc_thresh = acc_thresh_lookup.get(exp_id,.6)
+        missed_thresh = missed_thresh_lookup.get(exp_id,.25)
+        df.groupby('worker_id').rt.median() < rt_thresh
+        df.groupby('worker_id').correct.mean() < acc_thresh
+        
+        
     
+    
+    for i,row in data.iterrows():
+        if (i%100 == 0):
+            print(i)
+        QC = True
+        if row['experiment_template'] in 'jspsych':
+            exp_id = row['experiment_exp_id']
+            rt_thresh = rt_thresh_lookup.get(exp_id,200)
+            acc_thresh = acc_thresh_lookup.get(exp_id,.6)
+            missed_thresh = missed_thresh_lookup.get(exp_id,.25)
+            df = extract_row(row)
+            if exp_id not in ['psychological_refractory_period_two_choices', 'two_stage_decision']:
+                if (df['rt'].median < rt_thresh) or \
+                   (np.mean(df.get('correct',1)) < acc_thresh) or \
+                   (np.mean(df['rt'] == -1) > missed_thresh):
+                       QC = False
+            elif exp_id == 'psychological_refractory_period_two_choices':
+                if (df['choice1_rt'].median < rt_thresh) or \
+                   (np.mean(df['choice1_correct']) < acc_thresh) or \
+                   (((df['choice1_rt']==-1) | (df['choice2_rt'] <= -1)).mean() > missed_thresh):
+                       QC = False
+            elif exp_id == 'two_stage_decision':
+                if (df['rt_first'].median < rt_thresh) or \
+                    (df['rt_second'].median < rt_thresh) or \
+                   ((df.trial_id == "incomplete_trial").mean() > missed_thresh):
+                       QC = False
+        passed_QC.append(QC)
+    data.loc[:,'passed_QC'] = passed_QC
+    finish_time = (time() - start_time)/60
+    print('Finished QC. Time taken: ' + str(finish_time))
     
     
     
