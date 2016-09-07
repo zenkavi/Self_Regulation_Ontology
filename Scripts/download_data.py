@@ -4,7 +4,7 @@ from expanalysis.results import get_filters
 import json
 import os
 import pandas as pd
-from util import anonymize_data, download_data, get_bonuses, get_info, get_pay
+from util import anonymize_data, download_data, get_bonuses, get_info, get_pay, quality_check
 
 # Fix Python 2.x.
 try: input = raw_input
@@ -46,10 +46,6 @@ if job == 'download' or job == "all":
     #load Data
     f = open(token)
     access_token = f.read().strip()  
-    try:
-        os.remove(data_dir + 'mturk_data_extras.json')
-    except OSError:
-        pass
     data = download_data(data_dir, access_token, filters = filters,  battery = 'Self Regulation Battery')
     data.reset_index(drop = True, inplace = True)
     
@@ -72,6 +68,9 @@ if job in ['extras', 'all']:
     bonuses = get_bonuses(data)
     calc_time_taken(data)
     get_post_task_responses(data)   
+    quality_check(data)
+    
+    # save data
     os.remove(data_dir + 'mturk_data.json')
     data.to_json(data_dir + 'mturk_data_extras.json')
     

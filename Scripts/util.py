@@ -333,6 +333,7 @@ def quality_check(data):
     start_time = time()
     passed_QC = []
     rt_thresh_lookup = {
+        'angling_risk_task_always_sunny': 0,
         'simple_reaction_time': 150    
     }
     acc_thresh_lookup = {
@@ -348,11 +349,10 @@ def quality_check(data):
     for i,row in data.iterrows():
         if (i%100 == 0):
             print(i)
-            
         QC = True
         if row['experiment_template'] in 'jspsych':
             exp_id = row['experiment_exp_id']
-            rt_thresh = rt_thresh_lookup.get(exp_id,300)
+            rt_thresh = rt_thresh_lookup.get(exp_id,200)
             acc_thresh = acc_thresh_lookup.get(exp_id,.6)
             missed_thresh = missed_thresh_lookup.get(exp_id,.25)
             df = extract_row(row)
