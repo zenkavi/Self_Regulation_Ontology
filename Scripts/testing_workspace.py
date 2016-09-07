@@ -46,7 +46,10 @@ pay_list = [pay.total.get(inverse_lookup.get(w,'not found'),'not_found') if pay.
 
 #load Data
 token = get_info('expfactory_token')
-data_dir=get_info('base_directory') + 'Data/'
+try:
+    data_dir=get_info('data_directory')
+except Exception:
+    data_dir=get_info('base_directory') + 'Data/'
 
 
 # read preprocessed data

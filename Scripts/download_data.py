@@ -22,7 +22,10 @@ if job == 'more':
         sample = sample.split(',')   
         
 token = get_info('expfactory_token')
-data_dir=get_info('base_directory') + 'Data/'
+try:
+    data_dir=get_info('data_directory')
+except Exception:
+    data_dir=get_info('base_directory') + 'Data/'
 
 if job == 'download' or job == "all":
     #***************************************************
