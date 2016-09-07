@@ -6,12 +6,16 @@ import os
 import pandas as pd
 from util import anonymize_data, download_data, get_bonuses, get_info, get_pay
 
+# Fix Python 2.x.
+try: input = raw_input
+except NameError: pass
+    
 # get options
-job = raw_input('Type "download", "extras", "post" or "all": ')
+job = input('Type "download", "extras", "post" or "all": ')
 sample = 'discovery'
 if job == 'more':
-    job = raw_input('More: Type "download", "extras", "post" or "both": ')
-    sample = raw_input('Type "discovery", "validation" or "incomplete". Use commas to separate multiple samples or "all": ')
+    job = input('More: Type "download", "extras", "post" or "both": ')
+    sample = input('Type "discovery", "validation" or "incomplete". Use commas to separate multiple samples or "all": ')
     if sample == 'all':
         sample = ['discovery','validation','incomplete']
     else:
