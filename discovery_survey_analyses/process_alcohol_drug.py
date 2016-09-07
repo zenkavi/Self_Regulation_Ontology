@@ -8,12 +8,19 @@ This is a temporary script file.
 import numpy,pandas
 import os
 import json
+# ensure ascii encoding is correct
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 from metadata_utils import metadata_subtract_one,metadata_replace_zero_with_nan
 from metadata_utils import metadata_change_two_to_zero_for_no,metadata_reverse_scale
 from metadata_utils import write_metadata
 
-def get_data(basedir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses'):
+token, basedir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
+basedir += 'discovery_survey_analyses'
+
+def get_data(basedir=basedir):
 
     datafile=os.path.join(basedir,'alcohol_drugs.csv')
     data=pandas.read_csv(datafile,index_col=0)
@@ -22,12 +29,12 @@ def get_data(basedir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_su
 
 
 
-def get_demog_items(data):
-    demog_items={}
+def get_alcohol_drug_items(data):
+    alcohol_drug_items={}
     for i,r in data.iterrows():
-        if not r.text in demog_items.keys():
-            demog_items[r.text]=r
-    return demog_items
+        if not r.text in alcohol_drug_items.keys():
+            alcohol_drug_items[r.text]=r
+    return alcohol_drug_items
 
 
 def setup_itemid_dict():
@@ -73,24 +80,24 @@ def setup_itemid_dict():
     id_to_name['alcohol_drugs_survey_38']='MedicalProblemsDueToDrugUse'
     return id_to_name,nominalvars
 
-def get_metadata(demog_items):
+def get_metadata(alcohol_drug_items):
 
     id_to_name,nominalvars=setup_itemid_dict()
-    demog_dict={"MeasurementToolMetadata": {"Description": 'Health',
+    alcohol_drug_dict={"MeasurementToolMetadata": {"Description": 'Health',
             "TermURL": ''}}
-    for i in demog_items:
-            r=demog_items[i]
+    for i in alcohol_drug_items:
+            r=alcohol_drug_items[i]
             if not pandas.isnull(r.options):
                 itemoptions=eval(r.options)
             else:
                 itemoptions=None
             itemid='_'.join(r['id'].split('_')[:4])
-            assert itemid not in demog_dict  # check for duplicates
-            demog_dict[itemid]={}
-            demog_dict[itemid]['Description']=r.text
-            demog_dict[itemid]['Levels']={}
+            assert itemid not in alcohol_drug_dict  # check for duplicates
+            alcohol_drug_dict[itemid]={}
+            alcohol_drug_dict[itemid]['Description']=r.text
+            alcohol_drug_dict[itemid]['Levels']={}
             if itemid in nominalvars:
-                demog_dict[itemid]['Nominal']=True
+                alcohol_drug_dict[itemid]['Nominal']=True
             levelctr=0
             if itemoptions is not None:
                 for i in itemoptions:
@@ -99,17 +106,17 @@ def get_metadata(demog_items):
                         levelctr+=1
                     else:
                         value=i['value']
-                    demog_dict[itemid]['Levels'][value]=i['text']
+                    alcohol_drug_dict[itemid]['Levels'][value]=i['text']
     #rename according to more useful names
-    demog_dict_renamed={}
-    for k in demog_dict.keys():
+    alcohol_drug_dict_renamed={}
+    for k in alcohol_drug_dict.keys():
         if not k in id_to_name.keys():
-            demog_dict_renamed[k]=demog_dict[k]
+            alcohol_drug_dict_renamed[k]=alcohol_drug_dict[k]
         else:
-            demog_dict_renamed[id_to_name[k]]=demog_dict[k]
-    return demog_dict_renamed
+            alcohol_drug_dict_renamed[id_to_name[k]]=alcohol_drug_dict[k]
+    return alcohol_drug_dict_renamed
 
-def add_demog_item_labels(data):
+def add_alcohol_drug_item_labels(data):
     item_ids=[]
     for i,r in data.iterrows():
         item_ids.append('_'.join(r['id'].split('_')[:4]))
@@ -152,8 +159,8 @@ def fix_item(d,v,metadata):
 
     return d,metadata
 
-def save_demog_data(data,survey_metadata,
-              outdir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses/surveydata'):
+def save_alcohol_drug_data(data,survey_metadata,
+              outdir=basedir + '/surveydata'):
     id_to_name,nominalvars=setup_itemid_dict()
     if not os.path.exists(outdir):
         os.mkdir(outdir)
@@ -179,8 +186,8 @@ def save_demog_data(data,survey_metadata,
 if __name__=='__main__':
     id_to_name,nominalvars=setup_itemid_dict()
     data,basedir=get_data()
-    demog_items=get_demog_items(data)
-    demog_metadata=get_metadata(demog_items)
-    data=add_demog_item_labels(data)
-    datadir,surveydata_renamed=save_demog_data(data,demog_metadata)
-    metadatadir=write_metadata(demog_metadata,'alcohol_drugs.json')
+    alcohol_drug_items=get_alcohol_drug_items(data)
+    alcohol_drug_metadata=get_metadata(alcohol_drug_items)
+    data=add_alcohol_drug_item_labels(data)
+    datadir,surveydata_renamed=save_alcohol_drug_data(data,alcohol_drug_metadata)
+    metadatadir=write_metadata(alcohol_drug_metadata,'alcohol_drugs.json')

@@ -8,12 +8,19 @@ This is a temporary script file.
 import numpy,pandas
 import os
 import json
+# ensure ascii encoding is correct
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 from metadata_utils import metadata_subtract_one,metadata_replace_zero_with_nan
 from metadata_utils import metadata_change_two_to_zero_for_no
 from metadata_utils import write_metadata
 
-def get_data(basedir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses'):
+token, basedir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
+basedir += 'discovery_survey_analyses'
+
+def get_data(basedir=basedir):
 
     datafile=os.path.join(basedir,'demographics.csv')
 
@@ -163,7 +170,7 @@ def fix_item(d,v,metadata):
     return d,metadata
 
 def save_demog_data(data,survey_metadata,
-              outdir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses/surveydata'):
+              outdir=basedir + '/surveydata'):
     id_to_name,nominalvars=setup_itemid_dict()
     if not os.path.exists(outdir):
         os.mkdir(outdir)

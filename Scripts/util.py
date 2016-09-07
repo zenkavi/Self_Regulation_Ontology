@@ -7,7 +7,7 @@ except ImportError:
     from io import StringIO
 from expanalysis.experiments.processing import extract_row, extract_experiment
 from expanalysis.results import Result
-from expanalysis.experiments.utils import result_filter
+from expanalysis.experiments.utils import remove_duplicates, result_filter
 import json
 import matplotlib.pyplot as plt
 import numpy as np
@@ -221,6 +221,7 @@ def get_items(data):
     responses_text = []
     options = []
     workers = []
+    item_nums = []
     exps = []
     for exp in data.experiment_exp_id.unique():
         if 'survey' in exp and exp not in excluded_surveys:
@@ -233,9 +234,13 @@ def get_items(data):
             responses_text += list(survey.response_text)
             options += list(survey.options)
             workers += list(survey.worker_id)
+            item_nums += list(survey.question_num)
             exps += [exp] * len(survey.text)
+    
     items_df = pd.DataFrame({'survey': exps, 'worker': workers, 'item_text': items, 'coded_response': responses,
                              'response_text': responses_text, 'options': options}, dtype = float)
+    items_df.loc[:,'item_num'] = [str(i).zfill(3) for i in item_nums]
+    items_df.loc[:,'item_ID'] = items_df['survey'] + '_' + items_df['item_num'].astype(str)
     return items_df
     
     
@@ -314,9 +319,12 @@ def load_data(data_loc, access_token = None, action = 'file', filters = None, ba
             action = 'file'
             data = pd.read_json(data_loc + 'mturk_data.json')
     
+    # remove duplicates
+    remove_duplicates(data)
+    
     # remove a few mistakes from data
     data = data.query('worker_id not in ["A254JKSDNE44AM", "A1O51P5O9MC5LX"]') # Sandbox workers
-    data.reset_index(drop = True, inplace = True)
+    data.reset_index(drop = True, inplace = True)    
     
     # if saving, save the data and the lookup file for anonymized workers
     if save == True:
