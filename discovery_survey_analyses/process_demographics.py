@@ -8,17 +8,21 @@ This is a temporary script file.
 import numpy,pandas
 import os
 import json
-# ensure ascii encoding is correct
+# ensure ascii encoding is correct -
+# removing this because it breaks in python3 and is a bad idea:
+# http://stackoverflow.com/questions/3828723/why-should-we-not-use-sys-setdefaultencodingutf-8-in-a-py-script
+
 import sys
-reload(sys)
-sys.setdefaultencoding('utf-8')
+#reload(sys)
+#sys.setdefaultencoding('utf-8')
 
 from metadata_utils import metadata_subtract_one,metadata_replace_zero_with_nan
 from metadata_utils import metadata_change_two_to_zero_for_no
 from metadata_utils import write_metadata
 
-token, basedir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
-basedir += 'discovery_survey_analyses'
+from utils import get_info
+
+basedir=os.path.join(get_info('base_directory'),'discovery_survey_analyses')
 
 def get_data(basedir=basedir):
 
@@ -140,7 +144,7 @@ def fix_item(d,v,metadata):
     # variables that need to have one subtracted
     subtract_one=['ArrestedChargedLifeCount','ChildrenNumber',
                     'RelationshipNumber','TrafficAccidentsLifeCount',
-                    'TrafficTicketsLastYearCount']
+                    'TrafficTicketsLastYearCount','RentOwn']
     if vname in subtract_one:
         tmp=[int(i) for i in d]
         d.iloc[:]=numpy.array(tmp)-1
