@@ -45,7 +45,8 @@ workers = []
 pay_list = [pay.total.get(inverse_lookup.get(w,'not found'),'not_found') if pay.base.get(inverse_lookup.get(w,'not found'),'not_found') != 60 else pay.bonuses.get(inverse_lookup.get(w,'not found'),'not_found') for w in workers]
 
 #load Data
-token, data_dir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
+token, base_dir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
+data_dir = base_dir + 'Data/'
 
 # read preprocessed data
 data = pd.read_json(data_dir + 'mturk_discovery_data_post.json')
@@ -58,8 +59,7 @@ DV_df = pd.read_json(data_dir + 'mturk_discovery_DV.json')
 # ********* Save Components of Data **
 # ************************************
 items_df = get_items(data)
-items_df['text+'] = items_df.item_text + ';' + items_df.survey
-items_pivot_df = items_df.pivot('worker','text+','coded_response')
+items_pivot_df = items_df.pivot('worker','item_ID','coded_response')
 items_df.to_csv('/home/ian/tmp/items.csv')
 items_pivot_df.to_csv('/home/ian/tmp/items_pivot.csv')
 
