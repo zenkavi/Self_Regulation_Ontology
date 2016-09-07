@@ -4,23 +4,28 @@ from expanalysis.results import get_filters
 import json
 import os
 import pandas as pd
-from util import anonymize_data, get_bonuses, get_pay, load_data
+from util import anonymize_data, download_data, get_bonuses, get_info, get_pay, quality_check
 
+# Fix Python 2.x.
+try: input = raw_input
+except NameError: pass
+    
 # get options
-job = raw_input('Type "download", "extras", "post" or "all": ')
+job = input('Type "download", "extras", "post" or "all": ')
 sample = 'discovery'
 if job == 'more':
-    job = raw_input('More: Type "download", "extras", "post" or "both": ')
-    sample = raw_input('Type "discovery", "validation" or "incomplete". Use commas to separate multiple samples or "all": ')
+    job = input('More: Type "download", "extras", "post" or "both": ')
+    sample = input('Type "discovery", "validation" or "incomplete". Use commas to separate multiple samples or "all": ')
     if sample == 'all':
         sample = ['discovery','validation','incomplete']
     else:
-        sample = sample.split(',')
-if job in ['download', 'all']:
-    action = raw_input('Overwrite data or append new data to previous file? Type "overwrite" or "append"')       
+        sample = sample.split(',')   
         
-token, base_dir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
-data_dir = base_dir + 'Data/'
+token = get_info('expfactory_token')
+try:
+    data_dir=get_info('data_directory')
+except Exception:
+    data_dir=get_info('base_directory') + 'Data/'
 
 if job == 'download' or job == "all":
     #***************************************************
@@ -41,11 +46,7 @@ if job == 'download' or job == "all":
     #load Data
     f = open(token)
     access_token = f.read().strip()  
-    try:
-        os.remove(data_dir + 'mturk_extras.json')
-    except OSError:
-        pass
-    data = load_data(data_dir, access_token, filters = filters, action = action, battery = 'Self Regulation Battery')
+    data = download_data(data_dir, access_token, filters = filters,  battery = 'Self Regulation Battery')
     data.reset_index(drop = True, inplace = True)
     
 if job in ['extras', 'all']:
@@ -67,6 +68,9 @@ if job in ['extras', 'all']:
     bonuses = get_bonuses(data)
     calc_time_taken(data)
     get_post_task_responses(data)   
+    quality_check(data)
+    
+    # save data
     os.remove(data_dir + 'mturk_data.json')
     data.to_json(data_dir + 'mturk_data_extras.json')
     

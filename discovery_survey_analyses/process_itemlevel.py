@@ -9,7 +9,9 @@ import numpy,pandas
 import os
 import json
 
-token, basedir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
+from utils import get_info
+
+basedir=os.path.join(get_info('base_directory'),'discovery_survey_analyses')
 
 survey_longnames={'eating_survey':'Eating survey', 
                   'erq_survey':'Emotion regulation questionnaire', 

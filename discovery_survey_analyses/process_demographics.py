@@ -12,10 +12,6 @@ import json
 # removing this because it breaks in python3 and is a bad idea:
 # http://stackoverflow.com/questions/3828723/why-should-we-not-use-sys-setdefaultencodingutf-8-in-a-py-script
 
-import sys
-#reload(sys)
-#sys.setdefaultencoding('utf-8')
-
 from metadata_utils import metadata_subtract_one,metadata_replace_zero_with_nan
 from metadata_utils import metadata_change_two_to_zero_for_no
 from metadata_utils import write_metadata

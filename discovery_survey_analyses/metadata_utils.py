@@ -3,8 +3,12 @@ utilities for fixing metadata
 """
 import os,json
 
+from utils import get_info
+
+outdir=os.path.join(get_info('base_directory'),'discovery_survey_analyses/metadata')
+
 def write_metadata(metadata,fname,
-    outdir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses/metadata'):
+    outdir=outdir):
     if not os.path.exists(outdir):
         os.mkdir(outdir)
     with open(os.path.join(outdir,fname), 'w') as outfile:
@@ -12,7 +16,7 @@ def write_metadata(metadata,fname,
                   ensure_ascii=False)
     return outdir
 def load_metadata(variable,
-    outdir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses/metadata'):
+    outdir=outdir):
 
     with open(os.path.join(outdir,'%s.json'%variable)) as outfile:
             metadata=json.load(outfile)

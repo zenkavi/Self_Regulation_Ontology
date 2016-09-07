@@ -1,43 +1,18 @@
 '''
 Utility functions for the ontology project
 '''
-try:
-    import cStringIO as StringIO
-except ImportError:
-    from io import StringIO
 from expanalysis.experiments.processing import extract_row, extract_experiment
 from expanalysis.results import Result
 from expanalysis.experiments.utils import remove_duplicates, result_filter
 import json
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import pandas as pd
 import seaborn as sns
 from scipy.cluster.hierarchy import linkage
 from scipy.cluster.hierarchy import dendrogram
-import sys
 from time import time
-
-# Used to capture print
-class Logger(object):
-    def __init__(self):
-        self.terminal = sys.stdout
-        self.log = StringIO.StringIO()
-
-    def write(self, message):
-        self.terminal.write(message)
-        self.log.write(message)  
-
-    def get_log(self):
-        return self.log.getvalue()
-        
-    def flush(self):
-        #this flush method is needed for python 3 compatibility.
-        #this handles the flush command by doing nothing.
-        #you might want to specify some extra behavior here.
-        pass    
-
-
 
 def set_discovery_sample(n, discovery_n, seed = None):
     """
@@ -51,8 +26,6 @@ def set_discovery_sample(n, discovery_n, seed = None):
     sample = ['discovery']*discovery_n + ['validation']*(n-discovery_n)
     np.random.shuffle(sample)
     return sample
-
-
 
 def anonymize_data(data):
     complete_workers = (data.groupby('worker_id').count().finishtime>=63)
@@ -73,15 +46,6 @@ def anonymize_data(data):
 #***************************************************
 # ********* Helper Functions **********************
 #**************************************************
-def append_to_json(filey, dic):
-    try:
-        data = json.load(open(filey,'w'))
-        data.update(dic)
-    except IOError:
-        data = dic
-        
-    with open(filey, 'w') as f:
-        json.dump(data, f)
 
 def calc_bonuses(data):
     bonus_experiments = ['angling_risk_task_always_sunny', 'two_stage_decision',
@@ -169,6 +133,32 @@ def dendroheatmap_left(df, labels = True):
     row_dendr = dendrogram(row_clusters, orientation='right',  
                            count_sort='descending', ax = ax1) 
     return fig
+
+ 
+def download_data(data_loc, access_token = None, filters = None, battery = None, save = True, url = None):
+    start_time = time()
+    #Load Results from Database
+    results = Result(access_token, filters = filters, url = url)
+    data = results.data
+    if battery:
+        data = result_filter(data, battery = battery)
+
+    # remove duplicates
+    remove_duplicates(data)
+    
+    # remove a few mistakes from data
+    data = data.query('worker_id not in ["A254JKSDNE44AM", "A1O51P5O9MC5LX"]') # Sandbox workers
+    data.reset_index(drop = True, inplace = True)    
+    
+    # if saving, save the data and the lookup file for anonymized workers
+    if save == True:
+        data.to_json(data_loc + 'mturk_data.json')
+        print('Finished saving')
+    
+    finish_time = (time() - start_time)/60
+    print('Finished downloading data. Time taken: ' + str(finish_time))
+    return data                 
+    
     
 def export_to_csv(data, clean = False):
     for exp in np.unique(data['experiment_exp_id']):
@@ -213,6 +203,28 @@ def get_demographics(df):
     age_vars = [age_col.min(), age_col.max(), age_col.mean()]    
     return {'age': age_vars, 'sex': sex, 'race': race, 'hispanic': hispanic}  
     
+def get_info(item,infile='../Self_Regulation_Settings.txt'):
+    """
+    get info from settings file
+    """
+    
+    infodict={}
+    try:
+        assert os.path.exists(infile)
+    except:
+        raise Exception('You must first create a Self_Regulation_Settings.txt file')
+
+    with open(infile) as f:
+        lines=[i for i in f.readlines() if not i.find('#')==0]
+        for l in lines:
+            l_s=l.rstrip('\n').split(':')
+            infodict[l_s[0]]=l_s[1]
+    try:
+        assert item in infodict
+    except:
+        raise Exception('infodict does not include requested item')
+    return infodict[item]
+
 
 def get_items(data):
     excluded_surveys = ['holt_laury_survey', 'selection_optimization_compensation_survey', 'sensation_seeking_survey']
@@ -295,48 +307,7 @@ def heatmap(df):
     ax.set_yticklabels(df.columns[::-1], rotation=0, rotation_mode="anchor", fontsize = 'large')
     ax.set_xticklabels(df.columns, rotation=-90, rotation_mode = "anchor", ha = 'left') 
     return fig
- 
-def load_data(data_loc, access_token = None, action = 'file', filters = None, battery = None, save = True, url = None):
-    start_time = time()
-    sys.stdout = Logger()
-    if action == 'overwrite':
-        #Load Results from Database
-        results = Result(access_token, filters = filters, url = url)
-        data = results.data
-        if battery:
-            data = result_filter(data, battery = battery)
-    elif action == 'append':
-        try:
-            url = json.load(open('../internal_settings.json','r'))['last_used_url']
-            old_data = pd.read_json(data_loc + 'mturk_data.json')
-            results = Result(access_token, filters = filters, url = url)
-            new_data = results.data
-            if battery:
-                new_data = result_filter(new_data, battery = battery)
-            data = pd.concat([old_data,new_data]).drop_duplicates(subset = 'finishtime')
-        except IOError:
-            print('No url found in internal_settings file. Cannot append')
-            action = 'file'
-            data = pd.read_json(data_loc + 'mturk_data.json')
-    
-    # remove duplicates
-    remove_duplicates(data)
-    
-    # remove a few mistakes from data
-    data = data.query('worker_id not in ["A254JKSDNE44AM", "A1O51P5O9MC5LX"]') # Sandbox workers
-    data.reset_index(drop = True, inplace = True)    
-    
-    # if saving, save the data and the lookup file for anonymized workers
-    if save == True:
-        data.to_json(data_loc + 'mturk_data.json')
-        print('Finished saving')
-    final_url = sys.stdout.get_log().split('\n')[-150].split()[1]
-    append_to_json('../internal_settings.json', {'last_used_url': final_url})
-    
-    finish_time = (time() - start_time)/60
-    print('Finished loading data. Time taken: ' + str(finish_time))
-    return data                 
-    
+
 def order_by_time(data):
     data.sort_values(['worker_id','finishtime'], inplace = True)
     num_exps = data.groupby('worker_id')['finishtime'].count() 
@@ -362,6 +333,7 @@ def quality_check(data):
     start_time = time()
     passed_QC = []
     rt_thresh_lookup = {
+        'angling_risk_task_always_sunny': 0,
         'simple_reaction_time': 150    
     }
     acc_thresh_lookup = {
@@ -377,11 +349,10 @@ def quality_check(data):
     for i,row in data.iterrows():
         if (i%100 == 0):
             print(i)
-            
         QC = True
         if row['experiment_template'] in 'jspsych':
             exp_id = row['experiment_exp_id']
-            rt_thresh = rt_thresh_lookup.get(exp_id,300)
+            rt_thresh = rt_thresh_lookup.get(exp_id,200)
             acc_thresh = acc_thresh_lookup.get(exp_id,.6)
             missed_thresh = missed_thresh_lookup.get(exp_id,.25)
             df = extract_row(row)
