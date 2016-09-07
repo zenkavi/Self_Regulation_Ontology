@@ -10,7 +10,7 @@ import os
 import json
 
 from metadata_utils import metadata_subtract_one,metadata_replace_zero_with_nan
-from metadata_utils import metadata_change_two_to_zero_for_no
+from metadata_utils import metadata_change_two_to_zero_for_no,metadata_reverse_scale
 from metadata_utils import write_metadata
 
 def get_data(basedir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses'):
@@ -50,6 +50,7 @@ def setup_itemid_dict():
     id_to_name['alcohol_drugs_survey_14']='HowOftenGuiltRemorseDrinking'
     id_to_name['alcohol_drugs_survey_15']='HowOftenUnableRememberDrinking'
     id_to_name['alcohol_drugs_survey_16']='InjuredDrinking'
+    nominalvars.append('alcohol_drugs_survey_16')
     id_to_name['alcohol_drugs_survey_17']='RelativeFriendConcernedDrinking'
     id_to_name['alcohol_drugs_survey_18']='CannabisPast6Months'
     id_to_name['alcohol_drugs_survey_20']='CannabisHowOften'
@@ -128,6 +129,7 @@ def fix_item(d,v,metadata):
         tmp=numpy.array([float(i) for i in d])
         d.iloc[:]=tmp*-1 + 5
         print('reversed scale:',v,vname)
+        metadata=metadata_reverse_scale(metadata)
 
     # variables that need to have one subtracted
     subtract_one=["AlcoholHowOften","AlcoholHowOften6Drinks",
@@ -137,6 +139,7 @@ def fix_item(d,v,metadata):
         tmp=[int(i) for i in d]
         d.iloc[:]=numpy.array(tmp)-1
         print('subtrated one:',v,vname)
+        metadata=metadata_subtract_one(metadata)
 
     # replace 2 for "no" with zero
     change_two_to_zero_for_no=['LifetimeSmoke100Cigs']
@@ -145,6 +148,7 @@ def fix_item(d,v,metadata):
         tmp[tmp==2]=0
         d.iloc[:]=tmp
         print('changed two to zero for no:',v,vname)
+        metadata=metadata_change_two_to_zero_for_no(metadata)
 
     return d,metadata
 
