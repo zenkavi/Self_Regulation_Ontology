@@ -1,10 +1,6 @@
 '''
 Utility functions for the ontology project
 '''
-try:
-    import cStringIO as StringIO
-except ImportError:
-    from io import StringIO
 from expanalysis.experiments.processing import extract_row, extract_experiment
 from expanalysis.results import Result
 from expanalysis.experiments.utils import remove_duplicates, result_filter
@@ -16,29 +12,7 @@ import pandas as pd
 import seaborn as sns
 from scipy.cluster.hierarchy import linkage
 from scipy.cluster.hierarchy import dendrogram
-import sys
 from time import time
-
-# Used to capture print
-class Logger(object):
-    def __init__(self):
-        self.terminal = sys.stdout
-        self.log = StringIO.StringIO()
-
-    def write(self, message):
-        self.terminal.write(message)
-        self.log.write(message)  
-
-    def get_log(self):
-        return self.log.getvalue()
-        
-    def flush(self):
-        #this flush method is needed for python 3 compatibility.
-        #this handles the flush command by doing nothing.
-        #you might want to specify some extra behavior here.
-        pass    
-
-
 
 def set_discovery_sample(n, discovery_n, seed = None):
     """
@@ -52,8 +26,6 @@ def set_discovery_sample(n, discovery_n, seed = None):
     sample = ['discovery']*discovery_n + ['validation']*(n-discovery_n)
     np.random.shuffle(sample)
     return sample
-
-
 
 def anonymize_data(data):
     complete_workers = (data.groupby('worker_id').count().finishtime>=63)
@@ -74,15 +46,6 @@ def anonymize_data(data):
 #***************************************************
 # ********* Helper Functions **********************
 #**************************************************
-def append_to_json(filey, dic):
-    try:
-        data = json.load(open(filey,'w'))
-        data.update(dic)
-    except IOError:
-        data = dic
-        
-    with open(filey, 'w') as f:
-        json.dump(data, f)
 
 def calc_bonuses(data):
     bonus_experiments = ['angling_risk_task_always_sunny', 'two_stage_decision',
@@ -170,6 +133,32 @@ def dendroheatmap_left(df, labels = True):
     row_dendr = dendrogram(row_clusters, orientation='right',  
                            count_sort='descending', ax = ax1) 
     return fig
+
+ 
+def download_data(data_loc, access_token = None, filters = None, battery = None, save = True, url = None):
+    start_time = time()
+    #Load Results from Database
+    results = Result(access_token, filters = filters, url = url)
+    data = results.data
+    if battery:
+        data = result_filter(data, battery = battery)
+
+    # remove duplicates
+    remove_duplicates(data)
+    
+    # remove a few mistakes from data
+    data = data.query('worker_id not in ["A254JKSDNE44AM", "A1O51P5O9MC5LX"]') # Sandbox workers
+    data.reset_index(drop = True, inplace = True)    
+    
+    # if saving, save the data and the lookup file for anonymized workers
+    if save == True:
+        data.to_json(data_loc + 'mturk_data.json')
+        print('Finished saving')
+    
+    finish_time = (time() - start_time)/60
+    print('Finished downloading data. Time taken: ' + str(finish_time))
+    return data                 
+    
     
 def export_to_csv(data, clean = False):
     for exp in np.unique(data['experiment_exp_id']):
@@ -318,48 +307,7 @@ def heatmap(df):
     ax.set_yticklabels(df.columns[::-1], rotation=0, rotation_mode="anchor", fontsize = 'large')
     ax.set_xticklabels(df.columns, rotation=-90, rotation_mode = "anchor", ha = 'left') 
     return fig
- 
-def load_data(data_loc, access_token = None, action = 'file', filters = None, battery = None, save = True, url = None):
-    start_time = time()
-    sys.stdout = Logger()
-    if action == 'overwrite':
-        #Load Results from Database
-        results = Result(access_token, filters = filters, url = url)
-        data = results.data
-        if battery:
-            data = result_filter(data, battery = battery)
-    elif action == 'append':
-        try:
-            url = json.load(open('../internal_settings.json','r'))['last_used_url']
-            old_data = pd.read_json(data_loc + 'mturk_data.json')
-            results = Result(access_token, filters = filters, url = url)
-            new_data = results.data
-            if battery:
-                new_data = result_filter(new_data, battery = battery)
-            data = pd.concat([old_data,new_data]).drop_duplicates(subset = 'finishtime')
-        except IOError:
-            print('No url found in internal_settings file. Cannot append')
-            action = 'file'
-            data = pd.read_json(data_loc + 'mturk_data.json')
-    
-    # remove duplicates
-    remove_duplicates(data)
-    
-    # remove a few mistakes from data
-    data = data.query('worker_id not in ["A254JKSDNE44AM", "A1O51P5O9MC5LX"]') # Sandbox workers
-    data.reset_index(drop = True, inplace = True)    
-    
-    # if saving, save the data and the lookup file for anonymized workers
-    if save == True:
-        data.to_json(data_loc + 'mturk_data.json')
-        print('Finished saving')
-    final_url = sys.stdout.get_log().split('\n')[-150].split()[1]
-    append_to_json('../internal_settings.json', {'last_used_url': final_url})
-    
-    finish_time = (time() - start_time)/60
-    print('Finished loading data. Time taken: ' + str(finish_time))
-    return data                 
-    
+
 def order_by_time(data):
     data.sort_values(['worker_id','finishtime'], inplace = True)
     num_exps = data.groupby('worker_id')['finishtime'].count() 

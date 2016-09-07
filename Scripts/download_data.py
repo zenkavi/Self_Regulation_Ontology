@@ -4,7 +4,7 @@ from expanalysis.results import get_filters
 import json
 import os
 import pandas as pd
-from util import anonymize_data, get_bonuses, get_pay, load_data
+from util import anonymize_data, download_data, get_bonuses, get_info, get_pay
 
 # get options
 job = raw_input('Type "download", "extras", "post" or "all": ')
@@ -15,9 +15,7 @@ if job == 'more':
     if sample == 'all':
         sample = ['discovery','validation','incomplete']
     else:
-        sample = sample.split(',')
-if job in ['download', 'all']:
-    action = raw_input('Overwrite data or append new data to previous file? Type "overwrite" or "append"')       
+        sample = sample.split(',')   
         
 token = get_info('expfactory_token')
 data_dir=get_info('base_directory') + 'Data/'
@@ -45,7 +43,7 @@ if job == 'download' or job == "all":
         os.remove(data_dir + 'mturk_data_extras.json')
     except OSError:
         pass
-    data = load_data(data_dir, access_token, filters = filters, action = action, battery = 'Self Regulation Battery')
+    data = download_data(data_dir, access_token, filters = filters,  battery = 'Self Regulation Battery')
     data.reset_index(drop = True, inplace = True)
     
 if job in ['extras', 'all']:
