@@ -8,11 +8,17 @@ This is a temporary script file.
 import numpy,pandas
 import os
 import json
+# ensure ascii encoding is correct
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 from metadata_utils import write_metadata,metadata_reverse_scale
 
+token, basedir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
+basedir += 'discovery_survey_analyses'
 
-def get_data(basedir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses'):
+def get_data(basedir=basedir):
 
     datafile=os.path.join(basedir,'health.csv')
 
@@ -22,15 +28,15 @@ def get_data(basedir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_su
 
 
 
-def get_demog_items(data):
-    demog_items={}
+def get_health_items(data):
+    health_items={}
     for i,r in data.iterrows():
-        if not r.text in demog_items.keys():
+        if not r.text in health_items.keys():
             if r.text.find('If')==0:
-                demog_items[r.id+'-'+r.text]=r
+                health_items[r.id+'-'+r.text]=r
             else:
-                demog_items[r.text]=r
-    return demog_items
+                health_items[r.text]=r
+    return health_items
 
 
 def setup_itemid_dict():
@@ -60,24 +66,24 @@ def setup_itemid_dict():
     nominalvars.append('k6_survey_20')
     return id_to_name,nominalvars
 
-def get_metadata(demog_items):
+def get_metadata(health_items):
     all_itemids=[]
     id_to_name,nominalvars=setup_itemid_dict()
-    demog_dict={"MeasurementToolMetadata": {"Description": 'Health',
+    health_dict={"MeasurementToolMetadata": {"Description": 'Health',
             "TermURL": ''}}
-    for i in demog_items:
-            r=demog_items[i]
+    for i in health_items:
+            r=health_items[i]
             if not pandas.isnull(r.options):
                 itemoptions=eval(r.options)
             else:
                 itemoptions=None
             itemid='_'.join(r['id'].split('_')[:3])
-            assert itemid not in demog_dict  # check for duplicates
-            demog_dict[itemid]={}
-            demog_dict[itemid]['Description']=r.text
-            demog_dict[itemid]['Levels']={}
+            assert itemid not in health_dict  # check for duplicates
+            health_dict[itemid]={}
+            health_dict[itemid]['Description']=r.text
+            health_dict[itemid]['Levels']={}
             if itemid in nominalvars:
-                demog_dict[itemid]['Nominal']=True
+                health_dict[itemid]['Nominal']=True
             levelctr=0
             if itemoptions is not None:
                 for i in itemoptions:
@@ -86,17 +92,17 @@ def get_metadata(demog_items):
                         levelctr+=1
                     else:
                         value=i['value']
-                    demog_dict[itemid]['Levels'][value]=i['text']
+                    health_dict[itemid]['Levels'][value]=i['text']
     #rename according to more useful names
-    demog_dict_renamed={}
-    for k in demog_dict.keys():
+    health_dict_renamed={}
+    for k in health_dict.keys():
         if not k in id_to_name.keys():
-            demog_dict_renamed[k]=demog_dict[k]
+            health_dict_renamed[k]=health_dict[k]
         else:
-            demog_dict_renamed[id_to_name[k]]=demog_dict[k]
-    return demog_dict_renamed
+            health_dict_renamed[id_to_name[k]]=health_dict[k]
+    return health_dict_renamed
 
-def add_demog_item_labels(data):
+def add_health_item_labels(data):
     item_ids=[]
     for i,r in data.iterrows():
         item_ids.append('_'.join(r['id'].split('_')[:3]))
@@ -120,8 +126,8 @@ def fix_item(d,v,metadata):
         metadata=metadata_reverse_scale(metadata)
     return d,metadata
 
-def save_demog_data(data,survey_metadata,
-              outdir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses/surveydata'):
+def save_health_data(data,survey_metadata,
+              outdir=basedir + '/surveydata'):
     id_to_name,nominalvars=setup_itemid_dict()
     if not os.path.exists(outdir):
         os.mkdir(outdir)
@@ -147,8 +153,8 @@ def save_demog_data(data,survey_metadata,
 if __name__=='__main__':
     id_to_name,nominalvars=setup_itemid_dict()
     data,basedir=get_data()
-    demog_items=get_demog_items(data)
-    demog_metadata=get_metadata(demog_items)
-    data=add_demog_item_labels(data)
-    datadir,surveydata_renamed=save_demog_data(data,demog_metadata)
-    metadatadir=write_metadata(demog_metadata,'health.json')
+    health_items=get_health_items(data)
+    health_metadata=get_metadata(health_items)
+    data=add_health_item_labels(data)
+    datadir,surveydata_renamed=save_health_data(data,health_metadata)
+    metadatadir=write_metadata(health_metadata,'health.json')

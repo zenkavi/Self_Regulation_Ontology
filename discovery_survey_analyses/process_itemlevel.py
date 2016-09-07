@@ -9,6 +9,8 @@ import numpy,pandas
 import os
 import json
 
+token, basedir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
+
 survey_longnames={'eating_survey':'Eating survey', 
                   'erq_survey':'Emotion regulation questionnaire', 
                   'impulsive_venture_survey':"I7 impulsiveness and venturesomeness survey", 
@@ -54,7 +56,7 @@ survey_termurls={'erq_survey':"http://www.cognitiveatlas.org/term/id/trm_56bbead
                 'mpq_control_survey':"http://www.cognitiveatlas.org/term/id/trm_55a6aa62c54f8"}              
 
                 
-def get_data(basedir='/Users/poldrack/code/Self_Regulation_Ontology'):
+def get_data(basedir=basedir):
 
     datafile=os.path.join(basedir,'items.csv')
 
@@ -75,7 +77,7 @@ def get_survey_items(data):
 
 
 def save_metadata(survey_items,
-                  outdir='/Users/poldrack/code/Self_Regulation_Ontology/metadata'):
+                  outdir=basedir + 'metadata'):
 
     if not os.path.exists(outdir):
         os.mkdir(outdir)
@@ -109,7 +111,7 @@ def add_survey_item_labels(data):
     return data
         
 def save_data(data,survey_metadata,
-              outdir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses/surveydata'):
+              outdir=basedir + 'discovery_survey_analyses/surveydata'):
     
     if not os.path.exists(outdir):
         os.mkdir(outdir)
