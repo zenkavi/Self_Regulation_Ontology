@@ -45,8 +45,9 @@ workers = []
 pay_list = [pay.total.get(inverse_lookup.get(w,'not found'),'not_found') if pay.base.get(inverse_lookup.get(w,'not found'),'not_found') != 60 else pay.bonuses.get(inverse_lookup.get(w,'not found'),'not_found') for w in workers]
 
 #load Data
-token, base_dir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
-data_dir = base_dir + 'Data/'
+token = get_info('expfactory_token')
+data_dir=get_info('base_directory') + 'Data/'
+
 
 # read preprocessed data
 data = pd.read_json(data_dir + 'mturk_discovery_data_post.json')

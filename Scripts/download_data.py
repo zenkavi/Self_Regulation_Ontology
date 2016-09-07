@@ -19,8 +19,8 @@ if job == 'more':
 if job in ['download', 'all']:
     action = raw_input('Overwrite data or append new data to previous file? Type "overwrite" or "append"')       
         
-token, base_dir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
-data_dir = base_dir + 'Data/'
+token = get_info('expfactory_token')
+data_dir=get_info('base_directory') + 'Data/'
 
 if job == 'download' or job == "all":
     #***************************************************
@@ -42,7 +42,7 @@ if job == 'download' or job == "all":
     f = open(token)
     access_token = f.read().strip()  
     try:
-        os.remove(data_dir + 'mturk_extras.json')
+        os.remove(data_dir + 'mturk_data_extras.json')
     except OSError:
         pass
     data = load_data(data_dir, access_token, filters = filters, action = action, battery = 'Self Regulation Battery')

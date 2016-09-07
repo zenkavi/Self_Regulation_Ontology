@@ -8,15 +8,12 @@ This is a temporary script file.
 import numpy,pandas
 import os
 import json
-# ensure ascii encoding is correct
-import sys
-reload(sys)
-sys.setdefaultencoding('utf-8')
 
 from metadata_utils import write_metadata,metadata_reverse_scale
 
-token, basedir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
-basedir += 'discovery_survey_analyses'
+from utils import get_info
+
+basedir=os.path.join(get_info('base_directory'),'discovery_survey_analyses')
 
 def get_data(basedir=basedir):
 

@@ -8,10 +8,6 @@ This is a temporary script file.
 import numpy,pandas
 import os
 import json
-# ensure ascii encoding is correct
-import sys
-reload(sys)
-sys.setdefaultencoding('utf-8')
 
 from metadata_utils import metadata_subtract_one,metadata_replace_zero_with_nan
 from metadata_utils import metadata_change_two_to_zero_for_no,metadata_reverse_scale
