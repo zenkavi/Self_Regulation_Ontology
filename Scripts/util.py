@@ -46,7 +46,6 @@ def anonymize_data(data):
 #***************************************************
 # ********* Helper Functions **********************
 #**************************************************
-
 def calc_bonuses(data):
     bonus_experiments = ['angling_risk_task_always_sunny', 'two_stage_decision',
                          'columbia_card_task_hot', 'columbia_card_task_cold', 'hierarchical_rule',
@@ -58,7 +57,7 @@ def calc_bonuses(data):
             bonus = df.iloc[-1].get('performance_var','error')
             if pd.isnull(bonus):
                 bonus = df.iloc[-5].get('performance_var','error')
-            if isinstance(bonus,unicode):
+            if isinstance(bonus,str):
                 bonus = json.loads(bonus)['amount']
             bonuses.append(bonus)
         else:
@@ -329,9 +328,9 @@ def print_time(data, time_col = 'ontask_time'):
     print(time)
     return time
     
+               
 def quality_check(data):
     start_time = time()
-    passed_QC = []
     rt_thresh_lookup = {
         'angling_risk_task_always_sunny': 0,
         'simple_reaction_time': 150    
@@ -345,102 +344,42 @@ def quality_check(data):
     }
     missed_thresh_lookup = {
     }
-    
-    for i,row in data.iterrows():
-        if (i%100 == 0):
-            print(i)
-        QC = True
-        if row['experiment_template'] in 'jspsych':
-            exp_id = row['experiment_exp_id']
-            rt_thresh = rt_thresh_lookup.get(exp_id,200)
-            acc_thresh = acc_thresh_lookup.get(exp_id,.6)
-            missed_thresh = missed_thresh_lookup.get(exp_id,.25)
-            df = extract_row(row)
-            if exp_id not in ['psychological_refractory_period_two_choices', 'two_stage_decision']:
-                if (df['rt'].median < rt_thresh) or \
-                   (np.mean(df.get('correct',1)) < acc_thresh) or \
-                   (np.mean(df['rt'] == -1) > missed_thresh):
-                       QC = False
-            elif exp_id == 'psychological_refractory_period_two_choices':
-                if (df['choice1_rt'].median < rt_thresh) or \
-                   (np.mean(df['choice1_correct']) < acc_thresh) or \
-                   (((df['choice1_rt']==-1) | (df['choice2_rt'] <= -1)).mean() > missed_thresh):
-                       QC = False
-            elif exp_id == 'two_stage_decision':
-                if (df['rt_first'].median < rt_thresh) or \
-                    (df['rt_second'].median < rt_thresh) or \
-                   ((df.trial_id == "incomplete_trial").mean() > missed_thresh):
-                       QC = False
-        passed_QC.append(QC)
-    data.loc[:,'passed_QC'] = passed_QC
-    finish_time = (time() - start_time)/60
-    print('Finished QC. Time taken: ' + str(finish_time))
-           
-        
-def quality_check(data):
-    start_time = time()
-    passed_QC = []
-    rt_thresh_lookup = {
-        'angling_risk_task_always_sunny': 0,
-        'simple_reaction_time': 150    
-    }
-    acc_thresh_lookup = {
-        'digit_span': 0,
-        'hierarchical_rule': 0,
-        'probabilistic_selection': 0,
-        'shift_task': 0,
-        'spatial_span': 0
-    }
-    missed_thresh_lookup = {
-    }
+    templates = data.groupby('experiment_exp_id').experiment_template.unique()
     data.loc[:,'passed_QC'] = True
     for exp in data.experiment_exp_id.unique():
-        df = extract_experiment(data, exp)
-        rt_thresh = rt_thresh_lookup.get(exp_id,200)
-        acc_thresh = acc_thresh_lookup.get(exp_id,.6)
-        missed_thresh = missed_thresh_lookup.get(exp_id,.25)
-        df.groupby('worker_id').rt.median() < rt_thresh
-        df.groupby('worker_id').correct.mean() < acc_thresh
-        
-        
-    
-    
-    for i,row in data.iterrows():
-        if (i%100 == 0):
-            print(i)
-        QC = True
-        if row['experiment_template'] in 'jspsych':
-            exp_id = row['experiment_exp_id']
-            rt_thresh = rt_thresh_lookup.get(exp_id,200)
-            acc_thresh = acc_thresh_lookup.get(exp_id,.6)
-            missed_thresh = missed_thresh_lookup.get(exp_id,.25)
-            df = extract_row(row)
-            if exp_id not in ['psychological_refractory_period_two_choices', 'two_stage_decision']:
-                if (df['rt'].median < rt_thresh) or \
-                   (np.mean(df.get('correct',1)) < acc_thresh) or \
-                   (np.mean(df['rt'] == -1) > missed_thresh):
-                       QC = False
-            elif exp_id == 'psychological_refractory_period_two_choices':
-                if (df['choice1_rt'].median < rt_thresh) or \
-                   (np.mean(df['choice1_correct']) < acc_thresh) or \
-                   (((df['choice1_rt']==-1) | (df['choice2_rt'] <= -1)).mean() > missed_thresh):
-                       QC = False
-            elif exp_id == 'two_stage_decision':
-                if (df['rt_first'].median < rt_thresh) or \
-                    (df['rt_second'].median < rt_thresh) or \
-                   ((df.trial_id == "incomplete_trial").mean() > missed_thresh):
-                       QC = False
-        passed_QC.append(QC)
-    data.loc[:,'passed_QC'] = passed_QC
+        try:
+            if templates.loc[exp] == 'jspsych':
+                print('Running QC on ' + exp)
+                df = extract_experiment(data, exp)
+                rt_thresh = rt_thresh_lookup.get(exp,200)
+                acc_thresh = acc_thresh_lookup.get(exp,.6)
+                missed_thresh = missed_thresh_lookup.get(exp,.25)
+                
+                if exp == 'two_stage_decision':
+                    passed_rt = (df.groupby('worker_id').median()[['rt_first','rt_second']] >= rt_thresh).all(axis = 1)
+                    passed_miss = df.groupby('worker_id').trial_id.agg(lambda x: np.mean(x == 'incomplete_trial')) < missed_thresh
+                elif exp == 'psychological_refractory_period_two_choices':
+                    passed_rt = (df.groupby('worker_id').median()[['choice1_rt','choice2_rt']] >= rt_thresh).all(axis = 1)
+                    passed_acc = df.groupby('worker_id').choice1_correct.mean() >= acc_thresh
+                    passed_miss = ((df.groupby('worker_id').choice1_rt.agg(lambda x: np.mean(x!=-1) >= missed_thresh)) \
+                                        + (df.groupby('worker_id').choice2_rt.agg(lambda x: np.mean(x>-1) >= missed_thresh))) == 2
+                else:
+                    passed_rt = df.groupby('worker_id').rt.median() >= rt_thresh
+                    if 'correct' in df.columns:
+                        passed_acc = df.groupby('worker_id').correct.mean() >= acc_thresh
+                    passed_miss = df.groupby('worker_id').rt.agg(lambda x: np.mean(x == -1)) < missed_thresh
+                
+                passed = passed_rt & passed_acc & passed_miss
+                failed = passed[passed == False]
+                for subj in failed.index:
+                    data.loc[(data.experiment_exp_id == exp) & (data.worker_id == subj),'passed_QC'] = False
+        except AttributeError as e:
+            print('QC could not be run on experiment %s' % exp)
+            print(e)
     finish_time = (time() - start_time)/60
     print('Finished QC. Time taken: ' + str(finish_time))
-    
-    
-    
-    
-    
-    
 
+    
     
     
     
