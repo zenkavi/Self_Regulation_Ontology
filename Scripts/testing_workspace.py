@@ -1,7 +1,6 @@
 from expanalysis.results import get_filters
 from expanalysis.experiments.processing import extract_row, post_process_data, post_process_exp, extract_experiment, calc_DVs, extract_DVs,flag_data,  get_DV, generate_reference
 from expanalysis.experiments.stats import results_check
-from expanalysis.experiments.utils import result_filter
 import json
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -71,7 +70,7 @@ items_pivot_df.to_csv('/home/ian/tmp/items_pivot.csv')
 # ********* DVs **********************
 # ************************************
 exp = data.experiment_exp_id.unique()[5]
-print exp 
+print(exp) 
 dv=get_DV(data,exp)
 np.mean([i['Release_clicks'] for i in dv[0].values()])
 sns.plt.hist([i['alerting_rt'] for i in dv[0].values()])
