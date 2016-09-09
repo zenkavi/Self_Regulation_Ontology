@@ -10,14 +10,11 @@ import seaborn as sns
 from sklearn.decomposition import PCA
 from util import *
 
-# set discovery sample
-seed = 1960
-n = 500
-discovery_n = 200
-subjects = ['s' + str(i).zfill(3) for i in range(1,n+1)]
-subject_order = set_discovery_sample(n, discovery_n, seed)
-subject_assignment_df = pd.DataFrame({'dataset': subject_order}, index = subjects)
-subject_assignment_df.to_csv('../subject_assignment.csv')
+#work around for spyder bug in python 3
+import warnings
+warnings.simplefilter(action = "ignore", category = RuntimeWarning)
+
+
 
 #***************************************************
 # ********* Load Data **********************
@@ -65,6 +62,7 @@ items_df = get_items(data)
 items_pivot_df = items_df.pivot('worker','item_ID','coded_response')
 items_df.to_csv('/home/ian/tmp/items.csv')
 items_pivot_df.to_csv('/home/ian/tmp/items_pivot.csv')
+
 
 # ************************************
 # ********* DVs **********************
