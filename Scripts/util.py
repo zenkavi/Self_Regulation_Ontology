@@ -341,7 +341,8 @@ def quality_check(data):
         'probabilistic_selection': 0,
         'shift_task': 0,
         'spatial_span': 0,
-        'tower_of_london': 0
+        'tower_of_london': 0,
+        'information_sampling_task': 0
     }
     missed_thresh_lookup = {
         'tower_of_london': 2
@@ -371,7 +372,7 @@ def quality_check(data):
                     passed_rt = df.groupby('worker_id').rt.median() >= rt_thresh
                     passed_acc = df.query('trial_id == "feedback"').groupby('worker_id').correct.mean() >= acc_thresh
                     # Labeling someone as "missing" too many problems if they don't make enough moves
-                    passed_miss = df.groupby(['worker_id','problem_id']).num_moves_made.max().reset_index().groupby('worker_id').mean() >= missed_thresh
+                    passed_miss = (df.groupby(['worker_id','problem_id']).num_moves_made.max().reset_index().groupby('worker_id').mean() >= missed_thresh).num_moves_made
                 else:
                     passed_rt = df.groupby('worker_id').rt.median() >= rt_thresh
                     if 'correct' in df.columns:
