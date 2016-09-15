@@ -1,14 +1,9 @@
-from expanalysis.results import get_filters
 from expanalysis.experiments.processing import extract_row, post_process_data, post_process_exp, extract_experiment, calc_DVs, extract_DVs,flag_data,  get_DV, generate_reference
-from expanalysis.experiments.stats import results_check
 from graphs import Graph_Analysis
 import json
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from sklearn.decomposition import PCA
 from util import *
 
 #work around for spyder bug in python 3
@@ -56,74 +51,49 @@ data = pd.read_json(data_dir + 'mturk_discovery_data_post.json').reset_index(dro
 #DV_df = pd.read_json(data_dir + 'mturk_discovery_DV.json')
 DV_df, valence_df = extract_DVs(data,use_group_fun = False)
 
-#flip negative signed valence DVs
-flip_df = valence_df.replace(to_replace ={'Pos': 1, 'NA': 1, 'Neg': -1})
-DV_df*flip_df
+#save data
+save_task_data(data_dir, data)
+
+    
+
 # ************************************
 # ********* Save Components of Data **
 # ************************************
 items_df = get_items(data)
 items_pivot_df = items_df.pivot('worker','item_ID','coded_response')
-items_df.to_csv('/home/ian/tmp/items.csv')
-items_pivot_df.to_csv('/home/ian/tmp/items_pivot.csv')
-
 
 # ************************************
 # ********* DVs **********************
 # ************************************
-exp = data.experiment_exp_id.unique()[5]
-print(exp) 
-dv=get_DV(data,exp)
-np.mean([i['Release_clicks'] for i in dv[0].values()])
-sns.plt.hist([i['alerting_rt'] for i in dv[0].values()])
-
 # get all DVs
+
+#flip negative signed valence DVs
+flip_df = valence_df.replace(to_replace ={'Pos': 1, 'NA': 1, 'Neg': -1}).iloc[0]
+for c in DV_df.columns:
+    print(c)
+    try:
+        DV_df.loc[:,c] = DV_df.loc[:,c] * flip_df.loc[c]
+    except TypeError:
+        continue
+    
 #drop na columns
 DV_df.dropna(axis = 1, how = 'all', inplace = True)
-
-drop_vars = 'missed_percent|tower|demographics|avg_rt|std_rt|overall_accuracy|post_error_slowing'
+# drop other columns of no interest
+drop_vars = "missed_percent|acc|avg_rt_error|std_rt_error|avg_rt|std_rt|post_error_slowing|\
+congruency_seq_rt|congruency_seq_acc|demographics"
 subset = DV_df.drop(DV_df.filter(regex=drop_vars).columns, axis = 1)
+
+#make data subsets:
 survey_df = subset.filter(regex = 'survey')
-survey_df = survey_df.drop(survey_df.filter(regex = 'demographics').columns, axis = 1)
 
-EZ_df = subset.filter(regex = 'thresh|drift')
-rt_df = DV_df.filter(regex = 'avg_rt')
+# plot graph
+Graph_Analysis(subset.corr().dropna(axis=[0,1], how='all'), threshold = .2)
+Graph_Analysis(abs(subset.corr().dropna(axis=[0,1], how='all')), threshold = .2)
+Graph_Analysis(survey_df.corr().dropna(axis=[0,1], how='all'), threshold = .4)
 
-plot_df = subset
+# dendrogram heatmap
+plot_df = subset.corr()
 plot_df.columns = [' '.join(x.split('_')) for x in  plot_df.columns]
 fig = dendroheatmap(plot_df.corr(), labels = True)
-fig.savefig('/home/ian/EZ_df.png')
-np.mean(np.mean(plot_df.corr().mask(np.triu(np.ones(plot_df.corr().shape)).astype(np.bool))))
-
-# ***************************
-#PCA
-# ***************************
-
-X = DV_df.corr()
-pca = PCA(n_components = 'mle')
-pca.fit(X)
-Xt = pca.transform(X)
-[abs(np.corrcoef(pca.components_[0,:],X.iloc[i,:]))[0,1] for i in range(len(X))]
-
-#PCA plotting
-selection = 'EZ'
-fig, ax = sns.plt.subplots()
-ax.scatter(Xt[:,0],Xt[:,1],100, c = ['r' if selection in x else 'b' for x in X.columns])
-
-for i, txt in enumerate(X.columns):
-    if selection in txt:
-        ax.annotate(txt, (Xt[i,0],Xt[i,1]))
-
-fig = plt.figure(1, figsize=(12, 9))
-plt.clf()
-ax = Axes3D(fig, rect=[0, 0, .95, 1], elev=48, azim=134)
-ax.scatter(Xt[:, 0], Xt[:, 1], Xt[:, 2], c = ['r' if selection in x else 'b' for x in X.columns], cmap=plt.cm.spectral)
-    
-
-
-
-sns.plt.plot(pca.explained_variance_ratio_)
-summary = results_check(data, silent = True, plot = True)
-
 
 

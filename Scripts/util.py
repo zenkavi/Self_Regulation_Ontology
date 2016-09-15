@@ -359,6 +359,7 @@ def quality_check(data):
                 acc_thresh = acc_thresh_lookup.get(exp,.6)
                 missed_thresh = missed_thresh_lookup.get(exp,.25)
                 
+                # special cases...
                 if exp == 'two_stage_decision':
                     passed_rt = (df.groupby('worker_id').median()[['rt_first','rt_second']] >= rt_thresh).all(axis = 1)
                     passed_miss = df.groupby('worker_id').trial_id.agg(lambda x: np.mean(x == 'incomplete_trial')) < missed_thresh
@@ -373,6 +374,7 @@ def quality_check(data):
                     passed_acc = df.query('trial_id == "feedback"').groupby('worker_id').correct.mean() >= acc_thresh
                     # Labeling someone as "missing" too many problems if they don't make enough moves
                     passed_miss = (df.groupby(['worker_id','problem_id']).num_moves_made.max().reset_index().groupby('worker_id').mean() >= missed_thresh).num_moves_made
+                # everything else
                 else:
                     passed_rt = df.groupby('worker_id').rt.median() >= rt_thresh
                     if 'correct' in df.columns:
@@ -393,8 +395,12 @@ def quality_check(data):
 
     
 def save_task_data(data_loc, data):
+    path = data_loc + 'Individual_Measures/'
+    if not os.path.exists(path):
+        os.makedirs(path)
     for exp_id in data.experiment_exp_id.unique():
-        extract_experiment(data,exp_id).to_json(data_loc + exp_id + '.json')
+        print('Saving %s...' % exp_id)
+        extract_experiment(data,exp_id).to_json(path + exp_id + '.json')
     
     
     

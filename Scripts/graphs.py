@@ -153,7 +153,7 @@ def Graph_Analysis(data, threshold = .15, weight = True, layout = 'kk', reorder 
                         'vertex_size': [c*200+100 for c in G.vs['eigen_centrality']], 
                         'vertex_label': G.vs['id'],
                         'vertex_label_size': 75,
-                        'bbox': (4000,4000),
+                        'bbox': (6000,6000),
                         'margin': 500}
         if weight:
             visual_style['edge_width'] = [w*10 for w in G.es['weight']]
