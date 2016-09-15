@@ -2,7 +2,6 @@ from expanalysis.experiments.jspsych import calc_time_taken, get_post_task_respo
 from expanalysis.experiments.processing import post_process_data, extract_DVs
 from expanalysis.results import get_filters
 import json
-import os
 import pandas as pd
 from util import anonymize_data, download_data, get_bonuses, get_info, get_pay, quality_check
 
@@ -70,7 +69,6 @@ if job in ['extras', 'all']:
     get_post_task_responses(data)   
     
     # save data
-    os.remove(data_dir + 'mturk_data.json')
     data.to_json(data_dir + 'mturk_data_extras.json')
     
     # calculate pay

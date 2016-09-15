@@ -392,7 +392,9 @@ def quality_check(data):
     print('Finished QC. Time taken: ' + str(finish_time))
 
     
-    
+def save_task_data(data_loc, data):
+    for exp_id in data.experiment_exp_id.unique():
+        extract_experiment(data,exp_id).to_json(data_loc + exp_id + '.json')
     
     
     
