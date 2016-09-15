@@ -1,6 +1,7 @@
 from expanalysis.results import get_filters
 from expanalysis.experiments.processing import extract_row, post_process_data, post_process_exp, extract_experiment, calc_DVs, extract_DVs,flag_data,  get_DV, generate_reference
 from expanalysis.experiments.stats import results_check
+from graphs import Graph_Analysis
 import json
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -52,9 +53,12 @@ except Exception:
 data = pd.read_json(data_dir + 'mturk_discovery_data_post.json').reset_index(drop = True)
 
 # get DV df
-DV_df = pd.read_json(data_dir + 'mturk_discovery_DV.json')
+#DV_df = pd.read_json(data_dir + 'mturk_discovery_DV.json')
+DV_df, valence_df = extract_DVs(data,use_group_fun = False)
 
-
+#flip negative signed valence DVs
+flip_df = valence_df.replace(to_replace ={'Pos': 1, 'NA': 1, 'Neg': -1})
+DV_df*flip_df
 # ************************************
 # ********* Save Components of Data **
 # ************************************
@@ -74,6 +78,9 @@ np.mean([i['Release_clicks'] for i in dv[0].values()])
 sns.plt.hist([i['alerting_rt'] for i in dv[0].values()])
 
 # get all DVs
+#drop na columns
+DV_df.dropna(axis = 1, how = 'all', inplace = True)
+
 drop_vars = 'missed_percent|tower|demographics|avg_rt|std_rt|overall_accuracy|post_error_slowing'
 subset = DV_df.drop(DV_df.filter(regex=drop_vars).columns, axis = 1)
 survey_df = subset.filter(regex = 'survey')

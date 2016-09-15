@@ -119,7 +119,7 @@ if job in ['post', 'all']:
     
     if 'discovery' in sample:
         #calculate DVs
-        DV_df = extract_DVs(discovery_data)
+        DV_df = extract_DVs(discovery_data, use_group_fun = False)
         DV_df.to_json(data_dir + 'mturk_discovery_DV.json')
 
     
