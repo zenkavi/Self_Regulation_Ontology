@@ -57,7 +57,7 @@ def calc_bonuses(data):
             bonus = df.iloc[-1].get('performance_var','error')
             if pd.isnull(bonus):
                 bonus = df.iloc[-5].get('performance_var','error')
-            if isinstance(bonus,str):
+            if not isinstance(bonus,(int,float)):
                 bonus = json.loads(bonus)['amount']
             bonuses.append(bonus)
         else:
