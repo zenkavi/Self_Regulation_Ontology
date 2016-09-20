@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import bct
 import igraph
 from itertools import combinations 
@@ -14,26 +12,7 @@ from sklearn.metrics.cluster import normalized_mutual_info_score
 import warnings
 warnings.simplefilter(action = "ignore", category = RuntimeWarning)
 
-# Utilities/Small World
-def simulate(rep = 1000, fun = lambda: gen_random_graph(100,100)):
-    output = []
-    for _ in range(rep):
-        output.append(fun())
-    return output
-        
-def gen_random_graph(n = 10, m = 10, template_graph = None):
-    if template_graph:
-        G = template_graph.copy()
-        G.rewire() # bct.randomizer_bin_und works on binary adjrices
-    else:
-        #  Generates a random binary graph with n vertices and m edges
-        G = igraph.Graph.Erdos_Renyi(n = n, m = m)    
-    # get cluster coeffcient. Transitivity is closed triangles/total triplets
-    c = G.transitivity_undirected() 
-    # get average (shortest) path length
-    l = G.average_path_length()
-    return (G,c,l,c/l)
-
+# Utilities
 def calc_small_world(G):
     # simulate random graphs with same number of nodes and edges
     sim_out = simulate(rep = 10000, fun = lambda: gen_random_graph(n = len(G.vs), m = len(G.es)))
@@ -47,6 +26,26 @@ def calc_small_world(G):
     Sigma = Gamma/Lambda
     return (Sigma, Gamma, Lambda)
 
+def gen_random_graph(n = 10, m = 10, template_graph = None):
+    if template_graph:
+        G = template_graph.copy()
+        G.rewire() # bct.randomizer_bin_und works on binary adjrices
+    else:
+        #  Generates a random binary graph with n vertices and m edges
+        G = igraph.Graph.Erdos_Renyi(n = n, m = m)    
+    # get cluster coeffcient. Transitivity is closed triangles/total triplets
+    c = G.transitivity_undirected() 
+    # get average (shortest) path length
+    l = G.average_path_length()
+    return (G,c,l,c/l)
+
+def graph_to_matrix(G):
+    if 'weight' in G.es.attribute_names():
+        graph_mat = np.array(G.get_adjacency(attribute = 'weight').data)
+    else:
+        graph_mat = np.array(G.get_adjacency().data)
+    return graph_mat
+    
 def pairwise_MI(data):
     columns = data.columns
     MI_df = pd.DataFrame(index = columns, columns = columns)
@@ -57,7 +56,21 @@ def pairwise_MI(data):
         MI_df.loc[c2,c1] = MI
     return MI_df.astype(float)
     
+def simulate(rep = 1000, fun = lambda: gen_random_graph(100,100)):
+    output = []
+    for _ in range(rep):
+        output.append(fun())
+    return output
+          
+    
+def threshold_proportional_sign(W, threshold):
+    sign = np.sign(W)
+    thresh_W = bct.threshold_proportional(np.abs(W), threshold)
+    W = thresh_W * sign
+    return W
+    
 # Visualization
+    
 def get_visual_style(G,  layout = 'kk', vertex_size = None, size = 1000, labels = None):
     """
     Creates an appropriate visual style for a graph. 
@@ -93,7 +106,7 @@ def get_visual_style(G,  layout = 'kk', vertex_size = None, size = 1000, labels 
     # each community is a different color palette, darks colors are more central to the module
     if 'community' in G.vs.attribute_names():
         community_count = np.max(G.vs['community'])
-        if community_count <= 6 and 'within_module_degree' in G.vs.attribute_names():
+        if community_count <= 6 and 'subgraph_eigen_centrality' in G.vs.attribute_names():
             num_colors = 20.0
             palettes = ['Blues','Reds','Greens','Greys','Purples','Oranges']
             
@@ -115,11 +128,18 @@ def get_visual_style(G,  layout = 'kk', vertex_size = None, size = 1000, labels 
                     'bbox': (size,size),
                     'margin': size/20.0}
     if 'weight' in G.es.attribute_names():
-        visual_style['edge_width'] = [w*4 for w in G.es['weight']]
+        edge_threshold = 0
+        visual_style['edge_width'] = [abs(w)**1.4*size/200.0 if abs(w) > edge_threshold else 0 for w in G.es['weight']]
+        if np.sum([e<0 for e in G.es['weight']]) > 0:
+            visual_style['edge_color'] = [['#3399FF','#202020','#FF6666'][int(np.sign(w)+1)] for w in G.es['weight']]
+        else:
+            visual_style['edge_color'] = '#202020'
     if vertex_size:
         visual_style['vertex_size'] = [c*(size/20.0)+(size/50.0) for c in G.vs[vertex_size]]
     if labels:
         visual_style['vertex_label'] = labels
+    elif 'id' in G.vs.attribute_names():
+        visual_style['vertex_label'] = G.vs['id']
     else:
         visual_style['vertex_label'] = range(len(G.vs))
     
@@ -165,8 +185,63 @@ def print_community_members(G, lookup = {}, file = None):
         pprint(to_print, stream = f)
         print('', file = f)
         
+# community functions
+def community_reorder(G):
+    assert set(['community']) <=  set(G.vs.attribute_names()), \
+        'Graph must have "community" and "id" as a vertex attributes'
+    community = G.vs['community']
+    reorder_index = np.argsort(community)
+    # hold graph attributes:
+    attribute_names = G.vs.attributes()
+    attribute_values = [G.vs[a] for a in attribute_names]
+    attribute_df = pd.DataFrame(attribute_values, index = attribute_names).T
+    sorted_df = attribute_df.reindex(reorder_index).reset_index()
+    
+    # rearrange connectivity matrix
+    graph_mat = graph_to_matrix(G)
+    graph_mat = graph_mat[:,reorder_index][reorder_index]
+
+    # make a binary version if not weighted
+    if 'weight' in G.es.attribute_names():
+        G = igraph.Graph.Weighted_Adjacency(graph_mat.tolist(), mode = 'undirected')
+    else:
+        G = igraph.Graph.Adjacency(graph_mat.tolist(), mode = 'undirected')
+    for name in attribute_names:
+        G.vs[name] = sorted_df[name]
+    
+    return G
+        
+            
+def get_subgraph(G, community = 1):
+    assert set(['community']) <=  set(G.vs.attribute_names()), \
+        'Graph must have "community" and "id" as a vertex attributes'
+    subgraph = G.induced_subgraph([v for v in G.vs if v['community'] == community])
+    subgraph.vs['community'] = subgraph.vs['subgraph_community']
+    subgraph.vs['eigen_centrality'] = subgraph.vs['subgraph_eigen_centrality']
+    del subgraph.vs['subgraph_community']
+    del subgraph.vs['subgraph_eigen_centrality']
+    return subgraph
+      
+def subgraph_analysis(G, community_alg = None):
+    assert set(['community','id']) <=  set(G.vs.attribute_names()), \
+        'Graph must have "community" and "id" as a vertex attributes'
+    for c in np.unique(G.vs['community']):
+        subgraph = G.induced_subgraph([v for v in G.vs if v['community'] == c])
+        subgraph_mat = graph_to_matrix(subgraph)
+        if 'weight' in G.es.attribute_names():
+            subgraph.vs['eigen_centrality'] = subgraph.eigenvector_centrality(directed = False, weights = subgraph.es['weight'])
+        else:
+            subgraph.vs['eigen_centrality'] = subgraph.eigenvector_centrality(directed = False)
+        G.vs.select(lambda v: v['id'] in subgraph.vs['id'])['subgraph_eigen_centrality'] = subgraph.vs['eigen_centrality']
+        if community_alg:
+            comm, Q = community_alg(subgraph_mat)
+            subgraph.vs['community'] = comm
+            G.vs.select(lambda v: v['id'] in subgraph.vs['id'])['subgraph_community'] = subgraph.vs['community']
+            
 # Main graph analysis function
-def Graph_Analysis(data, edge_metric = 'pearson', threshold = .15, weight = True, reorder = True, display = True, layout = 'kk', **kwargs):
+def Graph_Analysis(data, thresh_func = bct.threshold_proportional, community_alg = bct.community_louvain, 
+                   edge_metric = 'pearson', threshold = .15, weight = True, reorder = True, 
+                   display = True, layout = 'kk', print_options = {}, plot_options = {}):
     """
     Creates and displays graphs of a data matrix.
     
@@ -174,6 +249,13 @@ def Graph_Analysis(data, edge_metric = 'pearson', threshold = .15, weight = True
     ----------
     data: pandas DataFrame
         data to use to create the graph
+    thresh_func: function that takes in a connectivity matrix and thresholds
+        any algorithm that returns a connectivity matrix of the same size as the original may be used.
+        intended to be used with bct.threshold_proportional or bct.threshold_absolute
+    community_alg: function that takes in a connectivity matrix and returns community assignment
+        intended to use algorithms from brain connectivity toolbox like commnity_louvain or 
+        modularity_und. Must return a list of community assignments followed by Q, the modularity
+        index
     edge_metric: str: 'pearson', 'separman' or 'MI'
         relationship metric between nodes. MI stands for mutual information. "abs_"
         may be used in front of "pearson" or "spearman" to get the absolute value
@@ -188,8 +270,10 @@ def Graph_Analysis(data, edge_metric = 'pearson', threshold = .15, weight = True
         if True, display the graph and print node membership
     layout: str: 'kk', 'circle', 'grid' or other igraph layouts, optional
         Determines how the graph is displayed
-    filey: str, optional
-        if defined, save the graph to this location
+    print_options: dict, optional
+        dictionary of arguments to be passed to print_community_members
+    plot_options: dict, optional
+        dictionary of arguments to be passed to plot_graph
         
     Returns
     ----------
@@ -208,12 +292,10 @@ def Graph_Analysis(data, edge_metric = 'pearson', threshold = .15, weight = True
             connectivity_matrix = abs(data.corr(method = edge_metric)).as_matrix()
         else:
             connectivity_matrix = data.corr(method = edge_metric).as_matrix()
-        
-    # remove diagnoal (required by bct) and uppder triangle
-    np.fill_diagonal(connectivity_matrix,0)
+            
+    #threshold and remove diagonal
+    graph_mat = thresh_func(connectivity_matrix,threshold)
     
-    #threshold
-    graph_mat = bct.threshold_proportional(connectivity_matrix,threshold)
     # make a binary version if not weighted
     if not weight:
         graph_mat = np.ceil(graph_mat)
@@ -224,46 +306,32 @@ def Graph_Analysis(data, edge_metric = 'pearson', threshold = .15, weight = True
     # community detection
     # using louvain but also bct.modularity_und which is "Newman's spectral community detection"
     # bct.modularity_louvain_und_sign
-    comm, mod = bct.community_louvain(graph_mat)
-    
-    #if reorder, reorder vertices by community membership
-    if reorder:
-        # rearrange connectivity matrix
-        column_names = column_names[np.argsort(comm)]
-        connectivity_matrix = connectivity_matrix[:,np.argsort(comm)][np.argsort(comm)]
-        # reorder community in line with reordering of data
-        comm = np.sort(comm)
-        #threshold
-        graph_mat = bct.threshold_proportional(connectivity_matrix,threshold)
-        # make a binary version if not weighted
-        if not weight:
-            graph_mat = np.ceil(graph_mat)
-            G = igraph.Graph.Adjacency(graph_mat.tolist(), mode = 'undirected')
-        else:
-            G = igraph.Graph.Weighted_Adjacency(graph_mat.tolist(), mode = 'undirected')
-    
+    comm, mod = community_alg(graph_mat)
     G.vs['community'] = comm
     G.vs['id'] = range(len(G.vs))
     G.vs['name'] = column_names
     G.vs['within_module_degree'] = bct.module_degree_zscore(graph_mat,comm)
     G.vs['part_coef'] = bct.participation_coef(graph_mat, comm)
+    
     if weight:
         G.vs['eigen_centrality'] = G.eigenvector_centrality(directed = False, weights = G.es['weight'])
     else:
         G.vs['eigen_centrality'] = G.eigenvector_centrality(directed = False)
+        
+    #if reorder, reorder vertices by community membership
+    if reorder:
+        G = community_reorder(G)
+        
+    # calculate subgraph (within-community) characteristics
+    subgraph_analysis(G, community_alg = community_alg)
     
+    # visualize
+    visual_style = {}
     if display:
         # plot community structure
-        visual_style = get_visual_style(G, layout = layout, vertex_size = 'eigen_centrality', size = 3000)
+        visual_style = get_visual_style(G, layout = layout, vertex_size = 'eigen_centrality', size = 4000)
     
         #visualize
-        if 'target' in kwargs.keys():
-            print_target = kwargs['target'] + '_vertex_names.txt'
-            kwargs['target'] = kwargs['target'] + '.pdf'
-        else:
-            print_target = None
-        print_community_members(G, lookup = verbose_lookup, file = print_target)
-        plot_graph(G, visual_style = visual_style, **kwargs)
-    return (G, graph_mat, visual_style['layout'])
-    
-    
+        print_community_members(G, **print_options)
+        plot_graph(G, visual_style = visual_style, **plot_options)
+    return (G, graph_mat, visual_style)

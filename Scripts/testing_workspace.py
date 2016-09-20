@@ -1,5 +1,5 @@
 from expanalysis.experiments.processing import extract_row, post_process_data, post_process_exp, extract_experiment, calc_DVs, extract_DVs,flag_data,  get_DV, generate_reference
-from graphs import Graph_Analysis
+from graphs import Graph_Analysis, threshold_proportional_sign
 import json
 import numpy as np
 import pandas as pd
@@ -48,7 +48,7 @@ except Exception:
 data = pd.read_json(data_dir + 'mturk_discovery_data_post.json').reset_index(drop = True)
 
 # get DV df
-#DV_df = pd.read_json(data_dir + 'mturk_discovery_DV.json')
+DV_df = pd.read_json(data_dir + 'mturk_discovery_DV.json')
 DV_df, valence_df = extract_DVs(data,use_group_fun = False)
 
 #save data
@@ -88,9 +88,20 @@ subset = DV_df.drop(DV_df.filter(regex=drop_vars).columns, axis = 1)
 survey_df = subset.filter(regex = 'survey')
 
 # plot graph
-Graph_Analysis(subset.corr().dropna(axis=[0,1], how='all'), threshold = .2)
-Graph_Analysis(abs(subset.corr().dropna(axis=[0,1], how='all')), threshold = .2)
-Graph_Analysis(survey_df.corr().dropna(axis=[0,1], how='all'), threshold = .4)
+t = 1
+em = 'spearman'
+t_f = threshold_proportional_sign
+c_a = bct.modularity_louvain_und_sign
+
+G_w, connectivity_adj, visual_style = Graph_Analysis(subset, community_alg = c_a, thresh_func = t_f, edge_metric = em, 
+                                                     reorder = True, threshold = t, weight = True, layout = 'circle', 
+                                                     print_options = {'lookup': {}, 'file': '../Plots/weighted_' + em + '.txt'}, 
+                                                    plot_options = {'inline': False, 'target': '../Plots/weighted_' + em + '.pdf'})
+                                                     
+subgraph = community_reorder(get_subgraph(G_w,1))
+print_community_members(subgraph)
+subgraph_visual_style = get_visual_style(subgraph, vertex_size = 'eigen_centrality')
+plot_graph(subgraph, visual_style = subgraph_visual_style, layout = 'circle', inline = False)
 
 # dendrogram heatmap
 plot_df = subset.corr()
