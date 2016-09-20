@@ -345,7 +345,8 @@ def quality_check(data):
         'information_sampling_task': 0
     }
     missed_thresh_lookup = {
-        'tower_of_london': 2
+        'tower_of_london': 2,
+        'information_sampling_task': 1
     }
     
     templates = data.groupby('experiment_exp_id').experiment_template.unique()
