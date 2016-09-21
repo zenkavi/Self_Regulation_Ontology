@@ -119,6 +119,7 @@ if job in ['post', 'all']:
         #calculate DVs
         DV_df, valence_df = extract_DVs(discovery_data, use_group_fun = False)
         DV_df.to_json(data_dir + 'mturk_discovery_DV.json')
+        valence_df.to_json(data_dir + 'mturk_discovery_DV_valence.json')
 
     
     
