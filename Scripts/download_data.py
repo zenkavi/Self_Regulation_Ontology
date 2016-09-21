@@ -3,7 +3,7 @@ from expanalysis.experiments.processing import post_process_data, extract_DVs
 from expanalysis.results import get_filters
 import json
 import pandas as pd
-from util import anonymize_data, download_data, get_bonuses, get_info, get_pay, quality_check
+from util import anonymize_data, download_data, get_bonuses, get_info, get_pay, remove_failed_subjects
 
 # Fix Python 2.x.
 try: input = raw_input
@@ -91,30 +91,62 @@ if job in ['post', 'all']:
     subject_assignment = pd.read_csv('../subject_assignment.csv')
     discovery_sample = list(subject_assignment.query('dataset == "discovery"').iloc[:,0])
     validation_sample = list(subject_assignment.query('dataset == "validation"').iloc[:,0])
-        
+    extra_sample =  ['s' + str(i) for i in range(501,600)]
+    
+    # create dataframe to hold failed data
+    failed_data = pd.DataFrame()
+    # preprocess extras
+    # only get extra data
+    extra_data = data.query('worker_id not in %s' % (validation_sample + discovery_sample + extra_sample)).reset_index(drop = True)
+    post_process_data(extra_data)
+    failures = remove_failed_subjects(extra_data)
+    failed_data = pd.concat([failed_data,failures])
+    extra_workers = extra_data.worker_id.unique()
+    print('Finished processing extra data')    
+    
     # preprocess and save each sample individually
     if 'discovery' in sample:
         # only get discovery data
         discovery_data = data.query('worker_id in %s' % discovery_sample).reset_index(drop = True)
         post_process_data(discovery_data)
-        quality_check(discovery_data)
+        failures = remove_failed_subjects(discovery_data)
+        failed_data = pd.concat([failed_data,failures])
+        # add extra workers if necessary
+        num_failures = len(failures.worker_id.unique())
+        if num_failures > 0:
+            makeup_workers = extra_workers[0:num_failures]
+            new_data = extra_data[extra_data['worker_id'].isin(makeup_workers)]
+            discovery_data = pd.concat([discovery_data, new_data])
+            extra_data.drop(new_data.index, inplace = True)
         discovery_data.to_json(data_dir + 'mturk_discovery_data_post.json')
         print('Finished saving post-processed discovery data')
+        
     if 'validation' in sample:
         # only get validation data
         validation_data = data.query('worker_id in %s' % validation_sample).reset_index(drop = True)
         post_process_data(validation_data)
-        quality_check(validation_data)
+        failures = remove_failed_subjects(validation_data)
+        failed_data = pd.concat([failed_data,failures])
+        # add extra workers if necessary
+        num_failures = len(failures.worker_id.unique())
+        if num_failures > 0:
+            makeup_workers = extra_workers[0:num_failures]
+            new_data = extra_data[extra_data['worker_id'].isin(makeup_workers)]
+            discovery_data = pd.concat([validation_data, new_data])
+            extra_data.drop(new_data.index, inplace = True)
         validation_data.to_json(data_dir + 'mturk_validation_data_post.json')
         print('Finished saving post-processed validation data')
+        
     if 'incomplete' in sample:
-        # only get validation data
-        incomplete_data = data.query('worker_id not in %s' % (validation_sample + discovery_sample)).reset_index(drop = True)
+        # only get incomplete data
+        incomplete_data = data.query('worker_id not in %s' % (validation_sample + discovery_sample + extra_sample)).reset_index(drop = True)
         post_process_data(incomplete_data)
-        quality_check(incomplete_data)
+        remove_failed_subjects(incomplete_data)
         incomplete_data.to_json(data_dir + 'mturk_incomplete_data_post.json')
         print('Finished saving post-processed incomplete data')
-    
+    # save failed data
+    incomplete_data.to_json(data_dir + 'mturk_failed_data_post.json')
+    print('Finished saving post-processed failed data')
     if 'discovery' in sample:
         #calculate DVs
         DV_df, valence_df = extract_DVs(discovery_data, use_group_fun = False)

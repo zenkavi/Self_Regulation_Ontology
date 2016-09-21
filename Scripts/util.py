@@ -394,6 +394,15 @@ def quality_check(data):
     finish_time = (time() - start_time)/60
     print('Finished QC. Time taken: ' + str(finish_time))
 
+def remove_failed_subjects(data):
+    if 'passed_QC' not in data.columns:
+        quality_check(data)
+    failed_workers = data.groupby('worker_id').passed_QC.sum() < 60
+    failed_workers = list(failed_workers[failed_workers].index)
+    # drop workers
+    failed_data = data[data['worker_id'].isin(failed_workers)]
+    data.drop(failed_data.index, inplace = True)
+    return failed_data
     
 def save_task_data(data_loc, data):
     path = data_loc + 'Individual_Measures/'

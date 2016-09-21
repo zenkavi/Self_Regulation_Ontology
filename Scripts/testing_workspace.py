@@ -49,7 +49,7 @@ data = pd.read_json(data_dir + 'mturk_discovery_data_post.json').reset_index(dro
 
 # get DV df
 DV_df = pd.read_json(data_dir + 'mturk_discovery_DV.json')
-DV_df, valence_df = extract_DVs(data,use_group_fun = False)
+valence_df = pd.read_json(data_dir + 'mturk_discovery_DV_valence.json')
 
 #save data
 save_task_data(data_dir, data)
