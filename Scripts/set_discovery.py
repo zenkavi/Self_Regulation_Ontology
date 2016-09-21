@@ -1,10 +1,22 @@
 
 import pandas as pd
-from util import set_discovery_sample
-
+import numpy as np
 # ************************************
 # set discovery sample
 # ************************************
+def set_discovery_sample(n, discovery_n, seed = None):
+    """
+    :n: total size of sample
+    :discovery_n: number of discovery subjects
+    :param seed: if set, use as the seed for randomization
+    :return array: array specifying which subjects, in order, are discovery/validation
+    """
+    if seed:
+        np.random.seed(seed)
+    sample = ['discovery']*discovery_n + ['validation']*(n-discovery_n)
+    np.random.shuffle(sample)
+    return sample
+    
 seed = 1960
 n = 500
 discovery_n = 200

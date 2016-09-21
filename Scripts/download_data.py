@@ -3,7 +3,7 @@ from expanalysis.experiments.processing import post_process_data, extract_DVs
 from expanalysis.results import get_filters
 import json
 import pandas as pd
-from util import anonymize_data, download_data, get_bonuses, get_info, get_pay, remove_failed_subjects
+from util import anonymize_data, calc_trial_order, download_data, get_bonuses, get_info, get_pay,  remove_failed_subjects
 
 # Fix Python 2.x.
 try: input = raw_input
@@ -67,6 +67,7 @@ if job in ['extras', 'all']:
     bonuses = get_bonuses(data)
     calc_time_taken(data)
     get_post_task_responses(data)   
+    calc_trial_order(data)
     
     # save data
     data.to_json(data_dir + 'mturk_data_extras.json')
@@ -116,7 +117,7 @@ if job in ['post', 'all']:
         if num_failures > 0:
             makeup_workers = extra_workers[0:num_failures]
             new_data = extra_data[extra_data['worker_id'].isin(makeup_workers)]
-            discovery_data = pd.concat([discovery_data, new_data])
+            discovery_data = pd.concat([discovery_data, new_data]).reset_index(drop = True)
             extra_data.drop(new_data.index, inplace = True)
         discovery_data.to_json(data_dir + 'mturk_discovery_data_post.json')
         print('Finished saving post-processed discovery data')
@@ -132,7 +133,7 @@ if job in ['post', 'all']:
         if num_failures > 0:
             makeup_workers = extra_workers[0:num_failures]
             new_data = extra_data[extra_data['worker_id'].isin(makeup_workers)]
-            discovery_data = pd.concat([validation_data, new_data])
+            validation_data = pd.concat([validation_data, new_data]).reset_index(drop = True)
             extra_data.drop(new_data.index, inplace = True)
         validation_data.to_json(data_dir + 'mturk_validation_data_post.json')
         print('Finished saving post-processed validation data')
@@ -145,7 +146,7 @@ if job in ['post', 'all']:
         incomplete_data.to_json(data_dir + 'mturk_incomplete_data_post.json')
         print('Finished saving post-processed incomplete data')
     # save failed data
-    incomplete_data.to_json(data_dir + 'mturk_failed_data_post.json')
+    failed_data.to_json(data_dir + 'mturk_failed_data_post.json')
     print('Finished saving post-processed failed data')
     if 'discovery' in sample:
         #calculate DVs

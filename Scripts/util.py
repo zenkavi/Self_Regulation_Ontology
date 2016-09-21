@@ -14,69 +14,9 @@ from scipy.cluster.hierarchy import linkage
 from scipy.cluster.hierarchy import dendrogram
 from time import time
 
-def set_discovery_sample(n, discovery_n, seed = None):
-    """
-    :n: total size of sample
-    :discovery_n: number of discovery subjects
-    :param seed: if set, use as the seed for randomization
-    :return array: array specifying which subjects, in order, are discovery/validation
-    """
-    if seed:
-        np.random.seed(seed)
-    sample = ['discovery']*discovery_n + ['validation']*(n-discovery_n)
-    np.random.shuffle(sample)
-    return sample
-
-def anonymize_data(data):
-    complete_workers = (data.groupby('worker_id').count().finishtime>=63)
-    complete_workers = list(complete_workers[complete_workers].index)
-    workers = data.groupby('worker_id').finishtime.max().sort_values().index
-    # make new ids
-    new_ids = []
-    id_index = 1
-    for worker in workers:
-        if worker in complete_workers:
-            new_ids.append('s' + str(id_index).zfill(3))
-            id_index += 1
-        else:
-            new_ids.append(worker)
-    data.replace(workers, new_ids,inplace = True)
-    return {x:y for x,y in zip(new_ids, workers)}
-
 #***************************************************
-# ********* Helper Functions **********************
+# ********* Plotting Functions **********************
 #**************************************************
-def calc_bonuses(data):
-    bonus_experiments = ['angling_risk_task_always_sunny', 'two_stage_decision',
-                         'columbia_card_task_hot', 'columbia_card_task_cold', 'hierarchical_rule',
-                         'kirby','discount_titrate','bickel_titrator']
-    bonuses = []
-    for i,row in data.iterrows():
-        if row['experiment_exp_id'] in bonus_experiments:
-            df = extract_row(row, clean = False)
-            bonus = df.iloc[-1].get('performance_var','error')
-            if pd.isnull(bonus):
-                bonus = df.iloc[-5].get('performance_var','error')
-            if not isinstance(bonus,(int,float)):
-                bonus = json.loads(bonus)['amount']
-            bonuses.append(bonus)
-        else:
-            bonuses.append(np.nan)
-    data.loc[:,'bonus'] = bonuses
-    data.loc[:,'bonus_zscore'] = data['bonus']
-    means = data.groupby('experiment_exp_id').bonus.mean()
-    std = data.groupby('experiment_exp_id').bonus.std()
-    for exp in bonus_experiments:
-        data.loc[data.experiment_exp_id == exp,'bonus_zscore'] = (data[data.experiment_exp_id == exp].bonus-means[exp])/std[exp]
-
-def check_timing(df):
-    df.loc[:, 'time_diff'] = df['time_elapsed'].diff()
-    timing_cols = pd.concat([df['block_duration'], df.get('feedback_duration'), df['timing_post_trial'].shift(1)], axis = 1)
-    df.loc[:, 'expected_time'] = timing_cols.sum(axis = 1)
-    df.loc[:, 'timing_error'] = df['time_diff'] - df['expected_time']
-    errors = [df[abs(df['timing_error']) < 500]['timing_error'].mean(), df[df['timing_error'] < 500]['timing_error'].max()]
-    return errors
-      
 def dendroheatmap(df, labels = True):
     """
     :df: plot hierarchical clustering and heatmap
@@ -133,7 +73,65 @@ def dendroheatmap_left(df, labels = True):
                            count_sort='descending', ax = ax1) 
     return fig
 
- 
+
+#***************************************************
+# ********* Helper Functions **********************
+#**************************************************
+def anonymize_data(data):
+    complete_workers = (data.groupby('worker_id').count().finishtime>=63)
+    complete_workers = list(complete_workers[complete_workers].index)
+    workers = data.groupby('worker_id').finishtime.max().sort_values().index
+    # make new ids
+    new_ids = []
+    id_index = 1
+    for worker in workers:
+        if worker in complete_workers:
+            new_ids.append('s' + str(id_index).zfill(3))
+            id_index += 1
+        else:
+            new_ids.append(worker)
+    data.replace(workers, new_ids,inplace = True)
+    return {x:y for x,y in zip(new_ids, workers)}
+    
+def calc_bonuses(data):
+    bonus_experiments = ['angling_risk_task_always_sunny', 'two_stage_decision',
+                         'columbia_card_task_hot', 'columbia_card_task_cold', 'hierarchical_rule',
+                         'kirby','discount_titrate','bickel_titrator']
+    bonuses = []
+    for i,row in data.iterrows():
+        if row['experiment_exp_id'] in bonus_experiments:
+            df = extract_row(row, clean = False)
+            bonus = df.iloc[-1].get('performance_var','error')
+            if pd.isnull(bonus):
+                bonus = df.iloc[-5].get('performance_var','error')
+            if not isinstance(bonus,(int,float)):
+                bonus = json.loads(bonus)['amount']
+            bonuses.append(bonus)
+        else:
+            bonuses.append(np.nan)
+    data.loc[:,'bonus'] = bonuses
+    data.loc[:,'bonus_zscore'] = data['bonus']
+    means = data.groupby('experiment_exp_id').bonus.mean()
+    std = data.groupby('experiment_exp_id').bonus.std()
+    for exp in bonus_experiments:
+        data.loc[data.experiment_exp_id == exp,'bonus_zscore'] = (data[data.experiment_exp_id == exp].bonus-means[exp])/std[exp]
+        
+def calc_trial_order(data):
+    sorted_data = data.sort_values(by = ['worker_id','finishtime'])
+    num_exps = data.groupby('worker_id')['finishtime'].count() 
+    order = []    
+    for x in num_exps:
+        order += range(x)
+    data.loc[sorted_data.index, 'trial_order'] = order
+    
+def check_timing(df):
+    df.loc[:, 'time_diff'] = df['time_elapsed'].diff()
+    timing_cols = pd.concat([df['block_duration'], df.get('feedback_duration'), df['timing_post_trial'].shift(1)], axis = 1)
+    df.loc[:, 'expected_time'] = timing_cols.sum(axis = 1)
+    df.loc[:, 'timing_error'] = df['time_diff'] - df['expected_time']
+    errors = [df[abs(df['timing_error']) < 500]['timing_error'].mean(), df[df['timing_error'] < 500]['timing_error'].max()]
+    return errors
+      
 def download_data(data_loc, access_token = None, filters = None, battery = None, save = True, url = None):
     start_time = time()
     #Load Results from Database
@@ -157,11 +155,6 @@ def download_data(data_loc, access_token = None, filters = None, battery = None,
     finish_time = (time() - start_time)/60
     print('Finished downloading data. Time taken: ' + str(finish_time))
     return data                 
-    
-    
-def export_to_csv(data, clean = False):
-    for exp in np.unique(data['experiment_exp_id']):
-        extract_experiment(data,exp, clean = clean).to_csv('/home/ian/' + exp + '.csv')
 
 def get_bonuses(data):
     if 'bonus_zscore' not in data.columns:
@@ -206,7 +199,6 @@ def get_info(item,infile='../Self_Regulation_Settings.txt'):
     """
     get info from settings file
     """
-    
     infodict={}
     try:
         assert os.path.exists(infile)
@@ -306,14 +298,6 @@ def heatmap(df):
     ax.set_yticklabels(df.columns[::-1], rotation=0, rotation_mode="anchor", fontsize = 'large')
     ax.set_xticklabels(df.columns, rotation=-90, rotation_mode = "anchor", ha = 'left') 
     return fig
-
-def order_by_time(data):
-    data.sort_values(['worker_id','finishtime'], inplace = True)
-    num_exps = data.groupby('worker_id')['finishtime'].count() 
-    order = []    
-    for x in num_exps:
-        order += range(x)
-    data.insert(data.columns.get_loc('data'), 'experiment_order', order)
 
 def print_time(data, time_col = 'ontask_time'):
     '''Prints time taken for each experiment in minutes
