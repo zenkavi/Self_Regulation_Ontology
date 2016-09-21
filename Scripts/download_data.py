@@ -146,6 +146,7 @@ if job in ['post', 'all']:
         incomplete_data.to_json(data_dir + 'mturk_incomplete_data_post.json')
         print('Finished saving post-processed incomplete data')
     # save failed data
+    failed_data = failed_data.reset_index(drop = True)
     failed_data.to_json(data_dir + 'mturk_failed_data_post.json')
     print('Finished saving post-processed failed data')
     if 'discovery' in sample:
