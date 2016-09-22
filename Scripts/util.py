@@ -322,19 +322,28 @@ def quality_check(data):
     acc_thresh_lookup = {
         'digit_span': 0,
         'hierarchical_rule': 0,
+        'information_sampling_task': 0,
         'probabilistic_selection': 0,
+        'ravens': 0,
         'shift_task': 0,
         'spatial_span': 0,
-        'tower_of_london': 0,
-        'information_sampling_task': 0
+        'tower_of_london': 0
+        
     }
     missed_thresh_lookup = {
-        'tower_of_london': 2,
-        'information_sampling_task': 1
+        'information_sampling_task': 1,
+        'go_nogo': 1,
+        'tower_of_london': 2
     }
     
     response_thresh_lookup = {
-        'angling_risk_task_always_sunny': np.nan
+        'angling_risk_task_always_sunny': np.nan,
+        'discount_titrate': np.nan,
+        'digit_span': np.nan,
+        'go_nogo': .98,
+        'kirby': np.nan,
+        'simple_reaction_time': np.nan,
+        'spatial_span': np.nan,
     }
     
     templates = data.groupby('experiment_exp_id').experiment_template.unique()
@@ -350,23 +359,49 @@ def quality_check(data):
                 response_thresh = response_thresh_lookup.get(exp,.95)
                 
                 # special cases...
-                if exp == 'two_stage_decision':
-                    passed_rt = (df.groupby('worker_id').median()[['rt_first','rt_second']] >= rt_thresh).all(axis = 1)
-                    passed_miss = df.groupby('worker_id').trial_id.agg(lambda x: np.mean(x == 'incomplete_trial')) < missed_thresh
-                    passed_acc = [True] * len(passed_rt)
-                    passed_response = [True] * len(passed_rt)
+                if exp == 'go_nogo':
+                    passed_rt = df.groupby('worker_id').rt.median() >= rt_thresh
+                    passed_miss = df.groupby('worker_id').rt.agg(lambda x: np.mean(x == -1)) < missed_thresh
+                    passed_acc = df.groupby('worker_id').correct.mean() >= acc_thresh
+                    passed_response = np.logical_not(df.groupby('worker_id').key_press.agg(
+                                                            lambda x: np.any(pd.value_counts(x) > pd.value_counts(x).sum()*response_thresh)))
                 elif exp == 'psychological_refractory_period_two_choices':
                     passed_rt = (df.groupby('worker_id').median()[['choice1_rt','choice2_rt']] >= rt_thresh).all(axis = 1)
                     passed_acc = df.query('choice1_rt != -1').groupby('worker_id').choice1_correct.mean() >= acc_thresh
                     passed_miss = ((df.groupby('worker_id').choice1_rt.agg(lambda x: np.mean(x!=-1) >= missed_thresh)) \
                                         + (df.groupby('worker_id').choice2_rt.agg(lambda x: np.mean(x>-1) >= missed_thresh))) == 2
-                    passed_response = [True] * len(passed_rt)
+                    passed_response1 = np.logical_not(df.query('choice1_rt != -1').groupby('worker_id').choice1_key_press.agg(
+                                                            lambda x: np.any(pd.value_counts(x) > pd.value_counts(x).sum()*response_thresh)))
+                    passed_response2 = np.logical_not(df.query('choice2_rt != -1').groupby('worker_id').choice2_key_press.agg(
+                                                            lambda x: np.any(pd.value_counts(x) > pd.value_counts(x).sum()*response_thresh)))
+                    passed_response = np.logical_and(passed_response1,passed_response2)
+                elif exp == 'ravens':
+                    passed_rt = df.groupby('worker_id').rt.median() >= rt_thresh
+                    passed_acc = df.query('trial_id == "feedback"').groupby('worker_id').correct.mean() >= acc_thresh
+                    passed_response = np.logical_not(df.groupby('worker_id').stim_response.agg(
+                                                            lambda x: np.any(pd.value_counts(x) > pd.value_counts(x).sum()*response_thresh)))
+                    passed_miss = pd.Series([True] * len(passed_rt), index = passed_rt.index)
                 elif exp == 'tower_of_london':
                     passed_rt = df.groupby('worker_id').rt.median() >= rt_thresh
                     passed_acc = df.query('trial_id == "feedback"').groupby('worker_id').correct.mean() >= acc_thresh
                     # Labeling someone as "missing" too many problems if they don't make enough moves
                     passed_miss = (df.groupby(['worker_id','problem_id']).num_moves_made.max().reset_index().groupby('worker_id').mean() >= missed_thresh).num_moves_made
-                    passed_response = [True] * len(passed_rt)
+                    passed_response = pd.Series([True] * len(passed_rt), index = passed_rt.index)
+                elif exp == 'two_stage_decision':
+                    passed_rt = (df.groupby('worker_id').median()[['rt_first','rt_second']] >= rt_thresh).all(axis = 1)
+                    passed_miss = df.groupby('worker_id').trial_id.agg(lambda x: np.mean(x == 'incomplete_trial')) < missed_thresh
+                    passed_acc = pd.Series([True] * len(passed_rt), index = passed_rt.index)
+                    passed_response = pd.Series([True] * len(passed_rt), index = passed_rt.index)
+                    passed_response1 = np.logical_not(df.query('rt_first != -1').groupby('worker_id').key_press_first.agg(
+                                                            lambda x: np.any(pd.value_counts(x) > pd.value_counts(x).sum()*response_thresh)))
+                    passed_response2 = np.logical_not(df.query('rt_second != -1').groupby('worker_id').key_press_second.agg(
+                                                            lambda x: np.any(pd.value_counts(x) > pd.value_counts(x).sum()*response_thresh)))
+                    passed_response = np.logical_and(passed_response1,passed_response2)
+                elif exp == 'writing_task':
+                    passed_response = df.query('trial_id == "write"').groupby('worker_id').final_text.agg(lambda x: len(x[0]) > 100)
+                    passed_acc = pd.Series([True] * len(passed_response), index = passed_rt.index)
+                    passed_rt = pd.Series([True] * len(passed_response), index = passed_rt.index)
+                    passed_miss = pd.Series([True] * len(passed_response), index = passed_rt.index)
                 # everything else
                 else:
                     passed_rt = df.groupby('worker_id').rt.median() >= rt_thresh
@@ -374,15 +409,16 @@ def quality_check(data):
                     if 'correct' in df.columns:
                         passed_acc = df.query('rt != -1').groupby('worker_id').correct.mean() >= acc_thresh
                     else:
-                        passed_acc = [True] * len(passed_rt)
+                        passed_acc = pd.Series([True] * len(passed_rt), index = passed_rt.index)
                     if 'mouse_click' in df.columns:
                         passed_response = np.logical_not(df.query('rt != -1').groupby('worker_id').mouse_click.agg(
                                                             lambda x: np.any(pd.value_counts(x) > pd.value_counts(x).sum()*response_thresh)))
                     elif 'key_press' in df.columns:
                         passed_response = np.logical_not(df.query('rt != -1').groupby('worker_id').key_press.agg(
-                                                            lambda x: np.any(pd.value_counts(x) > pd.value_counts(x).sum()*response_thresh)))
-                    
-                passed = passed_rt & passed_acc & passed_miss & passed_response
+                                                            lambda x: np.any(pd.value_counts(x) > pd.value_counts(x).sum()*response_thresh)))   
+                                                            
+                passed_df = pd.concat([passed_rt,passed_acc,passed_miss,passed_response], axis = 1).fillna(False, inplace = False)
+                passed = passed_df.all(axis = 1)
                 failed = passed[passed == False]
                 for subj in failed.index:
                     data.loc[(data.experiment_exp_id == exp) & (data.worker_id == subj),'passed_QC'] = False
