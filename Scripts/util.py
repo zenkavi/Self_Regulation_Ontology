@@ -354,21 +354,23 @@ def quality_check(data):
                     passed_rt = (df.groupby('worker_id').median()[['rt_first','rt_second']] >= rt_thresh).all(axis = 1)
                     passed_miss = df.groupby('worker_id').trial_id.agg(lambda x: np.mean(x == 'incomplete_trial')) < missed_thresh
                     passed_acc = [True] * len(passed_rt)
-                    passed_response = True
+                    passed_response = [True] * len(passed_rt)
                 elif exp == 'psychological_refractory_period_two_choices':
                     passed_rt = (df.groupby('worker_id').median()[['choice1_rt','choice2_rt']] >= rt_thresh).all(axis = 1)
                     passed_acc = df.query('choice1_rt != -1').groupby('worker_id').choice1_correct.mean() >= acc_thresh
                     passed_miss = ((df.groupby('worker_id').choice1_rt.agg(lambda x: np.mean(x!=-1) >= missed_thresh)) \
                                         + (df.groupby('worker_id').choice2_rt.agg(lambda x: np.mean(x>-1) >= missed_thresh))) == 2
-                    passed_response = True
+                    passed_response = [True] * len(passed_rt)
                 elif exp == 'tower_of_london':
                     passed_rt = df.groupby('worker_id').rt.median() >= rt_thresh
                     passed_acc = df.query('trial_id == "feedback"').groupby('worker_id').correct.mean() >= acc_thresh
                     # Labeling someone as "missing" too many problems if they don't make enough moves
                     passed_miss = (df.groupby(['worker_id','problem_id']).num_moves_made.max().reset_index().groupby('worker_id').mean() >= missed_thresh).num_moves_made
-                    passed_response = True
+                    passed_response = [True] * len(passed_rt)
                 # everything else
                 else:
+                    passed_rt = df.groupby('worker_id').rt.median() >= rt_thresh
+                    passed_miss = df.groupby('worker_id').rt.agg(lambda x: np.mean(x == -1)) < missed_thresh
                     if 'correct' in df.columns:
                         passed_acc = df.query('rt != -1').groupby('worker_id').correct.mean() >= acc_thresh
                     else:
@@ -379,8 +381,6 @@ def quality_check(data):
                     elif 'key_press' in df.columns:
                         passed_response = np.logical_not(df.query('rt != -1').groupby('worker_id').key_press.agg(
                                                             lambda x: np.any(pd.value_counts(x) > pd.value_counts(x).sum()*response_thresh)))
-                    passed_rt = df.groupby('worker_id').rt.median() >= rt_thresh
-                    passed_miss = df.groupby('worker_id').rt.agg(lambda x: np.mean(x == -1)) < missed_thresh
                     
                 passed = passed_rt & passed_acc & passed_miss & passed_response
                 failed = passed[passed == False]
