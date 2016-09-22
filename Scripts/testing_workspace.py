@@ -47,6 +47,7 @@ except Exception:
 # read preprocessed data
 data = pd.read_json(data_dir + 'mturk_discovery_data_post.json').reset_index(drop = True)
 
+
 # get DV df
 DV_df = pd.read_json(data_dir + 'mturk_discovery_DV.json')
 valence_df = pd.read_json(data_dir + 'mturk_discovery_DV_valence.json')

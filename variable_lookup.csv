@@ -1,0 +1,364 @@
+Mplus_Name,Scale/Task,Variable_Name
+,,adaptive_n_back.EZ_drift
+,,adaptive_n_back.EZ_non_decision
+,,adaptive_n_back.EZ_thresh
+,,adaptive_n_back.acc
+,,adaptive_n_back.avg_rt
+,,adaptive_n_back.avg_rt_error
+NBMEANLD,"Adaptive-N-Back Task, Mean Load",adaptive_n_back.mean_load
+,,adaptive_n_back.missed_percent
+,,adaptive_n_back.post_error_slowing
+,,adaptive_n_back.proactive_interference
+,,adaptive_n_back.std_rt
+,,adaptive_n_back.std_rt_error
+,,angling_risk_task_always_sunny.keep_adjusted_clicks
+,,angling_risk_task_always_sunny.keep_loss_percent
+,,angling_risk_task_always_sunny.keep_score
+,,angling_risk_task_always_sunny.release_adjusted_clicks
+,,angling_risk_task_always_sunny.release_loss_percent
+,,angling_risk_task_always_sunny.release_score
+ANTZDRFT,"Attention Network Task (ANT), EZ Drift",attention_network_task.EZ_drift
+ANTZNDEC,"Attention Network Task (ANT), EZ Non-Decision",attention_network_task.EZ_non_decision
+ANTZTHRS,"Attention Network Task (ANT), EZ Threshold",attention_network_task.EZ_thresh
+,,attention_network_task.acc
+,,attention_network_task.alerting_acc
+ANTALTRT,"Attention Network Task (ANT), Alerting Reaction Time",attention_network_task.alerting_rt
+ANTAVGRT,"Attention Network Task (ANT), Average Reaction Time",attention_network_task.avg_rt
+,,attention_network_task.avg_rt_error
+,,attention_network_task.conflict_acc
+ANTCONRT,"Attention Network Task (ANT), Conflict Reaction Time",attention_network_task.conflict_rt
+,,attention_network_task.congruency_seq_acc
+,,attention_network_task.congruency_seq_rt
+ANTMSPRC,"Attention Network Task (ANT), Missed Percentage",attention_network_task.missed_percent
+,,attention_network_task.orienting_acc
+ANTORTRT,"Attention Network Task (ANT), Orienting Reaction Time",attention_network_task.orienting_rt
+,,attention_network_task.post_error_slowing
+ANTSTDRT,"Attention Network Task (ANT), Standard Deviation of Reaction Time",attention_network_task.std_rt
+,,attention_network_task.std_rt_error
+BISATTII,"Barratt Impulsivity Scale (BIS-11), Attentional (Second-Order Factor)",bis11_survey.Attentional
+BISMOTII,"Barratt Impulsivity Scale (BIS-11), Motor (Second-Order Factor)",bis11_survey.Motor
+BISNPLII,"Barratt Impulsivity Scale (BIS-11), Nonplanning (Second-Order Factor)",bis11_survey.Nonplanning
+BISATTNI,"Barratt Impulsivity Scale (BIS-11), Attention (First-Order Factor)",bis11_survey.first_order_attention
+BISCGCXI,"Barratt Impulsivity Scale (BIS-11), Cognitive Complexity (First-Order Factor)",bis11_survey.first_order_cognitive_complexity
+BISCGSTI,"Barratt Impulsivity Scale (BIS-11), Cognitive Stability (First-Order Factor)",bis11_survey.first_order_cognitive_stability
+BISMOTOI,"Barratt Impulsivity Scale (BIS-11), Motor (First-Order Factor)",bis11_survey.first_order_motor
+BISPERSI,"Barratt Impulsivity Scale (BIS-11), Perseverance (First-Order Factor)",bis11_survey.first_order_perseverance
+,,bis11_survey.first_order_self-control
+BBASDRIV,"Behavioral Inhibition System/Behavioral Activation System (BIS/BAS), BAS Drive",bis_bas_survey.BAS_drive
+BBASFUNS,"Behavioral Inhibition System/Behavioral Activation System (BIS/BAS), BAS Fun Seeking",bis_bas_survey.BAS_fun_seeking
+BBASRWRD,"Behavioral Inhibition System/Behavioral Activation System (BIS/BAS), BAS Reward Responsiveness",bis_bas_survey.BAS_reward_responsiveness
+BBASBIS,"Behavioral Inhibition System/Behavioral Activation System (BIS/BAS), BIS",bis_bas_survey.BIS
+BSCSSCON,"Brief Self-Control Scale (BSCS), Self Control",brief_self_control_survey.self_control
+CRTZDRFT,"Choice Reaction Time (CRT), EZ Drift",choice_reaction_time.EZ_drift
+CRTZNDEC,"Choice Reaction Time (CRT), EZ Non-Decision",choice_reaction_time.EZ_non_decision
+CRTZTHRS,"Choice Reaction Time (CRT), EZ Threshold",choice_reaction_time.EZ_thresh
+,,choice_reaction_time.acc
+CRTAVGRT,"Choice Reaction Time (CRT), Average Reaction Time",choice_reaction_time.avg_rt
+,,choice_reaction_time.avg_rt_error
+CRTMSPRC,"Choice Reaction Time (CRT), Missed Percentage",choice_reaction_time.missed_percent
+,,choice_reaction_time.post_error_slowing
+CRTSTDRT,"Choice Reaction Time (CRT), Standard Deviation of Reaction Time",choice_reaction_time.std_rt
+,,choice_reaction_time.std_rt_error
+,,cognitive_reflection_survey.acc
+CGRSINTP,"Cognitive Reflection Survey (CRS), Intuitive Proportion",cognitive_reflection_survey.intuitive_proportion
+CCTCAVCC,"Columbia Card Task Cold, Average Cards Chosen ",columbia_card_task_cold.avg_cards_chosen
+CCTCGAIN,"Columbia Card Task Cold, Gain Sensitivity",columbia_card_task_cold.gain_sensitivity
+CCTCINFO,"Columbia Card Task Cold, Information Use",columbia_card_task_cold.information_use
+CCTCLOSS,"Columbia Card Task Cold, Loss Sensitivity",columbia_card_task_cold.loss_sensitivity
+CCTCPROB,"Columbia Card Task Cold, Probability Sensitivity ",columbia_card_task_cold.probability_sensitivity
+CCTHAVCC,"Columbia Card Task Hot,  Average Cards Chosen ",columbia_card_task_hot.avg_cards_chosen
+CCTHGAIN,"Columbia Card Task Hot, Gain Sensitivity",columbia_card_task_hot.gain_sensitivity
+CCTHINFO,"Columbia Card Task Hot,  Information Use",columbia_card_task_hot.information_use
+CCTHLOSS,"Columbia Card Task Hot, Loss Sensitivity",columbia_card_task_hot.loss_sensitivity
+CCTHPROB,"Columbia Card Task Hot, Probability Sensitivity ",columbia_card_task_hot.probability_sensitivity
+,,demographics_survey.BMI
+,,demographics_survey.age
+,,demographics_survey.arrest_count
+,,demographics_survey.caffeine_intake
+,,demographics_survey.car_debt
+,,demographics_survey.children_count
+,,demographics_survey.credit_card_debt
+,,demographics_survey.divoce_count
+,,demographics_survey.education
+,,demographics_survey.education_debt
+,,demographics_survey.gambling_problem?
+,,demographics_survey.height(inches)
+,,demographics_survey.hispanic?
+,,demographics_survey.home_status
+,,demographics_survey.household_income(dollars)
+,,demographics_survey.longest_relationship(months)
+,,demographics_survey.mortage_debt
+,,demographics_survey.mturk_motivation
+,,demographics_survey.other_motivation
+,,demographics_survey.other_sources_of_debt
+,,demographics_survey.percent_retirement_in_stock
+,,demographics_survey.race
+,,demographics_survey.relationship_count
+,,demographics_survey.relationship_status
+,,demographics_survey.retirement_account?
+,,demographics_survey.sex
+,,demographics_survey.traffic_accident_count
+,,demographics_survey.traffic_ticket_count
+,,demographics_survey.weight(pounds)
+DIIDYSF,"Dickman's Impulsivity Inventory (DII), Dysfunctional",dickman_survey.dysfunctional
+DIIFUNC,"Dickman's Impulsivity Inventory (DII), Functional",dickman_survey.functional
+DDTHEALT,"Dietary Decisions Task, Health",dietary_decision.health_sensitivity
+DDTTASTE,"Dietary Decisions Task, Taste",dietary_decision.taste_sensitivity
+DGSFORWD,"Digit Span, Forward",digit_span.forward_span
+DGSREVRS,"Digit Span, Reverse",digit_span.reverse_span
+,,directed_forgetting.EZ_drift
+,,directed_forgetting.EZ_non_decision
+,,directed_forgetting.EZ_thresh
+,,directed_forgetting.acc
+DRFAVGRT,"Directed Forgetting, Average Reaction Time",directed_forgetting.avg_rt
+,,directed_forgetting.avg_rt_error
+,,directed_forgetting.missed_percent
+,,directed_forgetting.post_error_slowing
+DRFPINAC,"Directed Forgetting, Proactive Intereference Accuracy",directed_forgetting.proactive_inteference_acc
+DRFPINRT,"Directed Forgetting, Proactive Intereference Reaction Time",directed_forgetting.proactive_inteference_rt
+DRFSTDRT,"Directed Forgetting, Standard Deviation of Reaction Time",directed_forgetting.std_rt
+,,directed_forgetting.std_rt_error
+DSPRTEEB,"Domain Specific Risk Taking Scale (DOSPERT), Ethical, Expected Benefits",dospert_eb_survey.ethical
+DSPRTFEB,"Domain Specific Risk Taking Scale (DOSPERT), Financial, Expected Benefits",dospert_eb_survey.financial
+,,dospert_eb_survey.health/safety
+DSPRTREB,"Domain Specific Risk Taking Scale (DOSPERT), Recreational, Expected Benefits",dospert_eb_survey.recreational
+DSPRTSEB,"Domain Specific Risk Taking Scale (DOSPERT), Social, Expected Benefits",dospert_eb_survey.social
+DSPRTERP,"Domain Specific Risk Taking Scale (DOSPERT), Ethical, Risk Perception",dospert_rp_survey.ethical
+DSPRTFRP,"Domain Specific Risk Taking Scale (DOSPERT), Financial, Risk Perception",dospert_rp_survey.financial
+,,dospert_rp_survey.health/safety
+DSPRTRRP,"Domain Specific Risk Taking Scale (DOSPERT), Recreational, Risk Perception",dospert_rp_survey.recreational
+DSPRTSRP,"Domain Specific Risk Taking Scale (DOSPERT), Social, Risk Perception",dospert_rp_survey.social
+DSPRTERT,"Domain Specific Risk Taking Scale (DOSPERT), Ethical, Risk Taking",dospert_rt_survey.ethical
+DSPRTFRT,"Domain Specific Risk Taking Scale (DOSPERT), Financial, Risk Taking",dospert_rt_survey.financial
+,,dospert_rt_survey.health/safety
+DSPRTRRT,"Domain Specific Risk Taking Scale (DOSPERT), Recreational, Risk Taking",dospert_rt_survey.recreational
+DSPRTSRT,"Domain Specific Risk Taking Scale (DOSPERT), Social, Risk Taking",dospert_rt_survey.social
+,,dot_pattern_expectancy.AY-BY_acc
+,,dot_pattern_expectancy.AY-BY_rt
+,,dot_pattern_expectancy.BX-BY_acc
+,,dot_pattern_expectancy.BX-BY_rt
+DPEZDRFT,"Dot Pattern Expectancy, EZ Drift",dot_pattern_expectancy.EZ_drift
+DPEZNDEC,"Dot Pattern Expectancy, EZ Non-Decision",dot_pattern_expectancy.EZ_non_decision
+DPEZTHRS,"Dot Pattern Expectancy, EZ Threshold",dot_pattern_expectancy.EZ_thresh
+,,dot_pattern_expectancy.acc
+DPEAVGRT,"Dot Pattern Expectancy, Average Reaction Time",dot_pattern_expectancy.avg_rt
+,,dot_pattern_expectancy.avg_rt_error
+,,dot_pattern_expectancy.dprime
+DPEMSPRC,"Dot Pattern Expectancy, Missed Percentage",dot_pattern_expectancy.missed_percent
+,,dot_pattern_expectancy.post_error_slowing
+DPESTDRT,"Dot Pattern Expectancy, Standard Deviation of Reaction Time",dot_pattern_expectancy.std_rt
+,,dot_pattern_expectancy.std_rt_error
+TFEQCGRS,"Three-Factor Eating Questionnaire (TFEQ), Cognitive Restraint",eating_survey.cognitive_restraint
+TFEQEEAT,"Three-Factor Eating Questionnaire (TFEQ), Emotional Eating",eating_survey.emotional_eating
+TFEQUEAT,"Three-Factor Eating Questionnaire (TFEQ), Uncontrolled Eating",eating_survey.uncontrolled_eating
+,,erq_survey.reappraisal
+,,erq_survey.suppression
+FFMQAWAR,"Five Facet Mindfulness Questionnaire (FFMQ), Acting with Awareness",five_facet_mindfulness_survey.act_with_awareness
+FFMQDESC,"Five Facet Mindfulness Questionnaire (FFMQ), Describing",five_facet_mindfulness_survey.describe
+FFMQNJUD,"Five Facet Mindfulness Questionnaire (FFMQ), Nonjudging of Inner Experience",five_facet_mindfulness_survey.nonjudge
+FFMQNREA,"Five Facet Mindfulness Questionnaire (FFMQ), Nonreactivity to Inner Experience",five_facet_mindfulness_survey.nonreact
+FFMQOBSV,"Five Facet Mindfulness Questionnaire (FFMQ), Observing",five_facet_mindfulness_survey.observe
+FTPSFTP,"Future Time Perspective Survey, Future Time Perspective",future_time_perspective_survey.future_time_perspective
+,,go_nogo.dprime
+,,go_nogo.go_acc
+GNOGORT,"Go/No-Go Task, Go Reaction Time",go_nogo.go_rt
+,,go_nogo.nogo_acc
+,,go_nogo.overall_acc
+GRTSGRIT,"Grit Scale Survey, Grit",grit_scale_survey.grit
+,,hierarchical_rule.acc
+HIRAVGRT,"Hierarchical Rule, Average Reaction Time",hierarchical_rule.avg_rt
+,,hierarchical_rule.avg_rt_error
+HIRMSPRC,"Hierarchical Rule, Missed Percentage",hierarchical_rule.missed_percent
+,,hierarchical_rule.post_error_slowing
+HIRSCOR,"Hierarchical Rule, Score",hierarchical_rule.score
+HIRSTDRT,"Hierarchical Rule, Standard Deviation of Reaction Time",hierarchical_rule.std_rt
+,,hierarchical_rule.std_rt_error
+IMVIMPLS,"Impulsiveness and Venturesomeness Survey (I7), Impulsiveness",impulsive_venture_survey.impulsiveness
+IMVVNTUR,"Impulsiveness and Venturesomeness Survey (I7), Venturesomeness",impulsive_venture_survey.venturesomeness
+,,information_sampling_task.Decreasing Win_P_correct
+,,information_sampling_task.Decreasing Win_acc
+,,information_sampling_task.Decreasing Win_boxes_opened
+,,information_sampling_task.Decreasing Win_total_points
+,,information_sampling_task.Fixed Win_P_correct
+,,information_sampling_task.Fixed Win_acc
+,,information_sampling_task.Fixed Win_boxes_opened
+,,information_sampling_task.Fixed Win_total_points
+KTTSCOR,"Keep Track Task, Score",keep_track.score
+LCATACTL,"Leisure Time Activity Survey (LCAT), Activity Level",leisure_time_activity_survey.activity_level
+LOGZDRFT,"Local Global Letter, EZ Drift",local_global_letter.EZ_drift
+LOGZNDEC,"Local Global Letter, EZ Non-Decision",local_global_letter.EZ_non_decision
+LOGXTHRS,"Local Global Letter, EZ Threshold",local_global_letter.EZ_thresh
+,,local_global_letter.acc
+LOGAVGRT,"Local Global Letter, Average Reaction Time",local_global_letter.avg_rt
+,,local_global_letter.avg_rt_error
+,,local_global_letter.conflict_acc
+,,local_global_letter.conflict_rt
+,,local_global_letter.congruency_seq_acc
+,,local_global_letter.congruency_seq_rt
+,,local_global_letter.congruent_facilitation_acc
+LOGCFCRT,"Local Global Letter, Congruent Facilitation Reaction Time",local_global_letter.congruent_facilitation_rt
+,,local_global_letter.incongruent_harm_acc
+LOGICHRT,"Local Global Letter, Incongruent Harm Reaction Time",local_global_letter.incongruent_harm_rt
+LOGMSPRC,"Local Global Letter, Missed Percentage",local_global_letter.missed_percent
+,,local_global_letter.post_error_slowing
+LOGSTDRT,"Local Global Letter, Standard Deviation of Reaction Time",local_global_letter.std_rt
+,,local_global_letter.std_rt_error
+,,local_global_letter.switch_cost_acc
+LOGSWCRT,"Local Global Letter, Switch Cost Reaction Time",local_global_letter.switch_cost_rt
+MAASMIND,Mindful Attention Awareness Scale (MAAS),mindful_attention_awareness_survey.mindfulness
+,,motor_selective_stop_signal.EZ_drift
+,,motor_selective_stop_signal.EZ_non_decision
+,,motor_selective_stop_signal.EZ_thresh
+,,motor_selective_stop_signal.SSRT
+,,motor_selective_stop_signal.SS_delay
+,,motor_selective_stop_signal.go_acc
+,,motor_selective_stop_signal.go_rt
+,,motor_selective_stop_signal.go_rt_error
+,,motor_selective_stop_signal.go_rt_std
+,,motor_selective_stop_signal.go_rt_std_error
+,,motor_selective_stop_signal.reactive_control
+,,motor_selective_stop_signal.selective_proactive_control
+,,motor_selective_stop_signal.stop_acc
+,,motor_selective_stop_signal.stop_rt_error
+,,motor_selective_stop_signal.stop_rt_error_std
+MPQCONTR,"Multidimensional Personality Questionnaire Control Scale (MPQ), Control",mpq_control_survey.control
+PRSMSPRC,"Probabilistic Selection, Missed Percentage",probabilistic_selection.missed_percent
+,,probabilistic_selection.negative_acc
+PRSOVTAC,"Probabilistic Selection, Overall Test Accuracy",probabilistic_selection.overall_test_acc
+,,probabilistic_selection.positive_acc
+PRSPOSLB,"Probabilistic Selection, Positive Learning Bias",probabilistic_selection.positive_learning_bias
+PRSRPOLB,"Probabilistic Selection, Reg Positive Learning Bias",probabilistic_selection.reg_positive_learning_bias
+PRSRVASE,"Probabilistic Selection, Reg Value Sensitivity",probabilistic_selection.reg_value_sensitivity
+PRPSLOPE,"Psychological Refractory Period (PRP), Slope",psychological_refractory_period_two_choices.PRP_slope
+PRPSLOW,"Psychological Refractory Period (PRP), Slowing",psychological_refractory_period_two_choices.PRP_slowing
+PRPMSPRC,"Psychological Refractory Period (PRP), Missed Percentage",psychological_refractory_period_two_choices.missed_percent
+PRPTAOAC,"Psychological Refractory Period (PRP), Task 1 Accuracy",psychological_refractory_period_two_choices.task1_acc
+PRPTATAC,"Psychological Refractory Period (PRP), Task 2 Accuracy",psychological_refractory_period_two_choices.task2_acc
+RPMSCOR,"Raven's Progressive Matrices, Score",ravens.score
+REPZDRFT,"Recent Probes, EZ Drift",recent_probes.EZ_drift
+REPZNDEC,"Recent Probes, EZ Non-Decision",recent_probes.EZ_non_decision
+REPZTHRS,"Recent Probes, EZ Threshold",recent_probes.EZ_thresh
+,,recent_probes.acc
+REPAVGRT,"Recent Probes, Average Reaction Time",recent_probes.avg_rt
+,,recent_probes.avg_rt_error
+,,recent_probes.missed_percent
+,,recent_probes.post_error_slowing
+REPPINAC,"Recent Probes, Proactive Interference Accuracy",recent_probes.proactive_inteference_acc
+REPPINRT,"Recent Probes, Proactive Interference Reaction Time",recent_probes.proactive_inteference_rt
+REPSTDRT,"Recent Probes, Standard Deviation of Reaction Time",recent_probes.std_rt
+,,recent_probes.std_rt_error
+SOCCOMPE,"Selection Optimization Compensation Survey (SOC), Compensation",selection_optimization_compensation_survey.compensation
+SOCELSEL,"Selection Optimization Compensation Survey (SOC), Elective Selection",selection_optimization_compensation_survey.elective_selection
+,,selection_optimization_compensation_survey.loss-based_selection
+SOCOPTIM,"Selection Optimization Compensation Survey (SOC), Optimization",selection_optimization_compensation_survey.optimization
+SSRQCONT,Short Self-Regulation Questionnaire (SSRQ),self_regulation_survey.control
+SSSBORED,"Sensation Seeking Scale (SSS), Boredom Susceptibility",sensation_seeking_survey.boredom_susceptibility
+SSSDISIN,"Sensation Seeking Scale (SSS), Disinhibition",sensation_seeking_survey.disinhibition
+SSSEXPSK,"Sensation Seeking Scale (SSS), Experience Seeking",sensation_seeking_survey.experience_seeking
+SSSTHRIL,"Sensation Seeking Scale (SSS), Thrill and Adventure Seeking",sensation_seeking_survey.thrill_adventure_seeking
+,,shift_task.acc
+SFTAVGRT,"Shift Task, Average Reaction Time",shift_task.avg_rt
+SFTLRNRT,"Shift Task, Learning Rate",shift_task.learning_rate
+SFTMSPRC,"Shift Task, Missed Percentage",shift_task.missed_percent
+,,shift_task.post_error_slowing
+SFTSTDRT,"Shift Task, Standard Deviation of Reaction Time",shift_task.std_rt
+SIMZDRFT,"Simon, EZ Drift",simon.EZ_drift
+SIMZNDEC,"Simon, EZ Non-Decision",simon.EZ_non_decision
+SIMZTHRS,"Simon, EZ Threshold",simon.EZ_thresh
+,,simon.acc
+SIMAVGRT,"Simon, Average Reaction Time",simon.avg_rt
+,,simon.avg_rt_error
+,,simon.congruency_seq_acc
+,,simon.congruency_seq_rt
+SIMMSPRC,"Simon, Missed Percentage",simon.missed_percent
+,,simon.post_error_slowing
+,,simon.simon_acc
+SIMSIMRT,"Simon, Simon Reaction Time",simon.simon_rt
+SIMSTDRT,"Simon, Standard Deviation of Reaction Time",simon.std_rt
+,,simon.std_rt_error
+SRTAVGRT,"Simple Reaction Time, Average Reaction Time",simple_reaction_time.avg_rt
+SRTMSPRC,"Simple Reaction Time, Missed Percentage",simple_reaction_time.missed_percent
+SRTSTDRT,"Simple Reaction Time, Standard Deviation of Reaction Time",simple_reaction_time.std_rt
+SPSFORWD,"Spatial Span, Forward",spatial_span.forward_span
+SPSREVRS,"Spatial Span, Reverse",spatial_span.reverse_span
+,,stim_selective_stop_signal.EZ_drift
+,,stim_selective_stop_signal.EZ_non_decision
+,,stim_selective_stop_signal.EZ_thresh
+,,stim_selective_stop_signal.SSRT
+,,stim_selective_stop_signal.SS_delay
+,,stim_selective_stop_signal.go_acc
+,,stim_selective_stop_signal.go_rt
+,,stim_selective_stop_signal.go_rt_error
+,,stim_selective_stop_signal.go_rt_std
+,,stim_selective_stop_signal.go_rt_std_error
+,,stim_selective_stop_signal.stop_acc
+,,stim_selective_stop_signal.stop_rt_error
+,,stim_selective_stop_signal.stop_rt_error_std
+,,stop_signal.EZ_drift
+,,stop_signal.EZ_non_decision
+,,stop_signal.EZ_thresh
+SSSSRT,"Stop Signal, SSRT",stop_signal.SSRT
+,,stop_signal.SSRT_high
+,,stop_signal.SSRT_low
+,,stop_signal.SS_delay
+,,stop_signal.go_acc
+,,stop_signal.go_rt
+,,stop_signal.go_rt_error
+,,stop_signal.go_rt_std
+,,stop_signal.go_rt_std_error
+,,stop_signal.proactive_SSRT_speeding
+,,stop_signal.proactive_slowing
+,,stop_signal.stop_acc
+,,stop_signal.stop_rt_error
+,,stop_signal.stop_rt_error_std
+,,stroop.EZ_drift
+,,stroop.EZ_non_decision
+,,stroop.EZ_thresh
+,,stroop.acc
+STRAVGRT,"Stroop, Average Reaction Time",stroop.avg_rt
+,,stroop.avg_rt_error
+,,stroop.congruency_seq_acc
+,,stroop.congruency_seq_rt
+STRMSPRC,"Stroop, Missed Percentage",stroop.missed_percent
+,,stroop.post_error_slowing
+STRSTDRT,"Stroop, Standard Deviation of Reaction Time",stroop.std_rt
+,,stroop.std_rt_error
+,,stroop.stroop_acc
+STRSTRRT,"Stroop, Stroop Reaction Time",stroop.stroop_rt
+TIPIAGRE,"10-Item Personality Inventory, Agreeableness",ten_item_personality_survey.agreeableness
+TIPICONS,"10-Item Personality Inventory, Conscientiousness",ten_item_personality_survey.conscientiousness
+TIPIEMST,"10-Item Personality Inventory, Emotional Stability",ten_item_personality_survey.emotional_stability
+TIPIEXTR,"10-Item Personality Inventory, Extraversion",ten_item_personality_survey.extraversion
+TIPIOPEN,"10-Item Personality Inventory, Openness to Experience",ten_item_personality_survey.openness
+TXTZDRFT,"3 x 2 Task Switching, EZ Drift",threebytwo.EZ_drift
+TXTNDEC,"3 x 2 Task Switching, EZ Non-Decision",threebytwo.EZ_non_decision
+TXTZTHRS,"3 x 2 Task Switching, EZ Threshold",threebytwo.EZ_thresh
+,,threebytwo.acc
+TXTAVGRT,"3 x 2 Task Switching, Average Reaction Time",threebytwo.avg_rt
+,,threebytwo.avg_rt_error
+TXTCUSWC,"3 x 2 Task Switching, Cue Switch Cost",threebytwo.cue_switch_cost
+TXTMSPRC,"3 x 2 Task Switching, Missed Percentage",threebytwo.missed_percent
+,,threebytwo.post_error_slowing
+TXTSTDRT,"3 x 2 Task Switching, Standard Deviation of Reaction Time",threebytwo.std_rt
+,,threebytwo.std_rt_error
+,,threebytwo.task_inhibition
+TXTTASWC,"3 x 2 Task Switching, Task Switch Cost",threebytwo.task_switch_cost
+ZTPIFUTR,"Time Perspective Survey, Future",time_perspective_survey.future
+ZTPIPNEG,"Time Perspective Survey, Past Negative",time_perspective_survey.past_negative
+ZTPIPPOS,"Time Perspective Survey, Past Positive",time_perspective_survey.past_positive
+ZTPIPRFA,"Time Perspective Survey, Present Fatalistic",time_perspective_survey.present_fatalistic
+ZTPIPRHE,"Time Perspective Survey, Present Hedonistic",time_perspective_survey.present_hedonistic
+TOLAVGMT,"Tower of London, Average Move Time",tower_of_london.avg_move_time
+,,tower_of_london.num_correct
+,,tower_of_london.num_optimal_solutions
+TOLPLNTM,"Tower of London, Planning Time",tower_of_london.planning_time
+TOLTOTMV,"Tower of London, Total Moves",tower_of_london.total_moves
+TSTAVGRT,"Two Stage Task, Average Reaction Time",two_stage_decision.avg_rt
+TSTMSPRC,"Two Stage Task, Missed Percentage",two_stage_decision.missed_percent
+TSTMODBA,"Two Stage Task, Model Based",two_stage_decision.model_based
+TSTMODFR,"Two Stage Task, Model Free",two_stage_decision.model_free
+UPPLPREM,"UPPS Impulse Behavior Scale (UPPS+P), Lack of Premeditation",upps_impulsivity_survey.lack_of__premeditation
+UPPLPERS,"UPPS Impulse Behavior Scale (UPPS+P), Lack of Perseverance",upps_impulsivity_survey.lack_of_perseverance
+UPPNEGUR,"UPPS Impulse Behavior Scale (UPPS+P), Negative Urgency",upps_impulsivity_survey.negative_urgency
+UPPPOSUR,"UPPS Impulse Behavior Scale (UPPS+P), Positive Urgency",upps_impulsivity_survey.positive_urgency
+UPPSENSE,"UPPS Impulse Behavior Scale (UPPS+P), Sensation Seeking",upps_impulsivity_survey.sensation_seeking

@@ -98,7 +98,7 @@ if job in ['post', 'all']:
     failed_data = pd.DataFrame()
     # preprocess extras
     # only get extra data
-    extra_data = data.query('worker_id not in %s' % (validation_sample + discovery_sample + extra_sample)).reset_index(drop = True)
+    extra_data = data.query('worker_id in %s' % extra_sample).reset_index(drop = True)
     post_process_data(extra_data)
     failures = remove_failed_subjects(extra_data)
     failed_data = pd.concat([failed_data,failures])
