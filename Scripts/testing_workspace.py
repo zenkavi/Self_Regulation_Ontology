@@ -47,6 +47,7 @@ except Exception:
 # read preprocessed data
 data = pd.read_json(data_dir + 'mturk_discovery_data_post.json').reset_index(drop = True)
 failed_data = pd.read_json(data_dir + 'mturk_failed_data_post.json').reset_index(drop = True)
+failed_data = failed_data[np.logical_not(failed_data.worker_id.str.contains('s5'))]
 
 # get DV df
 DV_df = pd.read_json(data_dir + 'mturk_discovery_DV.json')
@@ -82,8 +83,14 @@ DV_df.dropna(axis = 1, how = 'all', inplace = True)
 # drop other columns of no interest
 drop_vars = "missed_percent|acc|avg_rt_error|std_rt_error|avg_rt|std_rt|post_error_slowing|\
 congruency_seq_rt|congruency_seq_acc|demographics|go_acc|stop_acc|go_rt_error|go_rt_std_error|\
-go_rt|go_rt_std|stop_rt_error|stop_rt_error_std|SS_delay"
+go_rt|go_rt_std|stop_rt_error|stop_rt_error_std|SS_delay|sentiment_label"
 subset = DV_df.drop(DV_df.filter(regex=drop_vars).columns, axis = 1)
+# make subset without EZ variables
+drop_EZ_vars = 'drift_|thresh_|non_decision_|_EZ'
+noEZ_subset = subset.drop(subset.filter(regex = drop_EZ_vars).columns,axis =1)
+# make subset without acc/rt vars
+drop_rtacc_vars = '_acc|_rt'
+EZ_subset = subset.drop(subset.filter(regex = drop_rtacc_vars).columns, axis = 1)
 
 #make data subsets:
 survey_df = subset.filter(regex = 'survey')

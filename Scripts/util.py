@@ -360,7 +360,13 @@ def quality_check(data):
                 response_thresh = response_thresh_lookup.get(exp,.95)
                 
                 # special cases...
-                if exp == 'go_nogo':
+                if exp == 'information_sampling_task':
+                    df.groupby('worker_id').which_click_in_round.value_counts()
+                    passed_response = df.groupby('worker_id').which_click_in_round.mean() < 2
+                    passed_rt = pd.Series([True] * len(passed_response), index = passed_response.index)
+                    passed_miss = pd.Series([True] * len(passed_response), index = passed_response.index)
+                    passed_acc = pd.Series([True] * len(passed_response), index = passed_response.index)
+                elif exp == 'go_nogo':
                     passed_rt = df.query('rt != -1').groupby('worker_id').rt.median() >= rt_thresh
                     passed_miss = df.groupby('worker_id').rt.agg(lambda x: np.mean(x == -1)) < missed_thresh
                     passed_acc = df.groupby('worker_id').correct.mean() >= acc_thresh
