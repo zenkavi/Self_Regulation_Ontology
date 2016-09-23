@@ -2,6 +2,7 @@ from expanalysis.experiments.jspsych import calc_time_taken, get_post_task_respo
 from expanalysis.experiments.processing import post_process_data, extract_DVs
 from expanalysis.results import get_filters
 import json
+import numpy as np
 import pandas as pd
 from util import anonymize_data, calc_trial_order, download_data, get_bonuses, get_info, get_pay,  remove_failed_subjects
 
@@ -102,7 +103,7 @@ if job in ['post', 'all']:
     post_process_data(extra_data)
     failures = remove_failed_subjects(extra_data)
     failed_data = pd.concat([failed_data,failures])
-    extra_workers = extra_data.worker_id.unique()
+    extra_workers = np.sort(extra_data.worker_id.unique())
     print('Finished processing extra data')    
     
     # preprocess and save each sample individually

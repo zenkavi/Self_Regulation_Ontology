@@ -338,6 +338,7 @@ def quality_check(data):
     
     response_thresh_lookup = {
         'angling_risk_task_always_sunny': np.nan,
+        'columbia_card_task_cold': np.nan,
         'discount_titrate': np.nan,
         'digit_span': np.nan,
         'go_nogo': .98,
@@ -360,7 +361,7 @@ def quality_check(data):
                 
                 # special cases...
                 if exp == 'go_nogo':
-                    passed_rt = df.groupby('worker_id').rt.median() >= rt_thresh
+                    passed_rt = df.query('rt != -1').groupby('worker_id').rt.median() >= rt_thresh
                     passed_miss = df.groupby('worker_id').rt.agg(lambda x: np.mean(x == -1)) < missed_thresh
                     passed_acc = df.groupby('worker_id').correct.mean() >= acc_thresh
                     passed_response = np.logical_not(df.groupby('worker_id').key_press.agg(
@@ -376,8 +377,8 @@ def quality_check(data):
                                                             lambda x: np.any(pd.value_counts(x) > pd.value_counts(x).sum()*response_thresh)))
                     passed_response = np.logical_and(passed_response1,passed_response2)
                 elif exp == 'ravens':
-                    passed_rt = df.groupby('worker_id').rt.median() >= rt_thresh
-                    passed_acc = df.query('trial_id == "feedback"').groupby('worker_id').correct.mean() >= acc_thresh
+                    passed_rt = df.query('rt != -1').groupby('worker_id').rt.median() >= rt_thresh
+                    passed_acc = df.query('rt != -1').groupby('worker_id').correct.mean() >= acc_thresh
                     passed_response = np.logical_not(df.groupby('worker_id').stim_response.agg(
                                                             lambda x: np.any(pd.value_counts(x) > pd.value_counts(x).sum()*response_thresh)))
                     passed_miss = pd.Series([True] * len(passed_rt), index = passed_rt.index)
@@ -404,7 +405,7 @@ def quality_check(data):
                     passed_miss = pd.Series([True] * len(passed_response), index = passed_rt.index)
                 # everything else
                 else:
-                    passed_rt = df.groupby('worker_id').rt.median() >= rt_thresh
+                    passed_rt = df.query('rt != -1').groupby('worker_id').rt.median() >= rt_thresh
                     passed_miss = df.groupby('worker_id').rt.agg(lambda x: np.mean(x == -1)) < missed_thresh
                     if 'correct' in df.columns:
                         passed_acc = df.query('rt != -1').groupby('worker_id').correct.mean() >= acc_thresh
