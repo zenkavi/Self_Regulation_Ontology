@@ -71,7 +71,7 @@ def threshold_proportional_sign(W, threshold):
     
 # Visualization
     
-def get_visual_style(G,  layout = 'kk', vertex_size = None, size = 1000, labels = None):
+def get_visual_style(G,  layout = 'kk', vertex_size = None, size = 1000, labels = None, avg_num_edges = 5):
     """
     Creates an appropriate visual style for a graph. 
     
@@ -90,6 +90,8 @@ def get_visual_style(G,  layout = 'kk', vertex_size = None, size = 1000, labels 
         are proportional to this value. Figures are always square
     labels: list the size of the number of vertices, optional
         Used to label vertices. Numbers are used if no labels are provided
+    avg_num_edges: int > 1
+        thresholds the edges on the graph so each node has, on average, avg_num_edges
         
     Returns
     ----------
@@ -124,18 +126,19 @@ def get_visual_style(G,  layout = 'kk', vertex_size = None, size = 1000, labels 
     
     visual_style = {'layout': graph_layout, 
                     'vertex_color': vertex_color, 
-                    'vertex_label_size': size/50.0,
+                    'vertex_label_size': size/130.0,
                     'bbox': (size,size),
                     'margin': size/20.0}
     if 'weight' in G.es.attribute_names():
-        edge_threshold = 0
-        visual_style['edge_width'] = [abs(w)**1.4*size/200.0 if abs(w) > edge_threshold else 0 for w in G.es['weight']]
+        proportion = max(0,min([100,100-(avg_num_edges*len(G.vs))/len(G.es)*100]))
+        edge_threshold = np.percentile(np.abs(G.es['weight']),proportion)
+        visual_style['edge_width'] = [abs(w)**1.4*size/230.0 if abs(w) > edge_threshold else 0 for w in G.es['weight']]
         if np.sum([e<0 for e in G.es['weight']]) > 0:
             visual_style['edge_color'] = [['#3399FF','#202020','#FF6666'][int(np.sign(w)+1)] for w in G.es['weight']]
         else:
             visual_style['edge_color'] = '#202020'
     if vertex_size:
-        visual_style['vertex_size'] = [c*(size/20.0)+(size/50.0) for c in G.vs[vertex_size]]
+        visual_style['vertex_size'] = [c*(size/40.0)+(size/80.0) for c in G.vs[vertex_size]]
     if labels:
         visual_style['vertex_label'] = labels
     elif 'id' in G.vs.attribute_names():
@@ -241,7 +244,7 @@ def subgraph_analysis(G, community_alg = None):
 # Main graph analysis function
 def Graph_Analysis(data, thresh_func = bct.threshold_proportional, community_alg = bct.community_louvain, 
                    edge_metric = 'pearson', threshold = .15, weight = True, reorder = True, 
-                   display = True, layout = 'kk', print_options = {}, plot_options = {}):
+                   display = True, layout = 'kk', avg_num_edges = 5, print_options = {}, plot_options = {}):
     """
     Creates and displays graphs of a data matrix.
     
@@ -270,6 +273,8 @@ def Graph_Analysis(data, thresh_func = bct.threshold_proportional, community_alg
         if True, display the graph and print node membership
     layout: str: 'kk', 'circle', 'grid' or other igraph layouts, optional
         Determines how the graph is displayed
+    avg_num_edges: int > 1
+        thresholds the edges on the graph so each node has, on average, avg_num_edges
     print_options: dict, optional
         dictionary of arguments to be passed to print_community_members
     plot_options: dict, optional
@@ -327,11 +332,9 @@ def Graph_Analysis(data, thresh_func = bct.threshold_proportional, community_alg
     
     # visualize
     visual_style = {}
+    visual_style = get_visual_style(G, layout = layout, vertex_size = 'eigen_centrality', size = 6000, avg_num_edges = avg_num_edges)
     if display:
         # plot community structure
-        visual_style = get_visual_style(G, layout = layout, vertex_size = 'eigen_centrality', size = 4000)
-    
-        #visualize
         print_community_members(G, **print_options)
         plot_graph(G, visual_style = visual_style, **plot_options)
     return (G, graph_mat, visual_style)

@@ -156,6 +156,15 @@ def download_data(data_loc, access_token = None, filters = None, battery = None,
     print('Finished downloading data. Time taken: ' + str(finish_time))
     return data                 
 
+def drop_vars(data, drop_vars = []):
+    if len(drop_vars) == 0:
+        drop_vars = ["missed_percent","acc","avg_rt_error","std_rt_error","avg_rt","std_rt","post_error_slowing",
+                    "congruency_seq","demographics","go_acc","stop_acc","go_rt_error","go_rt_std_error",
+                    "go_rt","go_rt_std","stop_rt_error","stop_rt_error_std","SS_delay","sentiment_label","_total_points"]
+    drop_vars = '|'.join(drop_vars)
+    return data.drop(data.filter(regex=drop_vars).columns, axis = 1)
+    
+    
 def get_bonuses(data):
     if 'bonus_zscore' not in data.columns:
         calc_bonuses(data)

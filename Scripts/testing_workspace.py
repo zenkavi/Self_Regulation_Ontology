@@ -1,5 +1,6 @@
 from expanalysis.experiments.processing import extract_row, post_process_data, post_process_exp, extract_experiment, calc_DVs, extract_DVs,flag_data,  get_DV, generate_reference
 from graphs import Graph_Analysis, threshold_proportional_sign
+import bct
 import json
 import numpy as np
 import pandas as pd
@@ -81,28 +82,45 @@ for c in DV_df.columns:
 #drop na columns
 DV_df.dropna(axis = 1, how = 'all', inplace = True)
 # drop other columns of no interest
-drop_vars = "missed_percent|acc|avg_rt_error|std_rt_error|avg_rt|std_rt|post_error_slowing|\
-congruency_seq_rt|congruency_seq_acc|demographics|go_acc|stop_acc|go_rt_error|go_rt_std_error|\
-go_rt|go_rt_std|stop_rt_error|stop_rt_error_std|SS_delay|sentiment_label|_total_points"
-subset = DV_df.drop(DV_df.filter(regex=drop_vars).columns, axis = 1)
+subset = drop_vars(DV_df)
 # make subset without EZ variables
-drop_EZ_vars = 'drift_|thresh_|non_decision_|_EZ'
-noEZ_subset = subset.drop(subset.filter(regex = drop_EZ_vars).columns,axis =1)
+noEZ_subset = drop_vars(subset, drop_vars = ['drift_','thresh_','non_decision_','_EZ'])
 # make subset without acc/rt vars
-drop_rtacc_vars = '_acc|_rt'
-EZ_subset = subset.drop(subset.filter(regex = drop_rtacc_vars).columns, axis = 1)
+EZ_subset = drop_vars(subset, drop_vars = ['_acc', '_rt'])
 
 #make data subsets:
 survey_df = subset.filter(regex = 'survey')
 
 # plot graph
-t = 1
+t = .15
+em = 'spearman'
+t_f = bct.threshold_proportional
+c_a = bct.community_louvain
+
+G_w, connectivity_adj, threshold_visual = Graph_Analysis(noEZ_subset, community_alg = c_a, thresh_func = t_f, edge_metric = em, 
+                                                     reorder = False, threshold = t, weight = True, layout = 'kk', avg_num_edges = 5,
+                                                     print_options = {'lookup': {}}, 
+                                                    plot_options = {'inline': False})
+                                                    
+t = .9
 em = 'spearman'
 t_f = threshold_proportional_sign
-c_a = bct.modularity_louvain_und_sign
+c_a = bct.modularity_louvain_und_sign                                               
 
-G_w, connectivity_adj, visual_style = Graph_Analysis(subset, community_alg = c_a, thresh_func = t_f, edge_metric = em, 
+# kk layout using from thresholded positive weights                                              
+G_w, connectivity_adj, visual_style = Graph_Analysis(noEZ_subset, community_alg = c_a, thresh_func = t_f, edge_metric = em, 
+                                                     reorder = False, threshold = t, weight = True, layout = threshold_visual['layout'], 
+                                                     avg_num_edges = 4, print_options = {'lookup': {}}, 
+                                                    plot_options = {'inline': False}) 
+# circle layout                                                  
+G_w, connectivity_adj, visual_style = Graph_Analysis(noEZ_subset, community_alg = c_a, thresh_func = t_f, edge_metric = em, 
                                                      reorder = True, threshold = t, weight = True, layout = 'circle', 
+                                                     avg_num_edges = 1, print_options = {'lookup': {}}, 
+                                                    plot_options = {'inline': False})
+                                                    
+# save graph
+G_w, connectivity_adj, visual_style = Graph_Analysis(noEZ_subset, community_alg = c_a, thresh_func = t_f, edge_metric = em, 
+                                                     reorder = True, threshold = t, weight = True, layout = 'kk', 
                                                      print_options = {'lookup': {}, 'file': '../Plots/weighted_' + em + '.txt'}, 
                                                     plot_options = {'inline': False, 'target': '../Plots/weighted_' + em + '.pdf'})
                                                      
