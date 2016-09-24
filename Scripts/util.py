@@ -362,7 +362,7 @@ def quality_check(data):
                 # special cases...
                 if exp == 'information_sampling_task':
                     df.groupby('worker_id').which_click_in_round.value_counts()
-                    passed_response = df.groupby('worker_id').which_click_in_round.mean() < 2
+                    passed_response = df.groupby('worker_id').which_click_in_round.mean() > 2
                     passed_rt = pd.Series([True] * len(passed_response), index = passed_response.index)
                     passed_miss = pd.Series([True] * len(passed_response), index = passed_response.index)
                     passed_acc = pd.Series([True] * len(passed_response), index = passed_response.index)

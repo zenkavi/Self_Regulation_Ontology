@@ -83,7 +83,7 @@ DV_df.dropna(axis = 1, how = 'all', inplace = True)
 # drop other columns of no interest
 drop_vars = "missed_percent|acc|avg_rt_error|std_rt_error|avg_rt|std_rt|post_error_slowing|\
 congruency_seq_rt|congruency_seq_acc|demographics|go_acc|stop_acc|go_rt_error|go_rt_std_error|\
-go_rt|go_rt_std|stop_rt_error|stop_rt_error_std|SS_delay|sentiment_label"
+go_rt|go_rt_std|stop_rt_error|stop_rt_error_std|SS_delay|sentiment_label|_total_points"
 subset = DV_df.drop(DV_df.filter(regex=drop_vars).columns, axis = 1)
 # make subset without EZ variables
 drop_EZ_vars = 'drift_|thresh_|non_decision_|_EZ'
