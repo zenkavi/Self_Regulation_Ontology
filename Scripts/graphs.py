@@ -39,6 +39,9 @@ def gen_random_graph(n = 10, m = 10, template_graph = None):
     l = G.average_path_length()
     return (G,c,l,c/l)
 
+def get_percentile_weight(W, percentile):
+    return np.percentile((np.abs(W)[np.nonzero(W)]),percentile)
+    
 def graph_to_matrix(G):
     if 'weight' in G.es.attribute_names():
         graph_mat = np.array(G.get_adjacency(attribute = 'weight').data)
@@ -71,7 +74,7 @@ def threshold_proportional_sign(W, threshold):
     
 # Visualization
     
-def get_visual_style(G,  layout = 'kk', vertex_size = None, size = 1000, labels = None, avg_num_edges = 5):
+def get_visual_style(G,  layout = 'kk', vertex_size = None, size = 1000, labels = None, display_threshold = 0):
     """
     Creates an appropriate visual style for a graph. 
     
@@ -130,9 +133,7 @@ def get_visual_style(G,  layout = 'kk', vertex_size = None, size = 1000, labels 
                     'bbox': (size,size),
                     'margin': size/20.0}
     if 'weight' in G.es.attribute_names():
-        proportion = max(0,min([100,100-(avg_num_edges*len(G.vs))/len(G.es)*100]))
-        edge_threshold = np.percentile(np.abs(G.es['weight']),proportion)
-        visual_style['edge_width'] = [abs(w)**1.4*size/230.0 if abs(w) > edge_threshold else 0 for w in G.es['weight']]
+        visual_style['edge_width'] = [abs(w)**1.4*size/230.0 if abs(w) > display_threshold else 0 for w in G.es['weight']]
         if np.sum([e<0 for e in G.es['weight']]) > 0:
             visual_style['edge_color'] = [['#3399FF','#202020','#FF6666'][int(np.sign(w)+1)] for w in G.es['weight']]
         else:
@@ -244,7 +245,7 @@ def subgraph_analysis(G, community_alg = None):
 # Main graph analysis function
 def Graph_Analysis(data, thresh_func = bct.threshold_proportional, community_alg = bct.community_louvain, 
                    edge_metric = 'pearson', threshold = .15, weight = True, reorder = True, 
-                   display = True, layout = 'kk', avg_num_edges = 5, print_options = {}, plot_options = {}):
+                   display = True, layout = 'kk', plot_threshold = None, print_options = {}, plot_options = {}):
     """
     Creates and displays graphs of a data matrix.
     
@@ -297,7 +298,11 @@ def Graph_Analysis(data, thresh_func = bct.threshold_proportional, community_alg
             connectivity_matrix = abs(data.corr(method = edge_metric)).as_matrix()
         else:
             connectivity_matrix = data.corr(method = edge_metric).as_matrix()
-            
+    
+    if plot_threshold:
+        display_threshold = get_percentile_weight(connectivity_matrix, (1-plot_threshold) * 100)
+    else:
+        display_threshold = get_percentile_weight(connectivity_matrix, (1-threshold) * 100)
     #threshold and remove diagonal
     graph_mat = thresh_func(connectivity_matrix,threshold)
     
@@ -332,7 +337,7 @@ def Graph_Analysis(data, thresh_func = bct.threshold_proportional, community_alg
     
     # visualize
     visual_style = {}
-    visual_style = get_visual_style(G, layout = layout, vertex_size = 'eigen_centrality', size = 6000, avg_num_edges = avg_num_edges)
+    visual_style = get_visual_style(G, layout = layout, vertex_size = 'eigen_centrality', size = 6000, display_threshold = display_threshold)
     if display:
         # plot community structure
         print_community_members(G, **print_options)

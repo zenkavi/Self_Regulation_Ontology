@@ -98,28 +98,28 @@ t_f = bct.threshold_proportional
 c_a = bct.community_louvain
 
 G_w, connectivity_adj, threshold_visual = Graph_Analysis(noEZ_subset, community_alg = c_a, thresh_func = t_f, edge_metric = em, 
-                                                     reorder = False, threshold = t, weight = True, layout = 'kk', avg_num_edges = 5,
+                                                     reorder = False, threshold = t, plot_threshold = .075, weight = True, layout = 'kk',
                                                      print_options = {'lookup': {}}, 
                                                     plot_options = {'inline': False})
                                                     
-t = .9
+t = 1
 em = 'spearman'
 t_f = threshold_proportional_sign
 c_a = bct.modularity_louvain_und_sign                                               
 
 # kk layout using from thresholded positive weights                                              
-G_w, connectivity_adj, visual_style = Graph_Analysis(noEZ_subset, community_alg = c_a, thresh_func = t_f, edge_metric = em, 
+G_w, connectivity_mat, visual_style = Graph_Analysis(noEZ_subset, community_alg = c_a, thresh_func = t_f, edge_metric = em, 
                                                      reorder = False, threshold = t, weight = True, layout = threshold_visual['layout'], 
-                                                     avg_num_edges = 4, print_options = {'lookup': {}}, 
+                                                    plot_threshold = .05, print_options = {'lookup': {}}, 
                                                     plot_options = {'inline': False}) 
 # circle layout                                                  
-G_w, connectivity_adj, visual_style = Graph_Analysis(noEZ_subset, community_alg = c_a, thresh_func = t_f, edge_metric = em, 
+G_w, connectivity_mat, visual_style = Graph_Analysis(noEZ_subset, community_alg = c_a, thresh_func = t_f, edge_metric = em, 
                                                      reorder = True, threshold = t, weight = True, layout = 'circle', 
-                                                     avg_num_edges = 1, print_options = {'lookup': {}}, 
+                                                     plot_threshold = .03, print_options = {'lookup': {}}, 
                                                     plot_options = {'inline': False})
                                                     
 # save graph
-G_w, connectivity_adj, visual_style = Graph_Analysis(noEZ_subset, community_alg = c_a, thresh_func = t_f, edge_metric = em, 
+G_w, connectivity_mat, visual_style = Graph_Analysis(noEZ_subset, community_alg = c_a, thresh_func = t_f, edge_metric = em, 
                                                      reorder = True, threshold = t, weight = True, layout = 'kk', 
                                                      print_options = {'lookup': {}, 'file': '../Plots/weighted_' + em + '.txt'}, 
                                                     plot_options = {'inline': False, 'target': '../Plots/weighted_' + em + '.pdf'})
