@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from pprint import pprint
 import seaborn as sns
+from scipy import stats
 from sklearn.metrics.cluster import normalized_mutual_info_score
 
 #work around for spyder bug in python 3
@@ -40,7 +41,7 @@ def gen_random_graph(n = 10, m = 10, template_graph = None):
     return (G,c,l,c/l)
 
 def get_percentile_weight(W, percentile):
-    return np.percentile((np.abs(W)[np.nonzero(W)]),percentile)
+    return np.percentile(np.abs(W[np.tril_indices_from(W, k = -1)]),percentile)
     
 def graph_to_matrix(G):
     if 'weight' in G.es.attribute_names():
@@ -133,19 +134,17 @@ def get_visual_style(G,  layout = 'kk', vertex_size = None, size = 1000, labels 
                     'bbox': (size,size),
                     'margin': size/20.0}
     if 'weight' in G.es.attribute_names():
-        visual_style['edge_width'] = [abs(w)**1.4*size/230.0 if abs(w) > display_threshold else 0 for w in G.es['weight']]
+        thresholded_weights = [w if abs(w) > display_threshold else 0 for w in G.es['weight']]
+        standardized_weights = thresholded_weights/max(np.abs(G.es['weight']))
+        visual_style['edge_width'] = [abs(w)**1.5*size/300.0 for w in standardized_weights]
         if np.sum([e<0 for e in G.es['weight']]) > 0:
-            visual_style['edge_color'] = [['#3399FF','#202020','#FF6666'][int(np.sign(w)+1)] for w in G.es['weight']]
+            visual_style['edge_color'] = [['#3399FF','#696969','#FF6666'][int(np.sign(w)+1)] for w in G.es['weight']]
         else:
-            visual_style['edge_color'] = '#202020'
+            visual_style['edge_color'] = '#696969'
     if vertex_size:
-        visual_style['vertex_size'] = [c*(size/40.0)+(size/80.0) for c in G.vs[vertex_size]]
+        visual_style['vertex_size'] = [c*(size/60.0)+(size/200.0) for c in G.vs[vertex_size]]
     if labels:
         visual_style['vertex_label'] = labels
-    elif 'id' in G.vs.attribute_names():
-        visual_style['vertex_label'] = G.vs['id']
-    else:
-        visual_style['vertex_label'] = range(len(G.vs))
     
     return visual_style
     
@@ -303,6 +302,7 @@ def Graph_Analysis(data, thresh_func = bct.threshold_proportional, community_alg
         display_threshold = get_percentile_weight(connectivity_matrix, (1-plot_threshold) * 100)
     else:
         display_threshold = get_percentile_weight(connectivity_matrix, (1-threshold) * 100)
+        
     #threshold and remove diagonal
     graph_mat = thresh_func(connectivity_matrix,threshold)
     
@@ -337,7 +337,8 @@ def Graph_Analysis(data, thresh_func = bct.threshold_proportional, community_alg
     
     # visualize
     visual_style = {}
-    visual_style = get_visual_style(G, layout = layout, vertex_size = 'eigen_centrality', size = 6000, display_threshold = display_threshold)
+    visual_style = get_visual_style(G, layout = layout, vertex_size = 'eigen_centrality', labels = False,
+                                    size = 6000, display_threshold = display_threshold)
     if display:
         # plot community structure
         print_community_members(G, **print_options)
