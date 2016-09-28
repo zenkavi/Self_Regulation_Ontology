@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Spyder Editor
-
-This is a temporary script file.
+process the item-level data to generate separate files
+assumes that the data are in the main directory 
 """
 
 import numpy,pandas
@@ -11,7 +10,8 @@ import json
 
 from utils import get_info
 
-basedir=os.path.join(get_info('base_directory'),'discovery_survey_analyses')
+basedir=get_info('base_directory')
+datadir=os.path.join(basedir,'Self_Regulation_Ontology_Sept27')
 
 survey_longnames={'eating_survey':'Eating survey',
                   'erq_survey':'Emotion regulation questionnaire',
@@ -58,9 +58,9 @@ survey_termurls={'erq_survey':"http://www.cognitiveatlas.org/term/id/trm_56bbead
                 'mpq_control_survey':"http://www.cognitiveatlas.org/term/id/trm_55a6aa62c54f8"}
 
 
-def get_data(basedir=basedir):
+def get_data(datadir=datadir):
 
-    datafile=os.path.join(basedir,'items.csv')
+    datafile=os.path.join(datadir,'items.csv')
 
     data=pandas.read_csv(datafile,index_col=0)
     return data,basedir
@@ -78,7 +78,7 @@ def get_survey_items(data):
 
 
 def save_metadata(survey_items,
-                  outdir=basedir + 'metadata'):
+                  outdir=os.path.join(datadir, 'metadata')):
 
     if not os.path.exists(outdir):
         os.mkdir(outdir)
@@ -112,7 +112,7 @@ def add_survey_item_labels(data):
     return data
 
 def save_data(data,survey_metadata,
-              outdir=basedir + 'surveydata'):
+              outdir=os.path.join(datadir,'surveydata')):
 
     if not os.path.exists(outdir):
         os.mkdir(outdir)
