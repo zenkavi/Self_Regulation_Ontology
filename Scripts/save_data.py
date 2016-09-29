@@ -56,10 +56,11 @@ except Exception:
 
 discovery_directory = path.join(data_dir, 'Discovery_9-26-16')
 failed_directory = path.join(data_dir, 'Failed_9-26-16')
+local_dir = path.join(data_dir,'Local')
 
 # read preprocessed data
-discovery_data = pd.read_json(path.join(data_dir,'mturk_discovery_data_post.json')).reset_index(drop = True)
-failed_data = pd.read_json(path.join(data_dir,'mturk_failed_data_post.json')).reset_index(drop = True)
+discovery_data = pd.read_json(path.join(local_dir,'mturk_discovery_data_post.json')).reset_index(drop = True)
+failed_data = pd.read_json(path.join(local_dir,'mturk_failed_data_post.json')).reset_index(drop = True)
 
 for data,directory in [(discovery_data, discovery_directory), (failed_data, failed_directory)]:
     # save target datasets

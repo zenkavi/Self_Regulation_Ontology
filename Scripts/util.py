@@ -170,6 +170,7 @@ def drop_vars(data, drop_vars = []):
                     "\.EZ_drift_con", "\.EZ_drift_neg", "\.EZ_thresh_con", "\.EZ_thresh_neg", "\.EZ_non_decision_con", "\.EZ_non_decision_neg", # directed forgetting
                     "\.EZ_drift_AY", "\.EZ_drift_BX", "\.EZ_drift_BY", "\.EZ_thresh_AY", "\.EZ_thresh_BX", "\.EZ_thresh_BY", # DPX
                     "\.EZ_non_decision_AX", "\.EZ_non_decision_BX", "\.EZ_non_decision_BY", # DPX continued
+                    "\.risky_choices$", # holt and laury
                     "_total_points$", # IST
                     "\.go_acc$", "\.nogo_acc$", "\.go_rt$", #go_nogo
                     "_large$", "_medium$", "_small$", "\.warnings$", "_notnow$", "_now$", #kirby and delay discounting
