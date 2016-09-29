@@ -3,6 +3,7 @@ from expanalysis.experiments.processing import post_process_data, extract_DVs
 from expanalysis.results import get_filters
 import json
 import numpy as np
+from os import path
 import pandas as pd
 from util import anonymize_data, calc_trial_order, download_data, get_bonuses, get_info, get_pay,  remove_failed_subjects
 
@@ -21,11 +22,12 @@ if job == 'more':
     else:
         sample = sample.split(',')   
         
+#load Data
 token = get_info('expfactory_token')
 try:
     data_dir=get_info('data_directory')
 except Exception:
-    data_dir=get_info('base_directory') + 'Data/'
+    data_dir=path.join(get_info('base_directory'),'Data')
 
 if job == 'download' or job == "all":
     #***************************************************
@@ -53,16 +55,16 @@ if job in ['extras', 'all']:
     #Process Data
     if job == "extras":
         #load Data
-        data = pd.read_json(data_dir + 'mturk_data.json')
+        data = pd.read_json(path.join(data_dir,  + 'mturk_data.json'))
         data.reset_index(drop = True, inplace = True)
         print('Finished loading raw data')
     
     #anonymize data
     worker_lookup = anonymize_data(data)
-    json.dump(worker_lookup, open(data_dir + 'worker_lookup.json','w'))
+    json.dump(worker_lookup, open(path.join(data_dir,  + 'worker_lookup.json','w')))
     
     # record subject completion statistics
-    (data.groupby('worker_id').count().finishtime).to_json(data_dir + 'worker_counts.json')
+    (data.groupby('worker_id').count().finishtime).to_json(path.join(data_dir,  + 'worker_counts.json'))
     
     # add a few extras
     bonuses = get_bonuses(data)
@@ -71,11 +73,11 @@ if job in ['extras', 'all']:
     calc_trial_order(data)
     
     # save data
-    data.to_json(data_dir + 'mturk_data_extras.json')
+    data.to_json(path.join(data_dir,  + 'mturk_data_extras.json'))
     
     # calculate pay
     pay = get_pay(data)
-    pay.to_json(data_dir + 'worker_pay.json')
+    pay.to_json(path.join(data_dir,  + 'worker_pay.json'))
     print('Finished saving worker pay')
     
 if job in ['post', 'all']:
@@ -83,9 +85,9 @@ if job in ['post', 'all']:
     if job == "post":
         #load Data
         try:
-            data = pd.read_json(data_dir + 'mturk_data_extras.json')
+            data = pd.read_json(path.join(data_dir, 'mturk_data_extras.json'))
         except ValueError:
-            data = pd.read_json(data_dir + 'mturk_data.json')
+            data = pd.read_json(path.join(data_dir,  + 'mturk_data.json'))
         data.reset_index(drop = True, inplace = True)
         print('Finished loading raw data')
     
@@ -120,7 +122,7 @@ if job in ['post', 'all']:
             new_data = extra_data[extra_data['worker_id'].isin(makeup_workers)]
             discovery_data = pd.concat([discovery_data, new_data]).reset_index(drop = True)
             extra_data.drop(new_data.index, inplace = True)
-        discovery_data.to_json(data_dir + 'mturk_discovery_data_post.json')
+        discovery_data.to_json(path.join(data_dir,'mturk_discovery_data_post.json'))
         print('Finished saving post-processed discovery data')
         
     if 'validation' in sample:
@@ -136,7 +138,7 @@ if job in ['post', 'all']:
             new_data = extra_data[extra_data['worker_id'].isin(makeup_workers)]
             validation_data = pd.concat([validation_data, new_data]).reset_index(drop = True)
             extra_data.drop(new_data.index, inplace = True)
-        validation_data.to_json(data_dir + 'mturk_validation_data_post.json')
+        validation_data.to_json(path.join(data_dir,'mturk_validation_data_post.json'))
         print('Finished saving post-processed validation data')
         
     if 'incomplete' in sample:
@@ -156,8 +158,8 @@ if job in ['DV', 'all']:
         data = pd.read_json(data_dir + 'mturk_discovery_data_post.json')
         #calculate DVs
         DV_df, valence_df = extract_DVs(data, use_group_fun = False)
-        DV_df.to_json(data_dir + 'mturk_discovery_DV.json')
-        valence_df.to_json(data_dir + 'mturk_discovery_DV_valence.json')
+        DV_df.to_json(path.join(data_dir, 'mturk_discovery_DV.json'))
+        valence_df.to_json(path.join(data_dir, 'mturk_discovery_DV_valence.json'))
 
     
     
