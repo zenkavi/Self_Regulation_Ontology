@@ -174,8 +174,11 @@ def drop_vars(data, drop_vars = []):
                     "\.go_acc$", "\.nogo_acc$", "\.go_rt$", #go_nogo
                     "_large$", "_medium$", "_small$", "\.warnings$", "_notnow$", "_now$", #kirby and delay discounting
                     "letter.EZ_drift_congruent$", "letter.EZ_thresh_congruent$", "letter.EZ_non_decision_congruent$", # local global letter
+                    "letter.EZ_drift_stay$", "letter.EZ_thresh_stay$", "letter.EZ_non_decision_stay$", # local global letter continued
+                    "letter.EZ_drift_switch$", "letter.EZ_thresh_switch$", "letter.EZ_non_decision_switch$", # local global letter continued
                     "\.EZ_drift_rec", "\.EZ_drift_xrec", "\.EZ_thresh_rec", "\.EZ_thresh_xrec", "\.EZ_non_decision_rec", "\.EZ_non_decision_xrec", # recent probes
-                     "go_acc","stop_acc","go_rt_error","go_rt_std_error", "go_rt","go_rt_std","stop_rt_error","stop_rt_error_std","SS_delay", # stop signal
+                     "go_acc","stop_acc","go_rt_error","go_rt_std_error", "go_rt","go_rt_std", # stop signal
+                     "stop_rt_error","stop_rt_error_std","SS_delay", "^stop_signal.SSRT$" # stop signal continue
                      "\.EZ_drift_.*_switch", "\.EZ_thresh_.*_switch", "\.EZ_non_decision_.*_switch", "\.EZ_drift_task_stay", "\.EZ_thresh_task_stay", "\.EZ_non_decision_task_stay", # three by two
                      "sentiment_label" # writing task
                     ]

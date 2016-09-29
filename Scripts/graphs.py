@@ -135,14 +135,13 @@ def get_visual_style(G,  layout = 'kk', vertex_size = None, size = 1000, labels 
                     'margin': size/20.0}
     if 'weight' in G.es.attribute_names():
         thresholded_weights = [w if abs(w) > display_threshold else 0 for w in G.es['weight']]
-        standardized_weights = thresholded_weights/max(np.abs(G.es['weight']))
-        visual_style['edge_width'] = [abs(w)**1.5*size/300.0 for w in standardized_weights]
+        visual_style['edge_width'] = [abs(w)**2.5*size/300.0 for w in thresholded_weights]
         if np.sum([e<0 for e in G.es['weight']]) > 0:
             visual_style['edge_color'] = [['#3399FF','#696969','#FF6666'][int(np.sign(w)+1)] for w in G.es['weight']]
         else:
             visual_style['edge_color'] = '#696969'
     if vertex_size:
-        visual_style['vertex_size'] = [c*(size/60.0)+(size/200.0) for c in G.vs[vertex_size]]
+        visual_style['vertex_size'] = [c*(size/60.0)+(size/100.0) for c in G.vs[vertex_size]]
     if labels:
         visual_style['vertex_label'] = labels
     
