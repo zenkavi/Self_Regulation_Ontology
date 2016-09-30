@@ -1,0 +1,537 @@
+{
+    "MeasurementToolMetadata": {
+        "Description": "UPPS+P",
+        "TermURL": "http://www.cognitiveatlas.org/term/id/trm_56a91a92043bc"
+    },
+    "upps_impulsivity_survey_10": {
+        "Description": "I tend to give up easily.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_11": {
+        "Description": "When I am in great mood, I tend to get into situations that could cause me problems.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_12": {
+        "Description": "I am not one of those people who blurt out things without thinking.",
+        "Levels": {
+            "1": "Agree Strongly",
+            "2": "Agree Some",
+            "3": "Disagree Some",
+            "4": "Disagree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_13": {
+        "Description": "I often get involved in things I later wish I could get out of.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_14": {
+        "Description": "I like sports and games in which you have to choose your next move very quickly.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_15": {
+        "Description": "Unfinished tasks really bother me.",
+        "Levels": {
+            "1": "Agree Strongly",
+            "2": "Agree Some",
+            "3": "Disagree Some",
+            "4": "Disagree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_16": {
+        "Description": "When I am very happy, I tend to do things that may cause problems in my life.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_17": {
+        "Description": "I like to stop and think things over before I do them.",
+        "Levels": {
+            "1": "Agree Strongly",
+            "2": "Agree Some",
+            "3": "Disagree Some",
+            "4": "Disagree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_18": {
+        "Description": "When I feel bad, I will often do things I later regret in order to make myself feel better now.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_19": {
+        "Description": "I would enjoy water skiing.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_2": {
+        "Description": "I have a reserved and cautious attitude toward life.",
+        "Levels": {
+            "1": "Agree Strongly",
+            "2": "Agree Some",
+            "3": "Disagree Some",
+            "4": "Disagree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_20": {
+        "Description": "Once I get going on something I hate to stop.",
+        "Levels": {
+            "1": "Agree Strongly",
+            "2": "Agree Some",
+            "3": "Disagree Some",
+            "4": "Disagree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_21": {
+        "Description": "I tend to lose control when I am in a great mood.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_22": {
+        "Description": "I don't like to start a project until I know exactly how to proceed.",
+        "Levels": {
+            "1": "Agree Strongly",
+            "2": "Agree Some",
+            "3": "Disagree Some",
+            "4": "Disagree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_23": {
+        "Description": "Sometimes when I feel bad, I can't seem to stop what I am doing even though it is making me feel worse.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_24": {
+        "Description": "I quite enjoy taking risks.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_25": {
+        "Description": "I concentrate easily.",
+        "Levels": {
+            "1": "Agree Strongly",
+            "2": "Agree Some",
+            "3": "Disagree Some",
+            "4": "Disagree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_26": {
+        "Description": "When I am really ecstatic, I tend to get out of control.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_27": {
+        "Description": "I would enjoy parachute jumping.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_28": {
+        "Description": "I finish what I start.",
+        "Levels": {
+            "1": "Agree Strongly",
+            "2": "Agree Some",
+            "3": "Disagree Some",
+            "4": "Disagree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_29": {
+        "Description": "I tend to value and follow a rational, 'sensible' approach to things.",
+        "Levels": {
+            "1": "Agree Strongly",
+            "2": "Agree Some",
+            "3": "Disagree Some",
+            "4": "Disagree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_3": {
+        "Description": "I have trouble controlling my impulses.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_30": {
+        "Description": "When I am upset I often act without thinking.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_31": {
+        "Description": "Others would say I make bad choices when I am extremely happy about something.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_32": {
+        "Description": "I welcome new and exciting experiences and sensations, even if they are a little frightening and unconventional.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_33": {
+        "Description": "I am able to pace myself so as to get things done on time.",
+        "Levels": {
+            "1": "Agree Strongly",
+            "2": "Agree Some",
+            "3": "Disagree Some",
+            "4": "Disagree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_34": {
+        "Description": "I usually make up my mind through careful reasoning.",
+        "Levels": {
+            "1": "Agree Strongly",
+            "2": "Agree Some",
+            "3": "Disagree Some",
+            "4": "Disagree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_35": {
+        "Description": "When I feel rejected, I will often say things that I later regret. ",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_36": {
+        "Description": "Others are shocked or worried about the things I do when I am feeling very excited. ",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_37": {
+        "Description": "I would like to learn to fly an airplane. ",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_38": {
+        "Description": "I am a person who always gets the job done. ",
+        "Levels": {
+            "1": "Agree Strongly",
+            "2": "Agree Some",
+            "3": "Disagree Some",
+            "4": "Disagree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_39": {
+        "Description": "I am a cautious person. ",
+        "Levels": {
+            "1": "Agree Strongly",
+            "2": "Agree Some",
+            "3": "Disagree Some",
+            "4": "Disagree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_4": {
+        "Description": "I generally seek new and exciting experiences and sensations.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_40": {
+        "Description": "It is hard for me to resist acting on my feelings. ",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_41": {
+        "Description": "When I get really happy about something, I tend to do things that can have bad consequences. ",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_42": {
+        "Description": "I sometimes like doing things that are a bit frightening. ",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_43": {
+        "Description": "I almost always finish projects that I start. ",
+        "Levels": {
+            "1": "Agree Strongly",
+            "2": "Agree Some",
+            "3": "Disagree Some",
+            "4": "Disagree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_44": {
+        "Description": "Before I get into a new situation I like to find out what to expect from it. ",
+        "Levels": {
+            "1": "Agree Strongly",
+            "2": "Agree Some",
+            "3": "Disagree Some",
+            "4": "Disagree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_45": {
+        "Description": "I often make matters worse because I act without thinking when I am upset.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_46": {
+        "Description": "When overjoyed, I feel like I cant stop myself from going overboard.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_47": {
+        "Description": "I would enjoy the sensation of skiing very fast down a high mountain slope.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_48": {
+        "Description": "Sometimes there are so many little things to be done that I just ignore them all.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_49": {
+        "Description": "I usually think carefully before doing anything.",
+        "Levels": {
+            "1": "Agree Strongly",
+            "2": "Agree Some",
+            "3": "Disagree Some",
+            "4": "Disagree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_5": {
+        "Description": "I generally like to see things through to the end.",
+        "Levels": {
+            "1": "Agree Strongly",
+            "2": "Agree Some",
+            "3": "Disagree Some",
+            "4": "Disagree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_50": {
+        "Description": "When I am really excited, I tend not to think of the consequences of my actions.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_51": {
+        "Description": "In the heat of an argument, I will often say things that I later regret.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_52": {
+        "Description": "I would like to go scuba diving.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_53": {
+        "Description": "I tend to act without thinking when I am really excited.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_54": {
+        "Description": "I always keep my feelings under control.",
+        "Levels": {
+            "1": "Agree Strongly",
+            "2": "Agree Some",
+            "3": "Disagree Some",
+            "4": "Disagree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_55": {
+        "Description": "When I am really happy, I often find myself in situations that I normally wouldn't be comfortable with.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_56": {
+        "Description": "Before making up my mind, I consider all the advantages and disadvantages.",
+        "Levels": {
+            "1": "Agree Strongly",
+            "2": "Agree Some",
+            "3": "Disagree Some",
+            "4": "Disagree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_57": {
+        "Description": "I would enjoy fast driving.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_58": {
+        "Description": "When I am very happy, I feel like it is ok to give in to cravings or overindulge.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_59": {
+        "Description": "Sometimes I do impulsive things that I later regret.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_6": {
+        "Description": "When I am very happy, I cant seem to stop myself from doing things that can have bad consequences.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_60": {
+        "Description": "I am surprised at the things I do while in a great mood.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_7": {
+        "Description": "My thinking is usually careful and purposeful.",
+        "Levels": {
+            "1": "Agree Strongly",
+            "2": "Agree Some",
+            "3": "Disagree Some",
+            "4": "Disagree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_8": {
+        "Description": "I have trouble resisting my cravings (for food, cigarettes, etc.).",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    },
+    "upps_impulsivity_survey_9": {
+        "Description": "I'll try anything once.",
+        "Levels": {
+            "1": "Disagree Strongly",
+            "2": "Disagree Some",
+            "3": "Agree Some",
+            "4": "Agree Strongly"
+        }
+    }
+}
