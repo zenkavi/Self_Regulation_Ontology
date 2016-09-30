@@ -5,8 +5,10 @@ assumes that the data are in the main directory
 """
 
 import numpy,pandas
-import os
+import os,pickle,sys
 import json
+
+sys.path.append('../utils')
 
 from utils import get_info
 dataset='Discovery_9-26-16'
@@ -137,3 +139,4 @@ if __name__=='__main__':
     survey_metadata,metadatdir=save_metadata(survey_items)
     data=add_survey_item_labels(data)
     datadir=save_data(data,survey_metadata)
+    pickle.dump((data,survey_metadata),open(os.path.join(outdir,'surveydata.pkl'),'wb'))
