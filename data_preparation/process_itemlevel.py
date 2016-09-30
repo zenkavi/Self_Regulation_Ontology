@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 process the item-level data to generate separate files
-assumes that the data are in the main directory 
+assumes that the data are in the main directory
 """
 
 import numpy,pandas
@@ -11,7 +11,10 @@ import json
 from utils import get_info
 
 basedir=get_info('base_directory')
-datadir=os.path.join(basedir,'Self_Regulation_Ontology_Sept27')
+datadir=os.path.join(basedir,'data/Discovery_9-26-16')
+outdir=os.path.join(basedir,'data/Derived_Data/Discovery_9-26-16')
+if not os.path.exists(outdir):
+    os.mkdir(outdir)
 
 survey_longnames={'eating_survey':'Eating survey',
                   'erq_survey':'Emotion regulation questionnaire',
@@ -78,7 +81,7 @@ def get_survey_items(data):
 
 
 def save_metadata(survey_items,
-                  outdir=os.path.join(datadir, 'metadata')):
+                  outdir=os.path.join(outdir, 'metadata')):
 
     if not os.path.exists(outdir):
         os.mkdir(outdir)
@@ -112,7 +115,7 @@ def add_survey_item_labels(data):
     return data
 
 def save_data(data,survey_metadata,
-              outdir=os.path.join(datadir,'surveydata')):
+              outdir=os.path.join(outdir,'surveydata')):
 
     if not os.path.exists(outdir):
         os.mkdir(outdir)
