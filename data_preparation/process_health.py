@@ -6,9 +6,10 @@ This is a temporary script file.
 """
 
 import numpy,pandas
-import os
+import os,sys
 import json
 
+sys.path.append('../utils')
 from metadata_utils import write_metadata,metadata_reverse_scale
 
 from utils import get_info
@@ -26,7 +27,7 @@ def get_data(datadir=datadir):
 
     data=pandas.read_csv(datafile,index_col=0)
     data=data.rename(columns={'worker_id':'worker'})
-    return data,basedir
+    return data,datadir
 
 
 
@@ -122,26 +123,26 @@ def fix_item(d,v,metadata):
     reverse_scale=['DaysPhysicalHealthFeelings','Depressed','EverythingIsEffort',
                 'Hopeless','Nervous','RestlessFidgety','Worthless',"Last30DaysUsual"]
     if vname in reverse_scale:
-        tmp=numpy.array([float(i) for i in d])
-        d.iloc[:]=tmp*-1 + len(tmp)
+        tmp=numpy.array([float(i) for i in d.response])
+        d.iloc[:,0]=tmp*-1 + max(tmp)+1
         print('reversed scale:',v,vname)
         metadata=metadata_reverse_scale(metadata)
     return d,metadata
 
-def save_health_data(data,survey_metadata,
+def save_health_data(data,health_metadata,
               outdir=os.path.join(outdir,'surveydata')):
     id_to_name,nominalvars=setup_itemid_dict()
     if not os.path.exists(outdir):
         os.mkdir(outdir)
 
     unique_items=list(data.item_id.unique())
-    surveydata=pandas.DataFrame(index=list(data.worker.unique()))
+    surveydata=pandas.DataFrame(index=list(data.worker.unique()),columns=unique_items)
     for i in unique_items:
         qresult=data.query('item_id=="%s"'%i)
-        matchitem=qresult.response
+        matchitem=qresult.response.to_frame()
         matchitem.index=qresult['worker']
-        matchitem,survey_metadata[id_to_name[i]]=fix_item(matchitem,i,survey_metadata[id_to_name[i]])
-        surveydata.ix[matchitem.index,i]=matchitem
+        matchitem,health_metadata[id_to_name[i]]=fix_item(matchitem,i,health_metadata[id_to_name[i]])
+        surveydata.ix[matchitem.index,i]=matchitem.response
 
     surveydata_renamed=surveydata.rename(columns=id_to_name)
     surveydata_renamed.to_csv(os.path.join(outdir,'health.tsv'),sep='\t')
