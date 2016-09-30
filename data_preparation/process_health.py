@@ -160,4 +160,5 @@ if __name__=='__main__':
     health_metadata=get_metadata(health_items)
     data=add_health_item_labels(data)
     datadir,surveydata_renamed=save_health_data(data,health_metadata)
-    metadatadir=write_metadata(health_metadata,'health.json')
+    metadatadir=write_metadata(health_metadata,'health.json',
+        outdir=os.path.join(outdir,'metadata'))

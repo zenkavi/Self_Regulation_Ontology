@@ -6,8 +6,10 @@ This is a temporary script file.
 """
 
 import numpy,pandas
-import os
+import os,sys
 import json
+
+sys.path.append('../utils')
 
 from metadata_utils import metadata_subtract_one,metadata_replace_zero_with_nan
 from metadata_utils import metadata_change_two_to_zero_for_no,metadata_reverse_scale
@@ -192,4 +194,5 @@ if __name__=='__main__':
     alcohol_drug_metadata=get_metadata(alcohol_drug_items)
     data=add_alcohol_drug_item_labels(data)
     datadir,surveydata_renamed=save_alcohol_drug_data(data,alcohol_drug_metadata)
-    metadatadir=write_metadata(alcohol_drug_metadata,'alcohol_drugs.json')
+    metadatadir=write_metadata(alcohol_drug_metadata,'alcohol_drugs.json',
+        outdir=os.path.join(outdir,'metadata'))

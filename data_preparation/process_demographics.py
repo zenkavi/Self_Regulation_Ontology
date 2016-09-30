@@ -6,11 +6,13 @@ This is a temporary script file.
 """
 
 import numpy,pandas
-import os
+import os,sys
 import json
 # ensure ascii encoding is correct -
 # removing this because it breaks in python3 and is a bad idea:
 # http://stackoverflow.com/questions/3828723/why-should-we-not-use-sys-setdefaultencodingutf-8-in-a-py-script
+
+sys.path.append('../utils')
 
 from metadata_utils import metadata_subtract_one,metadata_replace_zero_with_nan
 from metadata_utils import metadata_change_two_to_zero_for_no
@@ -205,4 +207,5 @@ if __name__=='__main__':
     demog_metadata=get_metadata(demog_items)
     data=add_demog_item_labels(data)
     datadir,surveydata_renamed=save_demog_data(data,demog_metadata)
-    metadatadir=write_metadata(demog_metadata,'demographics.json')
+    metadatadir=write_metadata(demog_metadata,'demographics.json',
+        outdir=os.path.join(outdir,'metadata'))
