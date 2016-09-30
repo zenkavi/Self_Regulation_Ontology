@@ -18,15 +18,20 @@ from metadata_utils import write_metadata
 
 from utils import get_info
 
-basedir=os.path.join(get_info('base_directory'),'discovery_survey_analyses')
+dataset='Discovery_9-26-16'
+basedir=get_info('base_directory')
+datadir=os.path.join(basedir,'data/%s'%dataset)
+outdir=os.path.join(basedir,'data/Derived_Data/%s'%dataset)
+if not os.path.exists(outdir):
+    os.mkdir(outdir)
 
-def get_data(basedir=basedir):
+def get_data(datadir=datadir):
 
-    datafile=os.path.join(basedir,'demographics.csv')
+    datafile=os.path.join(datadir,'demographics.csv')
 
     data=pandas.read_csv(datafile,index_col=0)
     data=data.rename(columns={'worker_id':'worker'})
-    return data,basedir
+    return data,datadir
 
 def get_demog_items(data):
     demog_items={}
@@ -170,7 +175,7 @@ def fix_item(d,v,metadata):
     return d,metadata
 
 def save_demog_data(data,survey_metadata,
-              outdir=basedir + '/surveydata'):
+              outdir=os.path.join(outdir, 'surveydata')):
     id_to_name,nominalvars=setup_itemid_dict()
     if not os.path.exists(outdir):
         os.mkdir(outdir)
