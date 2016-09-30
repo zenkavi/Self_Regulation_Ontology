@@ -1,32 +1,32 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Sep 21 08:58:43 2016
+from os import path
+import numpy as np
+import pandas as pd
+from util import get_info
+import seaborn as sns
 
-@author: ian
-"""
-plt.figure(figsize=(12,8))
-data.groupby('worker_id').passed_QC.sum().hist(bins = 50)
+#load Data
+data_dir=path.join(get_info('base_directory'),'Data/Discovery_9-26-16')
 
-exp = 'simon'
-a,b = get_DV(data, exp, use_group_fun = False)
-x = [i['acc']['value'] for i in a.values()]
-y = [i['simon_rt']['value'] for i in a.values()]
-plot_df = pd.DataFrame({'acc': x, 'measure': y})
-plt.figure(figsize = (12,10))
-sns.regplot('acc','measure', data = plot_df)
+# get DV df
+DV_df = pd.read_csv(path.join(data_dir,'meaningful_variables_noEZ_contrasts.csv'), index_col = 0)
 
-exp = 'stroop'
-a,b = get_DV(data, exp, use_group_fun = False)
-x = [i['acc']['value'] for i in a.values()]
-y = [i['stroop_rt']['value'] for i in a.values()]
-plot_df = pd.DataFrame({'acc': x, 'measure': y})
-plt.figure(figsize = (12,10))
-sns.regplot('acc','measure', data = plot_df)
+tasks = np.unique(DV_df.columns.map(lambda x: x.split('.')[0]))
+for task in tasks:
+    subset = DV_df.filter(regex = '^%s' % task)
+    subset = subset.dropna(how = 'all').dropna(axis = 1)
+    sns.set(font_scale = 1.5)
+    p = sns.pairplot(subset, kind = 'reg', size = 5, diag_kws = {'bins': 50})
+    p.savefig('Plots/%s_pair_plot.pdf' % task, dpi = 300)
 
-exp = 'threebytwo'
-a,b = get_DV(data, exp, use_group_fun = False)
-x = [i['EZ_drift']['value'] for i in a.values()]
-y = [i['cue_switch_cost']['value'] for i in a.values()]
-plot_df = pd.DataFrame({'acc': x, 'measure': y})
-plt.figure(figsize = (12,10))
-sns.regplot('acc','measure', data = plot_df)
+
+# look across stop signals
+stop1 = DV_df.filter(regex = '^%s' % 'stop_signal')
+stop2 = DV_df.filter(regex = '^%s' % 'motor_selective')
+stop3 = DV_df.filter(regex = '^%s' % 'stim_selective')
+stop1 = stop1.dropna(how = 'all').dropna(axis = 1)
+stop2 = stop2.dropna(how = 'all').dropna(axis = 1)
+stop3 = stop3.dropna(how = 'all').dropna(axis = 1)
+stop = stop1.join(stop2).join(stop3).dropna()
+sns.set(font_scale = 1.5)
+p = sns.pairplot(stop, kind = 'reg', size = 5, diag_kws = {'bins': 50})
+p.savefig('Plots/%s_pair_plot.pdf' % 'all_stops', dpi = 300)

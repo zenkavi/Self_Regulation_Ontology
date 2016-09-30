@@ -2,7 +2,6 @@ from expanalysis.experiments.processing import  extract_experiment
 from os import makedirs, path
 import pandas as pd
 from util import drop_vars, get_info
-
 #******************************
 #*** Helper Functions *********
 #******************************
@@ -39,7 +38,7 @@ def get_items(data):
 def save_task_data(data_loc, data):
     save_path = path.join(data_loc,'Individual_Measures')
     if not path.exists(save_path):
-        makedirs(path)
+        makedirs(save_path)
     for exp_id in data.experiment_exp_id.unique():
         print('Saving %s...' % exp_id)
         extract_experiment(data,exp_id).to_csv(path.join(save_path, exp_id + '.csv'))
@@ -56,10 +55,13 @@ except Exception:
 
 discovery_directory = path.join(data_dir, 'Discovery_9-26-16')
 failed_directory = path.join(data_dir, 'Failed_9-26-16')
+local_dir = path.join(data_dir,'Local')
+if not path.exists(local_dir):
+    makedirs(local_dir)
 
 # read preprocessed data
-discovery_data = pd.read_json(path.join(data_dir,'mturk_discovery_data_post.json')).reset_index(drop = True)
-failed_data = pd.read_json(path.join(data_dir,'mturk_failed_data_post.json')).reset_index(drop = True)
+discovery_data = pd.read_json(path.join(local_dir,'mturk_discovery_data_post.json')).reset_index(drop = True)
+failed_data = pd.read_json(path.join(local_dir,'mturk_failed_data_post.json')).reset_index(drop = True)
 
 for data,directory in [(discovery_data, discovery_directory), (failed_data, failed_directory)]:
     # save target datasets
@@ -74,8 +76,9 @@ for data,directory in [(discovery_data, discovery_directory), (failed_data, fail
     items_df.to_csv(path.join(directory, 'items.csv'))
     subjectsxitems = items_df.pivot('worker','item_ID','coded_response')
     subjectsxitems.to_csv(path.join(directory, 'subject_x_items.csv'))
-    # save Individual Measures
-    save_task_data(directory, data)
+    
+# save Individual Measures
+save_task_data(path.join(local_dir,'discovery'), data)
 
 
 # ************************************
@@ -84,13 +87,12 @@ for data,directory in [(discovery_data, discovery_directory), (failed_data, fail
 directory = discovery_directory
 
 # get DV df
-DV_df = pd.read_json(path.join(discovery_directory,'mturk_discovery_DV.json'))
-valence_df = pd.read_json(path.join(discovery_directory,'mturk_discovery_DV_valence.json'))
+DV_df = pd.read_json(path.join(directory,'mturk_discovery_DV.json'))
+valence_df = pd.read_json(path.join(directory,'mturk_discovery_DV_valence.json'))
 
 #flip negative signed valence DVs
-flip_df = valence_df.replace(to_replace ={'Pos': 1, 'NA': 1, 'Neg': -1}).iloc[0]
+flip_df = valence_df.replace(to_replace ={'Pos': 1, 'NA': 1, 'Neg': -1}).mean()
 for c in DV_df.columns:
-    print(c)
     try:
         DV_df.loc[:,c] = DV_df.loc[:,c] * flip_df.loc[c]
     except TypeError:
