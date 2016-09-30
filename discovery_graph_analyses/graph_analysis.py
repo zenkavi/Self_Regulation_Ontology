@@ -1,54 +1,47 @@
 import bct
 from collections import OrderedDict as odict
-from graphs import community_reorder, get_subgraph, get_visual_style, Graph_Analysis, plot_graph, \
+from graph_util import community_reorder, get_subgraph, get_visual_style, Graph_Analysis, plot_graph, \
                     print_community_members, threshold_proportional_sign
 import numpy as np
+from os import path
 import pandas as pd
-from util import dendroheatmap, drop_vars, get_info
+from util import dendroheatmap, get_info
+import seaborn as sns
 
 #load Data
 data_dir=path.join(get_info('base_directory'),'Data/Discovery_9-26-16')
 
 # get DV df
-DV_df = pd.read_json(path.join(data_dir,'mturk_discovery_DV.json'))
+DV_df = pd.read_csv(path.join(data_dir,'meaningful_variables_EZ_contrasts.csv'), index_col = 0)
 valence_df = pd.read_json(path.join(data_dir, 'mturk_discovery_DV_valence.json'))
 
 
 #flip negative signed valence DVs
-flip_df = valence_df.replace(to_replace ={'Pos': 1, 'NA': 1, 'Neg': -1}).iloc[0]
+flip_df = valence_df.replace(to_replace ={'Pos': 1, 'NA': 1, 'Neg': -1}).mean()
 for c in DV_df.columns:
-    print(c)
     try:
         DV_df.loc[:,c] = DV_df.loc[:,c] * flip_df.loc[c]
     except TypeError:
         continue
     
-#drop na columns
-DV_df.dropna(axis = 1, how = 'all', inplace = True)
-# drop other columns of no interest
-subset = drop_vars(DV_df)
-# make subset without EZ variables
-noEZ_subset = drop_vars(subset, drop_vars = ['_EZ'])
-# make subset without acc/rt vars
-EZ_subset = drop_vars(subset, drop_vars = ['_acc', '_rt'])
-# make survey subset
-survey_df = subset.filter(regex = 'survey')
-
 
 
 # ************************************
 # ********* Heatmaps *******************
 # ************************************
 # dendrogram heatmap
-plot_df = subset.corr()
+plot_df = DV_df.corr()
 plot_df.columns = [' '.join(x.split('_')) for x in  plot_df.columns]
 fig = dendroheatmap(plot_df.corr(), labels = True)
+
 
 # ************************************
 # ********* Graphs *******************
 # ************************************
 
-graph_data = EZ_subset
+
+                    
+graph_data = DV_df
 
 # threshold positive graph
 t = .15
@@ -97,6 +90,14 @@ print_community_members(subgraph)
 subgraph_visual_style = get_visual_style(subgraph, vertex_size = 'eigen_centrality')
 plot_graph(subgraph, visual_style = subgraph_visual_style, layout = 'circle', inline = False)
 
-# ************************************
-# ************ PCA *******************
-# ************************************
+
+
+
+
+
+
+
+
+
+
+
