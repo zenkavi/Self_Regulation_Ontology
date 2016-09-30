@@ -36,6 +36,7 @@ for f in datafiles:
     for c in d.columns:
         assert c in metadata
 
+alldata.to_csv(os.path.join(derived_dir,'surveydata.csv'))
 mdkeys=list(allmetadata.keys())
 mdkeys.sort()
 shortnames=[]
