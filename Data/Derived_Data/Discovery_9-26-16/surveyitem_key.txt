@@ -1,0 +1,506 @@
+bis11_survey_10	bis10	I concentrate easily.
+bis11_survey_11	bis11	I save regularly.
+bis11_survey_12	bis12	I squirm at plays or lectures.
+bis11_survey_13	bis13	I am a careful thinker.
+bis11_survey_14	bis14	I plan for job security.
+bis11_survey_15	bis15	I say things without thinking.
+bis11_survey_16	bis16	I like to think about complex problems.
+bis11_survey_17	bis17	I change jobs.
+bis11_survey_18	bis18	I act on impulse.
+bis11_survey_19	bis19	I get easily bored when solving thought problems.
+bis11_survey_2	bis02	I plan tasks carefully.
+bis11_survey_20	bis20	I act on the spur of the moment.
+bis11_survey_21	bis21	I am a steady thinker.
+bis11_survey_22	bis22	I change residences.
+bis11_survey_23	bis23	I buy things on impulse.
+bis11_survey_24	bis24	I can only think about one thing at a time.
+bis11_survey_25	bis25	I change hobbies.
+bis11_survey_26	bis26	I spend or charge more than I earn.
+bis11_survey_27	bis27	I often have extraneous thoughts when thinking.
+bis11_survey_28	bis28	I am more interested in the present than the future.
+bis11_survey_29	bis29	I am restless at the theater or lectures.
+bis11_survey_3	bis03	I do things without thinking.
+bis11_survey_30	bis30	I like puzzles.
+bis11_survey_31	bis31	I am future oriented.
+bis11_survey_4	bis04	I make-up my mind quickly.
+bis11_survey_5	bis05	I am happy-go-lucky.
+bis11_survey_6	bis06	I dont pay attention.
+bis11_survey_7	bis07	I have racing thoughts.
+bis11_survey_8	bis08	I plan trips well ahead of time.
+bis11_survey_9	bis09	I am self controlled.
+bis_bas_survey_10	bisbas10	When I want something I usually go all-out to get it.
+bis_bas_survey_11	bisbas11	I will often do things for no other reason than that they might be fun.
+bis_bas_survey_12	bisbas12	It is hard for me to find the time to do things such as get a haircut.
+bis_bas_survey_13	bisbas13	If I see a chance to get something I want I move on it right away.
+bis_bas_survey_14	bisbas14	I feel pretty worried or upset when I think or know somebody is angry at me.
+bis_bas_survey_15	bisbas15	When I see an opportunity for something I like I get excited right away.
+bis_bas_survey_16	bisbas16	I often act on the spur of the moment.
+bis_bas_survey_17	bisbas17	If I think something unpleasant is going to happen I usually get pretty worked up.
+bis_bas_survey_18	bisbas18	I often wonder why people act the way they do.
+bis_bas_survey_19	bisbas19	When good things happen to me, it affects me strongly.
+bis_bas_survey_2	bisbas02	A persons family is the most important thing in life.
+bis_bas_survey_20	bisbas20	I feel worried when I think I have done poorly at something important.
+bis_bas_survey_21	bisbas21	I crave excitement and new sensations.
+bis_bas_survey_22	bisbas22	When I go after something I use a no holds barred approach.
+bis_bas_survey_23	bisbas23	I have very few fears compared to my friends.
+bis_bas_survey_24	bisbas24	It would excite me to win a contest.
+bis_bas_survey_25	bisbas25	I worry about making mistakes.
+bis_bas_survey_3	bisbas03	Even if something bad is about to happen to me, I rarely experience fear or nervousness.
+bis_bas_survey_4	bisbas04	I go out of my way to get things I want.
+bis_bas_survey_5	bisbas05	When I am doing well at something I love to keep at it.
+bis_bas_survey_6	bisbas06	I am always willing to try something new if I think it will be fun.
+bis_bas_survey_7	bisbas07	How I dress is important to me.
+bis_bas_survey_8	bisbas08	When I get something I want, I feel excited and energized.
+bis_bas_survey_9	bisbas09	Criticism or scolding hurts me quite a bit.
+brief_self_control_survey_10	brisel10	Pleasure and fun sometimes keep me from getting work done.
+brief_self_control_survey_11	brisel11	I have trouble concentrating.
+brief_self_control_survey_12	brisel12	I am able to work effectively toward long-term goals.
+brief_self_control_survey_13	brisel13	Sometimes I cant stop myself from doing something, even if I know it is wrong.
+brief_self_control_survey_14	brisel14	I often act without thinking through all the alternatives.
+brief_self_control_survey_2	brisel02	I am good at resisting temptation.
+brief_self_control_survey_3	brisel03	I have a hard time breaking bad habits.
+brief_self_control_survey_4	brisel04	I am lazy.
+brief_self_control_survey_5	brisel05	I say inappropriate things.
+brief_self_control_survey_6	brisel06	I do certain things that are bad for me, if they are fun.
+brief_self_control_survey_7	brisel07	I refuse things that are bad for me.
+brief_self_control_survey_8	brisel08	I wish I had more self-discipline.
+brief_self_control_survey_9	brisel09	People would say that I have iron self-discipline.
+dickman_survey_10	dickma10	I often say and do things without considering the consequences.
+dickman_survey_11	dickma11	I frequently make appointments without thinking about whether I will be able to keep them.
+dickman_survey_12	dickma12	I am uncomfortable when l have to make up my mind rapidly.
+dickman_survey_13	dickma13	I dont like to do things quickly, even when I am doing something that is not very difficult.
+dickman_survey_14	dickma14	I frequently buy things without thinking about whether or not I can really afford them.
+dickman_survey_15	dickma15	I am good at careful reasoning.
+dickman_survey_16	dickma16	I like to take part in really fast-paced conversations, where you dont have much time to think before you speak.
+dickman_survey_17	dickma17	I like sports and games in which you have to choose your next move very quickly.
+dickman_survey_18	dickma18	Many times the plans I make dont work out because I havent gone over them carefully enough in advance.
+dickman_survey_19	dickma19	I often get into trouble because I dont think before I act.
+dickman_survey_2	dickma02	Often, I dont spend enough time thinking over a situation before I act.
+dickman_survey_20	dickma20	Most of the time, I can put my thoughts into words very rapidly.
+dickman_survey_21	dickma21	People have admired me because I can think quickly.
+dickman_survey_22	dickma22	I will often say whatever comes into my head without thinking first.
+dickman_survey_23	dickma23	Before making any important decision, I carefully weigh the pros and cons.
+dickman_survey_24	dickma24	I rarely get involved in projects without first considering the potential problems.
+dickman_survey_3	dickma03	I try to avoid activities where you have to act without much time to think first.
+dickman_survey_4	dickma04	I dont like to make decisions quickly, even simple decisions, such as choosing what to wear, or what to have for dinner.
+dickman_survey_5	dickma05	I enjoy working out problems slowly and carefully.
+dickman_survey_6	dickma06	I am good at taking advantage of unexpected opportunities,where you have to do something immediately or lose your chance.
+dickman_survey_7	dickma07	I would enjoy working at a job that required me to make a lot of split-second decisions.
+dickman_survey_8	dickma08	I often make up my mind without taking the time to consider the situation from all angles.
+dickman_survey_9	dickma09	I have often missed out on opportunities because I couldnt make up my mind fast enough.
+dospert_eb_survey_10	doseb10	Having an affair with a married man/woman.
+dospert_eb_survey_11	doseb11	Passing off somebody elses work as your own.
+dospert_eb_survey_12	doseb12	Going down a ski run that is beyond your ability.
+dospert_eb_survey_13	doseb13	Investing 5% of your annual income in a very speculative stock.
+dospert_eb_survey_14	doseb14	Going whitewater rafting at high water in the spring.
+dospert_eb_survey_15	doseb15	Betting a days income on the outcome of a sporting event.
+dospert_eb_survey_16	doseb16	Engaging in unprotected sex.
+dospert_eb_survey_17	doseb17	Revealing a friends secret to someone else.
+dospert_eb_survey_18	doseb18	Driving a car without wearing a seat belt.
+dospert_eb_survey_19	doseb19	Investing 10% of your annual income in a new business venture.
+dospert_eb_survey_2	doseb02	Admitting that your tastes are different from those of a friend.
+dospert_eb_survey_20	doseb20	Taking a skydiving class.
+dospert_eb_survey_21	doseb21	Riding a motorcycle without a helmet.
+dospert_eb_survey_22	doseb22	Choosing a career that you truly enjoy over a more secure one.
+dospert_eb_survey_23	doseb23	Speaking your mind about an unpopular issue in a meeting at work.
+dospert_eb_survey_24	doseb24	Sunbathing without sunscreen.
+dospert_eb_survey_25	doseb25	Bungee jumping off a tall bridge.
+dospert_eb_survey_26	doseb26	Piloting a small plane.
+dospert_eb_survey_27	doseb27	Walking home alone at night in an unsafe area of town.
+dospert_eb_survey_28	doseb28	Moving to a city far away from your extended family.
+dospert_eb_survey_29	doseb29	Starting a new career in your mid-thirties.
+dospert_eb_survey_3	doseb03	Going camping in the wilderness.
+dospert_eb_survey_30	doseb30	Leaving your young children alone at home while running an errand.
+dospert_eb_survey_31	doseb31	Not returning a wallet you found that contains $200.
+dospert_eb_survey_4	doseb04	Betting a days income at the horse races.
+dospert_eb_survey_5	doseb05	Investing 10% of your annual income in a moderate growth diversified fund.
+dospert_eb_survey_6	doseb06	Drinking heavily at a social function.
+dospert_eb_survey_7	doseb07	Taking some questionable deductions on your income tax return.
+dospert_eb_survey_8	doseb08	Disagreeing with an authority figure on a major issue.
+dospert_eb_survey_9	doseb09	Betting a days income at a high-stake poker game.
+dospert_rp_survey_10	dosrp10	Having an affair with a married man/woman.
+dospert_rp_survey_11	dosrp11	Passing off somebody elses work as your own.
+dospert_rp_survey_12	dosrp12	Going down a ski run that is beyond your ability.
+dospert_rp_survey_13	dosrp13	Investing 5% of your annual income in a very speculative stock.
+dospert_rp_survey_14	dosrp14	Going whitewater rafting at high water in the spring.
+dospert_rp_survey_15	dosrp15	Betting a days income on the outcome of a sporting event.
+dospert_rp_survey_16	dosrp16	Engaging in unprotected sex.
+dospert_rp_survey_17	dosrp17	Revealing a friends secret to someone else.
+dospert_rp_survey_18	dosrp18	Driving a car without wearing a seat belt.
+dospert_rp_survey_19	dosrp19	Investing 10% of your annual income in a new business venture.
+dospert_rp_survey_2	dosrp02	Admitting that your tastes are different from those of a friend.
+dospert_rp_survey_20	dosrp20	Taking a skydiving class.
+dospert_rp_survey_21	dosrp21	Riding a motorcycle without a helmet.
+dospert_rp_survey_22	dosrp22	Choosing a career that you truly enjoy over a more secure one.
+dospert_rp_survey_23	dosrp23	Speaking your mind about an unpopular issue in a meeting at work.
+dospert_rp_survey_24	dosrp24	Sunbathing without sunscreen.
+dospert_rp_survey_25	dosrp25	Bungee jumping off a tall bridge.
+dospert_rp_survey_26	dosrp26	Piloting a small plane.
+dospert_rp_survey_27	dosrp27	Walking home alone at night in an unsafe area of town.
+dospert_rp_survey_28	dosrp28	Moving to a city far away from your extended family.
+dospert_rp_survey_29	dosrp29	Starting a new career in your mid-thirties.
+dospert_rp_survey_3	dosrp03	Going camping in the wilderness.
+dospert_rp_survey_30	dosrp30	Leaving your young children alone at home while running an errand.
+dospert_rp_survey_31	dosrp31	Not returning a wallet you found that contains $200.
+dospert_rp_survey_4	dosrp04	Betting a days income at the horse races.
+dospert_rp_survey_5	dosrp05	Investing 10% of your annual income in a moderate growth diversified fund.
+dospert_rp_survey_6	dosrp06	Drinking heavily at a social function.
+dospert_rp_survey_7	dosrp07	Taking some questionable deductions on your income tax return.
+dospert_rp_survey_8	dosrp08	Disagreeing with an authority figure on a major issue.
+dospert_rp_survey_9	dosrp09	Betting a days income at a high-stake poker game.
+dospert_rt_survey_10	dosrt10	Having an affair with a married man/woman.
+dospert_rt_survey_11	dosrt11	Passing off somebody elses work as your own.
+dospert_rt_survey_12	dosrt12	Going down a ski run that is beyond your ability.
+dospert_rt_survey_13	dosrt13	Investing 5% of your annual income in a very speculative stock.
+dospert_rt_survey_14	dosrt14	Going whitewater rafting at high water in the spring.
+dospert_rt_survey_15	dosrt15	Betting a days income on the outcome of a sporting event.
+dospert_rt_survey_16	dosrt16	Engaging in unprotected sex.
+dospert_rt_survey_17	dosrt17	Revealing a friends secret to someone else.
+dospert_rt_survey_18	dosrt18	Driving a car without wearing a seat belt.
+dospert_rt_survey_19	dosrt19	Investing 10% of your annual income in a new business venture.
+dospert_rt_survey_2	dosrt02	Admitting that your tastes are different from those of a friend.
+dospert_rt_survey_20	dosrt20	Taking a skydiving class.
+dospert_rt_survey_21	dosrt21	Riding a motorcycle without a helmet.
+dospert_rt_survey_22	dosrt22	Choosing a career that you truly enjoy over a more secure one.
+dospert_rt_survey_23	dosrt23	Speaking your mind about an unpopular issue in a meeting at work.
+dospert_rt_survey_24	dosrt24	Sunbathing without sunscreen.
+dospert_rt_survey_25	dosrt25	Bungee jumping off a tall bridge.
+dospert_rt_survey_26	dosrt26	Piloting a small plane.
+dospert_rt_survey_27	dosrt27	Walking home alone at night in an unsafe area of town.
+dospert_rt_survey_28	dosrt28	Moving to a city far away from your extended family.
+dospert_rt_survey_29	dosrt29	Starting a new career in your mid-thirties.
+dospert_rt_survey_3	dosrt03	Going camping in the wilderness.
+dospert_rt_survey_30	dosrt30	Leaving your young children alone at home while running an errand.
+dospert_rt_survey_31	dosrt31	Not returning a wallet you found that contains $200.
+dospert_rt_survey_4	dosrt04	Betting a days income at the horse races.
+dospert_rt_survey_5	dosrt05	Investing 10% of your annual income in a moderate growth diversified fund.
+dospert_rt_survey_6	dosrt06	Drinking heavily at a social function.
+dospert_rt_survey_7	dosrt07	Taking some questionable deductions on your income tax return.
+dospert_rt_survey_8	dosrt08	Disagreeing with an authority figure on a major issue.
+dospert_rt_survey_9	dosrt09	Betting a days income at a high-stake poker game.
+eating_survey_10	eating10	I am always hungry so it is hard for me to stop eating before I finish the food on my plate.
+eating_survey_11	eating11	When I feel lonely, I console myself by eating.
+eating_survey_12	eating12	I consciously hold back at meals in order not to weight gain.
+eating_survey_13	eating13	I do not eat some foods because they make me fat.
+eating_survey_14	eating14	I am always hungry enough to eat at any time.
+eating_survey_15	eating15	How often do you feel hungry?
+eating_survey_16	eating16	How frequently do you avoid stocking up on tempting foods?
+eating_survey_17	eating17	How likely are you to consciously eat less than you want?
+eating_survey_18	eating18	Do you go on eating binges though you are not hungry?
+eating_survey_19	eating19	On a scale of 1 to 8, where 1 means no restraint in eating (eating whatever you want whenever you want it) and 8 means total restraint (constantly limiting food intake and never giving in) what number would you give yourself?
+eating_survey_2	eating02	When I smell a sizzling steak or juicy piece of meat, I find it very difficult to keep from eating, even if I have just finished a meal.
+eating_survey_3	eating03	I deliberately take small helpings as a means of controlling my weight.
+eating_survey_4	eating04	When I feel anxious, I find myself eating.
+eating_survey_5	eating05	Sometimes when I start eating, I just cant seem to stop.
+eating_survey_6	eating06	Being with someone who is eating often makes me hungry enough to eat also.
+eating_survey_7	eating07	When I feel blue, I often overeat.
+eating_survey_8	eating08	When I see a real delicacy, I often get so hungry that I have to eat right away.
+eating_survey_9	eating09	I get so hungry that my stomach often seems like a bottomless pit.
+erq_survey_10	erq10	When I am feeling <i>negative</i> emotions, I make sure not to express them.
+erq_survey_11	erq11	When I want to feel less <i>negative</i> emotion, I <i>change the way I am thinking</i> about the situation.
+erq_survey_2	erq02	When I want to feel more <i>positive</i> emotion (such as joy or amusement), I <i>change what I am thinking about.</i>
+erq_survey_3	erq03	I keep my emotions to myself.
+erq_survey_4	erq04	When I want to feel less <i>negative</i> emotion (such as sadness or anger), I <i>change what I am thinking about.</i>
+erq_survey_5	erq05	When I am feeling <i>positive</i> emotions, I am careful not to express them.
+erq_survey_6	erq06	When I am faced with a stressful situation, I make myself <i>think about it</i> in a way that helps me stay calm.
+erq_survey_7	erq07	I control my emotions by not expressing them.
+erq_survey_8	erq08	When I want to feel more <i>positive</i> emotion, I <i>change the way I am thinking</i> about the situation.
+erq_survey_9	erq09	I control my emotions by <i>changing the way</i> I think about the situation I am in.
+five_facet_mindfulness_survey_10	fivfac10	I watch my feelings without getting lost in them. 
+five_facet_mindfulness_survey_11	fivfac11	I tell myself I shouldnt be feeling the way Im feeling. 
+five_facet_mindfulness_survey_12	fivfac12	I notice how foods and drinks affect my thoughts, bodily sensations, and emotions. 
+five_facet_mindfulness_survey_13	fivfac13	Its hard for me to find the words to describe what Im thinking. 
+five_facet_mindfulness_survey_14	fivfac14	I am easily distracted. 
+five_facet_mindfulness_survey_15	fivfac15	I believe some of my thoughts are abnormal or bad and I shouldnt think that way.
+five_facet_mindfulness_survey_16	fivfac16	I pay attention to sensations, such as the wind in my hair or sun on my face. 
+five_facet_mindfulness_survey_17	fivfac17	I have trouble thinking of the right words to express how I feel about things.
+five_facet_mindfulness_survey_18	fivfac18	I make judgments about whether my thoughts are good or bad. 
+five_facet_mindfulness_survey_19	fivfac19	I find it difficult to stay focused on whats happening in the present. 
+five_facet_mindfulness_survey_2	fivfac02	When Im walking, I deliberately notice the sensations of my body moving. 
+five_facet_mindfulness_survey_20	fivfac20	When I have distressing thoughts or images, I step back and am aware of the thought or image without getting taken over by it. 
+five_facet_mindfulness_survey_21	fivfac21	I pay attention to sounds, such as clocks ticking, birds chirping, or cars passing. 
+five_facet_mindfulness_survey_22	fivfac22	In difficult situations, I can pause without immediately reacting. 
+five_facet_mindfulness_survey_23	fivfac23	When I have a sensation in my body, its difficult for me to describe it because I cant find the right words. 
+five_facet_mindfulness_survey_24	fivfac24	It seems I am running on automatic without much awareness of what Im doing. 
+five_facet_mindfulness_survey_25	fivfac25	When I have distressing thoughts or images, I feel calm soon after.
+five_facet_mindfulness_survey_26	fivfac26	I tell myself that I shouldnt be thinking the way Im thinking. 
+five_facet_mindfulness_survey_27	fivfac27	I notice the smells and aromas of things. 
+five_facet_mindfulness_survey_28	fivfac28	Even when Im feeling terribly upset, I can find a way to put it into words. 
+five_facet_mindfulness_survey_29	fivfac29	I rush through activities without being really attentive to them. 
+five_facet_mindfulness_survey_3	fivfac03	Im good at finding words to describe my feelings. 
+five_facet_mindfulness_survey_30	fivfac30	When I have distressing thoughts or images I am able just to notice them without reacting. 
+five_facet_mindfulness_survey_31	fivfac31	I think some of my emotions are bad or inappropriate and I shouldnt feel them. 
+five_facet_mindfulness_survey_32	fivfac32	I notice visual elements in art or nature, such as colors, shapes, textures, or patterns of light and shadow. 
+five_facet_mindfulness_survey_33	fivfac33	My natural tendency is to put my experiences into words. 
+five_facet_mindfulness_survey_34	fivfac34	When I have distressing thoughts or images, I just notice them and let them go. 
+five_facet_mindfulness_survey_35	fivfac35	I do jobs or tasks automatically without being aware of what Im doing. 
+five_facet_mindfulness_survey_36	fivfac36	When I have distressing thoughts or images, I judge myself as good or bad, depending what the thought/image is about. 
+five_facet_mindfulness_survey_37	fivfac37	I pay attention to how my emotions affect my thoughts and behavior. 
+five_facet_mindfulness_survey_38	fivfac38	I can usually describe how I feel at the moment in considerable detail. 
+five_facet_mindfulness_survey_39	fivfac39	I find myself doing things without paying attention. 
+five_facet_mindfulness_survey_4	fivfac04	I criticize myself for having irrational or inappropriate emotions. 
+five_facet_mindfulness_survey_40	fivfac40	I disapprove of myself when I have irrational ideas. 
+five_facet_mindfulness_survey_5	fivfac05	I perceive my feelings and emotions without having to react to them. 
+five_facet_mindfulness_survey_6	fivfac06	When I do things, my mind wanders off and Im easily distracted. 
+five_facet_mindfulness_survey_7	fivfac07	When I take a shower or bath, I stay alert to the sensations of water on my body. 
+five_facet_mindfulness_survey_8	fivfac08	I can easily put my beliefs, opinions, and expectations into words. 
+five_facet_mindfulness_survey_9	fivfac09	I dont pay attention to what Im doing because Im daydreaming, worrying, or otherwise distracted. 
+future_time_perspective_survey_10	futtim10	There are only limited possibilities in my future.
+future_time_perspective_survey_11	futtim11	As I get older, I begin to experience time as limited.
+future_time_perspective_survey_2	futtim02	Many opportunities await me in the future.
+future_time_perspective_survey_3	futtim03	I expect that I will set many new goals in the future.
+future_time_perspective_survey_4	futtim04	My future is filled with possibilities.
+future_time_perspective_survey_5	futtim05	Most of my life lies ahead of me.
+future_time_perspective_survey_6	futtim06	My future seems infinite to me.
+future_time_perspective_survey_7	futtim07	I could do anything I want in the future.
+future_time_perspective_survey_8	futtim08	There is plenty of time left in my life to make new plans.
+future_time_perspective_survey_9	futtim09	I have the sense that time is running out.
+grit_scale_survey_2	grisca02	New ideas and projects sometimes distract me from previous ones.
+grit_scale_survey_3	grisca03	Setbacks dont discourage me.
+grit_scale_survey_4	grisca04	I have been obsessed with a certain idea or project for a short time but later lost interest.
+grit_scale_survey_5	grisca05	I am a hard worker.
+grit_scale_survey_6	grisca06	I often set a goal but later choose to pursue a different one.
+grit_scale_survey_7	grisca07	I have difficulty maintaining my focus on projects that take more than a few months to complete.
+grit_scale_survey_8	grisca08	I finish whatever I begin.
+grit_scale_survey_9	grisca09	I am diligent.
+impulsive_venture_survey_10	impven10	Do you like diving off the highboard?
+impulsive_venture_survey_11	impven11	Are you an impulsive person?
+impulsive_venture_survey_12	impven12	Do you welcome new and exciting experiences and sensations even if they are a little frightening and unconventional?
+impulsive_venture_survey_13	impven13	Do you usually think carefully before doing anything?
+impulsive_venture_survey_14	impven14	Would you like to learn to fly an aeroplane?
+impulsive_venture_survey_15	impven15	Do you often do things on the spur of the moment?
+impulsive_venture_survey_16	impven16	Do you mostly speak before thinking things out?
+impulsive_venture_survey_17	impven17	Do you often get involved in things you later wish you could get out of?
+impulsive_venture_survey_18	impven18	Do you get so carried away by new and exciting ideas. that you never think of possible snags?
+impulsive_venture_survey_19	impven19	Do you find it hard to understand people who risk their necks climbing mountains?
+impulsive_venture_survey_2	impven02	Would you enjoy water skiing?
+impulsive_venture_survey_20	impven20	Do you sometimes like doing things that are a bit frightening?
+impulsive_venture_survey_21	impven21	Do you need to use a lot of self-control to keep out of trouble?
+impulsive_venture_survey_22	impven22	Would you agree that almost everything enjoyable is illegal or immoral?
+impulsive_venture_survey_23	impven23	Generally do you prefer to enter cold sea water gradually, to diving or jumping straight in?
+impulsive_venture_survey_24	impven24	Are you often surprised at peoples reactions to what you do or say?
+impulsive_venture_survey_25	impven25	Would you enjoy the sensation of skiing very fast down a high mountain slope?
+impulsive_venture_survey_26	impven26	Do you think an evening out is more successful if it is unplanned or arranged at the last moment?
+impulsive_venture_survey_27	impven27	Would you like to go scuba diving?
+impulsive_venture_survey_28	impven28	Would you enjoy fast driving?
+impulsive_venture_survey_29	impven29	Do you usually work quickly, without bothering to check?
+impulsive_venture_survey_3	impven03	Usually do you prefer to stick to brands you know are reliable to trying new ones on the chance of finding something better?
+impulsive_venture_survey_30	impven30	Do you often change your interests?
+impulsive_venture_survey_31	impven31	Before making up your mind, do you consider all the advantages and disadvantages?
+impulsive_venture_survey_32	impven32	Would you be put off a job involving quite a bit of danger?
+impulsive_venture_survey_33	impven33	Do you prefer to sleep on it before making decisions?
+impulsive_venture_survey_34	impven34	When people shout at you, do you shout back?
+impulsive_venture_survey_35	impven35	Do you usually make up your mind quickly?
+impulsive_venture_survey_4	impven04	Do you quite enjoy taking risks?
+impulsive_venture_survey_5	impven05	Would you enjoy parachute jumping?
+impulsive_venture_survey_6	impven06	Do you often buy things on impulse?
+impulsive_venture_survey_7	impven07	Do you generally do and say things without stopping to think?
+impulsive_venture_survey_8	impven08	Do you often get into a jam because you do things without thinking?
+impulsive_venture_survey_9	impven09	Do you think hitch-hiking is too dangerous a way to travel?
+leisure_time_activity_survey_2	leitim02	During the past month, which statement best describes the kinds of physical activity you usually did? Do not include the time you spent working at a job. Please read all six statements before selecting one.
+mindful_attention_awareness_survey_10	minatt10	I get so focused on the goal I want to achieve that I lose touch with what I am doing right now to get there.
+mindful_attention_awareness_survey_11	minatt11	I do jobs or tasks automatically, without being aware of what Im doing.
+mindful_attention_awareness_survey_12	minatt12	I find myself listening to someone with one ear, doing something else at the same time.
+mindful_attention_awareness_survey_13	minatt13	I drive places on automatic pilot and then wonder why I went there.
+mindful_attention_awareness_survey_14	minatt14	I find myself preoccupied with the future or the past.
+mindful_attention_awareness_survey_15	minatt15	I find myself doing things without paying attention.
+mindful_attention_awareness_survey_16	minatt16	I snack without being aware that Im eating.
+mindful_attention_awareness_survey_2	minatt02	I could be experiencing some emotion and not be conscious of it until some time later.
+mindful_attention_awareness_survey_3	minatt03	I break or spill things because of carelessness, not paying attention, or thinking of something else.
+mindful_attention_awareness_survey_4	minatt04	I find it difficult to stay focused on whats happening in the present.
+mindful_attention_awareness_survey_5	minatt05	I tend to walk quickly to get where Im going without paying attention to what I experience along the way.
+mindful_attention_awareness_survey_6	minatt06	I tend not to notice feelings of physical tension or discomfort until they really grab my attention.
+mindful_attention_awareness_survey_7	minatt07	I forget a persons name almost as soon as Ive been told it for the first time.
+mindful_attention_awareness_survey_8	minatt08	It seems I am running on automatic without much awareness of what Im doing.
+mindful_attention_awareness_survey_9	minatt09	I rush through activities without being really attentive to them.
+mpq_control_survey_10	mpqcon10	I do things on the spur of the moment.
+mpq_control_survey_11	mpqcon11	I am careful in reasoning.
+mpq_control_survey_12	mpqcon12	I am not as cautious.
+mpq_control_survey_13	mpqcon13	I am cautious person.
+mpq_control_survey_14	mpqcon14	I am a spontaneous person.
+mpq_control_survey_15	mpqcon15	I do the first thing that comes to mind.
+mpq_control_survey_16	mpqcon16	I keep close track of money.
+mpq_control_survey_17	mpqcon17	I play things by ear.
+mpq_control_survey_18	mpqcon18	I know how to proceed.
+mpq_control_survey_19	mpqcon19	I am very level-headed.
+mpq_control_survey_2	mpqcon02	I stop one activity before completing it.
+mpq_control_survey_20	mpqcon20	I organize my work.
+mpq_control_survey_21	mpqcon21	I often start projects.
+mpq_control_survey_22	mpqcon22	I am methodical.
+mpq_control_survey_23	mpqcon23	I do not have detailed plans.
+mpq_control_survey_24	mpqcon24	I have a good idea of what Im going to do.
+mpq_control_survey_25	mpqcon25	I like to find out what to expect.
+mpq_control_survey_3	mpqcon03	I take time to consider all aspects.
+mpq_control_survey_4	mpqcon04	I think before doing.
+mpq_control_survey_5	mpqcon05	I stop and think.
+mpq_control_survey_6	mpqcon06	I am fast and careless.
+mpq_control_survey_7	mpqcon07	I am never reckless.
+mpq_control_survey_8	mpqcon08	I buy something without thinking.
+mpq_control_survey_9	mpqcon09	I value rational approach.
+self_regulation_survey_10	selreg10	I usually think before I act.
+self_regulation_survey_11	selreg11	I learn from my mistakes.
+self_regulation_survey_12	selreg12	I give up quickly.
+self_regulation_survey_13	selreg13	I usually keep track of my progress toward my goals.
+self_regulation_survey_14	selreg14	I am able to accomplish goals for myself.
+self_regulation_survey_15	selreg15	I have personal standards, and try to live up to them.
+self_regulation_survey_16	selreg16	As soon as I see a problem or challenge, I start looking for possible solutions.
+self_regulation_survey_17	selreg17	I have a hard time setting goals for myself.
+self_regulation_survey_18	selreg18	When Im trying to change something, I pay a lot of attention to how Im doing.
+self_regulation_survey_19	selreg19	I have trouble making plans to help me reach my goals.
+self_regulation_survey_2	selreg02	I dont notice the effects of my actions until its too late.
+self_regulation_survey_20	selreg20	I set goals for myself and keep track of my progress.
+self_regulation_survey_21	selreg21	If I make a resolution to change something, I pay a lot of attention to how Im doing.
+self_regulation_survey_22	selreg22	I know how I want to be.
+self_regulation_survey_23	selreg23	I have trouble making up my mind about things.
+self_regulation_survey_25	selreg25	When it comes to deciding about a change, I feel overwhelmed by the choices.
+self_regulation_survey_26	selreg26	Most of the time I dont pay attention to what Im doing.
+self_regulation_survey_27	selreg27	I tend to keep doing the same thing, even when it doesnt work.
+self_regulation_survey_28	selreg28	Once I have a goal, I can usually plan how to reach it.
+self_regulation_survey_29	selreg29	If I wanted to change, I am confident that I could do it.
+self_regulation_survey_3	selreg03	I put off making decisions.
+self_regulation_survey_30	selreg30	I can stick to a plan thats working well.
+self_regulation_survey_31	selreg31	I have a lot of willpower.
+self_regulation_survey_32	selreg32	I am able to resist temptation.
+self_regulation_survey_4	selreg04	Its hard for me to notice when Ive had enough (alcohol, food, sweets).
+self_regulation_survey_5	selreg05	I have trouble following through with things once Ive made up my mind to do something.
+self_regulation_survey_6	selreg06	I dont seem to learn from my mistakes.
+self_regulation_survey_7	selreg07	I usually only have to make a mistake one time in order to learn from it.
+self_regulation_survey_8	selreg08	I can usually find several different possibilities when I want to change something.
+self_regulation_survey_9	selreg09	Often I dont notice what Im doing until someone calls it to my attention.
+ten_item_personality_survey_10	tenite10	Disorganized, careless.
+ten_item_personality_survey_11	tenite11	Calm, emotionally stable.
+ten_item_personality_survey_12	tenite12	Conventional, uncreative.
+ten_item_personality_survey_3	tenite03	Extraverted, enthusiastic.
+ten_item_personality_survey_4	tenite04	Critical, quarrelsome. 
+ten_item_personality_survey_5	tenite05	Dependable, self-disciplined.
+ten_item_personality_survey_6	tenite06	Anxious, easily upset.
+ten_item_personality_survey_7	tenite07	Open to new experiences, complex.
+ten_item_personality_survey_8	tenite08	Reserved, quiet.
+ten_item_personality_survey_9	tenite09	Sympathetic, warm.
+theories_of_willpower_survey_10	theof10	If you have just resisted a strong temptation, you feel strengthened and you can withstand any new temptations.
+theories_of_willpower_survey_11	theof11	It is particularly difficult to resist a temptation after resisting another temptation right before.
+theories_of_willpower_survey_12	theof12	Resisting temptations activates your willpower and you become even better able to face new upcoming temptations.
+theories_of_willpower_survey_13	theof13	Your capacity to resist temptations is not limited. Even after you have resisted a strong temptation you can control yourself right afterwards.
+theories_of_willpower_survey_2	theof02	Strenuous mental activity exhausts your resources, which you need to refuel afterwards (e.g. through taking breaks, doing nothing, watching television, eating snacks).
+theories_of_willpower_survey_3	theof03	After a strenuous mental activity, your energy is depleted and you must rest to get it refuelled again.
+theories_of_willpower_survey_4	theof04	When you have been working on a strenuous mental task, you feel energized and you are able to immediately start with another demanding activity.
+theories_of_willpower_survey_5	theof05	Your mental stamina fuels itself. Even after strenuous mental exertion, you can continue doing more of it.
+theories_of_willpower_survey_6	theof06	When you have completed a strenuous mental activity, you cannot start another activity immediately with the same concentration because you have to recover your mental energy again.
+theories_of_willpower_survey_7	theof07	After a strenuous mental activity, you feel energized for further challenging activities.
+theories_of_willpower_survey_8	theof08	Resisting temptations makes you feel more vulnerable to the next temptations that come along.
+theories_of_willpower_survey_9	theof09	When situations accumulate that challenge you with temptations, it gets more and more difficult to resist the temptations.
+time_perspective_survey_10	timper10	If things dont get done on time, I dont worry about it.
+time_perspective_survey_11	timper11	When I want to achieve something, I set goals and consider specific means for reaching those goals.
+time_perspective_survey_12	timper12	On balance, there is much more good to recall than bad in my past.
+time_perspective_survey_13	timper13	When listening to my favorite music, I often lose all track of time.
+time_perspective_survey_14	timper14	Meeting tomorrows deadlines and doing other necessary work comes before tonights play.
+time_perspective_survey_15	timper15	Since whatever will be will be, it doesnt really matter what I do.
+time_perspective_survey_16	timper16	I enjoy stories about how things used to be in the good old times.
+time_perspective_survey_17	timper17	Painful past experiences keep being replayed in my mind.
+time_perspective_survey_18	timper18	I try to live my life as fully as possible, one day at a time.
+time_perspective_survey_19	timper19	It upsets me to be late for appointments.
+time_perspective_survey_2	timper02	I believe that getting together with ones friends to party is one of lifes important pleasures.
+time_perspective_survey_20	timper20	Ideally, I would live each day as if it were my last.
+time_perspective_survey_21	timper21	Happy memories of good times spring readily to mind.
+time_perspective_survey_22	timper22	I meet my obligations to friends and authorities on time.
+time_perspective_survey_23	timper23	Ive taken my share of abuse and rejection in the past.
+time_perspective_survey_24	timper24	I make decisions on the spur of the moment.
+time_perspective_survey_25	timper25	I take each day as it is rather than try to plan it out.
+time_perspective_survey_26	timper26	The past has too many unpleasant memories that I prefer not to think about.
+time_perspective_survey_27	timper27	It is important to put excitement in my life.
+time_perspective_survey_28	timper28	Ive made mistakes in the past that I wish I could undo.
+time_perspective_survey_29	timper29	I feel that its more important to enjoy what youre doing than to get work done on time.
+time_perspective_survey_3	timper03	Familiar childhood sights, sounds, smells often bring back a flood of wonderful memories.
+time_perspective_survey_30	timper30	I get nostalgic about my childhood.
+time_perspective_survey_31	timper31	Before making a decision, I weigh the costs against the benefits.
+time_perspective_survey_32	timper32	Taking risks keeps my life from becoming boring.
+time_perspective_survey_33	timper33	It is more important for me to enjoy lifes journey than to focus only on the destination.
+time_perspective_survey_34	timper34	Things rarely work out as I expected.
+time_perspective_survey_35	timper35	Its hard for me to forget unpleasant images of my youth.
+time_perspective_survey_36	timper36	It takes joy out of the process and flow of my activities, if I have to think about goals, outcomes, and products.
+time_perspective_survey_37	timper37	Even when I am enjoying the present, I am drawn back to comparisons with similar past experiences.
+time_perspective_survey_38	timper38	You cant really plan for the future because things change so much.
+time_perspective_survey_39	timper39	My life path is controlled by forces I cannot influence.
+time_perspective_survey_4	timper04	Fate determines much in my life.
+time_perspective_survey_40	timper40	It doesnt make sense to worry about the future, since there is nothing that I can do about it anyway.
+time_perspective_survey_41	timper41	I complete projects on time by making steady progress.
+time_perspective_survey_42	timper42	I find myself tuning out when family members talk about the way things used to be.
+time_perspective_survey_43	timper43	I take risks to put excitement in my life.
+time_perspective_survey_44	timper44	I make lists of things to do.
+time_perspective_survey_45	timper45	I often follow my heart more than my head.
+time_perspective_survey_46	timper46	I am able to resist temptations when I know that there is work to be done.
+time_perspective_survey_47	timper47	I find myself getting swept up in the excitement of the moment.
+time_perspective_survey_48	timper48	Life today is too complicated; I would prefer the simpler life of the past.
+time_perspective_survey_49	timper49	I prefer friends who are spontaneous rather than predictable.
+time_perspective_survey_5	timper05	I often think of what I should have done differently in my life.
+time_perspective_survey_50	timper50	I like family rituals and traditions that are regularly repeated.
+time_perspective_survey_51	timper51	I think about the bad things that have happened to me in the past.
+time_perspective_survey_52	timper52	I keep working at difficult, uninteresting tasks if they will help me get ahead.
+time_perspective_survey_53	timper53	Spending what I earn on pleasures today is better than saving for tomorrows security.
+time_perspective_survey_54	timper54	Often luck pays off better than hard work.
+time_perspective_survey_55	timper55	I think about the good things that I have missed out on in my life.
+time_perspective_survey_56	timper56	I like my close relationships to be passionate.
+time_perspective_survey_57	timper57	There will always be time to catch up on my work.
+time_perspective_survey_6	timper06	My decisions are mostly influenced by people and things around me.
+time_perspective_survey_7	timper07	I believe that a persons day should be planned ahead each morning.
+time_perspective_survey_8	timper08	It gives me pleasure to think about my past.
+time_perspective_survey_9	timper09	I do things impulsively.
+upps_impulsivity_survey_10	uppimp10	I tend to give up easily.
+upps_impulsivity_survey_11	uppimp11	When I am in great mood, I tend to get into situations that could cause me problems.
+upps_impulsivity_survey_12	uppimp12	I am not one of those people who blurt out things without thinking.
+upps_impulsivity_survey_13	uppimp13	I often get involved in things I later wish I could get out of.
+upps_impulsivity_survey_14	uppimp14	I like sports and games in which you have to choose your next move very quickly.
+upps_impulsivity_survey_15	uppimp15	Unfinished tasks really bother me.
+upps_impulsivity_survey_16	uppimp16	When I am very happy, I tend to do things that may cause problems in my life.
+upps_impulsivity_survey_17	uppimp17	I like to stop and think things over before I do them.
+upps_impulsivity_survey_18	uppimp18	When I feel bad, I will often do things I later regret in order to make myself feel better now.
+upps_impulsivity_survey_19	uppimp19	I would enjoy water skiing.
+upps_impulsivity_survey_2	uppimp02	I have a reserved and cautious attitude toward life.
+upps_impulsivity_survey_20	uppimp20	Once I get going on something I hate to stop.
+upps_impulsivity_survey_21	uppimp21	I tend to lose control when I am in a great mood.
+upps_impulsivity_survey_22	uppimp22	I dont like to start a project until I know exactly how to proceed.
+upps_impulsivity_survey_23	uppimp23	Sometimes when I feel bad, I cant seem to stop what I am doing even though it is making me feel worse.
+upps_impulsivity_survey_24	uppimp24	I quite enjoy taking risks.
+upps_impulsivity_survey_25	uppimp25	I concentrate easily.
+upps_impulsivity_survey_26	uppimp26	When I am really ecstatic, I tend to get out of control.
+upps_impulsivity_survey_27	uppimp27	I would enjoy parachute jumping.
+upps_impulsivity_survey_28	uppimp28	I finish what I start.
+upps_impulsivity_survey_29	uppimp29	I tend to value and follow a rational, sensible approach to things.
+upps_impulsivity_survey_3	uppimp03	I have trouble controlling my impulses.
+upps_impulsivity_survey_30	uppimp30	When I am upset I often act without thinking.
+upps_impulsivity_survey_31	uppimp31	Others would say I make bad choices when I am extremely happy about something.
+upps_impulsivity_survey_32	uppimp32	I welcome new and exciting experiences and sensations, even if they are a little frightening and unconventional.
+upps_impulsivity_survey_33	uppimp33	I am able to pace myself so as to get things done on time.
+upps_impulsivity_survey_34	uppimp34	I usually make up my mind through careful reasoning.
+upps_impulsivity_survey_35	uppimp35	When I feel rejected, I will often say things that I later regret. 
+upps_impulsivity_survey_36	uppimp36	Others are shocked or worried about the things I do when I am feeling very excited. 
+upps_impulsivity_survey_37	uppimp37	I would like to learn to fly an airplane. 
+upps_impulsivity_survey_38	uppimp38	I am a person who always gets the job done. 
+upps_impulsivity_survey_39	uppimp39	I am a cautious person. 
+upps_impulsivity_survey_4	uppimp04	I generally seek new and exciting experiences and sensations.
+upps_impulsivity_survey_40	uppimp40	It is hard for me to resist acting on my feelings. 
+upps_impulsivity_survey_41	uppimp41	When I get really happy about something, I tend to do things that can have bad consequences. 
+upps_impulsivity_survey_42	uppimp42	I sometimes like doing things that are a bit frightening. 
+upps_impulsivity_survey_43	uppimp43	I almost always finish projects that I start. 
+upps_impulsivity_survey_44	uppimp44	Before I get into a new situation I like to find out what to expect from it. 
+upps_impulsivity_survey_45	uppimp45	I often make matters worse because I act without thinking when I am upset.
+upps_impulsivity_survey_46	uppimp46	When overjoyed, I feel like I cant stop myself from going overboard.
+upps_impulsivity_survey_47	uppimp47	I would enjoy the sensation of skiing very fast down a high mountain slope.
+upps_impulsivity_survey_48	uppimp48	Sometimes there are so many little things to be done that I just ignore them all.
+upps_impulsivity_survey_49	uppimp49	I usually think carefully before doing anything.
+upps_impulsivity_survey_5	uppimp05	I generally like to see things through to the end.
+upps_impulsivity_survey_50	uppimp50	When I am really excited, I tend not to think of the consequences of my actions.
+upps_impulsivity_survey_51	uppimp51	In the heat of an argument, I will often say things that I later regret.
+upps_impulsivity_survey_52	uppimp52	I would like to go scuba diving.
+upps_impulsivity_survey_53	uppimp53	I tend to act without thinking when I am really excited.
+upps_impulsivity_survey_54	uppimp54	I always keep my feelings under control.
+upps_impulsivity_survey_55	uppimp55	When I am really happy, I often find myself in situations that I normally wouldnt be comfortable with.
+upps_impulsivity_survey_56	uppimp56	Before making up my mind, I consider all the advantages and disadvantages.
+upps_impulsivity_survey_57	uppimp57	I would enjoy fast driving.
+upps_impulsivity_survey_58	uppimp58	When I am very happy, I feel like it is ok to give in to cravings or overindulge.
+upps_impulsivity_survey_59	uppimp59	Sometimes I do impulsive things that I later regret.
+upps_impulsivity_survey_6	uppimp06	When I am very happy, I cant seem to stop myself from doing things that can have bad consequences.
+upps_impulsivity_survey_60	uppimp60	I am surprised at the things I do while in a great mood.
+upps_impulsivity_survey_7	uppimp07	My thinking is usually careful and purposeful.
+upps_impulsivity_survey_8	uppimp08	I have trouble resisting my cravings (for food, cigarettes, etc.).
+upps_impulsivity_survey_9	uppimp09	Ill try anything once.
