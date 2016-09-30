@@ -9,10 +9,10 @@ import os
 import json
 
 from utils import get_info
-
+dataset='Discovery_9-26-16'
 basedir=get_info('base_directory')
-datadir=os.path.join(basedir,'data/Discovery_9-26-16')
-outdir=os.path.join(basedir,'data/Derived_Data/Discovery_9-26-16')
+datadir=os.path.join(basedir,'data/%s'%dataset)
+outdir=os.path.join(basedir,'data/Derived_Data/%s'%dataset)
 if not os.path.exists(outdir):
     os.mkdir(outdir)
 
