@@ -13,12 +13,18 @@ from metadata_utils import metadata_subtract_one,metadata_replace_zero_with_nan
 from metadata_utils import metadata_change_two_to_zero_for_no,metadata_reverse_scale
 from metadata_utils import write_metadata
 
-token, basedir = [line.rstrip('\n').split(':')[1] for line in open('../Self_Regulation_Settings.txt')]
-basedir += 'discovery_survey_analyses'
+from utils import get_info
 
-def get_data(basedir=basedir):
+dataset='Discovery_9-26-16'
+basedir=get_info('base_directory')
+datadir=os.path.join(basedir,'data/%s'%dataset)
+outdir=os.path.join(basedir,'data/Derived_Data/%s'%dataset)
+if not os.path.exists(outdir):
+    os.mkdir(outdir)
 
-    datafile=os.path.join(basedir,'alcohol_drugs.csv')
+def get_data(datadir=datadir):
+
+    datafile=os.path.join(datadir,'alcohol_drugs.csv')
     data=pandas.read_csv(datafile,index_col=0)
     data=data.rename(columns={'worker_id':'worker'})
     return data,basedir
@@ -156,7 +162,7 @@ def fix_item(d,v,metadata):
     return d,metadata
 
 def save_alcohol_drug_data(data,survey_metadata,
-              outdir=basedir + '/surveydata'):
+              outdir=os.path.join(outdir,'surveydata')):
     id_to_name,nominalvars=setup_itemid_dict()
     if not os.path.exists(outdir):
         os.mkdir(outdir)
