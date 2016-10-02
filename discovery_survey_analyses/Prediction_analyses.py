@@ -32,7 +32,7 @@ derived_dir=os.path.join(basedir,'data/Derived_Data/%s'%dataset)
 binary_vars=["Sex","ArrestedChargedLifeCount","DivorceCount","GamblingProblem","ChildrenNumber",
             "CreditCardDebt","RentOwn","RetirementAccount","TrafficTicketsLastYearCount","Obese",
              "TrafficAccidentsLifeCount","CaffienatedSodaCansPerDay"]
-
+binary_vars=['Sex','Obese',"CreditCardDebt"]
 def get_demog_data(binarize=True):
     demogdata=pandas.read_csv(os.path.join(derived_dir,'surveydata/demographics.tsv'),index_col=0,delimiter='\t')
     # remove a couple of outliers
@@ -80,7 +80,7 @@ print(list(demogdata.columns))
 
 nfeatures=5 # number of features to show
 nfolds=8
-classifier='csrp'
+classifier='RandomForest' #csrf'
 degree=2
 kernel='poly'
 oversample=False
@@ -153,7 +153,7 @@ for i in range(len(binary_vars)):
             clf.fit(Xtrain,Ytrain)
         if hasattr(clf,'predict_proba'):
             pred_prob.flat[test]=clf.predict_proba(sdata[test,:])
-        pred.flat[test]=clf.predict(sdata[test,:])
+        pred[test]=clf.predict(sdata[test,:])
         trainpredroc.append(roc_auc_score(Ytrain,clf.predict(Xtrain)))
     rocauc=roc_auc_score(y,pred_prob)
     print('Training accuracy: %f'%numpy.mean(trainpredroc))
