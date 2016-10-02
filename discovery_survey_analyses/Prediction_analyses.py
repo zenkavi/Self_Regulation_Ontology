@@ -13,6 +13,7 @@ from sklearn.preprocessing import scale
 from sklearn.neighbors import KNeighborsClassifier as KNN
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.cross_validation import StratifiedKFold,KFold
+from sklearn.decomposition import FactorAnalysis
 from sklearn.metrics import accuracy_score,f1_score,roc_auc_score,classification_report,confusion_matrix
 from imblearn.over_sampling import SMOTE
 from imblearn.combine import SMOTETomek
@@ -32,8 +33,11 @@ derived_dir=os.path.join(basedir,'data/Derived_Data/%s'%dataset)
 binary_vars=["Sex","ArrestedChargedLifeCount","DivorceCount","GamblingProblem","ChildrenNumber",
             "CreditCardDebt","RentOwn","RetirementAccount","TrafficTicketsLastYearCount","Obese",
              "TrafficAccidentsLifeCount","CaffienatedSodaCansPerDay"]
-binary_vars=['Sex','Obese',"CreditCardDebt"]
+# note: focusing here on a subset that seem predictable, for testing of classifiers
+binary_vars=['Sex','ChildrenNumber','Obese','TrafficAccidentsLifeCount']
+
 def get_demog_data(binarize=True):
+    keep_vars=['WeightPounds','HeightInches']
     demogdata=pandas.read_csv(os.path.join(derived_dir,'surveydata/demographics.tsv'),index_col=0,delimiter='\t')
     # remove a couple of outliers
     demogdata=demogdata.query('WeightPounds>50')
@@ -43,7 +47,7 @@ def get_demog_data(binarize=True):
     demogdata=demogdata.assign(Obese=(demogdata['BMI']>30).astype('int'))
 
     if binarize:
-        demogdata=demogdata[binary_vars]
+        demogdata=demogdata[binary_vars+keep_vars]
         demogdata=demogdata.loc[demogdata.isnull().sum(1)==0]
 
         for i in range(len(binary_vars)):
@@ -67,6 +71,10 @@ def get_joint_dataset(d1,d2):
     return d1.ix[inter],d2.ix[inter]
     return inter
 surveydata_orig,surveykeys=get_survey_data('Discovery_9-26-16')
+surveykeys['HeightInches']='HeightInches'
+surveykeys['WeightPounds']='WeightPounds'
+surveykeys['Sex']='Sex'
+
 demogdata,surveydata=get_joint_dataset(get_demog_data(),surveydata_orig)
 assert list(demogdata.index)==list(surveydata.index)
 print('%d joint subjects found'%demogdata.shape[0])
@@ -80,11 +88,12 @@ print(list(demogdata.columns))
 
 nfeatures=5 # number of features to show
 nfolds=8
-classifier='RandomForest' #csrf'
-degree=2
-kernel='poly'
-oversample=False
-
+degree=3
+kernel='rbf'
+shuffle=False
+add_cheat_vars=False
+verbose=False
+use_fa='fa'
 
 def print_confusion_matrix(y_true,y_pred,labels=[0,1]):
     cm=confusion_matrix(y_true,y_pred)
@@ -95,78 +104,115 @@ def print_confusion_matrix(y_true,y_pred,labels=[0,1]):
     print('\t1\t%d\t%d'%(cm[1,0],cm[1,1]))
 
 bvardata=numpy.array(demogdata)
-sdata=scale(numpy.array(surveydata))
+sdata=numpy.array(surveydata) #scale(numpy.array(surveydata))
+fa=FactorAnalysis(20)  # reduce to 20 dimensions
+
+results=pandas.DataFrame(columns=['variable','kernel','fa','smote','smvC','trainf1','testf1'])
+
+try:
+    clf_result
+except:
+    clf_result={}
+
+ctr=0
+
+classifier='svm'
+gamma='auto'
 
 for i in range(len(binary_vars)):
-    print('')
-    print('%s:'%binary_vars[i])
-
-    y=bvardata[:,i]
-    X=sdata.copy()
+    y=numpy.array(demogdata[binary_vars[i]])
+    if shuffle:
+        numpy.random.shuffle(y)
     kf=StratifiedKFold(y,n_folds=nfolds) # use stratified K-fold CV to get roughly equal folds
-    # we use an inner CV loop on training data to estimate the best penalty value
-    predlabels=[0,1]
-    # define cost for 0 and 1 respectively
-    #Cost matrix of the classification problem W
-    #here the columns represents the costs of:
-    #false positives, false negatives, true positives and true negatives, for each example.
 
-    cost=numpy.array([[1,0,0,0],[0,0.5/numpy.mean(y),0,0]])
+    for kernel in ['linear','rbf','poly']:
+        for use_fa in ['fa','nofa']:
+          for svmC in [0.1,0.5,1,5,10,50,100]:
+            if numpy.abs(numpy.mean(y)-0.5)>0.1:
+                oversample='smote'
+            else:
+                oversample='none'
+            print('%s\t%s\t%s\t%f\t%s:'%(kernel,use_fa,oversample,svmC,binary_vars[i]))
+
+            predlabels=[0,1]
+
+            # define cost for 0 and 1 respectively
+            #Cost matrix of the classification problem W
+            #here the columns represents the costs of:
+            #false positives, false negatives, true positives and true negatives, for each example.
+
+            cost=numpy.array([[1,0,0,0],[0,0.5/numpy.mean(y),0,0]])
 
 
 
-    if classifier=='RandomForest':
-        clf=RandomForestClassifier()
-    elif classifier=='knn':
-        clf=KNN()
-    elif classifier=='csrf':
-        clf=CostSensitiveRandomForestClassifier()
-    elif classifier=='csrp':
-        clf=CostSensitiveRandomPatchesClassifier()
-    elif classifier=='csdt':
-        clf=CostSensitiveDecisionTreeClassifier()
-    elif classifier=='oneclasssvc':
-        clf=OneClassSVM()
-        y[y==0]=-1
-        predlabels=[-1,1]
+            if classifier=='RandomForest':
+                clf=RandomForestClassifier()
+            elif classifier=='knn':
+                clf=KNN()
+            elif classifier=='csrf':
+                clf=CostSensitiveRandomForestClassifier()
+            elif classifier=='csrp':
+                clf=CostSensitiveRandomPatchesClassifier()
+            elif classifier=='csdt':
+                clf=CostSensitiveDecisionTreeClassifier()
+            elif classifier=='oneclasssvc':
+                clf=OneClassSVM()
+                y[y==0]=-1
+                predlabels=[-1,1]
+            else:
+                clf=SVC(kernel=kernel,degree=degree,gamma=gamma,C=svmC) #LogisticRegressionCV(solver='liblinear',penalty='l1')  #LinearSVC()
+
+
+            pred=numpy.zeros(len(y))
+            pred_prob=numpy.zeros(len(y))
+
+            trainpredroc=[]
+            for train,test in kf:
+                if use_fa=='fa':
+                    Xtrain=fa.fit_transform(sdata[train,:])
+                    Xtest=fa.transform(sdata[test,:])
+                else:
+                    Xtrain=sdata[train,:]
+                    Xtest=sdata[test,:]
+                if add_cheat_vars:
+                    Xtrain=numpy.hstack((Xtrain,numpy.array(demogdata[['WeightPounds','HeightInches','Sex']].iloc[train,:])))
+                    Xtest=numpy.hstack((Xtest,numpy.array(demogdata[['WeightPounds','HeightInches','Sex']].iloc[test,:])))
+                Ytrain=y[train]
+                if oversample=='smote':
+                    sm = SMOTETomek(random_state=42)
+                    Xtrain, Ytrain = sm.fit_sample(Xtrain, Ytrain)
+                if classifier in ['csrf','csdt','csrp']:
+                    cost_mat=numpy.zeros((len(Ytrain),4))
+                    cost_mat[Ytrain==0,:]=cost[0,:]
+                    cost_mat[Ytrain==1,:]=cost[1,:]
+                    clf.fit(Xtrain,Ytrain,cost_mat=cost_mat)
+                else:
+                    clf.fit(Xtrain,Ytrain)
+                pred.flat[test]=clf.predict(Xtest)
+                trainpredroc.append(f1_score(Ytrain,clf.predict(Xtrain)))
+            cm=confusion_matrix(y,pred)
+            results.loc[ctr,:]=[binary_vars[i],kernel,use_fa,oversample,svmC,numpy.mean(trainpredroc),f1_score(y,pred)]
+            ctr+=1
+            if verbose:
+                print('Training accuracy (f-score): %f'%numpy.mean(trainpredroc))
+                if numpy.var(pred)==0:
+                    print('WARNING: no variance in classifier output, degenerate model fit')
+                print('Predictive accuracy')
+                print(classification_report(y,pred,labels=predlabels))
+                print_confusion_matrix(y,pred)
+                if False:
+                    print("Features sorted by their absolute correlation with outcome (top %d):"%nfeatures)
+                    featcorr=numpy.array([numpy.corrcoef(sdata[:,x],y)[0,1] for x in range(sdata.shape[1])])
+                    idx=numpy.argsort(numpy.abs(featcorr))[::-1]
+                    for i in range(nfeatures):
+                        print('%f: %s'%(featcorr[idx[i]],surveykeys[surveyvars[idx[i]]]))
+
+#print(results[[0,1,2,3,5]])
+for v in binary_vars:
+    d=results.query('variable=="%s"'%v)
+    if d.testf1.max()<0.55:
+        print('%s: poor performance (%f max test accuracy)'%(v,d.testf1.max()))
     else:
-        clf=SVC(probability=True,kernel=kernel,degree=degree) #LogisticRegressionCV(solver='liblinear',penalty='l1')  #LinearSVC()
-
-
-    pred=numpy.zeros(len(y))
-    pred_prob=numpy.zeros(len(y))
-
-    trainpredroc=[]
-    for train,test in kf:
-        Xtrain=sdata[train,:].copy()
-        Ytrain=y[train].copy()
-        if oversample:
-            sm = SMOTETomek(random_state=42)
-            Xtrain, Ytrain = sm.fit_sample(Xtrain, Ytrain)
-        if classifier in ['csrf','csdt','csrp']:
-            cost_mat=numpy.zeros((len(Ytrain),4))
-            cost_mat[Ytrain==0,:]=cost[0,:]
-            cost_mat[Ytrain==1,:]=cost[1,:]
-
-            clf.fit(Xtrain,Ytrain,cost_mat=cost_mat)
-        else:
-            clf.fit(Xtrain,Ytrain)
-        if hasattr(clf,'predict_proba'):
-            pred_prob.flat[test]=clf.predict_proba(sdata[test,:])
-        pred[test]=clf.predict(sdata[test,:])
-        trainpredroc.append(roc_auc_score(Ytrain,clf.predict(Xtrain)))
-    rocauc=roc_auc_score(y,pred_prob)
-    print('Training accuracy: %f'%numpy.mean(trainpredroc))
-    if numpy.var(pred)==0:
-        print('WARNING: no variance in classifier output, degenerate model fit')
-    if hasattr(clf,'predict_proba'):
-        print('predictive accuracy (AUC: chance = 0.5) = %0.3f'%rocauc)
-    else:
-        print('Predictive accuracy')
-    print(classification_report(y,pred,labels=predlabels))
-    print_confusion_matrix(y,pred)
-    print("Features sorted by their absolute correlation with outcome (top %d):"%nfeatures)
-    featcorr=numpy.array([numpy.corrcoef(sdata[:,x],y)[0,1] for x in range(sdata.shape[1])])
-    idx=numpy.argsort(numpy.abs(featcorr))[::-1]
-    for i in range(nfeatures):
-        print('%f: %s'%(featcorr[idx[i]],surveykeys[surveyvars[idx[i]]]))
+        print(d)
+        #print(d[d.testf1==d.testf1.max()])
+    print('')
