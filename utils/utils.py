@@ -20,7 +20,8 @@ def get_info(item,infile='../Self_Regulation_Settings.txt'):
         lines=[i for i in f.readlines() if not i.find('#')==0]
         for l in lines:
             l_s=l.rstrip('\n').split(':')
-            infodict[l_s[0]]=l_s[1]
+            if len(l_s)>1:
+                infodict[l_s[0]]=l_s[1]
     try:
         assert item in infodict
     except:
@@ -29,9 +30,9 @@ def get_info(item,infile='../Self_Regulation_Settings.txt'):
 
 def get_survey_data(dataset):
     basedir=get_info('base_directory')
-    infile=os.path.join(basedir,'data/Derived_Data/%s/surveydata.csv'%dataset)
+    infile=os.path.join(basedir,'Data/Derived_Data/%s/surveydata.csv'%dataset)
     surveydata=pandas.read_csv(infile,index_col=0)
-    keyfile=os.path.join(basedir,'data/Derived_Data/%s/surveyitem_key.txt'%dataset)
+    keyfile=os.path.join(basedir,'Data/Derived_Data/%s/surveyitem_key.txt'%dataset)
     with open(keyfile) as f:
         keylines=[i.strip().split('\t') for i in f.readlines()]
     surveykey={}
