@@ -42,6 +42,11 @@ binary_vars=["Sex","ArrestedChargedLifeCount","DivorceCount","GamblingProblem","
              'Hopeless', 'RestlessFidgety', 'Depressed',
              'EverythingIsEffort', 'Worthless','CigsPerDay','LifetimeSmoke100Cigs',
              'CannabisPast6Months']
+try:
+    binary_vars=sys.argv[1]
+except:
+    print('specify variable as command line argument')
+    sys.exit(1)
 
 # for some items, we want to use somethign other than the minimum as the
 # cutoff:
@@ -81,11 +86,6 @@ def get_demog_data(binary_vars=binary_vars,ordinal_vars=[],item_thresholds={},bi
             demogdata.loc[demogdata[v]>threshold,v]=1
             assert demogdata[v].isnull().sum()==0
     return demogdata
-
-def get_subscale_data():
-    subscale_data=pandas.read_csv('survey_subscales.csv',index_col=0)
-    subscale_data=subscale_data.ix[subscale_data.isnull().sum(1)==0]
-    return subscale_data
 
 
 def get_joint_dataset(d1,d2):
