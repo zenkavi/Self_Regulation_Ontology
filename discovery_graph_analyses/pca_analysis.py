@@ -1,3 +1,4 @@
+import fancyimpute
 import numpy as np
 from os import path
 import pandas as pd
@@ -22,10 +23,16 @@ for c in DV_df.columns:
         continue
 
 # ************************************
+# ************ Imputation *******************
+# ************************************
+DV_df_complete = fancyimpute.SoftImpute().complete(DV_df)
+DV_df_complete = pd.DataFrame(DV_df_complete, index = DV_df.index, columns = DV_df.columns)
+
+# ************************************
 # ************ PCA *******************
 # ************************************
 
-pca_data = DV_df.corr()
+pca_data = DV_df_complete.corr()
 pca = decomposition.PCA()
 pca.fit(pca_data)
 
