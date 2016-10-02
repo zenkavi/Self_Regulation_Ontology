@@ -17,7 +17,6 @@ from sklearn.decomposition import FactorAnalysis
 from sklearn.metrics import accuracy_score,f1_score,roc_auc_score,classification_report,confusion_matrix
 from imblearn.over_sampling import SMOTE
 from imblearn.combine import SMOTETomek
-from costcla.models import CostSensitiveRandomForestClassifier,CostSensitiveDecisionTreeClassifier,CostSensitiveRandomPatchesClassifier
 
 # this is kludgey but it works
 sys.path.append('../utils')
@@ -26,7 +25,7 @@ from utils import get_info,get_survey_data
 
 dataset='Discovery_9-26-16'
 basedir=get_info('base_directory')
-derived_dir=os.path.join(basedir,'data/Derived_Data/%s'%dataset)
+derived_dir=os.path.join(basedir,'Data/Derived_Data/%s'%dataset)
 
 
 
@@ -35,26 +34,35 @@ binary_vars=["Sex","ArrestedChargedLifeCount","DivorceCount","GamblingProblem","
              "TrafficAccidentsLifeCount","CaffienatedSodaCansPerDay"]
 # note: focusing here on a subset that seem predictable, for testing of classifiers
 binary_vars=['Sex','ChildrenNumber','Obese','TrafficAccidentsLifeCount']
-
-def get_demog_data(binarize=True):
-    keep_vars=['WeightPounds','HeightInches']
-    demogdata=pandas.read_csv(os.path.join(derived_dir,'surveydata/demographics.tsv'),index_col=0,delimiter='\t')
-    # remove a couple of outliers
-    demogdata=demogdata.query('WeightPounds>50')
-    demogdata=demogdata.query('HeightInches>36')
-    demogdata=demogdata.query('CaffienatedSodaCansPerDay>-1')
-    demogdata=demogdata.assign(BMI=demogdata['WeightPounds']*0.45 / (demogdata['HeightInches']*0.025)**2)
-    demogdata=demogdata.assign(Obese=(demogdata['BMI']>30).astype('int'))
+binary_vars=['Nervous']
+item_thresholds={'Nervous':1}
+def get_demog_data(binary_vars=binary_vars,ordinal_vars=[],item_thresholds={},binarize=True):
+    demogdata=pandas.read_csv(os.path.join(derived_dir,'surveydata/demographics_ordinal.tsv'),index_col=0,delimiter='\t')
+    healthdata=pandas.read_csv(os.path.join(derived_dir,'surveydata/health_ordinal.tsv'),index_col=0,delimiter='\t')
+    alcdrugs=pandas.read_csv(os.path.join(derived_dir,'surveydata/alcohol_drugs_ordinal.tsv'),index_col=0,delimiter='\t')
+    assert all(demogdata.index==healthdata.index)
+    assert all(demogdata.index==alcdrugs.index)
+    demogdata=demogdata.merge(healthdata,left_index=True,right_index=True)
+    demogdata=demogdata.merge(alcdrugs,left_index=True,right_index=True)
+    # remove a couple of outliers - this is only for cases when we include BMI/obesity
+    if 'BMI' in ordinal_vars:
+        demogdata=demogdata.query('WeightPounds>50')
+        demogdata=demogdata.query('HeightInches>36')
+        demogdata=demogdata.query('CaffienatedSodaCansPerDay>-1')
+        demogdata=demogdata.assign(BMI=demogdata['WeightPounds']*0.45 / (demogdata['HeightInches']*0.025)**2)
+        demogdata=demogdata.assign(Obese=(demogdata['BMI']>30).astype('int'))
 
     if binarize:
-        demogdata=demogdata[binary_vars+keep_vars]
+        demogdata=demogdata[binary_vars]
         demogdata=demogdata.loc[demogdata.isnull().sum(1)==0]
 
         for i in range(len(binary_vars)):
             v=binary_vars[i]
-            if not demogdata[v].min()==0:
-                demogdata.loc[demogdata[v]==demogdata[v].min(),v]=0
-            demogdata.loc[demogdata[v]>demogdata[v].min(),v]=1
+            if v in item_thresholds:
+                threshold=item_thresholds[v]
+            else:
+                threshold=demogdata[v].min()
+            demogdata.loc[demogdata[v]>threshold,v]=1
             assert demogdata[v].isnull().sum()==0
     return demogdata
 
@@ -149,12 +157,6 @@ for i in range(len(binary_vars)):
                 clf=RandomForestClassifier()
             elif classifier=='knn':
                 clf=KNN()
-            elif classifier=='csrf':
-                clf=CostSensitiveRandomForestClassifier()
-            elif classifier=='csrp':
-                clf=CostSensitiveRandomPatchesClassifier()
-            elif classifier=='csdt':
-                clf=CostSensitiveDecisionTreeClassifier()
             elif classifier=='oneclasssvc':
                 clf=OneClassSVM()
                 y[y==0]=-1
