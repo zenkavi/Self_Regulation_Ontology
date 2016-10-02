@@ -16,8 +16,8 @@ from utils import get_info
 
 dataset='Discovery_9-26-16'
 basedir=get_info('base_directory')
-datadir=os.path.join(basedir,'data/%s'%dataset)
-outdir=os.path.join(basedir,'data/Derived_Data/%s'%dataset)
+datadir=os.path.join(basedir,'Data/%s'%dataset)
+outdir=os.path.join(basedir,'Data/Derived_Data/%s'%dataset)
 if not os.path.exists(outdir):
     os.mkdir(outdir)
 
@@ -119,12 +119,12 @@ def fix_item(d,v,metadata):
 
     id_to_name,nominalvars=setup_itemid_dict()
     vname=id_to_name[v]
-    # variables that need to have scale reversed - from 5-1 to 1-5
+    # variables that need to have scale reversed - from 5-1 to 0-4
     reverse_scale=['DaysPhysicalHealthFeelings','Depressed','EverythingIsEffort',
                 'Hopeless','Nervous','RestlessFidgety','Worthless',"Last30DaysUsual"]
     if vname in reverse_scale:
         tmp=numpy.array([float(i) for i in d.response])
-        d.iloc[:,0]=tmp*-1 + max(tmp)+1
+        d.iloc[:,0]=tmp*-1 + max(tmp)
         print('reversed scale:',v,vname)
         metadata=metadata_reverse_scale(metadata)
     return d,metadata
