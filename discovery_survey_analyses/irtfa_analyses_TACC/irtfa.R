@@ -14,3 +14,4 @@ d[,363]=NULL # drop row with non-integer values
 d$X=NULL
 itrfa.result=irt.fa(d,nfactors=ncomps,plot=FALSE)
 
+save(irtfa.result,file=sprintf('irtfa_%ddims_%s.Rdata',ncomps))
