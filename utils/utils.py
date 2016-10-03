@@ -70,3 +70,12 @@ def get_single_dataset(dataset,survey):
     metadata=load_metadata(survey,os.path.join(basedir,
         'data/Derived_Data/%s/metadata'%dataset))
     return data,metadata
+
+def get_behav_data(dataset,use_EZ=False):
+    basedir=get_info('base_directory')
+    if use_EZ:
+        datafile=os.path.join(basedir,'Data',dataset,'meaningful_variables_EZ_contrasts.csv')
+    else:
+        datafile=os.path.join(basedir,'Data',dataset,'meaningful_variables_noEZ_contrasts.csv')
+    d=pandas.read_csv(datafile,index_col=0)
+    return d
