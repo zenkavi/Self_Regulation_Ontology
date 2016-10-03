@@ -5,7 +5,7 @@
 
 # In[1]:
 
-import os,glob,sys
+import os,glob,sys,pickle
 import numpy,pandas
 from sklearn.svm import LinearSVC,SVC,OneClassSVM
 from sklearn.linear_model import LinearRegression,LogisticRegressionCV,RandomizedLogisticRegression,ElasticNet,ElasticNetCV,Ridge,RidgeCV
@@ -43,10 +43,10 @@ binary_vars=["Sex","ArrestedChargedLifeCount","DivorceCount","GamblingProblem","
              'EverythingIsEffort', 'Worthless','CigsPerDay','LifetimeSmoke100Cigs',
              'CannabisPast6Months']
 try:
-    binary_vars=sys.argv[1]
+    binary_vars=[sys.argv[1]]
 except:
     print('specify variable as command line argument')
-    sys.exit(1)
+    binary_vars=['Sex'] #hsys.exit(1)
 
 # for some items, we want to use somethign other than the minimum as the
 # cutoff:
@@ -203,5 +203,5 @@ for i in range(len(binary_vars)):
             for i in range(nfeatures):
                 print('%f: %s'%(featcorr[idx[i]],surveykeys[surveyvars[idx[i]]]))
 
-results.to_csv('cvresults.csv')
-pickle.dump(clf_params,open('clf_params_surveypredict_%s.pkl'%varname,'wb'))
+results.to_csv('surveypred/surveypredict_cvresults_%s.csv'%varname)
+pickle.dump(clf_params,open('surveypred/clf_params_surveypredict_%s.pkl'%varname,'wb'))
