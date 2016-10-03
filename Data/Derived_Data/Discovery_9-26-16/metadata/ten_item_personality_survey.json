@@ -1,0 +1,126 @@
+{
+    "MeasurementToolMetadata": {
+        "Description": "Ten item personality survey",
+        "TermURL": "http://www.cognitiveatlas.org/term/id/trm_56a919a478935"
+    },
+    "ten_item_personality_survey_10": {
+        "Description": "Disorganized, careless.",
+        "Levels": {
+            "1": "Agree strongly",
+            "2": "Agree moderately",
+            "3": "Agree a little",
+            "4": "Neither agree nor disagree",
+            "5": "Disagree a little",
+            "6": "Disagree moderately",
+            "7": "Disagree strongly"
+        }
+    },
+    "ten_item_personality_survey_11": {
+        "Description": "Calm, emotionally stable.",
+        "Levels": {
+            "1": "Disagree strongly",
+            "2": "Disagree moderately",
+            "3": "Disagree a little",
+            "4": "Neither agree nor disagree",
+            "5": "Agree a little",
+            "6": "Agree moderately",
+            "7": "Agree strongly"
+        }
+    },
+    "ten_item_personality_survey_12": {
+        "Description": "Conventional, uncreative.",
+        "Levels": {
+            "1": "Agree strongly",
+            "2": "Agree moderately",
+            "3": "Agree a little",
+            "4": "Neither agree nor disagree",
+            "5": "Disagree a little",
+            "6": "Disagree moderately",
+            "7": "Disagree strongly"
+        }
+    },
+    "ten_item_personality_survey_3": {
+        "Description": "Extraverted, enthusiastic.",
+        "Levels": {
+            "1": "Disagree strongly",
+            "2": "Disagree moderately",
+            "3": "Disagree a little",
+            "4": "Neither agree nor disagree",
+            "5": "Agree a little",
+            "6": "Agree moderately",
+            "7": "Agree strongly"
+        }
+    },
+    "ten_item_personality_survey_4": {
+        "Description": "Critical, quarrelsome. ",
+        "Levels": {
+            "1": "Agree strongly",
+            "2": "Agree moderately",
+            "3": "Agree a little",
+            "4": "Neither agree nor disagree",
+            "5": "Disagree a little",
+            "6": "Disagree moderately",
+            "7": "Disagree strongly"
+        }
+    },
+    "ten_item_personality_survey_5": {
+        "Description": "Dependable, self-disciplined.",
+        "Levels": {
+            "1": "Disagree strongly",
+            "2": "Disagree moderately",
+            "3": "Disagree a little",
+            "4": "Neither agree nor disagree",
+            "5": "Agree a little",
+            "6": "Agree moderately",
+            "7": "Agree strongly"
+        }
+    },
+    "ten_item_personality_survey_6": {
+        "Description": "Anxious, easily upset.",
+        "Levels": {
+            "1": "Agree strongly",
+            "2": "Agree moderately",
+            "3": "Agree a little",
+            "4": "Neither agree nor disagree",
+            "5": "Disagree a little",
+            "6": "Disagree moderately",
+            "7": "Disagree strongly"
+        }
+    },
+    "ten_item_personality_survey_7": {
+        "Description": "Open to new experiences, complex.",
+        "Levels": {
+            "1": "Disagree strongly",
+            "2": "Disagree moderately",
+            "3": "Disagree a little",
+            "4": "Neither agree nor disagree",
+            "5": "Agree a little",
+            "6": "Agree moderately",
+            "7": "Agree strongly"
+        }
+    },
+    "ten_item_personality_survey_8": {
+        "Description": "Reserved, quiet.",
+        "Levels": {
+            "1": "Agree strongly",
+            "2": "Agree moderately",
+            "3": "Agree a little",
+            "4": "Neither agree nor disagree",
+            "5": "Disagree a little",
+            "6": "Disagree moderately",
+            "7": "Disagree strongly"
+        }
+    },
+    "ten_item_personality_survey_9": {
+        "Description": "Sympathetic, warm.",
+        "Levels": {
+            "1": "Disagree strongly",
+            "2": "Disagree moderately",
+            "3": "Disagree a little",
+            "4": "Neither agree nor disagree",
+            "5": "Agree a little",
+            "6": "Agree moderately",
+            "7": "Agree strongly"
+        }
+    }
+}

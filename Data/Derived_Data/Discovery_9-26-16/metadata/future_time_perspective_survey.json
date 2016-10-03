@@ -1,0 +1,126 @@
+{
+    "MeasurementToolMetadata": {
+        "Description": "Future time perspective survey",
+        "TermURL": "http://www.cognitiveatlas.org/term/id/trm_56a915fe77945"
+    },
+    "future_time_perspective_survey_10": {
+        "Description": "There are only limited possibilities in my future.",
+        "Levels": {
+            "1": "Very untrue: 1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5",
+            "6": "6",
+            "7": "Very true: 7"
+        }
+    },
+    "future_time_perspective_survey_11": {
+        "Description": "As I get older, I begin to experience time as limited.",
+        "Levels": {
+            "1": "Very untrue: 1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5",
+            "6": "6",
+            "7": "Very true: 7"
+        }
+    },
+    "future_time_perspective_survey_2": {
+        "Description": "Many opportunities await me in the future.",
+        "Levels": {
+            "1": "Very untrue: 1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5",
+            "6": "6",
+            "7": "Very true: 7"
+        }
+    },
+    "future_time_perspective_survey_3": {
+        "Description": "I expect that I will set many new goals in the future.",
+        "Levels": {
+            "1": "Very untrue: 1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5",
+            "6": "6",
+            "7": "Very true: 7"
+        }
+    },
+    "future_time_perspective_survey_4": {
+        "Description": "My future is filled with possibilities.",
+        "Levels": {
+            "1": "Very untrue: 1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5",
+            "6": "6",
+            "7": "Very true: 7"
+        }
+    },
+    "future_time_perspective_survey_5": {
+        "Description": "Most of my life lies ahead of me.",
+        "Levels": {
+            "1": "Very untrue: 1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5",
+            "6": "6",
+            "7": "Very true: 7"
+        }
+    },
+    "future_time_perspective_survey_6": {
+        "Description": "My future seems infinite to me.",
+        "Levels": {
+            "1": "Very untrue: 1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5",
+            "6": "6",
+            "7": "Very true: 7"
+        }
+    },
+    "future_time_perspective_survey_7": {
+        "Description": "I could do anything I want in the future.",
+        "Levels": {
+            "1": "Very untrue: 1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5",
+            "6": "6",
+            "7": "Very true: 7"
+        }
+    },
+    "future_time_perspective_survey_8": {
+        "Description": "There is plenty of time left in my life to make new plans.",
+        "Levels": {
+            "1": "Very untrue: 1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5",
+            "6": "6",
+            "7": "Very true: 7"
+        }
+    },
+    "future_time_perspective_survey_9": {
+        "Description": "I have the sense that time is running out.",
+        "Levels": {
+            "1": "Very untrue: 1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5",
+            "6": "6",
+            "7": "Very true: 7"
+        }
+    }
+}
