@@ -6,6 +6,7 @@
 # In[1]:
 
 import os,glob,sys,pickle
+import warnings
 import numpy,pandas
 from sklearn.svm import LinearSVC,SVC,OneClassSVM
 from sklearn.linear_model import LinearRegression,LogisticRegressionCV,RandomizedLogisticRegression,ElasticNet,ElasticNetCV,Ridge,RidgeCV
@@ -29,12 +30,15 @@ def print_confusion_matrix(y_true,y_pred,labels=[0,1]):
 sys.path.append('../utils')
 from utils import get_info,get_survey_data
 
+warnings.filterwarnings("ignore") # only turn this on in production mode
+                                  # to keep log files from overflowing
 
 dataset='Discovery_9-26-16'
 basedir=get_info('base_directory')
 derived_dir=os.path.join(basedir,'Data/Derived_Data/%s'%dataset)
 
-
+if not os.path.exists('surveypred'):
+    os.mkdir('surveypred')
 
 binary_vars=["Sex","ArrestedChargedLifeCount","DivorceCount","GamblingProblem","ChildrenNumber",
             "CreditCardDebt","RentOwn","RetirementAccount","TrafficTicketsLastYearCount","Obese",
@@ -47,6 +51,21 @@ try:
 except:
     print('specify variable as command line argument')
     binary_vars=['Sex'] #hsys.exit(1)
+
+if len(sys.argv)>2:
+    shuffle=True
+    shuffletag='_shuffle%04d'%int(sys.argv[2])
+else:
+    shuffle=False
+    shuffletag=''
+
+nfeatures=5 # number of features to show
+nfolds=8
+degree=3
+kernel='rbf'
+verbose=False
+use_fa='fa'
+
 
 # for some items, we want to use somethign other than the minimum as the
 # cutoff:
@@ -107,14 +126,6 @@ print(list(demogdata.columns))
 
 # First get binary variables and test classification based on survey data.  Only include variables that have at least 10% of the infrequent category. Some of these were not collected as binary variables, but we binarize by calling anything above the minimum value a positive outcome.
 
-nfeatures=5 # number of features to show
-nfolds=8
-degree=3
-kernel='rbf'
-shuffle=False
-verbose=False
-use_fa='fa'
-
 
 bvardata=numpy.array(demogdata)
 sdata=numpy.array(surveydata) #scale(numpy.array(surveydata))
@@ -129,6 +140,7 @@ ctr=0
 classifier='svm'
 gamma='auto'
 
+
 for i in range(len(binary_vars)):
     varname=binary_vars[i]
     y=numpy.array(demogdata[binary_vars[i]])
@@ -137,6 +149,7 @@ for i in range(len(binary_vars)):
         continue
     if shuffle:
         numpy.random.shuffle(y)
+
     kf=StratifiedKFold(y,n_folds=nfolds) # use stratified K-fold CV to get roughly equal folds
 
     if numpy.abs(numpy.mean(y)-0.5)>0.1:
@@ -203,5 +216,7 @@ for i in range(len(binary_vars)):
             for i in range(nfeatures):
                 print('%f: %s'%(featcorr[idx[i]],surveykeys[surveyvars[idx[i]]]))
 
-results.to_csv('surveypred/surveypredict_cvresults_%s.csv'%varname)
-pickle.dump(clf_params,open('surveypred/clf_params_surveypredict_%s.pkl'%varname,'wb'))
+results.to_csv('surveypred/surveypredict_cvresults_%s%s.csv'%(varname,shuffletag))
+
+if not shuffle:
+    pickle.dump(clf_params,open('surveypred/clf_params_surveypredict_%s.pkl'%varname,'wb'))
