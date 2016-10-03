@@ -197,9 +197,9 @@ for i in range(len(binary_vars)):
         trainpredroc.append(numpy.max([f1_fa,f1_nofa]))
     cm=confusion_matrix(y,pred)
     results.loc[ctr,:]=[binary_vars[i],fa_ctr,numpy.mean(trainpredroc),f1_score(y,pred)]
-    print(results.loc[ctr,:])
-    print(kernel)
-    print(C)
+    #print(results.loc[ctr,:])
+    #print(kernel)
+    #print(C)
     clf_params[binary_vars[i]]=(kernel,C)
     ctr+=1
     if verbose:
