@@ -4,6 +4,16 @@ some util functions
 
 import os,json
 import pandas
+from sklearn.metrics import confusion_matrix
+
+def print_confusion_matrix(y_true,y_pred,labels=[0,1]):
+    cm=confusion_matrix(y_true,y_pred)
+    print('Confusion matrix')
+    print('\t\tPredicted')
+    print('\t\t0\t1')
+    print('Actual\t0\t%d\t%d'%(cm[0,0],cm[0,1]))
+    print('\t1\t%d\t%d'%(cm[1,0],cm[1,1]))
+
 
 def get_info(item,infile='../Self_Regulation_Settings.txt'):
     """
