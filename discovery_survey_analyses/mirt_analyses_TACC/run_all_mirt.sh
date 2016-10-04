@@ -8,3 +8,9 @@ Rscript run_mirt.R 7
 Rscript run_mirt.R 8
 Rscript run_mirt.R 9
 Rscript run_mirt.R 10
+Rscript run_mirt.R 11
+Rscript run_mirt.R 12
+Rscript run_mirt.R 13
+Rscript run_mirt.R 14
+Rscript run_mirt.R 15
+Rscript run_mirt.R 16

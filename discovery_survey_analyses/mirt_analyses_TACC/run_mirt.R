@@ -10,7 +10,7 @@ ncomps=2
 }
 
 
-d=read.csv('../../Data/Derived_Data/Discovery_9-26-16/surveydata.csv')
+d=read.csv('../../Data/Derived_Data/Discovery_9-26-16/surveydata_fixed_minfreq20.csv')
 d$worker=NULL
 verbosearg=FALSE
 modeltype='graded'
