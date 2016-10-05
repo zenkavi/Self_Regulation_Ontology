@@ -11,7 +11,7 @@ import numpy,pandas
 from sklearn.svm import LinearSVC,SVC,OneClassSVM
 from sklearn.linear_model import LinearRegression,LogisticRegressionCV,RandomizedLogisticRegression,ElasticNet,ElasticNetCV,Ridge,RidgeCV
 from sklearn.preprocessing import scale
-from sklearn.cross_validation import StratifiedKFold,KFold
+from sklearn.model_selection import StratifiedKFold
 from sklearn.decomposition import FactorAnalysis
 from sklearn.metrics import accuracy_score,f1_score,roc_auc_score,classification_report,confusion_matrix
 from sklearn.model_selection import GridSearchCV
@@ -50,7 +50,7 @@ try:
     binary_vars=[sys.argv[1]]
 except:
     print('specify variable as command line argument')
-    binary_vars=['Sex'] #hsys.exit(1)
+    binary_vars=['Nervous'] #hsys.exit(1)
 
 if len(sys.argv)>2:
     shuffle=True
@@ -58,6 +58,8 @@ if len(sys.argv)>2:
 else:
     shuffle=False
     shuffletag=''
+
+shuffle=True
 
 nfeatures=5 # number of features to show
 nfolds=8
@@ -149,8 +151,9 @@ for i in range(len(binary_vars)):
         continue
     if shuffle:
         numpy.random.shuffle(y)
+        print('y shuffled')
 
-    kf=StratifiedKFold(y,n_folds=nfolds) # use stratified K-fold CV to get roughly equal folds
+    kf=StratifiedKFold(n_splits=nfolds) # use stratified K-fold CV to get roughly equal folds
 
     if numpy.abs(numpy.mean(y)-0.5)>0.1:
         oversample='smote'
@@ -172,7 +175,7 @@ for i in range(len(binary_vars)):
     kernel=[]
     C=[]
     fa_ctr=0
-    for train,test in kf:
+    for train,test in kf.split(sdata,y):
         Xtrain=sdata[train,:]
         Xtest=sdata[test,:]
         Ytrain=y[train]
@@ -180,7 +183,7 @@ for i in range(len(binary_vars)):
             sm = SMOTETomek(random_state=42)
             Xtrain, Ytrain = sm.fit_sample(Xtrain, Ytrain)
         Xtrain_fa=fa.fit_transform(Xtrain)
-        Xtest_fa=fa.transform(sdata[test,:])
+        Xtest_fa=fa.transform(Xtest)
         gsearch_nofa=GridSearchCV(svc,parameters,scoring='f1')
         gsearch_nofa.fit(Xtrain,Ytrain)
         gsearch_fa=GridSearchCV(svc,parameters,scoring='f1')
@@ -195,6 +198,7 @@ for i in range(len(binary_vars)):
             pred.flat[test]=gsearch_fa.predict(Xtest_fa)
             fa_ctr+=1
         trainpredroc.append(numpy.max([f1_fa,f1_nofa]))
+    assert not all(y==numpy.array(demogdata[binary_vars[i]]))
     cm=confusion_matrix(y,pred)
     results.loc[ctr,:]=[binary_vars[i],fa_ctr,numpy.mean(trainpredroc),f1_score(y,pred)]
     #print(results.loc[ctr,:])
