@@ -63,7 +63,7 @@ else:
 nfeatures=5 # number of features to show
 nfolds=4
 verbose=False
-
+simple_params=True
 
 # for some items, we want to use somethign other than the minimum as the
 # cutoff:
@@ -143,32 +143,36 @@ def inner_cv_loop(Xtrain,Ytrain,clf,parameters,
     """
     use GridSearchCV to find best classifier for training set
     """
-    fa=FactorAnalysis(fa_dims)
-    if oversample=='smote':
-        if verbose:
-            print('oversampling using SMOTETomek')
-        sm = SMOTETomek(random_state=42)
-        Xtrain, Ytrain = sm.fit_sample(Xtrain, Ytrain)
-    gsearch_nofa=GridSearchCV(clf,parameters,scoring='roc_auc')
-    gsearch_nofa.fit(Xtrain,Ytrain)
-    f1_nofa=f1_score(Ytrain,gsearch_nofa.predict(Xtrain))
-    if fa_dims>0:
-        Xtrain_fa=fa.fit_transform(Xtrain)
-        gsearch_fa=GridSearchCV(clf,parameters,scoring='roc_auc')
-        gsearch_fa.fit(Xtrain_fa,Ytrain)
-        f1_fa=f1_score(Ytrain,gsearch_fa.predict(Xtrain_fa))
-    else:
-        f1_fa=0
-        if verbose:
-            print('skipping FA')
-    if f1_nofa>f1_fa:
-        best_estimator_=gsearch_nofa.best_estimator_
-        fa=None
-    else:
-        best_estimator_=gsearch_fa.best_estimator_
 
-    trainpredf1=numpy.max([f1_fa,f1_nofa])
-    return best_estimator_,fa,trainpredf1
+    rocscore={}
+    best_est={}
+    facanal={}
+    for fa_d in [0,fa_dims]:
+        for oversample in ['none','smote']:
+            clfname='%s-%d'%(oversample,fa_d)
+            if oversample=='smote':
+                if verbose:
+                    print('oversampling using SMOTETomek')
+                sm = SMOTETomek(random_state=42)
+                Xtrain, Ytrain = sm.fit_sample(Xtrain, Ytrain)
+            if fa_d>0:
+                facanal[clfname]=FactorAnalysis(fa_d)
+                Xtrain=facanal[clfname].fit_transform(Xtrain)
+            else:
+                facanal[clfname]=None
+
+            if verbose:
+                print(clfname)
+            gs=GridSearchCV(clf,parameters,scoring='roc_auc')
+            gs.fit(Xtrain,Ytrain)
+            rocscore[clfname]=gs.best_score_
+            best_est[clfname]=gs.best_estimator_
+
+    bestscore=numpy.max([rocscore[i] for i in rocscore.keys()])
+    bestclf=[i for i in rocscore.keys() if rocscore[i]==bestscore][0]
+    if verbose:
+        print('best:',bestclf,bestscore,best_est[bestclf])
+    return best_est[bestclf],bestscore,facanal[bestclf]
 
 varname=binary_vars[0]
 print(varname)
@@ -181,12 +185,14 @@ if shuffle:
     print('y shuffled')
 
 # set up classifier params for GridSearchCV
-parameters = {'kernel':('linear','rbf','poly'),
-    'C':[0.5,1.,5, 10.,25.,50.,75.,100.],
-    'degree':[2,3],'gamma':1/numpy.array([5,10,100,250,500,750,1000])}
-#parameters = {'kernel':('linear','rbf'),
-#    'C':[1., 100.],
-#    'gamma':1/numpy.array([100,500,1000])}
+if simple_params:
+    parameters = {'kernel':('linear','rbf'),
+       'C':[1., 100.],
+       'gamma':1/numpy.array([100,500,1000])}
+else:
+    parameters = {'kernel':('linear','rbf','poly'),
+        'C':[0.5,1.,5, 10.,25.,50.,75.,100.],
+        'degree':[2,3],'gamma':1/numpy.array([5,10,100,250,500,750,1000])}
 clf=SVC(probability=True) #LogisticRegressionCV(solver='liblinear',penalty='l1')  #LinearSVC()
 
 def main_cv_loop(Xdata,Ydata,clf,parameters,
@@ -205,7 +211,6 @@ def main_cv_loop(Xdata,Ydata,clf,parameters,
     pred=numpy.zeros(len(y))  # predicted values
     kernel=[]
     C=[]
-    trainpredf1=[]
     fa_ctr=0
 
     for train,test in kf.split(Xdata,Ydata):
@@ -213,15 +218,14 @@ def main_cv_loop(Xdata,Ydata,clf,parameters,
         Xtest=Xdata[test,:]
         Ytrain=Ydata[train]
 
-        best_estimator_,fa,tpf1=inner_cv_loop(Xtrain,Ytrain,clf,
-                    parameters)
-        if fa:
+        best_estimator_,bestroc,fa=inner_cv_loop(Xtrain,Ytrain,clf,
+                    parameters,verbose=True)
+        if not fa is None:
             Xtest=fa.transform(Xtest)
             fa_ctr+=1
         pred.flat[test]=best_estimator_.predict_proba(Xtest)
         kernel.append(best_estimator_.kernel)
         C.append(best_estimator_.C)
-        trainpredf1.append(tpf1)
     #if shuffle:
         # make sure shuffling actually worked
         #assert not all(y==numpy.array(demogdata[binary_vars[i]]))
@@ -246,7 +250,7 @@ for i in range(10):
 with open('surveypred/surveypredict_cvresults_%s%s.csv'%(varname,shuffletag),'w') as f:
     for i in range(len(all_results)):
         f.write('%f\n'%all_results[i])
-          
+
 #     clf_params[binary_vars[i]]=(kernel,C)
 #     ctr+=1
 #     if verbose:
