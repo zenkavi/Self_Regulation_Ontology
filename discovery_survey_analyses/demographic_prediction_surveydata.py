@@ -11,7 +11,7 @@ import numpy,pandas
 from sklearn.svm import LinearSVC,SVC,OneClassSVM
 from sklearn.linear_model import LinearRegression,LogisticRegressionCV,RandomizedLogisticRegression,ElasticNet,ElasticNetCV,Ridge,RidgeCV
 from sklearn.preprocessing import scale
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold,StratifiedShuffleSplit
 from sklearn.decomposition import FactorAnalysis
 from sklearn.metrics import accuracy_score,f1_score,roc_auc_score,classification_report,confusion_matrix
 from sklearn.model_selection import GridSearchCV
@@ -62,11 +62,8 @@ else:
 shuffle=True
 
 nfeatures=5 # number of features to show
-nfolds=8
-degree=3
-kernel='rbf'
+nfolds=4
 verbose=False
-use_fa='fa'
 
 
 # for some items, we want to use somethign other than the minimum as the
@@ -130,8 +127,8 @@ print(list(demogdata.columns))
 
 
 bvardata=numpy.array(demogdata)
-sdata=numpy.array(surveydata) #scale(numpy.array(surveydata))
-fa=FactorAnalysis(20)  # reduce to 20 dimensions
+sdata=numpy.array(surveydata).copy() #scale(numpy.array(surveydata))
+#sdata=numpy.random.randn(sdata.shape[0],sdata.shape[1])
 
 results=pandas.DataFrame(columns=['variable','fa_ctr','trainf1','testf1'])
 
@@ -140,87 +137,136 @@ clf_params={}
 ctr=0
 
 classifier='svm'
-gamma='auto'
 
 
-for i in range(len(binary_vars)):
-    varname=binary_vars[i]
-    y=numpy.array(demogdata[binary_vars[i]])
-    if numpy.var(y)==0:
-        print(binary_vars[i],'zero variance, skipping')
-        continue
-    if shuffle:
-        numpy.random.shuffle(y)
-        print('y shuffled')
+def inner_cv_loop(Xtrain,Ytrain,clf,parameters,
+                    oversample=None,fa_dims=20,
+                    verbose=False):
+    """
+    use GridSearchCV to find best classifier for training set
+    """
+    fa=FactorAnalysis(fa_dims)
+    if oversample=='smote':
+        if verbose:
+            print('oversampling using SMOTETomek')
+        sm = SMOTETomek(random_state=42)
+        Xtrain, Ytrain = sm.fit_sample(Xtrain, Ytrain)
+    gsearch_nofa=GridSearchCV(clf,parameters,scoring='roc_auc')
+    gsearch_nofa.fit(Xtrain,Ytrain)
+    f1_nofa=f1_score(Ytrain,gsearch_nofa.predict(Xtrain))
+    if fa_dims>0:
+        Xtrain_fa=fa.fit_transform(Xtrain)
+        gsearch_fa=GridSearchCV(clf,parameters,scoring='roc_auc')
+        gsearch_fa.fit(Xtrain_fa,Ytrain)
+        f1_fa=f1_score(Ytrain,gsearch_fa.predict(Xtrain_fa))
+    else:
+        f1_fa=0
+        if verbose:
+            print('skipping FA')
+    if f1_nofa>f1_fa:
+        best_estimator_=gsearch_nofa.best_estimator_
+        fa=None
+    else:
+        best_estimator_=gsearch_fa.best_estimator_
 
-    kf=StratifiedKFold(n_splits=nfolds) # use stratified K-fold CV to get roughly equal folds
+    trainpredf1=numpy.max([f1_fa,f1_nofa])
+    return best_estimator_,fa,trainpredf1
 
-    if numpy.abs(numpy.mean(y)-0.5)>0.1:
+varname=binary_vars[0]
+print(varname)
+random_y=False
+
+y=numpy.array(demogdata[varname].copy())
+assert numpy.var(y)>0
+
+if shuffle:
+    numpy.random.shuffle(y)
+    print('y shuffled')
+if random_y:
+    print('using completely random y data')
+    y=(numpy.random.rand(y.shape[0])>numpy.mean(y)).astype('int')
+
+# set up classifier params for GridSearchCV
+# parameters = {'kernel':('linear','rbf','poly'),
+#     'C':[0.5,1.,5, 10.,25.,50.,75.,100.],
+#     'degree':[2,3],'gamma':1/numpy.array([5,10,100,250,500,750,1000])}
+parameters = {'kernel':('linear','rbf'),
+    'C':[1., 100.],
+    'gamma':1/numpy.array([100,500,1000])}
+clf=SVC() #LogisticRegressionCV(solver='liblinear',penalty='l1')  #LinearSVC()
+
+def main_cv_loop(Xdata,Ydata,clf,parameters,
+                n_folds=4,oversample_thresh=0.1):
+
+    # use stratified K-fold CV to get roughly equal folds
+    #kf=StratifiedKFold(n_splits=nfolds)
+    kf=StratifiedShuffleSplit(n_splits=4,test_size=0.2)
+    # use oversampling if the difference in prevalence is greater than 20%
+    if numpy.abs(numpy.mean(y)-0.5)>oversample_thresh:
         oversample='smote'
     else:
         oversample='none'
-    print(varname)
 
-    predlabels=[0,1]
-    parameters = {'kernel':('linear','rbf','poly'),
-        'C':[0.5,1.,5, 10.,25.,50.,75.,100.],
-        'degree':[2,3],'gamma':1/numpy.array([5,10,100,250,500,750,1000])}
-    svc=SVC() #LogisticRegressionCV(solver='liblinear',penalty='l1')  #LinearSVC()
-
-
-    pred=numpy.zeros(len(y))
-    pred_prob=numpy.zeros(len(y))
-
-    trainpredroc=[]
+    # variables to store outputs
+    pred=numpy.zeros(len(y))  # predicted values
     kernel=[]
     C=[]
+    trainpredf1=[]
     fa_ctr=0
-    for train,test in kf.split(sdata,y):
-        Xtrain=sdata[train,:]
-        Xtest=sdata[test,:]
-        Ytrain=y[train]
-        if oversample=='smote':
-            sm = SMOTETomek(random_state=42)
-            Xtrain, Ytrain = sm.fit_sample(Xtrain, Ytrain)
-        Xtrain_fa=fa.fit_transform(Xtrain)
-        Xtest_fa=fa.transform(Xtest)
-        gsearch_nofa=GridSearchCV(svc,parameters,scoring='f1')
-        gsearch_nofa.fit(Xtrain,Ytrain)
-        gsearch_fa=GridSearchCV(svc,parameters,scoring='f1')
-        gsearch_fa.fit(Xtrain_fa,Ytrain)
-        f1_fa=f1_score(Ytrain,gsearch_fa.predict(Xtrain_fa))
-        f1_nofa=f1_score(Ytrain,gsearch_nofa.predict(Xtrain))
-        if f1_nofa>f1_fa:
-            pred.flat[test]=gsearch_nofa.predict(Xtest)
-            kernel.append(gsearch_nofa.best_estimator_.kernel)
-            C.append(gsearch_nofa.best_estimator_.C)
-        else:
-            pred.flat[test]=gsearch_fa.predict(Xtest_fa)
+
+    for train,test in kf.split(Xdata,Ydata):
+        Xtrain=Xdata[train,:]
+        Xtest=Xdata[test,:]
+        Ytrain=Ydata[train]
+
+        best_estimator_,fa,tpf1=inner_cv_loop(Xtrain,Ytrain,clf,
+                    parameters,fa_dims=0,verbose=True)
+        if fa:
+            Xtest=fa.transform(Xtest)
             fa_ctr+=1
-        trainpredroc.append(numpy.max([f1_fa,f1_nofa]))
-    assert not all(y==numpy.array(demogdata[binary_vars[i]]))
-    cm=confusion_matrix(y,pred)
-    results.loc[ctr,:]=[binary_vars[i],fa_ctr,numpy.mean(trainpredroc),f1_score(y,pred)]
+        pred.flat[test]=best_estimator_.predict(Xtest)
+        kernel.append(best_estimator_.kernel)
+        C.append(best_estimator_.C)
+        trainpredf1.append(tpf1)
+    #if shuffle:
+        # make sure shuffling actually worked
+        #assert not all(y==numpy.array(demogdata[binary_vars[i]]))
+    #cm=confusion_matrix(y,pred)
+    #results.loc[ctr,:]=[binary_vars[i],fa_ctr,numpy.mean(trainpredf1),f1_score(y,pred)]
+    return f1_score(y,pred),y,pred
     #print(results.loc[ctr,:])
     #print(kernel)
     #print(C)
-    clf_params[binary_vars[i]]=(kernel,C)
-    ctr+=1
-    if verbose:
-        print('Training accuracy (f-score): %f'%numpy.mean(trainpredroc))
-        if numpy.var(pred)==0:
-            print('WARNING: no variance in classifier output, degenerate model fit')
-        print('Predictive accuracy')
-        print(classification_report(y,pred,labels=predlabels))
-        print_confusion_matrix(y,pred)
-        if False:
-            print("Features sorted by their absolute correlation with outcome (top %d):"%nfeatures)
-            featcorr=numpy.array([numpy.corrcoef(sdata[:,x],y)[0,1] for x in range(sdata.shape[1])])
-            idx=numpy.argsort(numpy.abs(featcorr))[::-1]
-            for i in range(nfeatures):
-                print('%f: %s'%(featcorr[idx[i]],surveykeys[surveyvars[idx[i]]]))
 
-results.to_csv('surveypred/surveypredict_cvresults_%s%s.csv'%(varname,shuffletag))
+all_results=[]
+for i in range(10):
+    print(i)
+    results,y_out,pred=main_cv_loop(sdata,y,clf,parameters)
+    all_results.append(results)
+    if shuffle:
+        assert not all(numpy.array(demogdata[varname])==y_out)
+    if numpy.var(pred)==0:
+        print('WARNING: no variance in predicted classes')
+    else:
+        print(numpy.sum(pred==0),numpy.sum(pred==1))
 
-if not shuffle:
-    pickle.dump(clf_params,open('surveypred/clf_params_surveypredict_%s.pkl'%varname,'wb'))
+#     clf_params[binary_vars[i]]=(kernel,C)
+#     ctr+=1
+#     if verbose:
+#         print('Training accuracy (f-score): %f'%numpy.mean(trainpredroc))
+#         if numpy.var(pred)==0:
+#             print('WARNING: no variance in classifier output, degenerate model fit')
+#         print('Predictive accuracy')
+#         print(classification_report(y,pred,labels=predlabels))
+#         print_confusion_matrix(y,pred)
+#         if False:
+#             print("Features sorted by their absolute correlation with outcome (top %d):"%nfeatures)
+#             featcorr=numpy.array([numpy.corrcoef(sdata[:,x],y)[0,1] for x in range(sdata.shape[1])])
+#             idx=numpy.argsort(numpy.abs(featcorr))[::-1]
+#             for i in range(nfeatures):
+#                 print('%f: %s'%(featcorr[idx[i]],surveykeys[surveyvars[idx[i]]]))
+#
+# results.to_csv('surveypred/surveypredict_cvresults_%s%s.csv'%(varname,shuffletag))
+#
+# if not shuffle:
+#     pickle.dump(clf_params,open('surveypred/clf_params_surveypredict_%s.pkl'%varname,'wb'))
