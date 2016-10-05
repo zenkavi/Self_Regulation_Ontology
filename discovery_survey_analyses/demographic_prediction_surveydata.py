@@ -63,7 +63,7 @@ else:
 nfeatures=5 # number of features to show
 nfolds=4
 verbose=False
-simple_params=True
+simple_params=False
 
 # for some items, we want to use somethign other than the minimum as the
 # cutoff:
@@ -171,7 +171,7 @@ def inner_cv_loop(Xtrain,Ytrain,clf,parameters,
     bestscore=numpy.max([rocscore[i] for i in rocscore.keys()])
     bestclf=[i for i in rocscore.keys() if rocscore[i]==bestscore][0]
     if verbose:
-        print('best:',bestclf,bestscore,best_est[bestclf])
+        print('best:',bestclf,bestscore,best_est[bestclf],facanal[bestclf])
     return best_est[bestclf],bestscore,facanal[bestclf]
 
 varname=binary_vars[0]
@@ -186,9 +186,10 @@ if shuffle:
 
 # set up classifier params for GridSearchCV
 if simple_params:
+    print('WARNING: using simple parameters - change for production')
     parameters = {'kernel':('linear','rbf'),
        'C':[1., 100.],
-       'gamma':1/numpy.array([100,500,1000])}
+       'gamma':1/numpy.array([100,500])}
 else:
     parameters = {'kernel':('linear','rbf','poly'),
         'C':[0.5,1.,5, 10.,25.,50.,75.,100.],
@@ -196,7 +197,7 @@ else:
 clf=SVC(probability=True) #LogisticRegressionCV(solver='liblinear',penalty='l1')  #LinearSVC()
 
 def main_cv_loop(Xdata,Ydata,clf,parameters,
-                n_folds=4,oversample_thresh=0.1):
+                n_folds=4,oversample_thresh=0.1,verbose=False):
 
     # use stratified K-fold CV to get roughly equal folds
     #kf=StratifiedKFold(n_splits=nfolds)
@@ -221,25 +222,22 @@ def main_cv_loop(Xdata,Ydata,clf,parameters,
         best_estimator_,bestroc,fa=inner_cv_loop(Xtrain,Ytrain,clf,
                     parameters,verbose=True)
         if not fa is None:
-            Xtest=fa.transform(Xtest)
+            if verbose:
+                print('transforming using fa')
+                print(fa)
+                print(Xtest.shape)
+            tmp=fa.transform(Xtest)
+            Xtest=tmp
             fa_ctr+=1
         pred.flat[test]=best_estimator_.predict_proba(Xtest)
         kernel.append(best_estimator_.kernel)
         C.append(best_estimator_.C)
-    #if shuffle:
-        # make sure shuffling actually worked
-        #assert not all(y==numpy.array(demogdata[binary_vars[i]]))
-    #cm=confusion_matrix(y,pred)
-    #results.loc[ctr,:]=[binary_vars[i],fa_ctr,numpy.mean(trainpredf1),f1_score(y,pred)]
     return roc_auc_score(y,pred,average='weighted'),y,pred
-    #print(results.loc[ctr,:])
-    #print(kernel)
-    #print(C)
 
 all_results=[]
 
 for i in range(10):
-    results,y_out,pred=main_cv_loop(sdata,y,clf,parameters)
+    results,y_out,pred=main_cv_loop(sdata,y,clf,parameters,verbose=True)
     all_results.append(results)
     if shuffle:
         assert not all(numpy.array(demogdata[varname])==y_out)
