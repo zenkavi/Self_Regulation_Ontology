@@ -50,7 +50,7 @@ try:
     binary_vars=[sys.argv[1]]
 except:
     print('specify variable as command line argument')
-    binary_vars=['Nervous'] #hsys.exit(1)
+    binary_vars=['Sex'] #hsys.exit(1)
 
 if len(sys.argv)>2:
     shuffle=True
@@ -59,7 +59,6 @@ else:
     shuffle=False
     shuffletag=''
 
-shuffle=True
 
 nfeatures=5 # number of features to show
 nfolds=4
@@ -128,7 +127,6 @@ print(list(demogdata.columns))
 
 bvardata=numpy.array(demogdata)
 sdata=numpy.array(surveydata).copy() #scale(numpy.array(surveydata))
-#sdata=numpy.random.randn(sdata.shape[0],sdata.shape[1])
 
 results=pandas.DataFrame(columns=['variable','fa_ctr','trainf1','testf1'])
 
@@ -174,7 +172,6 @@ def inner_cv_loop(Xtrain,Ytrain,clf,parameters,
 
 varname=binary_vars[0]
 print(varname)
-random_y=False
 
 y=numpy.array(demogdata[varname].copy())
 assert numpy.var(y)>0
@@ -182,18 +179,15 @@ assert numpy.var(y)>0
 if shuffle:
     numpy.random.shuffle(y)
     print('y shuffled')
-if random_y:
-    print('using completely random y data')
-    y=(numpy.random.rand(y.shape[0])>numpy.mean(y)).astype('int')
 
 # set up classifier params for GridSearchCV
-# parameters = {'kernel':('linear','rbf','poly'),
-#     'C':[0.5,1.,5, 10.,25.,50.,75.,100.],
-#     'degree':[2,3],'gamma':1/numpy.array([5,10,100,250,500,750,1000])}
-parameters = {'kernel':('linear','rbf'),
-    'C':[1., 100.],
-    'gamma':1/numpy.array([100,500,1000])}
-clf=SVC() #LogisticRegressionCV(solver='liblinear',penalty='l1')  #LinearSVC()
+parameters = {'kernel':('linear','rbf','poly'),
+    'C':[0.5,1.,5, 10.,25.,50.,75.,100.],
+    'degree':[2,3],'gamma':1/numpy.array([5,10,100,250,500,750,1000])}
+#parameters = {'kernel':('linear','rbf'),
+#    'C':[1., 100.],
+#    'gamma':1/numpy.array([100,500,1000])}
+clf=SVC(probability=True) #LogisticRegressionCV(solver='liblinear',penalty='l1')  #LinearSVC()
 
 def main_cv_loop(Xdata,Ydata,clf,parameters,
                 n_folds=4,oversample_thresh=0.1):
@@ -220,11 +214,11 @@ def main_cv_loop(Xdata,Ydata,clf,parameters,
         Ytrain=Ydata[train]
 
         best_estimator_,fa,tpf1=inner_cv_loop(Xtrain,Ytrain,clf,
-                    parameters,fa_dims=0,verbose=True)
+                    parameters)
         if fa:
             Xtest=fa.transform(Xtest)
             fa_ctr+=1
-        pred.flat[test]=best_estimator_.predict(Xtest)
+        pred.flat[test]=best_estimator_.predict_proba(Xtest)
         kernel.append(best_estimator_.kernel)
         C.append(best_estimator_.C)
         trainpredf1.append(tpf1)
@@ -233,7 +227,7 @@ def main_cv_loop(Xdata,Ydata,clf,parameters,
         #assert not all(y==numpy.array(demogdata[binary_vars[i]]))
     #cm=confusion_matrix(y,pred)
     #results.loc[ctr,:]=[binary_vars[i],fa_ctr,numpy.mean(trainpredf1),f1_score(y,pred)]
-    return f1_score(y,pred),y,pred
+    return roc_auc_score(y,pred,average='weighted'),y,pred
     #print(results.loc[ctr,:])
     #print(kernel)
     #print(C)
@@ -247,8 +241,8 @@ for i in range(10):
         assert not all(numpy.array(demogdata[varname])==y_out)
     if numpy.var(pred)==0:
         print('WARNING: no variance in predicted classes')
-    else:
-        print(numpy.sum(pred==0),numpy.sum(pred==1))
+    #else:
+    #    print(numpy.sum(pred==0),numpy.sum(pred==1))
 
 #     clf_params[binary_vars[i]]=(kernel,C)
 #     ctr+=1
