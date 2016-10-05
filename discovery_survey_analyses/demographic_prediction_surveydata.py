@@ -233,17 +233,20 @@ def main_cv_loop(Xdata,Ydata,clf,parameters,
     #print(C)
 
 all_results=[]
+
 for i in range(10):
-    print(i)
     results,y_out,pred=main_cv_loop(sdata,y,clf,parameters)
     all_results.append(results)
     if shuffle:
         assert not all(numpy.array(demogdata[varname])==y_out)
     if numpy.var(pred)==0:
-        print('WARNING: no variance in predicted classes')
+        print('%s: WARNING: no variance in predicted classes'%varname)
     #else:
     #    print(numpy.sum(pred==0),numpy.sum(pred==1))
-
+with open('surveypred/surveypredict_cvresults_%s%s.csv'%(varname,shuffletag),'w') as f:
+    for i in range(len(all_results)):
+        f.write('%f\n'%all_results[i])
+          
 #     clf_params[binary_vars[i]]=(kernel,C)
 #     ctr+=1
 #     if verbose:
