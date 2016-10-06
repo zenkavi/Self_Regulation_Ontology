@@ -2,25 +2,17 @@ import fancyimpute
 import numpy as np
 from os import path
 import pandas as pd
-from util import dendroheatmap, get_info
 import seaborn as sns
 from sklearn import decomposition
+import sys
 
-#load Data
-data_dir=path.join(get_info('base_directory'),'Data/Discovery_9-26-16')
+sys.path.append('../utils')
+from utils import get_behav_data
+from plot_utils import dendroheatmap
 
-# get DV df
-DV_df = pd.read_csv(path.join(data_dir,'meaningful_variables_EZ_contrasts.csv'), index_col = 0)
-valence_df = pd.read_json(path.join(data_dir, 'mturk_discovery_DV_valence.json'))
+# get dependent variables
+DV_df = get_behav_data('Discovery_9-26-16', use_EZ = True)
 
-
-#flip negative signed valence DVs
-flip_df = valence_df.replace(to_replace ={'Pos': 1, 'NA': 1, 'Neg': -1}).mean()
-for c in DV_df.columns:
-    try:
-        DV_df.loc[:,c] = DV_df.loc[:,c] * flip_df.loc[c]
-    except TypeError:
-        continue
 
 # ************************************
 # ************ Imputation *******************

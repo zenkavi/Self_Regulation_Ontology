@@ -1,16 +1,5 @@
-# -*- coding: utf-8 -*-
-"""
-Spyder Editor
-
-This is a temporary script file.
-"""
-
 import numpy,pandas
 import os,sys
-import json
-# ensure ascii encoding is correct -
-# removing this because it breaks in python3 and is a bad idea:
-# http://stackoverflow.com/questions/3828723/why-should-we-not-use-sys-setdefaultencodingutf-8-in-a-py-script
 
 sys.path.append('../utils')
 

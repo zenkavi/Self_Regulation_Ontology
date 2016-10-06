@@ -1,13 +1,5 @@
-# -*- coding: utf-8 -*-
-"""
-Spyder Editor
-
-This is a temporary script file.
-"""
-
 import numpy,pandas
 import os,sys
-import json
 
 sys.path.append('../utils')
 from metadata_utils import write_metadata,metadata_reverse_scale

@@ -14,6 +14,15 @@ def print_confusion_matrix(y_true,y_pred,labels=[0,1]):
     print('Actual\t0\t%d\t%d'%(cm[0,0],cm[0,1]))
     print('\t1\t%d\t%d'%(cm[1,0],cm[1,1]))
 
+def get_behav_data(dataset,use_EZ=False):
+    basedir=get_info('base_directory')
+    if use_EZ:
+        datafile=os.path.join(basedir,'Data',dataset,'meaningful_variables_EZ_contrasts.csv')
+    else:
+        datafile=os.path.join(basedir,'Data',dataset,'meaningful_variables_noEZ_contrasts.csv')
+    d=pandas.read_csv(datafile,index_col=0)
+    return d
+
 
 def get_info(item,infile='../Self_Regulation_Settings.txt'):
     """
@@ -38,6 +47,21 @@ def get_info(item,infile='../Self_Regulation_Settings.txt'):
         raise Exception('infodict does not include requested item')
     return infodict[item]
 
+def get_single_dataset(dataset,survey):
+    basedir=get_info('base_directory')
+    infile=os.path.join(basedir,'data/Derived_Data/%s/surveydata/%s.tsv'%(dataset,survey))
+    print(infile)
+    assert os.path.exists(infile)
+    if survey.find('ordinal')>-1:
+        survey=survey.replace('_ordinal','')
+    mdfile=os.path.join(basedir,'data/Derived_Data/%s/metadata/%s.json'%(dataset,survey))
+    print(mdfile)
+    assert os.path.exists(mdfile)
+    data=pandas.read_csv(infile,index_col=0,sep='\t')
+    metadata=load_metadata(survey,os.path.join(basedir,
+        'data/Derived_Data/%s/metadata'%dataset))
+    return data,metadata
+
 def get_survey_data(dataset):
     basedir=get_info('base_directory')
     infile=os.path.join(basedir,'Data/Derived_Data/%s/surveydata.csv'%dataset)
@@ -55,27 +79,3 @@ def load_metadata(variable,basedir):
     with open(os.path.join(basedir,'%s.json'%variable)) as outfile:
             metadata=json.load(outfile)
     return metadata
-
-def get_single_dataset(dataset,survey):
-    basedir=get_info('base_directory')
-    infile=os.path.join(basedir,'data/Derived_Data/%s/surveydata/%s.tsv'%(dataset,survey))
-    print(infile)
-    assert os.path.exists(infile)
-    if survey.find('ordinal')>-1:
-        survey=survey.replace('_ordinal','')
-    mdfile=os.path.join(basedir,'data/Derived_Data/%s/metadata/%s.json'%(dataset,survey))
-    print(mdfile)
-    assert os.path.exists(mdfile)
-    data=pandas.read_csv(infile,index_col=0,sep='\t')
-    metadata=load_metadata(survey,os.path.join(basedir,
-        'data/Derived_Data/%s/metadata'%dataset))
-    return data,metadata
-
-def get_behav_data(dataset,use_EZ=False):
-    basedir=get_info('base_directory')
-    if use_EZ:
-        datafile=os.path.join(basedir,'Data',dataset,'meaningful_variables_EZ_contrasts.csv')
-    else:
-        datafile=os.path.join(basedir,'Data',dataset,'meaningful_variables_noEZ_contrasts.csv')
-    d=pandas.read_csv(datafile,index_col=0)
-    return d
