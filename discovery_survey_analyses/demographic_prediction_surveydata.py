@@ -122,8 +122,10 @@ print('%d survey items found'%len(surveyvars))
 print('Demographic variables to test:')
 print(list(demogdata.columns))
 
-# First get binary variables and test classification based on survey data.  Only include variables that have at least 10% of the infrequent category. Some of these were not collected as binary variables, but we binarize by calling anything above the minimum value a positive outcome.
-
+# First get binary variables and test classification based on survey data.
+# Only include variables that have at least 10% of the infrequent category.
+# Some of these were not collected as binary variables, but we binarize by
+# calling anything above the minimum value a positive outcome.
 
 bvardata=numpy.array(demogdata)
 sdata=numpy.array(surveydata).copy() #scale(numpy.array(surveydata))
@@ -224,7 +226,6 @@ def main_cv_loop(Xdata,Ydata,clf,parameters,
             if verbose:
                 print('transforming using fa')
                 print(fa)
-                print(Xtest.shape)
             tmp=fa.transform(Xtest)
             Xtest=tmp
             fa_ctr+=1
