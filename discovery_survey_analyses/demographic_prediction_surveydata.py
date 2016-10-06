@@ -63,7 +63,7 @@ else:
 nfeatures=5 # number of features to show
 nfolds=4
 verbose=False
-simple_params=False
+simple_params=True
 
 # for some items, we want to use somethign other than the minimum as the
 # cutoff:
@@ -148,25 +148,19 @@ def inner_cv_loop(Xtrain,Ytrain,clf,parameters,
     best_est={}
     facanal={}
     for fa_d in [0,fa_dims]:
-        for oversample in ['none','smote']:
-            clfname='%s-%d'%(oversample,fa_d)
-            if oversample=='smote':
-                if verbose:
-                    print('oversampling using SMOTETomek')
-                sm = SMOTETomek(random_state=42)
-                Xtrain, Ytrain = sm.fit_sample(Xtrain, Ytrain)
-            if fa_d>0:
-                facanal[clfname]=FactorAnalysis(fa_d)
-                Xtrain=facanal[clfname].fit_transform(Xtrain)
-            else:
-                facanal[clfname]=None
+        clfname='fa' if fa_d>0 else "nofa"
+        if fa_d>0:
+            facanal[clfname]=FactorAnalysis(fa_d)
+            Xtrain=facanal[clfname].fit_transform(Xtrain)
+        else:
+            facanal[clfname]=None
 
-            if verbose:
-                print(clfname)
-            gs=GridSearchCV(clf,parameters,scoring='roc_auc')
-            gs.fit(Xtrain,Ytrain)
-            rocscore[clfname]=gs.best_score_
-            best_est[clfname]=gs.best_estimator_
+        if verbose:
+            print(clfname)
+        gs=GridSearchCV(clf,parameters,scoring='roc_auc')
+        gs.fit(Xtrain,Ytrain)
+        rocscore[clfname]=gs.best_score_
+        best_est[clfname]=gs.best_estimator_
 
     bestscore=numpy.max([rocscore[i] for i in rocscore.keys()])
     bestclf=[i for i in rocscore.keys() if rocscore[i]==bestscore][0]
@@ -218,6 +212,11 @@ def main_cv_loop(Xdata,Ydata,clf,parameters,
         Xtrain=Xdata[train,:]
         Xtest=Xdata[test,:]
         Ytrain=Ydata[train]
+        if numpy.abs(numpy.mean(Ytrain)-0.5)>0.2:
+            if verbose:
+                print('oversampling using SMOTETomek')
+            sm = SMOTETomek()
+            Xtrain, Ytrain = sm.fit_sample(Xtrain, Ytrain)
 
         best_estimator_,bestroc,fa=inner_cv_loop(Xtrain,Ytrain,clf,
                     parameters,verbose=True)
