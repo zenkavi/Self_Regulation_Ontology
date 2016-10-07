@@ -3,8 +3,11 @@ import json
 import numpy as np
 from os import makedirs, path
 import pandas as pd
-from util import get_info
 import seaborn as sns
+import sys
+
+sys.path.append('../utils')
+from utils import get_info
 
 #work around for spyder bug in python 3
 import warnings
@@ -57,11 +60,5 @@ failed_data = pd.read_json(path.join(local_dir,'mturk_failed_data_post.json')).r
 #calculate DVs
 DV_df, valence_df = extract_DVs(discovery_data, use_group_fun = False)
 DV_df.to_json(path.join(local_dir, 'mturk_discovery_DV.json'))
-valence_df.to_json(path.join(local_dir, 'mturk_discovery_DV_valence.json')
-
-
-
-
-
-
+valence_df.to_json(path.join(local_dir, 'mturk_discovery_DV_valence.json'))
 

@@ -106,7 +106,7 @@ def drop_vars(data, drop_vars = []):
         task_vars = ["demographics", # demographics
                     "network_task.EZ_drift_congruent$", "network_task.EZ_thresh_congruent$", "network_task.EZ_non_decision_congruent$", # ANT
                     "\.EZ_drift_incongruent$", "\.EZ_thresh_incongruent$", "\.EZ_non_decision_incongruent$", # ANT, local_global, simon, stroop
-                    "\.EZ_drift_con", "\.EZ_drift_neg", "\.EZ_thresh_con", "\.EZ_thresh_neg", "\.EZ_non_decision_con", "\.EZ_non_decision_neg", # directed forgetting
+                    "\.EZ_drift_con$", "\.EZ_drift_neg$", "\.EZ_thresh_con$", "\.EZ_thresh_neg$", "\.EZ_non_decision_con$", "\.EZ_non_decision_neg$", # directed forgetting
                     "\.EZ_drift_AY", "\.EZ_drift_BX", "\.EZ_drift_BY", "\.EZ_thresh_AY", "\.EZ_thresh_BX", "\.EZ_thresh_BY", # DPX
                     "\.EZ_non_decision_AX", "\.EZ_non_decision_BX", "\.EZ_non_decision_BY", # DPX continued
                     "\.risky_choices$", # holt and laury
@@ -118,7 +118,7 @@ def drop_vars(data, drop_vars = []):
                     "letter.EZ_drift_switch$", "letter.EZ_thresh_switch$", "letter.EZ_non_decision_switch$", # local global letter continued
                     "\.EZ_drift_rec", "\.EZ_drift_xrec", "\.EZ_thresh_rec", "\.EZ_thresh_xrec", "\.EZ_non_decision_rec", "\.EZ_non_decision_xrec", # recent probes
                      "go_acc","stop_acc","go_rt_error","go_rt_std_error", "go_rt","go_rt_std", # stop signal
-                     "stop_rt_error","stop_rt_error_std","SS_delay", "^stop_signal.SSRT$" # stop signal continue
+                     "stop_rt_error","stop_rt_error_std","SS_delay", "^stop_signal.SSRT$", # stop signal continue
                      "\.EZ_drift_.*_switch", "\.EZ_thresh_.*_switch", "\.EZ_non_decision_.*_switch", "\.EZ_drift_task_stay", "\.EZ_thresh_task_stay", "\.EZ_non_decision_task_stay", # three by two
                      "sentiment_label" # writing task
                     ]
