@@ -6,17 +6,20 @@
 # In[1]:
 
 import os,glob,sys,pickle
+import importlib
+
 import warnings
 import numpy,pandas
 from sklearn.svm import LinearSVC,SVC,OneClassSVM
 from sklearn.linear_model import LinearRegression,LogisticRegressionCV,RandomizedLogisticRegression,ElasticNet,ElasticNetCV,Ridge,RidgeCV
 from sklearn.preprocessing import scale
 from sklearn.cross_validation import StratifiedKFold,KFold
-from sklearn.decomposition import FactorAnalysis
+from sklearn.decomposition import FactorAnalysis,PCA
 from sklearn.metrics import accuracy_score,f1_score,roc_auc_score,classification_report,confusion_matrix
 from sklearn.model_selection import GridSearchCV
 from imblearn.over_sampling import SMOTE
 from imblearn.combine import SMOTETomek
+import fancyimpute
 
 def print_confusion_matrix(y_true,y_pred,labels=[0,1]):
     cm=confusion_matrix(y_true,y_pred)
@@ -28,13 +31,16 @@ def print_confusion_matrix(y_true,y_pred,labels=[0,1]):
 
 # this is kludgey but it works
 sys.path.append('../utils')
-from utils import get_info,get_survey_data
+import utils
+import crossvalidation
+importlib.reload(utils)
+importlib.reload(crossvalidation)
 
-warnings.filterwarnings("ignore") # only turn this on in production mode
+#warnings.filterwarnings("ignore") # only turn this on in production mode
                                   # to keep log files from overflowing
 
 dataset='Discovery_9-26-16'
-basedir=get_info('base_directory')
+basedir=utils.get_info('base_directory')
 derived_dir=os.path.join(basedir,'Data/Derived_Data/%s'%dataset)
 
 if not os.path.exists('surveypred'):
@@ -50,7 +56,7 @@ try:
     binary_vars=[sys.argv[1]]
 except:
     print('specify variable as command line argument')
-    binary_vars=['Sex'] #hsys.exit(1)
+    binary_vars=['Nervous'] #hsys.exit(1)
 
 if len(sys.argv)>2:
     shuffle=True
@@ -61,11 +67,8 @@ else:
 
 nfeatures=5 # number of features to show
 nfolds=8
-degree=3
-kernel='rbf'
 verbose=False
-use_fa='fa'
-
+simple_params=True
 
 # for some items, we want to use somethign other than the minimum as the
 # cutoff:
@@ -114,23 +117,23 @@ def get_joint_dataset(d1,d2):
     return d1.ix[inter],d2.ix[inter]
     return inter
 
-surveydata_orig,surveykeys=get_survey_data('Discovery_9-26-16')
+behavdata_orig=utils.get_behav_data('Discovery_9-26-16',use_EZ=True)
 
-demogdata,surveydata=get_joint_dataset(get_demog_data(),surveydata_orig)
-assert list(demogdata.index)==list(surveydata.index)
+demogdata,behavdata=get_joint_dataset(get_demog_data(),behavdata_orig)
+assert list(demogdata.index)==list(behavdata.index)
 print('%d joint subjects found'%demogdata.shape[0])
-surveyvars=list(surveydata.columns)
-print('%d survey items found'%len(surveyvars))
+behavvars=list(behavdata.columns)
+print('%d task variables found'%len(behavvars))
 print('Demographic variables to test:')
 print(list(demogdata.columns))
+
 
 # First get binary variables and test classification based on survey data.  Only include variables that have at least 10% of the infrequent category. Some of these were not collected as binary variables, but we binarize by calling anything above the minimum value a positive outcome.
 
 
 bvardata=numpy.array(demogdata)
-sdata=numpy.array(surveydata) #scale(numpy.array(surveydata))
-fa=FactorAnalysis(20)  # reduce to 20 dimensions
-
+sdata_orig=numpy.array(behavdata).copy() #scale(numpy.array(surveydata))
+sdata=fancyimpute.SoftImpute().complete(sdata_orig)
 results=pandas.DataFrame(columns=['variable','fa_ctr','trainf1','testf1'])
 
 clf_params={}
@@ -138,85 +141,54 @@ clf_params={}
 ctr=0
 
 classifier='svm'
-gamma='auto'
 
 
-for i in range(len(binary_vars)):
-    varname=binary_vars[i]
-    y=numpy.array(demogdata[binary_vars[i]])
-    if numpy.var(y)==0:
-        print(binary_vars[i],'zero variance, skipping')
-        continue
-    if shuffle:
-        numpy.random.shuffle(y)
+varname=binary_vars[0]
+print(varname)
 
-    kf=StratifiedKFold(y,n_folds=nfolds) # use stratified K-fold CV to get roughly equal folds
+crazytest=True
 
-    if numpy.abs(numpy.mean(y)-0.5)>0.1:
-        oversample='smote'
-    else:
-        oversample='none'
-    print(varname)
+if crazytest:
+    print('WARNING: using crazytest')
+    # this is to create a situation where classification has to work
+    #
+    y=numpy.random.randn(200)*10
+    y=(y.ravel()>numpy.mean(y)).astype('int')
+    sdata=numpy.vstack((y,y,y,y,y,y,y,y)).T
+    #sdata=sdata+numpy.random.randn(sdata.shape[0],sdata.shape[1])*0.00001
+    y=(y.ravel()>numpy.mean(y)).astype('int')
+else:
+    y=numpy.array(demogdata[varname].copy())
+assert numpy.var(y)>0
 
-    predlabels=[0,1]
+if shuffle:
+    numpy.random.shuffle(y)
+    print('y shuffled')
+
+# set up classifier params for GridSearchCV
+if simple_params:
+    print('WARNING: using simple parameters - change for production')
+    parameters = {'kernel':('linear','rbf'),
+       'C':[1., 100.],
+       'gamma':1/numpy.array([100,500])}
+else:
     parameters = {'kernel':('linear','rbf','poly'),
         'C':[0.5,1.,5, 10.,25.,50.,75.,100.],
         'degree':[2,3],'gamma':1/numpy.array([5,10,100,250,500,750,1000])}
-    svc=SVC() #LogisticRegressionCV(solver='liblinear',penalty='l1')  #LinearSVC()
+clf=SVC(probability=True) #LogisticRegressionCV(solver='liblinear',penalty='l1')  #LinearSVC()
 
+all_results=[]
 
-    pred=numpy.zeros(len(y))
-    pred_prob=numpy.zeros(len(y))
-
-    trainpredroc=[]
-    kernel=[]
-    C=[]
-    fa_ctr=0
-    for train,test in kf:
-        Xtrain=sdata[train,:]
-        Xtest=sdata[test,:]
-        Ytrain=y[train]
-        if oversample=='smote':
-            sm = SMOTETomek(random_state=42)
-            Xtrain, Ytrain = sm.fit_sample(Xtrain, Ytrain)
-        Xtrain_fa=fa.fit_transform(Xtrain)
-        Xtest_fa=fa.transform(sdata[test,:])
-        gsearch_nofa=GridSearchCV(svc,parameters,scoring='f1')
-        gsearch_nofa.fit(Xtrain,Ytrain)
-        gsearch_fa=GridSearchCV(svc,parameters,scoring='f1')
-        gsearch_fa.fit(Xtrain_fa,Ytrain)
-        f1_fa=f1_score(Ytrain,gsearch_fa.predict(Xtrain_fa))
-        f1_nofa=f1_score(Ytrain,gsearch_nofa.predict(Xtrain))
-        if f1_nofa>f1_fa:
-            pred.flat[test]=gsearch_nofa.predict(Xtest)
-            kernel.append(gsearch_nofa.best_estimator_.kernel)
-            C.append(gsearch_nofa.best_estimator_.C)
-        else:
-            pred.flat[test]=gsearch_fa.predict(Xtest_fa)
-            fa_ctr+=1
-        trainpredroc.append(numpy.max([f1_fa,f1_nofa]))
-    cm=confusion_matrix(y,pred)
-    results.loc[ctr,:]=[binary_vars[i],fa_ctr,numpy.mean(trainpredroc),f1_score(y,pred)]
-    #print(results.loc[ctr,:])
-    #print(kernel)
-    #print(C)
-    clf_params[binary_vars[i]]=(kernel,C)
-    ctr+=1
-    if verbose:
-        print('Training accuracy (f-score): %f'%numpy.mean(trainpredroc))
-        if numpy.var(pred)==0:
-            print('WARNING: no variance in classifier output, degenerate model fit')
-        print('Predictive accuracy')
-        print(classification_report(y,pred,labels=predlabels))
-        print_confusion_matrix(y,pred)
-        if False:
-            print("Features sorted by their absolute correlation with outcome (top %d):"%nfeatures)
-            featcorr=numpy.array([numpy.corrcoef(sdata[:,x],y)[0,1] for x in range(sdata.shape[1])])
-            idx=numpy.argsort(numpy.abs(featcorr))[::-1]
-            for i in range(nfeatures):
-                print('%f: %s'%(featcorr[idx[i]],surveykeys[surveyvars[idx[i]]]))
-
-results.to_csv('surveypred/surveypredict_cvresults_%s%s.csv'%(varname,shuffletag))
-
-if not shuffle:
-    pickle.dump(clf_params,open('surveypred/clf_params_surveypredict_%s.pkl'%varname,'wb'))
+for i in range(2):
+    print('round %d'%i)
+    results,y_out,pred,pred_proba=crossvalidation.main_cv_loop(sdata,y,clf,parameters,verbose=True)
+    all_results.append(results)
+    if shuffle:
+        assert not all(numpy.array(demogdata[varname])==y_out)
+    if numpy.var(pred)==0:
+        print('%s: WARNING: no variance in predicted classes'%varname)
+    #else:
+    #    print(numpy.sum(pred==0),numpy.sum(pred==1))
+with open('behavpred/behavpredict_cvresults_%s%s.csv'%(varname,shuffletag),'w') as f:
+    for i in range(len(all_results)):
+        f.write('%f\n'%all_results[i])
