@@ -50,17 +50,17 @@ derived_dir=os.path.join(basedir,'Data/Derived_Data/%s'%dataset)
 if not os.path.exists('surveypred'):
     os.mkdir('surveypred')
 
-binary_vars=["Sex","ArrestedChargedLifeCount","DivorceCount","GamblingProblem","ChildrenNumber",
+try:
+     binary_vars=[sys.argv[1]]
+except:
+     print('running for all variables')
+     binary_vars=["Sex","ArrestedChargedLifeCount","DivorceCount","GamblingProblem","ChildrenNumber",
             "CreditCardDebt","RentOwn","RetirementAccount","TrafficTicketsLastYearCount","Obese",
              "TrafficAccidentsLifeCount","CaffienatedSodaCansPerDay","Nervous",
              'Hopeless', 'RestlessFidgety', 'Depressed',
              'EverythingIsEffort', 'Worthless','CigsPerDay','LifetimeSmoke100Cigs',
              'CannabisPast6Months']
-# try:
-#     binary_vars=[sys.argv[1]]
-# except:
-#     print('specify variable as command line argument')
-#     binary_vars=['Nervous'] #hsys.exit(1)
+
 
 if len(sys.argv)>2:
     shuffle=True
