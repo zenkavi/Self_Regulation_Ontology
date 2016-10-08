@@ -77,6 +77,13 @@ else:
     shuffletag=''
 
 
+class SoftImpute:
+    def fit:
+        pass
+
+    def fit_transform(data):
+        return fancyimpute.SoftImpute().complete(data)
+
 # for some items, we want to use somethign other than the minimum as the
 # cutoff:
 item_thresholds={'Nervous':1,
@@ -163,8 +170,6 @@ importances={}
 for varname in binary_vars:
     print(varname)
 
-    crazytest=False
-
     y=numpy.array(demogdata[varname].copy())
     if numpy.var(y)==0:
         print('skipping %s: no variance'%varname)
@@ -180,13 +185,15 @@ for varname in binary_vars:
 
     cvscores=[]
     nruns=10
-    nruns_shuf=250
+    nruns_shuf=10
     for i in range(nruns):
         nested_score = cross_val_score(forest, X=sdata, y=y,
                             cv=outer_cv,scoring='roc_auc')
         cvscores.append(nested_score.mean())
     accuracy[varname]=cvscores
     print(numpy.mean(accuracy[varname]),numpy.min(accuracy[varname]),numpy.max(accuracy[varname]))
+
+    cvscores=[]
     # do shuffling to get null dist
     for i in range(nruns_shuf):
         y_shuf=y.copy()
@@ -198,6 +205,7 @@ for varname in binary_vars:
     null_accuracy[varname]=cvscores
     cutoff[varname]=scipy.stats.scoreatpercentile(cvscores,95)
     print('95% cutoff:',cutoff)
+    assert all(y==numpy.array(demogdata[varname]))
 
     # fit on all data and compute importance
     forest.fit(sdata, y)
@@ -211,3 +219,23 @@ for varname in binary_vars:
     for f in range(5):
         print("%s. feature %d (%f)" % (behavvars[indices[f]], indices[f], importances[varname][indices[f]]))
     print('')
+
+import pickle
+pickle.dump((accuracy,importances,null_accuracy,cutoff),open('behavpred_performance.pkl','wb'))
+
+(accuracy,importances,null_accuracy,cutoff)=pickle.load(open('behavpred_performance.pkl','rb'))
+for varname in binary_vars:
+    if not varname in importances:
+        continue
+    indices = numpy.argsort(importances[varname])[::-1]
+    print('')
+    print('Variable:',varname)
+    print('Prediction accuracy (ROC AUC):',numpy.mean(accuracy[varname][:10]))
+    pval=1-scipy.stats.percentileofscore(null_accuracy[varname],numpy.mean(accuracy[varname][:10]))/100.
+    print('null mean %f, pval: %f'%(numpy.mean(null_accuracy[varname]),pval))
+    if pval<0.1:
+        # Print the feature ranking
+        print("Feature ranking:")
+        for f in range(5):
+            print("%s. feature %d (%f)" % (behavvars[indices[f]], indices[f], importances[varname][indices[f]]))
+        print('')
