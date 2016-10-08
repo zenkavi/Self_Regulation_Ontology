@@ -12,14 +12,15 @@ import warnings
 import numpy,pandas
 from sklearn.svm import LinearSVC,SVC,OneClassSVM
 from sklearn.linear_model import LinearRegression,LogisticRegressionCV,RandomizedLogisticRegression,ElasticNet,ElasticNetCV,Ridge,RidgeCV
-from sklearn.preprocessing import scale
-from sklearn.cross_validation import StratifiedKFold,KFold
+from sklearn.preprocessing import scale,StandardScaler
 from sklearn.decomposition import FactorAnalysis,PCA
 from sklearn.metrics import accuracy_score,f1_score,roc_auc_score,classification_report,confusion_matrix
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV,StratifiedShuffleSplit,cross_val_score
 from imblearn.over_sampling import SMOTE
 from imblearn.combine import SMOTETomek
 import fancyimpute
+from sklearn.pipeline import Pipeline
+
 
 def print_confusion_matrix(y_true,y_pred,labels=[0,1]):
     cm=confusion_matrix(y_true,y_pred)
@@ -52,23 +53,27 @@ binary_vars=["Sex","ArrestedChargedLifeCount","DivorceCount","GamblingProblem","
              'Hopeless', 'RestlessFidgety', 'Depressed',
              'EverythingIsEffort', 'Worthless','CigsPerDay','LifetimeSmoke100Cigs',
              'CannabisPast6Months']
-try:
-    binary_vars=[sys.argv[1]]
-except:
-    print('specify variable as command line argument')
-    binary_vars=['Nervous'] #hsys.exit(1)
+# try:
+#     binary_vars=[sys.argv[1]]
+# except:
+#     print('specify variable as command line argument')
+#     binary_vars=['Nervous'] #hsys.exit(1)
 
 if len(sys.argv)>2:
     shuffle=True
-    shuffletag='_shuffle%04d'%int(sys.argv[2])
+    shufflenum=int(sys.argv[2])
 else:
     shuffle=False
+
+# for testing
+#shuffle=True
+#shufflenum=1
+
+if shuffle:
+    shuffletag='_shuffle%04d'%shufflenum
+else:
     shuffletag=''
 
-nfeatures=5 # number of features to show
-nfolds=8
-verbose=False
-simple_params=True
 
 # for some items, we want to use somethign other than the minimum as the
 # cutoff:
@@ -132,8 +137,14 @@ print(list(demogdata.columns))
 
 
 bvardata=numpy.array(demogdata)
-sdata_orig=numpy.array(behavdata).copy() #scale(numpy.array(surveydata))
-sdata=fancyimpute.SoftImpute().complete(sdata_orig)
+sdata_orig=numpy.array(behavdata).copy()
+
+# just impute randomly here, since we don't have a way to work our
+# imputation into the CV loop
+
+nanvals=numpy.where(numpy.isnan(sdata_orig))
+sdata=sdata_orig
+sdata[nanvals]=numpy.random.randn(nanvals[0].shape[0])*0.1
 results=pandas.DataFrame(columns=['variable','fa_ctr','trainf1','testf1'])
 
 clf_params={}
@@ -141,54 +152,63 @@ clf_params={}
 ctr=0
 
 classifier='svm'
+accuracy={}
+for varname in binary_vars:
+    print(varname)
 
+    crazytest=False
 
-varname=binary_vars[0]
-print(varname)
+    if crazytest:
+        print('WARNING: using crazytest')
+        # this is to create a situation where classification has to work
+        #
+        y=numpy.random.randn(200)*10
+        y=(y.ravel()>numpy.mean(y)).astype('int')
+        sdata=numpy.vstack((y,y,y,y,y,y,y,y)).T
+        #sdata=sdata+numpy.random.randn(sdata.shape[0],sdata.shape[1])*0.00001
+        y=(y.ravel()>numpy.mean(y)).astype('int')
+    else:
+        y=numpy.array(demogdata[varname].copy())
+    if numpy.var(y)==0:
+        print('skipping %s: no variance'%varname)
+        continue
 
-crazytest=True
-
-if crazytest:
-    print('WARNING: using crazytest')
-    # this is to create a situation where classification has to work
-    #
-    y=numpy.random.randn(200)*10
-    y=(y.ravel()>numpy.mean(y)).astype('int')
-    sdata=numpy.vstack((y,y,y,y,y,y,y,y)).T
-    #sdata=sdata+numpy.random.randn(sdata.shape[0],sdata.shape[1])*0.00001
-    y=(y.ravel()>numpy.mean(y)).astype('int')
-else:
-    y=numpy.array(demogdata[varname].copy())
-assert numpy.var(y)>0
-
-if shuffle:
-    numpy.random.shuffle(y)
-    print('y shuffled')
-
-# set up classifier params for GridSearchCV
-if simple_params:
-    print('WARNING: using simple parameters - change for production')
-    parameters = {'kernel':('linear','rbf'),
-       'C':[1., 100.],
-       'gamma':1/numpy.array([100,500])}
-else:
-    parameters = {'kernel':('linear','rbf','poly'),
-        'C':[0.5,1.,5, 10.,25.,50.,75.,100.],
-        'degree':[2,3],'gamma':1/numpy.array([5,10,100,250,500,750,1000])}
-clf=SVC(probability=True) #LogisticRegressionCV(solver='liblinear',penalty='l1')  #LinearSVC()
-
-all_results=[]
-
-for i in range(2):
-    print('round %d'%i)
-    results,y_out,pred,pred_proba=crossvalidation.main_cv_loop(sdata,y,clf,parameters,verbose=True)
-    all_results.append(results)
     if shuffle:
-        assert not all(numpy.array(demogdata[varname])==y_out)
-    if numpy.var(pred)==0:
-        print('%s: WARNING: no variance in predicted classes'%varname)
-    #else:
-    #    print(numpy.sum(pred==0),numpy.sum(pred==1))
-with open('behavpred/behavpredict_cvresults_%s%s.csv'%(varname,shuffletag),'w') as f:
-    for i in range(len(all_results)):
-        f.write('%f\n'%all_results[i])
+        numpy.random.shuffle(y)
+        print('y shuffled')
+
+    # set up classifier params for GridSearchCV
+    parameters = {'clf__kernel':('linear','rbf'),
+           'clf__C':[0.5,1.,5, 10.,25.,50.,100.],
+           'clf__gamma':1/numpy.array([100,500])}
+
+
+    pipeline = Pipeline([
+        ('scale', StandardScaler()),
+        ('clf', SVC(probability=True)),
+    ])
+
+
+    clf = GridSearchCV(pipeline, parameters, n_jobs=-1, verbose=False)
+
+    outer_cv = StratifiedShuffleSplit(n_splits=5)
+
+    # Nested CV with parameter optimization
+    cvscores=[]
+    nruns=10
+    for i in range(nruns):
+        nested_score = cross_val_score(clf, X=sdata, y=y, cv=outer_cv,scoring='roc_auc')
+        cvscores.append(nested_score.mean())
+    accuracy[varname]=cvscores
+    #with open('behavpred/behavpredict_cvresults_%s%s.csv'%(varname,shuffletag),'w') as f:
+    #    for i in range(len(all_results)):
+    #        f.write('%f\n'%all_results[i])
+    print(numpy.mean(accuracy[varname]),numpy.min(accuracy[varname]),numpy.max(accuracy[varname]))
+
+results=[]
+vars=list(accuracy.keys())
+vars.sort()
+for v in vars:
+    results.append(accuracy[v])
+df=pandas.DataFrame(results,index=vars)
+df.to_csv('behavpred/behavpred%s.csv'%shuffletag)
