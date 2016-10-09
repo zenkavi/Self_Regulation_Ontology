@@ -336,7 +336,7 @@ def Graph_Analysis(data, thresh_func = bct.threshold_proportional, community_alg
     
     # visualize
     visual_style = {}
-    visual_style = get_visual_style(G, layout = layout, vertex_size = 'eigen_centrality', labels = False,
+    visual_style = get_visual_style(G, layout = layout, vertex_size = 'eigen_centrality', labels = G.vs['id'],
                                     size = 6000, display_threshold = display_threshold)
     if display:
         # plot community structure

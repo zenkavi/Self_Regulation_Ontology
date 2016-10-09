@@ -4,7 +4,7 @@ import pandas as pd
 import sys
 
 sys.path.append('../utils')
-from data_preparation_utils import drop_vars
+from data_preparation_utils import convert_to_short_vars, drop_vars
 from utils import get_info
 
 #******************************
@@ -119,3 +119,25 @@ EZ_subset.to_csv(path.join(directory, 'meaningful_variables_EZ_contrasts.csv'))
 # make survey subset
 survey_subset = subset.filter(regex = 'survey')
 survey_subset.to_csv(path.join(directory, 'meaningful_variables_surveys.csv'))
+
+#use short variable names
+convert_to_short_vars(DV_df)
+# drop other columns of no interest
+subset = drop_vars(DV_df)
+subset.to_csv(path.join(directory, 'short_meaningful_variables.csv'))
+# make subset without EZ variables
+noEZ_subset = drop_vars(subset, drop_vars = ['_EZ'])
+noEZ_subset.to_csv(path.join(directory, 'short_meaningful_variables_noEZ_contrasts.csv'))
+# make subset without acc/rt vars
+EZ_subset = drop_vars(subset, drop_vars = ['_acc', '_rt'])
+EZ_subset.to_csv(path.join(directory, 'short_meaningful_variables_EZ_contrasts.csv'))
+# make survey subset
+survey_subset = subset.filter(regex = 'survey')
+survey_subset.to_csv(path.join(directory, 'short_meaningful_variables_surveys.csv'))
+
+
+
+
+
+
+

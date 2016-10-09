@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from os import path
 import pandas as pd
-from scipy.cluster.hierarchy import dendrogram, linkage
+from scipy.cluster.hierarchy import dendrogram, fcluster, linkage
 import seaborn as sns
 
 #***************************************************
@@ -13,11 +13,7 @@ def dendroheatmap(df, labels = True):
     """
     #clustering
     
-    row_clusters = linkage(df.values, method='complete', metric='euclidean')
-    pd.DataFrame(row_clusters, 
-                 columns=['row label 1', 'row label 2', 'distance', 'no. of items in clust.'],
-                 index=['cluster %d' %(i+1) for i in range(row_clusters.shape[0])])
-    
+    row_clusters = linkage(df.values, method='complete', metric='euclidean')    
     #dendrogram
     row_dendr = dendrogram(row_clusters, labels=df.columns, no_plot = True)
     df_rowclust = df.ix[row_dendr['leaves'],row_dendr['leaves']]
@@ -41,11 +37,7 @@ def dendroheatmap_left(df, labels = True):
     """
     #clustering
     
-    row_clusters = linkage(df.values, method='complete', metric='euclidean')
-    pd.DataFrame(row_clusters, 
-                 columns=['row label 1', 'row label 2', 'distance', 'no. of items in clust.'],
-                 index=['cluster %d' %(i+1) for i in range(row_clusters.shape[0])])
-    
+    row_clusters = linkage(df.values, method='complete', metric='euclidean')    
     #dendrogram
     row_dendr = dendrogram(row_clusters, labels=df.columns, no_plot = True)
     df_rowclust = df.ix[row_dendr['leaves'],row_dendr['leaves']]

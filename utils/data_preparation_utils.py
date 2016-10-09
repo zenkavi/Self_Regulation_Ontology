@@ -70,7 +70,14 @@ def check_timing(df):
     df.loc[:, 'timing_error'] = df['time_diff'] - df['expected_time']
     errors = [df[abs(df['timing_error']) < 500]['timing_error'].mean(), df[df['timing_error'] < 500]['timing_error'].max()]
     return errors
-      
+
+def convert_to_short_vars(data):
+    '''Convert column names to short variable names 
+    '''
+    short_names = pd.DataFrame.from_csv('../data_preparation/short_variable_names_lookup.csv')
+    new_columns = [short_names.loc[c][0] if c in short_names.index else c for c in data.columns]
+    data.columns = new_columns
+    
 def download_data(data_loc, access_token = None, filters = None, battery = None, save = True, url = None):
     start_time = time()
     #Load Results from Database
@@ -116,7 +123,7 @@ def drop_vars(data, drop_vars = []):
                     "letter.EZ_drift_congruent$", "letter.EZ_thresh_congruent$", "letter.EZ_non_decision_congruent$", # local global letter
                     "letter.EZ_drift_stay$", "letter.EZ_thresh_stay$", "letter.EZ_non_decision_stay$", # local global letter continued
                     "letter.EZ_drift_switch$", "letter.EZ_thresh_switch$", "letter.EZ_non_decision_switch$", # local global letter continued
-                    "\.EZ_drift_rec", "\.EZ_drift_xrec", "\.EZ_thresh_rec", "\.EZ_thresh_xrec", "\.EZ_non_decision_rec", "\.EZ_non_decision_xrec", # recent probes
+                    "\.EZ_drift_rec_", "\.EZ_drift_xrec_", "\.EZ_thresh_rec_", "\.EZ_thresh_xrec_", "\.EZ_non_decision_rec_", "\.EZ_non_decision_xrec_", # recent probes
                      "go_acc","stop_acc","go_rt_error","go_rt_std_error", "go_rt","go_rt_std", # stop signal
                      "stop_rt_error","stop_rt_error_std","SS_delay", "^stop_signal.SSRT$", # stop signal continue
                      "\.EZ_drift_.*_switch", "\.EZ_thresh_.*_switch", "\.EZ_non_decision_.*_switch", "\.EZ_drift_task_stay", "\.EZ_thresh_task_stay", "\.EZ_non_decision_task_stay", # three by two
