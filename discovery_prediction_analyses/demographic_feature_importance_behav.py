@@ -41,8 +41,6 @@ importlib.reload(utils)
 #warnings.filterwarnings("ignore") # only turn this on in production mode
                                   # to keep log files from overflowing
 
-nruns=10
-nruns_shuf=10 #2500
 dataset='Discovery_9-26-16'
 basedir=utils.get_info('base_directory')
 derived_dir=os.path.join(basedir,'Data/Derived_Data/%s'%dataset)
@@ -72,8 +70,8 @@ else:
 verbose=False
 
 # for testing
-shuffle=True
-shufflenum=1
+#shuffle=True
+#shufflenum=1
 
 if shuffle:
     shuffletag='_shuffle%04d'%shufflenum
@@ -203,7 +201,6 @@ def outer_cv_loop(Xdata,Ydata,clf,parameters=[],
         Ytrain=Ydata[train]
         # filter out bad folds
         clf.fit(Xtrain,Ytrain)
-        print(numpy.var(Ydata[test]))
         rocscores.append(roc_auc_score(clf.predict(Xtest),Ydata[test]))
         importances.append(clf.steps[-1][1].feature_importances_)
     return rocscores,importances
@@ -214,7 +211,6 @@ estimators = [('imputer',imputer),('clf',forest)]
 pipeline=Pipeline(steps=estimators)
 
 for varname in binary_vars:
-    print(varname)
 
     y=numpy.array(demogdata[varname].copy())
     if numpy.var(y)==0:
@@ -227,7 +223,7 @@ for varname in binary_vars:
         print('y shuffled')
     roc_scores,importances=outer_cv_loop(sdata,y,pipeline)
     accuracy[varname]=roc_scores
-    print(varname,shuffle,numpy.mean(accuracy[varname]),
+    print('OUTPUT:',varname,shuffle,numpy.mean(accuracy[varname]),
             numpy.min(accuracy[varname]),numpy.max(accuracy[varname]))
 
 
