@@ -15,7 +15,7 @@ from sklearn.linear_model import LinearRegression,LogisticRegressionCV,Randomize
 from sklearn.preprocessing import scale,StandardScaler,FunctionTransformer
 from sklearn.decomposition import FactorAnalysis,PCA
 from sklearn.metrics import accuracy_score,f1_score,roc_auc_score,classification_report,confusion_matrix
-from sklearn.model_selection import GridSearchCV,StratifiedShuffleSplit,cross_val_score
+from sklearn.model_selection import GridSearchCV,StratifiedShuffleSplit,cross_val_score,StratifiedKFold
 from sklearn.pipeline import make_pipeline
 from imblearn.over_sampling import SMOTE
 from imblearn.combine import SMOTETomek
@@ -60,6 +60,7 @@ except:
              'Hopeless', 'RestlessFidgety', 'Depressed',
              'EverythingIsEffort', 'Worthless','CigsPerDay','LifetimeSmoke100Cigs',
              'CannabisPast6Months']
+     binary_vars=["Sex"]
 
 
 if len(sys.argv)>2:
@@ -71,8 +72,8 @@ else:
 verbose=False
 
 # for testing
-#shuffle=True
-#shufflenum=1
+shuffle=True
+shufflenum=1
 
 if shuffle:
     shuffletag='_shuffle%04d'%shufflenum
@@ -138,11 +139,12 @@ behavdata_orig=utils.get_behav_data('Discovery_9-26-16',use_EZ=True)
 
 demogdata,behavdata=get_joint_dataset(get_demog_data(),behavdata_orig)
 assert list(demogdata.index)==list(behavdata.index)
-print('%d joint subjects found'%demogdata.shape[0])
 behavvars=list(behavdata.columns)
-print('%d task variables found'%len(behavvars))
-print('Demographic variables to test:')
-print(list(demogdata.columns))
+if verbose:
+    print('%d joint subjects found'%demogdata.shape[0])
+    print('%d task variables found'%len(behavvars))
+    print('Demographic variables to test:')
+    print(list(demogdata.columns))
 
 
 # First get binary variables and test classification based on survey data.
@@ -170,6 +172,46 @@ null_accuracy={}
 cutoff={}
 importances={}
 
+def inner_cv_loop(Xtrain,Ytrain,clf,parameters=[],
+                    verbose=False):
+    """
+    use GridSearchCV to find best classifier for training set
+    """
+    if parameters:
+        gs=GridSearchCV(clf,parameters,scoring='roc_auc',
+                        cv=StratifiedKFold(5))
+    else:
+        gs=GridSearchCV(clf,scoring='roc_auc',
+                        cv=StratifiedKFold(5))
+
+    gs.fit(Xtrain,Ytrain)
+    if verbose:
+        print('best:',gs.best_score_,gs.best_estimator_)
+
+    return gs.best_estimator_,gs.best_score_
+
+def outer_cv_loop(Xdata,Ydata,clf,parameters=[],
+                    n_splits=50,test_size=0.2):
+
+    pred=numpy.zeros(len(Ydata))
+    importances=[]
+    kf=StratifiedKFold(n_splits=5,shuffle=True)
+    rocscores=[]
+    for train,test in kf.split(Xdata,Ydata):
+        Xtrain=Xdata[train,:]
+        Xtest=Xdata[test,:]
+        Ytrain=Ydata[train]
+        # filter out bad folds
+        clf.fit(Xtrain,Ytrain)
+        print(numpy.var(Ydata[test]))
+        rocscores.append(roc_auc_score(clf.predict(Xtest),Ydata[test]))
+        importances.append(clf.steps[-1][1].feature_importances_)
+    return rocscores,importances
+
+# set up classifier
+forest = ExtraTreesClassifier(n_estimators=250)
+estimators = [('imputer',imputer),('clf',forest)]
+pipeline=Pipeline(steps=estimators)
 
 for varname in binary_vars:
     print(varname)
@@ -183,43 +225,11 @@ for varname in binary_vars:
     if shuffle:
         numpy.random.shuffle(y)
         print('y shuffled')
-
-    forest = ExtraTreesClassifier(n_estimators=250)
-    outer_cv = StratifiedShuffleSplit(n_splits=5)
-    estimators = [('imputer',imputer),('reduce_dim', FactorAnalysis(10)), ('clf',forest)]
-    pipeline=Pipeline(steps=estimators)
-    params=dict(reduce_dim=[None, FactorAnalysis(10), FactorAnalysis(25)])
-
-    grid_search = GridSearchCV(pipeline, param_grid=params)
-    cvscores=[]
-    for i in range(nruns):
-        nested_score = cross_val_score(grid_search, X=sdata, y=y,
-                            cv=outer_cv,scoring='roc_auc')
-        cvscores.append(nested_score.mean())
-    accuracy[varname]=cvscores
-    print(numpy.mean(accuracy[varname]),
+    roc_scores,importances=outer_cv_loop(sdata,y,pipeline)
+    accuracy[varname]=roc_scores
+    print(varname,shuffle,numpy.mean(accuracy[varname]),
             numpy.min(accuracy[varname]),numpy.max(accuracy[varname]))
 
-    cvscores=[]
-    # do shuffling to get null dist
-    for i in range(nruns_shuf):
-        y_shuf=y.copy()
-        numpy.random.shuffle(y_shuf)
-        assert not all(y_shuf==y)
-        nested_score = cross_val_score(pipeline, X=sdata, y=y_shuf,
-                            cv=outer_cv,scoring='roc_auc')
-        cvscores.append(nested_score.mean())
-    null_accuracy[varname]=cvscores
-    cutoff[varname]=scipy.stats.scoreatpercentile(cvscores,95)
-    print('95% cutoff:',cutoff)
-    assert all(y==numpy.array(demogdata[varname]))
-
-    # fit on all data and compute importance
-    forest.fit(fancyimpute.SoftImpute(verbose=False).complete(sdata), y)
-    importances[varname] = forest.feature_importances_
-    std = numpy.std([tree.feature_importances_ for tree in forest.estimators_],
-                 axis=0)
-    indices = numpy.argsort(importances[varname])[::-1]
 
     # Print the feature ranking
     if verbose:
@@ -230,7 +240,7 @@ for varname in binary_vars:
         print('')
 
 import pickle
-pickle.dump((accuracy,importances,null_accuracy,cutoff),
+pickle.dump((accuracy,importances),
         open('behavpred/pipeline_%s_performance%s.pkl'%(varname,shuffletag),'wb'))
 
 if verbose:
