@@ -71,12 +71,36 @@ def check_timing(df):
     errors = [df[abs(df['timing_error']) < 500]['timing_error'].mean(), df[df['timing_error'] < 500]['timing_error'].max()]
     return errors
 
-def convert_to_short_vars(data):
-    '''Convert column names to short variable names 
+def convert_var_names(to_convert):
+    '''Convert array of variable names or columns/index of a dataframe. Assumes that all values either
+    come from short of long variable names. If a dataframe is passed, variable conversion
+    is done in place.
     '''
-    short_names = pd.DataFrame.from_csv('../data_preparation/short_variable_names_lookup.csv')
-    new_columns = [short_names.loc[c][0] if c in short_names.index else c for c in data.columns]
-    data.columns = new_columns
+    assert(isinstance(to_convert, (list, np.ndarray, pd.DataFrame))), \
+        'Object to convert must be a list, numpy array or pandas DataFrame'
+    var_lookup = pd.Series.from_csv('../data_preparation/short_variable_names_lookup.csv')
+    inverse_lookup = pd.Series(index = var_lookup.values, data = var_lookup.index)
+    
+    if type(to_convert) == pd.DataFrame:
+        # convert columns if there are dependent variable names
+        if to_convert.columns[0] in var_lookup:
+            new_columns = [var_lookup.loc[c] if c in var_lookup.index else c for c in to_convert.columns]
+        elif to_convert.columns[0] in inverse_lookup:
+            new_columns = [inverse_lookup.loc[c] if c in inverse_lookup.index else c for c in to_convert.columns]
+        to_convert.columns = new_columns
+        # convert index if there are dependent variable names
+        if to_convert.index[0] in var_lookup:
+            new_index = [var_lookup.loc[i] if i in var_lookup.index else i for i in to_convert.index]
+        elif to_convert.index[0] in inverse_lookup:
+            new_index = [inverse_lookup.loc[i] if i in inverse_lookup.index else i for i in to_convert.index]
+        to_convert.columns = new_columns
+        to_convert.index = new_index
+    elif isinstance(to_convert, (list, np.ndarray)):
+        if to_convert[0] in var_lookup:
+            return  [var_lookup.loc[c] if c in var_lookup.index else c for c in to_convert]
+        elif to_convert[0] in inverse_lookup:
+            return  [inverse_lookup.loc[c] if c in inverse_lookup.index else c for c in to_convert]
+            
     
 def download_data(data_loc, access_token = None, filters = None, battery = None, save = True, url = None):
     start_time = time()

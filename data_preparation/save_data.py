@@ -121,7 +121,7 @@ survey_subset = subset.filter(regex = 'survey')
 survey_subset.to_csv(path.join(directory, 'meaningful_variables_surveys.csv'))
 
 #use short variable names
-convert_to_short_vars(DV_df)
+convert_var_names(DV_df)
 # drop other columns of no interest
 subset = drop_vars(DV_df)
 subset.to_csv(path.join(directory, 'short_meaningful_variables.csv'))
