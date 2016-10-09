@@ -36,13 +36,13 @@ def print_confusion_matrix(y_true,y_pred,labels=[0,1]):
 # this is kludgey but it works
 sys.path.append('../utils')
 import utils
-import crossvalidation
 importlib.reload(utils)
-importlib.reload(crossvalidation)
 
 #warnings.filterwarnings("ignore") # only turn this on in production mode
                                   # to keep log files from overflowing
 
+nruns=10
+nruns_shuf=10 #2500
 dataset='Discovery_9-26-16'
 basedir=utils.get_info('base_directory')
 derived_dir=os.path.join(basedir,'Data/Derived_Data/%s'%dataset)
@@ -192,8 +192,6 @@ for varname in binary_vars:
 
     grid_search = GridSearchCV(pipeline, param_grid=params)
     cvscores=[]
-    nruns=10
-    nruns_shuf=250
     for i in range(nruns):
         nested_score = cross_val_score(grid_search, X=sdata, y=y,
                             cv=outer_cv,scoring='roc_auc')
