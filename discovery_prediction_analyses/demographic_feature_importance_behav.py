@@ -41,6 +41,7 @@ importlib.reload(utils)
 #warnings.filterwarnings("ignore") # only turn this on in production mode
                                   # to keep log files from overflowing
 
+nruns=100
 dataset='Discovery_9-26-16'
 basedir=utils.get_info('base_directory')
 derived_dir=os.path.join(basedir,'Data/Derived_Data/%s'%dataset)
@@ -211,18 +212,23 @@ estimators = [('imputer',imputer),('clf',forest)]
 pipeline=Pipeline(steps=estimators)
 
 for varname in binary_vars:
-
+    accuracy[varname]=[]
+    importances[varname]=[]
     y=numpy.array(demogdata[varname].copy())
     if numpy.var(y)==0:
         print('skipping %s: no variance'%varname)
         print('')
         continue
-
     if shuffle:
         numpy.random.shuffle(y)
         print('y shuffled')
-    roc_scores,importances=outer_cv_loop(sdata,y,pipeline)
-    accuracy[varname]=roc_scores
+
+    for i in range(nruns):
+        roc_scores,imp=outer_cv_loop(sdata,y,pipeline)
+        importances[varname].append(imp)
+
+        accuracy[varname].append(roc_scores)
+
     print('OUTPUT:',varname,shuffle,numpy.mean(accuracy[varname]),
             numpy.min(accuracy[varname]),numpy.max(accuracy[varname]))
 
