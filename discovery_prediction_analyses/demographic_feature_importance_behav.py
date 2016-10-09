@@ -68,6 +68,8 @@ if len(sys.argv)>2:
 else:
     shuffle=False
 
+verbose=False
+
 # for testing
 #shuffle=True
 #shufflenum=1
@@ -148,7 +150,6 @@ print(list(demogdata.columns))
 # Some of these were not collected as binary variables, but we binarize by
 # calling anything above the minimum value a positive outcome.
 
-
 bvardata=numpy.array(demogdata)
 sdata_orig=numpy.array(behavdata).copy()
 
@@ -157,7 +158,6 @@ sdata_orig=numpy.array(behavdata).copy()
 
 #nanvals=numpy.where(numpy.isnan(sdata_orig))
 sdata=sdata_orig
-#sdata[nanvals]=numpy.random.randn(nanvals[0].shape[0])*0.1
 results=pandas.DataFrame(columns=['variable','fa_ctr','trainf1','testf1'])
 
 clf_params={}
@@ -169,6 +169,7 @@ imp={}
 null_accuracy={}
 cutoff={}
 importances={}
+
 
 for varname in binary_vars:
     print(varname)
@@ -185,7 +186,7 @@ for varname in binary_vars:
 
     forest = ExtraTreesClassifier(n_estimators=250)
     outer_cv = StratifiedShuffleSplit(n_splits=5)
-    estimators = [('imputer',imputer),('reduce_dim', PCA()), ('clf',forest)]
+    estimators = [('imputer',imputer),('reduce_dim', FactorAnalysis(10)), ('clf',forest)]
     pipeline=Pipeline(steps=estimators)
     params=dict(reduce_dim=[None, FactorAnalysis(10), FactorAnalysis(25)])
 
@@ -223,32 +224,34 @@ for varname in binary_vars:
     indices = numpy.argsort(importances[varname])[::-1]
 
     # Print the feature ranking
-    print("Feature ranking:")
-    for f in range(5):
-        print("%s. feature %d (%f)" % (behavvars[indices[f]], indices[f],
-                            importances[varname][indices[f]]))
-    print('')
-
-import pickle
-pickle.dump((accuracy,importances,null_accuracy,cutoff),
-        open('behavpred_pipeline_performance.pkl','wb'))
-
-(accuracy,importances,null_accuracy,cutoff)=pickle.load(
-        open('behavpred_pipeline_performance.pkl','rb'))
-for varname in binary_vars:
-    if not varname in importances:
-        continue
-    indices = numpy.argsort(importances[varname])[::-1]
-    print('')
-    print('Variable:',varname)
-    print('Prediction accuracy (ROC AUC):',numpy.mean(accuracy[varname][:10]))
-    pval=1-scipy.stats.percentileofscore(null_accuracy[varname],
-                numpy.mean(accuracy[varname][:10]))/100.
-    print('null mean %f, pval: %f'%(numpy.mean(null_accuracy[varname]),pval))
-    if pval<0.1:
-        # Print the feature ranking
+    if verbose:
         print("Feature ranking:")
         for f in range(5):
             print("%s. feature %d (%f)" % (behavvars[indices[f]], indices[f],
-                        importances[varname][indices[f]]))
+                                importances[varname][indices[f]]))
         print('')
+
+import pickle
+pickle.dump((accuracy,importances,null_accuracy,cutoff),
+        open('behavpred/pipeline_%s_performance%s.pkl'%(varname,shuffletag),'wb'))
+
+if verbose:
+    (accuracy,importances,null_accuracy,cutoff)=pickle.load(
+            open('behavpred/pipeline_%s_performance%s.pkl'%(varname,shuffletag),'rb'))
+    for varname in binary_vars:
+        if not varname in importances:
+            continue
+        indices = numpy.argsort(importances[varname])[::-1]
+        print('')
+        print('Variable:',varname)
+        print('Prediction accuracy (ROC AUC):',numpy.mean(accuracy[varname][:10]))
+        pval=1-scipy.stats.percentileofscore(null_accuracy[varname],
+                    numpy.mean(accuracy[varname][:10]))/100.
+        print('null mean %f, pval: %f'%(numpy.mean(null_accuracy[varname]),pval))
+        if pval<0.1:
+            # Print the feature ranking
+            print("Feature ranking:")
+            for f in range(5):
+                print("%s. feature %d (%f)" % (behavvars[indices[f]], indices[f],
+                            importances[varname][indices[f]]))
+            print('')
