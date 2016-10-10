@@ -41,7 +41,7 @@ importlib.reload(utils)
 #warnings.filterwarnings("ignore") # only turn this on in production mode
                                   # to keep log files from overflowing
 
-nruns=100
+nruns=10
 dataset='Discovery_9-26-16'
 basedir=utils.get_info('base_directory')
 derived_dir=os.path.join(basedir,'Data/Derived_Data/%s'%dataset)
@@ -190,7 +190,7 @@ def inner_cv_loop(Xtrain,Ytrain,clf,parameters=[],
     return gs.best_estimator_,gs.best_score_
 
 def outer_cv_loop(Xdata,Ydata,clf,parameters=[],
-                    n_splits=50,test_size=0.25):
+                    n_splits=10,test_size=0.25):
 
     pred=numpy.zeros(len(Ydata))
     importances=[]
@@ -209,9 +209,9 @@ def outer_cv_loop(Xdata,Ydata,clf,parameters=[],
            Xtrain,Ytrain=smt.fit_sample(Xtrain.copy(),Ydata[train])
         # filter out bad folds
         clf.fit(Xtrain,Ytrain)
-        pred=roc_auc_score(Ydata[test],clf.predict(Xtest))
+        pred=clf.predict(Xtest)
         if numpy.var(pred)>0:
-           rocscores.append(pred)
+           rocscores.append(roc_auc_score(Ydata[test],pred))
         else:
            rocscores.append(numpy.nan)
         importances.append(clf.feature_importances_)
