@@ -218,7 +218,7 @@ def outer_cv_loop(Xdata,Ydata,clf,parameters=[],
     return rocscores,importances
 
 # set up classifier
-forest = ExtraTreesClassifier(n_estimators=250)
+forest = ExtraTreesClassifier(n_estimators=250,n_jobs=-1)
 estimators = [('imputer',imputer),('clf',forest)]
 pipeline=Pipeline(steps=estimators)
 
@@ -230,11 +230,11 @@ for varname in binary_vars:
         print('skipping %s: no variance'%varname)
         print('')
         continue
-    if shuffle:
-        numpy.random.shuffle(y)
-        print('y shuffled')
 
     for i in range(nruns):
+        if shuffle:
+            numpy.random.shuffle(y)
+            print('y shuffled')
         roc_scores,imp=outer_cv_loop(sdata,y,forest)
         importances[varname].append(imp)
 
