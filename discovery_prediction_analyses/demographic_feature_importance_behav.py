@@ -178,10 +178,10 @@ def inner_cv_loop(Xtrain,Ytrain,clf,parameters=[],
     """
     if parameters:
         gs=GridSearchCV(clf,parameters,scoring='roc_auc',
-                        cv=StratifiedKFold(5))
+                        cv=StratifiedShuffleSplit(n_splits=5,test_size=0.2))
     else:
         gs=GridSearchCV(clf,scoring='roc_auc',
-                        cv=StratifiedKFold(5))
+                        cv=StratifiedShuffleSplit(n_splits=5,test_size=0.2))
 
     gs.fit(Xtrain,Ytrain)
     if verbose:
@@ -190,11 +190,11 @@ def inner_cv_loop(Xtrain,Ytrain,clf,parameters=[],
     return gs.best_estimator_,gs.best_score_
 
 def outer_cv_loop(Xdata,Ydata,clf,parameters=[],
-                    n_splits=50,test_size=0.2):
+                    n_splits=50,test_size=0.25):
 
     pred=numpy.zeros(len(Ydata))
     importances=[]
-    kf=StratifiedKFold(n_splits=5,shuffle=True)
+    kf=StratifiedShuffleSplit(n_splits=5,test_size=test_size)
     rocscores=[]
     for train,test in kf.split(Xdata,Ydata):
         Xtrain=Xdata[train,:]
