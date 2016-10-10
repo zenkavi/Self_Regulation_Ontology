@@ -194,16 +194,27 @@ def outer_cv_loop(Xdata,Ydata,clf,parameters=[],
 
     pred=numpy.zeros(len(Ydata))
     importances=[]
-    kf=StratifiedShuffleSplit(n_splits=5,test_size=test_size)
+    kf=StratifiedShuffleSplit(n_splits=n_splits,test_size=test_size)
     rocscores=[]
     for train,test in kf.split(Xdata,Ydata):
-        Xtrain=Xdata[train,:]
-        Xtest=Xdata[test,:]
+        if numpy.var(Ydata[test])==0:
+           print('zero variance',varname)
+           rocscores.append(numpy.nan)
+           continue
         Ytrain=Ydata[train]
+        Xtrain=fancyimpute.SoftImpute(verbose=False).complete(Xdata[train,:])
+        Xtest=fancyimpute.SoftImpute(verbose=False).complete(Xdata[test,:])
+        if numpy.abs(numpy.mean(Ytrain)-0.5)>0.2:
+           smt = SMOTETomek()
+           Xtrain,Ytrain=smt.fit_sample(Xtrain.copy(),Ydata[train])
         # filter out bad folds
         clf.fit(Xtrain,Ytrain)
-        rocscores.append(roc_auc_score(clf.predict(Xtest),Ydata[test]))
-        importances.append(clf.steps[-1][1].feature_importances_)
+        pred=roc_auc_score(Ydata[test],clf.predict(Xtest))
+        if numpy.var(pred)>0:
+           rocscores.append(pred)
+        else:
+           rocscores.append(numpy.nan)
+        importances.append(clf.feature_importances_)
     return rocscores,importances
 
 # set up classifier
@@ -224,7 +235,7 @@ for varname in binary_vars:
         print('y shuffled')
 
     for i in range(nruns):
-        roc_scores,imp=outer_cv_loop(sdata,y,pipeline)
+        roc_scores,imp=outer_cv_loop(sdata,y,forest)
         importances[varname].append(imp)
 
         accuracy[varname].append(roc_scores)
@@ -241,8 +252,8 @@ for varname in binary_vars:
                                 importances[varname][indices[f]]))
         print('')
 
-import pickle
-pickle.dump((accuracy,importances),
+    import pickle
+    pickle.dump((accuracy,importances),
         open('behavpred/pipeline_%s_performance%s.pkl'%(varname,shuffletag),'wb'))
 
 if verbose:
