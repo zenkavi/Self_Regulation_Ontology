@@ -4,7 +4,7 @@ import pandas as pd
 import sys
 
 sys.path.append('../utils')
-from data_preparation_utils import convert_to_short_vars, drop_vars
+from data_preparation_utils import convert_var_names, drop_vars
 from utils import get_info
 
 #******************************
