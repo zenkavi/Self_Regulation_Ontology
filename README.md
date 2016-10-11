@@ -14,3 +14,15 @@ starting with "base directory".  For example, on my computer it looks like:
 base_directory:/Users/poldrack/code/Self_Regulation_Ontology/
 
 
+### Organization
+
+Data: contains all of the original and derived data
+
+data_preparation: code for preparing derived data
+
+utils: utilities for loading/saving data and metadata
+
+other directories are specific to particular analyses - for any analysis you wish to add, please give it a descriptive name along with your initials - e.g. "irt_analyses_RP"
+
+
+
