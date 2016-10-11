@@ -27,7 +27,7 @@ DV_df_complete = pd.DataFrame(DV_df_complete, index = DV_df.index, columns = DV_
 # ********* Heatmaps *******************
 # ************************************
 # dendrogram heatmap
-plot_df = DV_df.corr()
+plot_df = DV_df.corr(method = 'spearman')
 plot_df.columns = [' '.join(x.split('_')) for x in  plot_df.columns]
 fig = dendroheatmap(plot_df.corr(), labels = True)
 
@@ -38,7 +38,7 @@ fig = dendroheatmap(plot_df.corr(), labels = True)
 
 
                     
-graph_data = DV_df
+graph_data = DV_df_complete
 
 # threshold positive graph
 t = .15
@@ -82,7 +82,7 @@ G_w, connectivity_mat, visual_style = Graph_Analysis(graph_data, community_alg =
                                                      print_options = {'lookup': {}, 'file': '../Plots/weighted_' + em + '.txt'}, 
                                                     plot_options = {'inline': False, 'target': '../Plots/weighted_' + em + '.pdf'})
                                                      
-subgraph = community_reorder(get_subgraph(G_w,1))
+subgraph = community_reorder(get_subgraph(G_w,2))
 print_community_members(subgraph)
 subgraph_visual_style = get_visual_style(subgraph, vertex_size = 'eigen_centrality')
 plot_graph(subgraph, visual_style = subgraph_visual_style, layout = 'circle', inline = False)

@@ -42,7 +42,7 @@ demog_data.drop(failed_index, inplace = True)
 # remove incomplete demographic variables
 demog_data.dropna(axis = 1, inplace = True)
 #remove non-numeric
-demog_data._get_numeric_data()
+demog_data = demog_data._get_numeric_data()
 # change variables to factors if they have fewer than 10 unique variables
 for c in demog_data.columns[demog_data.apply(lambda x: len(np.unique(x)))<10]:
     if len(np.unique(demog_data.loc[:,c])) > 2:
@@ -60,13 +60,14 @@ from rpy2.robjects import pandas2ri
 utils = importr('utils')
 ts=robjects.r('ts')
 polycor = importr('polycor')
+psych = importr('psych')
 
 pandas2ri.activate()
-polycor_out = polycor.hetcor(demog_data)
+polycor_out = polycor.hetcor(pandas2ri.py2ri(demog_data))
 
 
 # dimensionality reduction
-pca_data = corr_matrix
+pca_data = np.matrix(polycor_out[0])
 pca = decomposition.PCA()
 pca.fit(pca_data)
 

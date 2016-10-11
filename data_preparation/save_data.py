@@ -1,3 +1,4 @@
+import datetime
 from expanalysis.experiments.processing import  extract_experiment
 from os import makedirs, path
 import pandas as pd
@@ -51,6 +52,7 @@ def save_task_data(data_loc, data):
 #******************************
 #*** Save Data *********
 #******************************
+date = datetime.date.today().strftime("%m-%d-%Y")
 
 #load Data
 try:
@@ -58,11 +60,12 @@ try:
 except Exception:
     data_dir=path.join(get_info('base_directory'),'Data')
 
-discovery_directory = path.join(data_dir, 'Discovery_9-26-16')
-failed_directory = path.join(data_dir, 'Failed_9-26-16')
+discovery_directory = path.join(data_dir, 'Discovery_' + date)
+failed_directory = path.join(data_dir, 'Failed_' + date)
 local_dir = path.join(data_dir,'Local')
-if not path.exists(local_dir):
-    makedirs(local_dir)
+for directory in [discovery_directory, failed_directory, local_dir]:
+    if not path.exists(directory):
+        makedirs(directory)
 
 # read preprocessed data
 discovery_data = pd.read_json(path.join(local_dir,'mturk_discovery_data_post.json')).reset_index(drop = True)
@@ -83,7 +86,7 @@ for data,directory in [(discovery_data, discovery_directory), (failed_data, fail
     subjectsxitems.to_csv(path.join(directory, 'subject_x_items.csv'))
     
 # save Individual Measures
-save_task_data(path.join(local_dir,'discovery'), data)
+save_task_data(path.join(local_dir,'discovery_' + date), data)
 
 
 # ************************************
@@ -109,16 +112,14 @@ flip_df.to_csv(path.join(directory, 'DV_valence.csv'))
 DV_df.dropna(axis = 1, how = 'all', inplace = True)
 # drop other columns of no interest
 subset = drop_vars(DV_df)
-subset.to_csv(path.join(directory, 'meaningful_variables.csv'))
+subset.to_csv(path.join(directory, 'meaningful_variables_exhaustive.csv'))
 # make subset without EZ variables
 noEZ_subset = drop_vars(subset, drop_vars = ['_EZ'])
 noEZ_subset.to_csv(path.join(directory, 'meaningful_variables_noEZ_contrasts.csv'))
 # make subset without acc/rt vars
 EZ_subset = drop_vars(subset, drop_vars = ['_acc', '_rt'])
 EZ_subset.to_csv(path.join(directory, 'meaningful_variables_EZ_contrasts.csv'))
-# make survey subset
-survey_subset = subset.filter(regex = 'survey')
-survey_subset.to_csv(path.join(directory, 'meaningful_variables_surveys.csv'))
+EZ_subset.to_csv(path.join(directory, 'meaningful_variables.csv'))
 
 #use short variable names
 convert_var_names(DV_df)
@@ -131,10 +132,7 @@ noEZ_subset.to_csv(path.join(directory, 'short_meaningful_variables_noEZ_contras
 # make subset without acc/rt vars
 EZ_subset = drop_vars(subset, drop_vars = ['_acc', '_rt'])
 EZ_subset.to_csv(path.join(directory, 'short_meaningful_variables_EZ_contrasts.csv'))
-# make survey subset
-survey_subset = subset.filter(regex = 'survey')
-survey_subset.to_csv(path.join(directory, 'short_meaningful_variables_surveys.csv'))
-
+EZ_subset.to_csv(path.join(directory, 'short_meaningful_variables.csv'))
 
 
 

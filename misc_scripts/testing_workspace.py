@@ -34,6 +34,14 @@ try:
 except IOError:
     print('no worker pay found!')
 
+# plot number of tasks completed
+sns.plt.figure(figsize = (16,12))
+sns.plt.hist(list(worker_counts.values()), bins = 30, color = 'c')
+sns.plt.xlabel('Number of Tasks', size = 30)
+sns.plt.ylabel('Number of Subjects', size = 30)
+sns.plt.title('Histogram of MTurk Task Completion', size = 40)
+sns.plt.tick_params(labelsize = 20)
+
 #get pay
 pay = worker_pay
 workers = []
@@ -55,6 +63,7 @@ if not path.exists(local_dir):
 # read preprocessed data
 discovery_data = pd.read_json(path.join(local_dir,'mturk_discovery_data_post.json')).reset_index(drop = True)
 failed_data = pd.read_json(path.join(local_dir,'mturk_failed_data_post.json')).reset_index(drop = True)
+
 
 
 #calculate DVs

@@ -87,13 +87,16 @@ def convert_var_names(to_convert):
             new_columns = [var_lookup.loc[c] if c in var_lookup.index else c for c in to_convert.columns]
         elif to_convert.columns[0] in inverse_lookup:
             new_columns = [inverse_lookup.loc[c] if c in inverse_lookup.index else c for c in to_convert.columns]
+        else:
+            new_columns = to_convert.columns
         to_convert.columns = new_columns
         # convert index if there are dependent variable names
         if to_convert.index[0] in var_lookup:
             new_index = [var_lookup.loc[i] if i in var_lookup.index else i for i in to_convert.index]
         elif to_convert.index[0] in inverse_lookup:
             new_index = [inverse_lookup.loc[i] if i in inverse_lookup.index else i for i in to_convert.index]
-        to_convert.columns = new_columns
+        else: 
+            new_index = to_convert.index
         to_convert.index = new_index
     elif isinstance(to_convert, (list, np.ndarray)):
         if to_convert[0] in var_lookup:
