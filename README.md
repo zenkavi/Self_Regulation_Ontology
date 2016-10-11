@@ -14,7 +14,7 @@ starting with "base directory".  For example, on my computer it looks like:
 base_directory:/Users/poldrack/code/Self_Regulation_Ontology/
 
 
-### Organization
+### Organization of the repository
 
 Data: contains all of the original and derived data
 
