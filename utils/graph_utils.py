@@ -7,6 +7,7 @@ import pandas as pd
 from pprint import pprint
 import seaborn as sns
 from scipy import stats
+from scipy.spatial.distance import pdist, squareform
 from sklearn.metrics.cluster import normalized_mutual_info_score
 
 #work around for spyder bug in python 3
@@ -27,6 +28,46 @@ def calc_small_world(G):
     Sigma = Gamma/Lambda
     return (Sigma, Gamma, Lambda)
 
+def distcorr(X, Y):
+    """ Compute the distance correlation function
+    
+    >>> a = [1,2,3,4,5]
+    >>> b = np.array([1,2,9,4,4])
+    >>> distcorr(a, b)
+    0.762676242417
+    """
+    X,Y = zip(*[v for i,v in enumerate(zip(X,Y)) if not np.any(np.isnan(v))])
+    X = np.atleast_1d(X)
+    Y = np.atleast_1d(Y)
+    if np.prod(X.shape) == len(X):
+        X = X[:, None]
+    if np.prod(Y.shape) == len(Y):
+        Y = Y[:, None]
+    X = np.atleast_2d(X)
+    Y = np.atleast_2d(Y)
+    n = X.shape[0]
+    if Y.shape[0] != X.shape[0]:
+        raise ValueError('Number of samples must match')
+    a = squareform(pdist(X))
+    b = squareform(pdist(Y))
+    A = a - a.mean(axis=0)[None, :] - a.mean(axis=1)[:, None] + a.mean()
+    B = b - b.mean(axis=0)[None, :] - b.mean(axis=1)[:, None] + b.mean()
+    
+    dcov2_xy = (A * B).sum()/float(n * n)
+    dcov2_xx = (A * A).sum()/float(n * n)
+    dcov2_yy = (B * B).sum()/float(n * n)
+    dcor = np.sqrt(dcov2_xy)/np.sqrt(np.sqrt(dcov2_xx) * np.sqrt(dcov2_yy))
+    return dcor
+
+def distcorr_mat(M):
+    n = M.shape[1]
+    corr_mat = np.ones([n,n])
+    for i in range(n):
+        for j in range(i):
+            distance_corr = distcorr(M[:,i], M[:,j])
+            corr_mat[i,j] = corr_mat[j,i] =  distance_corr
+    return corr_mat
+    
 def gen_random_graph(n = 10, m = 10, template_graph = None):
     if template_graph:
         G = template_graph.copy()
@@ -49,6 +90,11 @@ def graph_to_matrix(G):
     else:
         graph_mat = np.array(G.get_adjacency().data)
     return graph_mat
+    
+def graph_to_dataframe(G):
+    matrix = graph_to_matrix(G)
+    graph_dataframe = pd.DataFrame(data = matrix, columns = G.vs['name'], index = G.vs['name'])
+    return graph_dataframe
     
 def pairwise_MI(data):
     columns = data.columns
@@ -75,7 +121,7 @@ def threshold_proportional_sign(W, threshold):
     
 # Visualization
     
-def get_visual_style(G,  layout = 'kk', vertex_size = None, size = 1000, labels = None, display_threshold = 0):
+def get_visual_style(G, layout_graph = None, layout = 'kk', vertex_size = None, size = 1000, labels = None):
     """
     Creates an appropriate visual style for a graph. 
     
@@ -106,7 +152,10 @@ def get_visual_style(G,  layout = 'kk', vertex_size = None, size = 1000, labels 
     if type(layout) == igraph.layout.Layout:
         graph_layout = layout
     elif type(layout) == str:
-        graph_layout = G.layout(layout)
+        if layout_graph:
+            graph_layout = layout_graph.layout(layout)
+        else:
+            graph_layout = G.layout(layout)
         
     # color by community and within-module-centrality
     # each community is a different color palette, darks colors are more central to the module
@@ -134,6 +183,7 @@ def get_visual_style(G,  layout = 'kk', vertex_size = None, size = 1000, labels 
                     'bbox': (size,size),
                     'margin': size/20.0}
     if 'weight' in G.es.attribute_names():
+        display_threshold = min([abs(i) for i in layout_graph.es['weight']])
         thresholded_weights = [w if abs(w) > display_threshold else 0 for w in G.es['weight']]
         visual_style['edge_width'] = [abs(w)**2.5*size/300.0 for w in thresholded_weights]
         if np.sum([e<0 for e in G.es['weight']]) > 0:
@@ -213,7 +263,23 @@ def community_reorder(G):
     
     return G
         
-            
+def relabel_community(community, reference):
+    ref_lists = [[i for i,c in enumerate(reference) if c==C] for C in np.unique(reference)]
+    comm_lists = [[i for i,c in enumerate(community) if c==C] for C in np.unique(community)]
+    relabel_dict = {}
+    for ci,comm in enumerate(comm_lists):
+        best_match = None
+        best_count = 0
+        for ri,ref in enumerate(ref_lists):
+            count = len(set(ref).intersection(comm))
+            if count > best_count:
+                best_count = count
+                best_match = ri + 1
+        if best_match in relabel_dict.values():
+            best_match = max(relabel_dict.values()) + 1
+        relabel_dict[ci+1] = best_match
+    return [relabel_dict[c] for c in community]
+           
 def get_subgraph(G, community = 1):
     assert set(['community']) <=  set(G.vs.attribute_names()), \
         'Graph must have "community" and "id" as a vertex attributes'
@@ -239,11 +305,28 @@ def subgraph_analysis(G, community_alg = None):
             comm, Q = community_alg(subgraph_mat)
             subgraph.vs['community'] = comm
             G.vs.select(lambda v: v['id'] in subgraph.vs['id'])['subgraph_community'] = subgraph.vs['community']
+
+def calc_connectivity_mat(data, edge_metric = 'pearson'):
+    assert edge_metric in ['pearson','spearman','MI','abs_pearson','abs_spearman', 'distance'], \
+        'Invalid edge metric passed. Must use "pearson", "spearman", "distance" or "MI"'
+    if edge_metric == 'MI':
+        connectivity_matrix = pd.DataFrame(pairwise_MI(data))
+    elif edge_metric == 'distance':
+        connectivity_matrix = pd.DataFrame(distcorr_mat(data.as_matrix()))
+    else:
+        *qualifier, edge_metric = edge_metric.split('_')
+        if (qualifier or [None])[0] == 'abs':
+            connectivity_matrix = abs(data.corr(method = edge_metric))
+        else:
+            connectivity_matrix = data.corr(method = edge_metric)
+    connectivity_matrix.columns = data.columns
+    connectivity_matrix.index = data.columns
+    return connectivity_matrix
             
 # Main graph analysis function
-def Graph_Analysis(data, thresh_func = bct.threshold_proportional, community_alg = bct.community_louvain, 
-                   edge_metric = 'pearson', threshold = .15, weight = True, reorder = True, 
-                   display = True, layout = 'kk', plot_threshold = None, print_options = {}, plot_options = {}):
+def Graph_Analysis(data, weight = True, thresh_func = bct.threshold_proportional,threshold = .15,  plot_threshold = None,
+                   community_alg = bct.community_louvain, ref_community = None,  reorder = False, 
+                   display = True, layout = 'kk', print_options = {}, plot_options = {}):
     """
     Creates and displays graphs of a data matrix.
     
@@ -286,24 +369,9 @@ def Graph_Analysis(data, thresh_func = bct.threshold_proportional, community_alg
     graph_mat: numpy matrix
         the matrix used to create the graph
     """
-    assert edge_metric in ['pearson','spearman','MI','abs_pearson','abs_spearman'], \
-        'Invalid edge metric passed. Must use "pearson", "spearman", or "MI"'
-    if edge_metric == 'MI':
-        connectivity_matrix = pairwise_MI(data).as_matrix()
-    else:
-        *qualifier, edge_metric = edge_metric.split('_')
-        if (qualifier or [None])[0] == 'abs':
-            connectivity_matrix = abs(data.corr(method = edge_metric)).as_matrix()
-        else:
-            connectivity_matrix = data.corr(method = edge_metric).as_matrix()
     
-    if plot_threshold:
-        display_threshold = get_percentile_weight(connectivity_matrix, (1-plot_threshold) * 100)
-    else:
-        display_threshold = get_percentile_weight(connectivity_matrix, (1-threshold) * 100)
-        
     #threshold and remove diagonal
-    graph_mat = thresh_func(connectivity_matrix,threshold)
+    graph_mat = thresh_func(data.as_matrix(), threshold)  
     
     # make a binary version if not weighted
     if not weight:
@@ -316,6 +384,9 @@ def Graph_Analysis(data, thresh_func = bct.threshold_proportional, community_alg
     # using louvain but also bct.modularity_und which is "Newman's spectral community detection"
     # bct.modularity_louvain_und_sign
     comm, mod = community_alg(graph_mat)
+    # if there is a reference, relbale communities based on their closest association    
+    if ref_community:
+        comm = relabel_community(comm,ref_community)
     G.vs['community'] = comm
     G.vs['id'] = range(len(G.vs))
     G.vs['name'] = column_names
@@ -330,16 +401,21 @@ def Graph_Analysis(data, thresh_func = bct.threshold_proportional, community_alg
     #if reorder, reorder vertices by community membership
     if reorder:
         G = community_reorder(G)
-        
+    # get connectivity matrix used to make the graph
+    connectivity_matrix = graph_to_dataframe(G)
     # calculate subgraph (within-community) characteristics
     subgraph_analysis(G, community_alg = community_alg)
     
     # visualize
+    layout_graph = None
+    if plot_threshold:
+        layout_mat = thresh_func(data.as_matrix(), plot_threshold)  
+        layout_graph = igraph.Graph.Weighted_Adjacency(layout_mat.tolist(), mode = 'undirected')
     visual_style = {}
-    visual_style = get_visual_style(G, layout = layout, vertex_size = 'eigen_centrality', labels = G.vs['id'],
-                                    size = 6000, display_threshold = display_threshold)
+    visual_style = get_visual_style(G, layout_graph, layout = layout, vertex_size = 'eigen_centrality', labels = G.vs['id'],
+                                    size = 6000)
     if display:
         # plot community structure
         print_community_members(G, **print_options)
         plot_graph(G, visual_style = visual_style, **plot_options)
-    return (G, graph_mat, visual_style)
+    return (G, connectivity_matrix, visual_style)
