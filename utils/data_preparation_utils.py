@@ -71,6 +71,39 @@ def check_timing(df):
     errors = [df[abs(df['timing_error']) < 500]['timing_error'].mean(), df[df['timing_error'] < 500]['timing_error'].max()]
     return errors
 
+def convert_item_names(to_convert):
+    '''Convert array of variable names or columns/index of a dataframe. Assumes that all values either
+    come from short of long variable names. If a dataframe is passed, variable conversion
+    is done in place.
+    '''
+    assert(isinstance(to_convert, (list, np.ndarray, pd.DataFrame))), \
+        'Object to convert must be a list, numpy array or pandas DataFrame'
+    var_lookup = pd.Series.from_csv('../data_preparation/item_name_lookup.csv')
+    inverse_lookup = pd.Series(index = var_lookup.values, data = var_lookup.index)
+    
+    if type(to_convert) == pd.DataFrame:
+        # convert columns if there are dependent variable names
+        if to_convert.columns[0] in var_lookup:
+            new_columns = [var_lookup.loc[c] if c in var_lookup.index else c for c in to_convert.columns]
+        elif to_convert.columns[0] in inverse_lookup:
+            new_columns = [inverse_lookup.loc[c] if c in inverse_lookup.index else c for c in to_convert.columns]
+        else:
+            new_columns = to_convert.columns
+        to_convert.columns = new_columns
+        # convert index if there are dependent variable names
+        if to_convert.index[0] in var_lookup:
+            new_index = [var_lookup.loc[i] if i in var_lookup.index else i for i in to_convert.index]
+        elif to_convert.index[0] in inverse_lookup:
+            new_index = [inverse_lookup.loc[i] if i in inverse_lookup.index else i for i in to_convert.index]
+        else: 
+            new_index = to_convert.index
+        to_convert.index = new_index
+    elif isinstance(to_convert, (list, np.ndarray)):
+        if to_convert[0] in var_lookup:
+            return  [var_lookup.loc[c] if c in var_lookup.index else c for c in to_convert]
+        elif to_convert[0] in inverse_lookup:
+            return  [inverse_lookup.loc[c] if c in inverse_lookup.index else c for c in to_convert]
+    
 def convert_var_names(to_convert):
     '''Convert array of variable names or columns/index of a dataframe. Assumes that all values either
     come from short of long variable names. If a dataframe is passed, variable conversion
@@ -192,7 +225,7 @@ def get_credit(data):
     data.loc[:,'credit'] = credit_array   
     
 def get_items(data):
-    excluded_surveys = ['holt_laury_survey', 'selection_optimization_compensation_survey', 'sensation_seeking_survey']
+    excluded_surveys = ['holt_laury_survey']
     items = []
     responses = []
     responses_text = []
@@ -216,8 +249,8 @@ def get_items(data):
     
     items_df = pd.DataFrame({'survey': exps, 'worker': workers, 'item_text': items, 'coded_response': responses,
                              'response_text': responses_text, 'options': options}, dtype = float)
-    items_df.loc[:,'item_num'] = [str(i).zfill(3) for i in item_nums]
-    items_df.loc[:,'item_ID'] = items_df['survey'] + '_' + items_df['item_num'].astype(str)
+    items_df.loc[:,'item_num'] = [str(i).zfill(2) for i in item_nums]
+    items_df.loc[:,'item_ID'] = items_df['survey'] + '.' + items_df['item_num'].astype(str)
     return items_df
     
     

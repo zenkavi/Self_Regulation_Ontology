@@ -84,9 +84,11 @@ for data,directory in [(discovery_data, discovery_directory), (failed_data, fail
     items_df.to_csv(path.join(directory, 'items.csv'))
     subjectsxitems = items_df.pivot('worker','item_ID','coded_response')
     subjectsxitems.to_csv(path.join(directory, 'subject_x_items.csv'))
+    convert_var_names(subjectsxitems)
+    subjectsxitems.to_csv(path.join(directory, 'short_subject_x_items.csv'))
     
 # save Individual Measures
-save_task_data(path.join(local_dir,'discovery_' + date), data)
+# save_task_data(path.join(local_dir,'discovery_' + date), data)
 
 
 # ************************************
@@ -121,16 +123,14 @@ EZ_subset = drop_vars(subset, drop_vars = ['_acc', '_rt'])
 EZ_subset.to_csv(path.join(directory, 'meaningful_variables_EZ_contrasts.csv'))
 EZ_subset.to_csv(path.join(directory, 'meaningful_variables.csv'))
 
-#use short variable names
-convert_var_names(DV_df)
 # drop other columns of no interest
-subset = drop_vars(DV_df)
+convert_var_names(subset)
 subset.to_csv(path.join(directory, 'short_meaningful_variables.csv'))
 # make subset without EZ variables
-noEZ_subset = drop_vars(subset, drop_vars = ['_EZ'])
+convert_var_names(noEZ_subset)
 noEZ_subset.to_csv(path.join(directory, 'short_meaningful_variables_noEZ_contrasts.csv'))
 # make subset without acc/rt vars
-EZ_subset = drop_vars(subset, drop_vars = ['_acc', '_rt'])
+convert_var_names(EZ_subset)
 EZ_subset.to_csv(path.join(directory, 'short_meaningful_variables_EZ_contrasts.csv'))
 EZ_subset.to_csv(path.join(directory, 'short_meaningful_variables.csv'))
 
