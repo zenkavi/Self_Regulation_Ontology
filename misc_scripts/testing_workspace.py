@@ -54,8 +54,8 @@ try:
 except Exception:
     data_dir=path.join(get_info('base_directory'),'Data')
     
-discovery_directory = path.join(data_dir, 'Discovery_9-26-16')
-failed_directory = path.join(data_dir, 'Failed_9-26-16')
+discovery_directory = path.join(data_dir, 'Discovery_09-26-2016')
+failed_directory = path.join(data_dir, 'Failed_09-26-2016')
 local_dir = path.join(data_dir,'Local')
 if not path.exists(local_dir):
     makedirs(local_dir)

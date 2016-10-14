@@ -154,8 +154,10 @@ def get_visual_style(G, layout_graph = None, layout = 'kk', vertex_size = None, 
     elif type(layout) == str:
         if layout_graph:
             graph_layout = layout_graph.layout(layout)
+            display_threshold = min([abs(i) for i in layout_graph.es['weight']])
         else:
             graph_layout = G.layout(layout)
+            display_threshold = 0
         
     # color by community and within-module-centrality
     # each community is a different color palette, darks colors are more central to the module
@@ -172,7 +174,7 @@ def get_visual_style(G, layout_graph = None, layout = 'kk', vertex_size = None, 
             
             vertex_color = [sns.color_palette(palettes[v['community']-1], int(num_colors)+1)[within_degree[i]] for i,v in enumerate(G.vs)]
         else:
-            palette = sns.cubehelix_palette(community_count)
+            palette = sns.cubehelix_palette(max(community_count,10))
             vertex_color = [palette[v['community']-1] for v in G.vs]
     else:
         vertex_color = 'red'
@@ -183,7 +185,6 @@ def get_visual_style(G, layout_graph = None, layout = 'kk', vertex_size = None, 
                     'bbox': (size,size),
                     'margin': size/20.0}
     if 'weight' in G.es.attribute_names():
-        display_threshold = min([abs(i) for i in layout_graph.es['weight']])
         thresholded_weights = [w if abs(w) > display_threshold else 0 for w in G.es['weight']]
         visual_style['edge_width'] = [abs(w)**2.5*size/300.0 for w in thresholded_weights]
         if np.sum([e<0 for e in G.es['weight']]) > 0:

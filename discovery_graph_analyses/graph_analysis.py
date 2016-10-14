@@ -17,12 +17,19 @@ from utils import get_behav_data
 # get dependent variables
 DV_df = get_behav_data('Discovery_10-11-2016', use_EZ = True)
     
-
 # ************************************
 # ************ Imputation *******************
 # ************************************
 DV_df_complete = fancyimpute.SoftImpute().complete(DV_df)
 DV_df_complete = pd.DataFrame(DV_df_complete, index = DV_df.index, columns = DV_df.columns)
+
+# ************************************
+# ************ Connectivity Matrix *******************
+# ************************************
+
+spearman_connectivity = calc_connectivity_mat(DV_df_complete, edge_metric = 'spearman')
+distance_connectivity = calc_connectivity_mat(DV_df_complete, edge_metric = 'distance')
+
 
 # ************************************
 # ********* Heatmaps *******************
@@ -37,14 +44,23 @@ fig = dendroheatmap(plot_df.corr(), labels = True)
 # ********* Graphs *******************
 # ************************************
 
+def get_fully_connected_threshold(connectivity_matrix, initial_value = .1):
+    '''Get a threshold above the initial value such that the graph is fully connected
+    '''
+    if type(connectivity_matrix) == pd.DataFrame:
+        connectivity_matrix = connectivity_matrix.as_matrix()
+    threshold = initial_value
+    thresholded_mat = bct.threshold_proportional(connectivity_matrix,threshold)
+    while np.any(np.max(thresholded_mat, axis = 1)==0):
+        threshold += .01
+        thresholded_mat = bct.threshold_proportional(connectivity_matrix,threshold)
+    return threshold
 
-                    
-spearman_connectivity = calc_connectivity_mat(DV_df_complete, edge_metric = 'spearman')
-distance_connectivity = calc_connectivity_mat(DV_df_complete, edge_metric = 'distance')
+
 
 # threshold positive graph
 t = .5
-plot_t = .1
+plot_t = get_fully_connected_threshold(spearman_connectivity, .05)
 t_f = bct.threshold_proportional
 c_a = bct.community_louvain
 
@@ -55,8 +71,7 @@ G_w, connectivity_adj, threshold_visual_style = Graph_Analysis(spearman_connecti
 
 # distance graph
 t = 1
-plot_t = .1
-em = 'distance'
+plot_t = get_fully_connected_threshold(distance_connectivity, .05)
 t_f = bct.threshold_proportional
 c_a = lambda x: bct.community_louvain(x, gamma = 1)
 
@@ -77,6 +92,8 @@ G_w, connectivity_mat, visual_style = Graph_Analysis(spearman_connectivity, comm
                                                      plot_threshold = plot_t, print_options = {'lookup': {}}, 
                                                     plot_options = {'inline': False})
 
+
+    
 def get_top_community_tasks(G, community = 1):
     vs = G.vs.select(community = community)
     tasks = np.unique(list(map(lambda x: x.split('.')[0], vs['name'])))
@@ -121,8 +138,8 @@ t_f = bct.threshold_proportional
 layout = None
 ref_community = None
 for gamma in np.arange(.5,2,.05):
-    c_a = lambda x: bct.community_louvain(x, gamma = gamma)
     layout = layout or 'kk'
+    c_a = lambda x: bct.community_louvain(x, gamma = gamma)
     G_w, connectivity_adj, visual_style = Graph_Analysis(spearman_connectivity, community_alg = c_a, ref_community = ref_community,
                                                          thresh_func = t_f, threshold = t, plot_threshold = plot_t, 
                                                          layout = layout, 

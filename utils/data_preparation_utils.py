@@ -140,6 +140,7 @@ def drop_vars(data, drop_vars = []):
         task_vars = ["demographics", # demographics
                     "network_task.EZ_drift_congruent$", "network_task.EZ_thresh_congruent$", "network_task.EZ_non_decision_congruent$", # ANT
                     "\.EZ_drift_incongruent$", "\.EZ_thresh_incongruent$", "\.EZ_non_decision_incongruent$", # ANT, local_global, simon, stroop
+                    ".first_order", # bis11
                     "\.EZ_drift_con$", "\.EZ_drift_neg$", "\.EZ_thresh_con$", "\.EZ_thresh_neg$", "\.EZ_non_decision_con$", "\.EZ_non_decision_neg$", # directed forgetting
                     "\.EZ_drift_AY", "\.EZ_drift_BX", "\.EZ_drift_BY", "\.EZ_thresh_AY", "\.EZ_thresh_BX", "\.EZ_thresh_BY", # DPX
                     "\.EZ_non_decision_AX", "\.EZ_non_decision_BX", "\.EZ_non_decision_BY", # DPX continued
