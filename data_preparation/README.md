@@ -6,3 +6,7 @@ directory for each survey
 * process_alcohol_drug.py: process data from drug/alcohol questionnaire
 * process_demographics.py: process demographic data
 * cleanup_items_for_mirt_cv.py: collapse survey responses that occur too infrequently
+
+To run everything, you can use:
+
+make dataprep
