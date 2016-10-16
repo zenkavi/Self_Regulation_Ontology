@@ -11,8 +11,9 @@ import json
 sys.path.append('../utils')
 
 from utils import get_info
-dataset='Discovery_9-26-16'
 basedir=get_info('base_directory')
+dataset=get_info('dataset')
+print('using dataset:',dataset)
 datadir=os.path.join(basedir,'data/%s'%dataset)
 outdir=os.path.join(basedir,'data/Derived_Data/%s'%dataset)
 if not os.path.exists(outdir):

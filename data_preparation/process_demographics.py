@@ -9,7 +9,8 @@ from metadata_utils import write_metadata
 
 from utils import get_info
 
-dataset='Discovery_9-26-16'
+dataset=get_info('dataset')
+print('using dataset:',dataset)
 basedir=get_info('base_directory')
 datadir=os.path.join(basedir,'data/%s'%dataset)
 outdir=os.path.join(basedir,'data/Derived_Data/%s'%dataset)
