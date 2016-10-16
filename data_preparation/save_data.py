@@ -45,7 +45,6 @@ for data,directory in [(discovery_data, discovery_directory), (failed_data, fail
     # ensure there are the correct number of items
     assert subjectsxitems.shape[1] == 594, "Wrong number of items found"
     # save items
-    items_df.to_csv(path.join(directory, 'items.csv'))
     subjectsxitems.to_csv(path.join(directory, 'subject_x_items.csv'))
     convert_var_names(subjectsxitems)
     assert np.max([len(name) for name in subjectsxitems.columns])<=8, \
