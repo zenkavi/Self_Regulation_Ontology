@@ -10,7 +10,7 @@ import os,glob
 import pandas
 import json
 
-basedir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses'
+basedir = os.path.join(get_info('base_directory'),'discovery_survey_analyses')
 
 files=glob.glob(os.path.join(basedir,'surveydata/*'))
 files.sort()

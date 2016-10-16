@@ -1,54 +1,13 @@
 import datetime
 from expanalysis.experiments.processing import  extract_experiment
 from os import makedirs, path
+import numpy as np
 import pandas as pd
 import sys
-
 sys.path.append('../utils')
-from data_preparation_utils import convert_var_names, drop_vars
+from data_preparation_utils import convert_var_names, drop_vars, get_items
 from utils import get_info
 
-#******************************
-#*** Helper Functions *********
-#******************************
-
-def get_items(data):
-    excluded_surveys = ['holt_laury_survey', 'selection_optimization_compensation_survey', 'sensation_seeking_survey']
-    items = []
-    responses = []
-    responses_text = []
-    options = []
-    workers = []
-    item_nums = []
-    exps = []
-    for exp in data.experiment_exp_id.unique():
-        if 'survey' in exp and exp not in excluded_surveys:
-            survey = extract_experiment(data,exp)
-            try:
-                responses += list(survey.response.map(lambda x: float(x)))
-            except ValueError:
-                continue
-            items += list(survey.text)
-            responses_text += list(survey.response_text)
-            options += list(survey.options)
-            workers += list(survey.worker_id)
-            item_nums += list(survey.question_num)
-            exps += [exp] * len(survey.text)
-    
-    items_df = pd.DataFrame({'survey': exps, 'worker': workers, 'item_text': items, 'coded_response': responses,
-                             'response_text': responses_text, 'options': options}, dtype = float)
-    items_df.loc[:,'item_num'] = [str(i).zfill(3) for i in item_nums]
-    items_df.loc[:,'item_ID'] = items_df['survey'] + '_' + items_df['item_num'].astype(str)
-    return items_df
-    
-def save_task_data(data_loc, data):
-    save_path = path.join(data_loc,'Individual_Measures')
-    if not path.exists(save_path):
-        makedirs(save_path)
-    for exp_id in data.experiment_exp_id.unique():
-        print('Saving %s...' % exp_id)
-        extract_experiment(data,exp_id).to_csv(path.join(save_path, exp_id + '.csv'))
-    
 #******************************
 #*** Save Data *********
 #******************************
@@ -81,12 +40,20 @@ for data,directory in [(discovery_data, discovery_directory), (failed_data, fail
     # save items
     items_df = get_items(data)
     print('Saving items...')
-    items_df.to_csv(path.join(directory, 'items.csv'))
     subjectsxitems = items_df.pivot('worker','item_ID','coded_response')
+    # ensure there are the correct number of items
+    assert subjectsxitems.shape[1] == 594, "Wrong number of items found"
+    # save items
+    items_df.to_csv(path.join(directory, 'items.csv.gz'), compression = 'gzip')
     subjectsxitems.to_csv(path.join(directory, 'subject_x_items.csv'))
-    
+    convert_var_names(subjectsxitems)
+    assert np.max([len(name) for name in subjectsxitems.columns])<=8, \
+        "Found column names longer than 8 characters in short version"
+    subjectsxitems.to_csv(path.join(directory, 'short_subject_x_items.csv'))
+
+   
 # save Individual Measures
-save_task_data(path.join(local_dir,'discovery_' + date), data)
+# save_task_data(path.join(local_dir,'discovery_' + date), data)
 
 
 # ************************************
@@ -121,16 +88,14 @@ EZ_subset = drop_vars(subset, drop_vars = ['_acc', '_rt'])
 EZ_subset.to_csv(path.join(directory, 'meaningful_variables_EZ_contrasts.csv'))
 EZ_subset.to_csv(path.join(directory, 'meaningful_variables.csv'))
 
-#use short variable names
-convert_var_names(DV_df)
 # drop other columns of no interest
-subset = drop_vars(DV_df)
-subset.to_csv(path.join(directory, 'short_meaningful_variables.csv'))
+convert_var_names(subset)
+subset.to_csv(path.join(directory, 'short_meaningful_variables_exhaustive.csv'))
 # make subset without EZ variables
-noEZ_subset = drop_vars(subset, drop_vars = ['_EZ'])
+convert_var_names(noEZ_subset)
 noEZ_subset.to_csv(path.join(directory, 'short_meaningful_variables_noEZ_contrasts.csv'))
 # make subset without acc/rt vars
-EZ_subset = drop_vars(subset, drop_vars = ['_acc', '_rt'])
+convert_var_names(EZ_subset)
 EZ_subset.to_csv(path.join(directory, 'short_meaningful_variables_EZ_contrasts.csv'))
 EZ_subset.to_csv(path.join(directory, 'short_meaningful_variables.csv'))
 
