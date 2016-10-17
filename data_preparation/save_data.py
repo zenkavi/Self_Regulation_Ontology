@@ -4,7 +4,6 @@ from os import makedirs, path
 import numpy as np
 import pandas as pd
 import sys
-
 sys.path.append('../utils')
 from data_preparation_utils import convert_var_names, drop_vars, get_items
 from utils import get_info
@@ -45,13 +44,14 @@ for data,directory in [(discovery_data, discovery_directory), (failed_data, fail
     # ensure there are the correct number of items
     assert subjectsxitems.shape[1] == 594, "Wrong number of items found"
     # save items
-    items_df.to_csv(path.join(directory, 'items.csv'))
+    items_df.to_csv(path.join(directory, 'items.csv.gz'), compression = 'gzip')
     subjectsxitems.to_csv(path.join(directory, 'subject_x_items.csv'))
     convert_var_names(subjectsxitems)
     assert np.max([len(name) for name in subjectsxitems.columns])<=8, \
         "Found column names longer than 8 characters in short version"
     subjectsxitems.to_csv(path.join(directory, 'short_subject_x_items.csv'))
-    
+
+   
 # save Individual Measures
 # save_task_data(path.join(local_dir,'discovery_' + date), data)
 
