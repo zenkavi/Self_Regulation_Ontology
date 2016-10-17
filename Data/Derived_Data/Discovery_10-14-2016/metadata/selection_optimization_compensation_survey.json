@@ -1,0 +1,13 @@
+{
+    "MeasurementToolMetadata": {
+        "Description": "Selection-Optimization-Compensation survey",
+        "TermURL": ""
+    },
+    "selection_optimization_compensation_survey_2": {
+        "Description": "Please select which of the two statements is more true for you.",
+        "Levels": {
+            "0": " I divide my energy among many things",
+            "1": "I concentrate all my energy on a few things"
+        }
+    }
+}

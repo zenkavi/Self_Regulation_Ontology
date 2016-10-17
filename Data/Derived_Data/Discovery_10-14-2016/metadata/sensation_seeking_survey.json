@@ -1,0 +1,13 @@
+{
+    "MeasurementToolMetadata": {
+        "Description": "Sensation seeking survey",
+        "TermURL": ""
+    },
+    "sensation_seeking_survey_2": {
+        "Description": "Please indicate which of the following scenarios you would prefer.",
+        "Levels": {
+            "0": " I prefer quiet parties with good conversation",
+            "1": "I like “wild” uninhibited parties"
+        }
+    }
+}

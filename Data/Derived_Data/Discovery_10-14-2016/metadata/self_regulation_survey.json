@@ -1,0 +1,306 @@
+{
+    "MeasurementToolMetadata": {
+        "Description": "Self-regulation survey",
+        "TermURL": "http://www.cognitiveatlas.org/term/id/trm_56a91ed5f1ccc"
+    },
+    "self_regulation_survey_10": {
+        "Description": "I usually think before I act.",
+        "Levels": {
+            "1": "Strongly disagree",
+            "2": "Somewhat disagree",
+            "3": "Neutral",
+            "4": "Somewhat agree",
+            "5": "Strongly agree"
+        }
+    },
+    "self_regulation_survey_11": {
+        "Description": "I learn from my mistakes.",
+        "Levels": {
+            "1": "Strongly disagree",
+            "2": "Somewhat disagree",
+            "3": "Neutral",
+            "4": "Somewhat agree",
+            "5": "Strongly agree"
+        }
+    },
+    "self_regulation_survey_12": {
+        "Description": "I give up quickly.",
+        "Levels": {
+            "1": "Strongly agree",
+            "2": "Somewhat agree",
+            "3": "Neutral",
+            "4": "Somewhat disagree",
+            "5": "Strongly disagree"
+        }
+    },
+    "self_regulation_survey_13": {
+        "Description": "I usually keep track of my progress toward my goals.",
+        "Levels": {
+            "1": "Strongly disagree",
+            "2": "Somewhat disagree",
+            "3": "Neutral",
+            "4": "Somewhat agree",
+            "5": "Strongly agree"
+        }
+    },
+    "self_regulation_survey_14": {
+        "Description": "I am able to accomplish goals for myself.",
+        "Levels": {
+            "1": "Strongly disagree",
+            "2": "Somewhat disagree",
+            "3": "Neutral",
+            "4": "Somewhat agree",
+            "5": "Strongly agree"
+        }
+    },
+    "self_regulation_survey_15": {
+        "Description": "I have personal standards, and try to live up to them.",
+        "Levels": {
+            "1": "Strongly disagree",
+            "2": "Somewhat disagree",
+            "3": "Neutral",
+            "4": "Somewhat agree",
+            "5": "Strongly agree"
+        }
+    },
+    "self_regulation_survey_16": {
+        "Description": "As soon as I see a problem or challenge, I start looking for possible solutions.",
+        "Levels": {
+            "1": "Strongly disagree",
+            "2": "Somewhat disagree",
+            "3": "Neutral",
+            "4": "Somewhat agree",
+            "5": "Strongly agree"
+        }
+    },
+    "self_regulation_survey_17": {
+        "Description": "I have a hard time setting goals for myself.",
+        "Levels": {
+            "1": "Strongly agree",
+            "2": "Somewhat agree",
+            "3": "Neutral",
+            "4": "Somewhat disagree",
+            "5": "Strongly disagree"
+        }
+    },
+    "self_regulation_survey_18": {
+        "Description": "When I'm trying to change something, I pay a lot of attention to how I'm doing.",
+        "Levels": {
+            "1": "Strongly disagree",
+            "2": "Somewhat disagree",
+            "3": "Neutral",
+            "4": "Somewhat agree",
+            "5": "Strongly agree"
+        }
+    },
+    "self_regulation_survey_19": {
+        "Description": "I have trouble making plans to help me reach my goals.",
+        "Levels": {
+            "1": "Strongly agree",
+            "2": "Somewhat agree",
+            "3": "Neutral",
+            "4": "Somewhat disagree",
+            "5": "Strongly disagree"
+        }
+    },
+    "self_regulation_survey_2": {
+        "Description": "I don't notice the effects of my actions until it's too late.",
+        "Levels": {
+            "1": "Strongly agree",
+            "2": "Somewhat agree",
+            "3": "Neutral",
+            "4": "Somewhat disagree",
+            "5": "Strongly disagree"
+        }
+    },
+    "self_regulation_survey_20": {
+        "Description": "I set goals for myself and keep track of my progress.",
+        "Levels": {
+            "1": "Strongly disagree",
+            "2": "Somewhat disagree",
+            "3": "Neutral",
+            "4": "Somewhat agree",
+            "5": "Strongly agree"
+        }
+    },
+    "self_regulation_survey_21": {
+        "Description": "If I make a resolution to change something, I pay a lot of attention to how I'm doing.",
+        "Levels": {
+            "1": "Strongly disagree",
+            "2": "Somewhat disagree",
+            "3": "Neutral",
+            "4": "Somewhat agree",
+            "5": "Strongly agree"
+        }
+    },
+    "self_regulation_survey_22": {
+        "Description": "I know how I want to be.",
+        "Levels": {
+            "1": "Strongly disagree",
+            "2": "Somewhat disagree",
+            "3": "Neutral",
+            "4": "Somewhat agree",
+            "5": "Strongly agree"
+        }
+    },
+    "self_regulation_survey_23": {
+        "Description": "I have trouble making up my mind about things.",
+        "Levels": {
+            "1": "Strongly agree",
+            "2": "Somewhat agree",
+            "3": "Neutral",
+            "4": "Somewhat disagree",
+            "5": "Strongly disagree"
+        }
+    },
+    "self_regulation_survey_25": {
+        "Description": "When it comes to deciding about a change, I feel overwhelmed by the choices.",
+        "Levels": {
+            "1": "Strongly agree",
+            "2": "Somewhat agree",
+            "3": "Neutral",
+            "4": "Somewhat disagree",
+            "5": "Strongly disagree"
+        }
+    },
+    "self_regulation_survey_26": {
+        "Description": "Most of the time I don't pay attention to what I'm doing.",
+        "Levels": {
+            "1": "Strongly agree",
+            "2": "Somewhat agree",
+            "3": "Neutral",
+            "4": "Somewhat disagree",
+            "5": "Strongly disagree"
+        }
+    },
+    "self_regulation_survey_27": {
+        "Description": "I tend to keep doing the same thing, even when it doesn't work.",
+        "Levels": {
+            "1": "Strongly agree",
+            "2": "Somewhat agree",
+            "3": "Neutral",
+            "4": "Somewhat disagree",
+            "5": "Strongly disagree"
+        }
+    },
+    "self_regulation_survey_28": {
+        "Description": "Once I have a goal, I can usually plan how to reach it.",
+        "Levels": {
+            "1": "Strongly disagree",
+            "2": "Somewhat disagree",
+            "3": "Neutral",
+            "4": "Somewhat agree",
+            "5": "Strongly agree"
+        }
+    },
+    "self_regulation_survey_29": {
+        "Description": "If I wanted to change, I am confident that I could do it.",
+        "Levels": {
+            "1": "Strongly disagree",
+            "2": "Somewhat disagree",
+            "3": "Neutral",
+            "4": "Somewhat agree",
+            "5": "Strongly agree"
+        }
+    },
+    "self_regulation_survey_3": {
+        "Description": "I put off making decisions.",
+        "Levels": {
+            "1": "Strongly agree",
+            "2": "Somewhat agree",
+            "3": "Neutral",
+            "4": "Somewhat disagree",
+            "5": "Strongly disagree"
+        }
+    },
+    "self_regulation_survey_30": {
+        "Description": "I can stick to a plan that's working well.",
+        "Levels": {
+            "1": "Strongly disagree",
+            "2": "Somewhat disagree",
+            "3": "Neutral",
+            "4": "Somewhat agree",
+            "5": "Strongly agree"
+        }
+    },
+    "self_regulation_survey_31": {
+        "Description": "I have a lot of willpower.",
+        "Levels": {
+            "1": "Strongly disagree",
+            "2": "Somewhat disagree",
+            "3": "Neutral",
+            "4": "Somewhat agree",
+            "5": "Strongly agree"
+        }
+    },
+    "self_regulation_survey_32": {
+        "Description": "I am able to resist temptation.",
+        "Levels": {
+            "1": "Strongly disagree",
+            "2": "Somewhat disagree",
+            "3": "Neutral",
+            "4": "Somewhat agree",
+            "5": "Strongly agree"
+        }
+    },
+    "self_regulation_survey_4": {
+        "Description": "It's hard for me to notice when I've 'had enough' (alcohol, food, sweets).",
+        "Levels": {
+            "1": "Strongly agree",
+            "2": "Somewhat agree",
+            "3": "Neutral",
+            "4": "Somewhat disagree",
+            "5": "Strongly disagree"
+        }
+    },
+    "self_regulation_survey_5": {
+        "Description": "I have trouble following through with things once I've made up my mind to do something.",
+        "Levels": {
+            "1": "Strongly agree",
+            "2": "Somewhat agree",
+            "3": "Neutral",
+            "4": "Somewhat disagree",
+            "5": "Strongly disagree"
+        }
+    },
+    "self_regulation_survey_6": {
+        "Description": "I don't seem to learn from my mistakes.",
+        "Levels": {
+            "1": "Strongly agree",
+            "2": "Somewhat agree",
+            "3": "Neutral",
+            "4": "Somewhat disagree",
+            "5": "Strongly disagree"
+        }
+    },
+    "self_regulation_survey_7": {
+        "Description": "I usually only have to make a mistake one time in order to learn from it.",
+        "Levels": {
+            "1": "Strongly disagree",
+            "2": "Somewhat disagree",
+            "3": "Neutral",
+            "4": "Somewhat agree",
+            "5": "Strongly agree"
+        }
+    },
+    "self_regulation_survey_8": {
+        "Description": "I can usually find several different possibilities when I want to change something.",
+        "Levels": {
+            "1": "Strongly disagree",
+            "2": "Somewhat disagree",
+            "3": "Neutral",
+            "4": "Somewhat agree",
+            "5": "Strongly agree"
+        }
+    },
+    "self_regulation_survey_9": {
+        "Description": "Often I don't notice what I'm doing until someone calls it to my attention.",
+        "Levels": {
+            "1": "Strongly agree",
+            "2": "Somewhat agree",
+            "3": "Neutral",
+            "4": "Somewhat disagree",
+            "5": "Strongly disagree"
+        }
+    }
+}
