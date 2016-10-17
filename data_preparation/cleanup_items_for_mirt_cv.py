@@ -14,23 +14,30 @@ import pandas,numpy
 import scipy.stats
 
 
-import os,glob
+import os,glob,sys
 import pandas
 import json
 
-basedir='/Users/poldrack/code/Self_Regulation_Ontology/discovery_survey_analyses'
+sys.path.append('../utils')
+
+from utils import get_info
+basedir=get_info('base_directory')
+dataset=get_info('dataset')
+print('using dataset:',dataset)
+datadir=os.path.join(basedir,'data/%s'%dataset)
+derived_dir=os.path.join(basedir,'data/Derived_Data/%s'%dataset)
 
 
 try:
-    data=pandas.read_csv('surveydata.csv')
+    data=pandas.read_csv(os.path.join(derived_dir,'surveydata.csv'))
 except:
-    files=glob.glob(os.path.join(basedir,'surveydata/*'))
+    files=glob.glob(os.path.join(derived_dir,'surveydata/*'))
     files.sort()
     pass
 
     all_metadata={}
     for f in files:
-        
+
         d=pandas.read_csv(f,sep='\t')
         code=f.split('/')[-1].replace('.tsv','')
         try:
@@ -39,12 +46,12 @@ except:
             data=d
 
 def truncate_dist(u,h,d,min_freq=4,verbose=False):
-    """ 
+    """
     remove responses with less than min_freq occurences, replacing with
     next less extreme response
     heuristic is that we always move it towards the middle of the scale
     - if they are in teh middle, of if more than two, then drop the column
-    
+
     returns amended data, and drop flag
     """
     u=numpy.array(u)
@@ -63,7 +70,7 @@ def truncate_dist(u,h,d,min_freq=4,verbose=False):
         # is it at an extreme?
         if u[badvals[0]]==u[0]:
             d.loc[d==u[badvals[0]]]=u[1]
-            
+
         elif u[badvals[0]]==u[-1]:
             d.loc[d==u[badvals[0]]]=u[-2]
         else:
@@ -89,8 +96,8 @@ def truncate_dist(u,h,d,min_freq=4,verbose=False):
     else:
         print('dropping',c)
         return d,True
-        
-    
+
+
 min_freq = 8
 
 fixdata=data.copy()
@@ -106,5 +113,5 @@ for c in data.columns:
     if dropflag:
         del fixdata[c]
         dropped[c]=(u,h)
-    
-fixdata.to_csv('surveydata_fixed_minfreq%d.csv'%min_freq,index=False)         
+
+fixdata.to_csv(os.path.join(derived_dir,'surveydata_fixed_minfreq%d.csv'%min_freq),index=False)

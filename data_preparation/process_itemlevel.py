@@ -11,14 +11,17 @@ import json
 sys.path.append('../utils')
 
 from utils import get_info
-dataset='Discovery_9-26-16'
 basedir=get_info('base_directory')
+dataset=get_info('dataset')
+print('using dataset:',dataset)
 datadir=os.path.join(basedir,'data/%s'%dataset)
 outdir=os.path.join(basedir,'data/Derived_Data/%s'%dataset)
 if not os.path.exists(outdir):
     os.mkdir(outdir)
 
 survey_longnames={'eating_survey':'Eating survey',
+                  'selection_optimization_compensation_survey':'Selection-Optimization-Compensation survey',
+                  'sensation_seeking_survey':'Sensation seeking survey',
                   'erq_survey':'Emotion regulation questionnaire',
                   'impulsive_venture_survey':"I7 impulsiveness and venturesomeness survey",
                   'upps_impulsivity_survey':'UPPS+P',
@@ -60,7 +63,9 @@ survey_termurls={'erq_survey':"http://www.cognitiveatlas.org/term/id/trm_56bbead
                 'ten_item_personality_survey':"http://www.cognitiveatlas.org/term/id/trm_56a919a478935",
                 'dospert_rt_survey':"http://www.cognitiveatlas.org/term/id/trm_5696abecf2569",
                 'dickman_survey':"http://www.cognitiveatlas.org/term/id/trm_55a6a95f66508",
-                'mpq_control_survey':"http://www.cognitiveatlas.org/term/id/trm_55a6aa62c54f8"}
+                'mpq_control_survey':"http://www.cognitiveatlas.org/term/id/trm_55a6aa62c54f8",
+                'sensation_seeking_survey':'',
+                'selection_optimization_compensation_survey':''}
 
 
 def get_data(datadir=datadir):

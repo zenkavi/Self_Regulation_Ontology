@@ -6,7 +6,8 @@ from metadata_utils import write_metadata,metadata_reverse_scale
 
 from utils import get_info
 
-dataset='Discovery_9-26-16'
+dataset=get_info('dataset')
+print('using dataset:',dataset)
 basedir=get_info('base_directory')
 datadir=os.path.join(basedir,'Data/%s'%dataset)
 outdir=os.path.join(basedir,'Data/Derived_Data/%s'%dataset)

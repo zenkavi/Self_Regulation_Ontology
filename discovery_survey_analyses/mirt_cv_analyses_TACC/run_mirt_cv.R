@@ -10,9 +10,8 @@ ncomponents=2
   ncomponents=as.integer(args[1])
 }
 
-d=read.csv('surveydata_fixed_minfreq8.csv')
+d=read.csv('../../Data/Derived_Data/Discovery_9-26-16/surveydata_fixed_minfreq20.csv')
 d$worker=NULL
-#d=read.csv('LA2K_qdata.csv')
 nsubs=dim(d)[1]
 nfolds=2
 for (runnum in 1:10){
@@ -23,10 +22,10 @@ good_cv=FALSE
 while (!good_cv) {
   cvidx=kronecker(array(1,nsubs),c(1:nfolds))
   cvidx=sample(cvidx[1:nsubs])
-  respcats=apply(d[cvidx==1,], 2, function(x) length(unique(x))) 
+  respcats=apply(d[cvidx==1,], 2, function(x) length(unique(x)))
   good_cv=TRUE
   for (i in 2:nfolds){
-    tstresp=apply(d[cvidx==i,], 2, function(x) length(unique(x))) 
+    tstresp=apply(d[cvidx==i,], 2, function(x) length(unique(x)))
     if (sum(tstresp==respcats)!=length(respcats)) {good_cv=FALSE}
   }
   ctr=ctr+1
@@ -38,7 +37,8 @@ ll=array(0,nfolds)
 for (cvfold in 1:nfolds){
   train_data=d[cvidx!=cvfold,]
   test_data=d[cvidx==cvfold,]
-  m=mirt(train_data,ncomponents,technical=list(MAXQUAD=100000),method='MHRM',verbose=FALSE)
+  m=mirt(train_data,ncomponents,SE=TRUE,TOL=0.01,technical=list(MHRM_SE_draws=5000,MAXQUAD=100000,NCYCLES=10000),verbose=verbosearg,method='MHRM',itemtype=modeltype)
+
   sv <- mod2values(m)
   sv$est <- FALSE #fix starting values to last model
   mod2 <- mirt(test_data, ncomponents, pars = sv)

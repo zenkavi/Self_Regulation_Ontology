@@ -79,3 +79,28 @@ def load_metadata(variable,basedir):
     with open(os.path.join(basedir,'%s.json'%variable)) as outfile:
             metadata=json.load(outfile)
     return metadata
+
+
+def get_single_dataset(dataset,survey):
+    basedir=get_info('base_directory')
+    infile=os.path.join(basedir,'data/Derived_Data/%s/surveydata/%s.tsv'%(dataset,survey))
+    print(infile)
+    assert os.path.exists(infile)
+    if survey.find('ordinal')>-1:
+        survey=survey.replace('_ordinal','')
+    mdfile=os.path.join(basedir,'data/Derived_Data/%s/metadata/%s.json'%(dataset,survey))
+    print(mdfile)
+    assert os.path.exists(mdfile)
+    data=pandas.read_csv(infile,index_col=0,sep='\t')
+    metadata=load_metadata(survey,os.path.join(basedir,
+        'data/Derived_Data/%s/metadata'%dataset))
+    return data,metadata
+
+def get_behav_data(dataset,use_EZ=False):
+    basedir=get_info('base_directory')
+    if use_EZ:
+        datafile=os.path.join(basedir,'Data',dataset,'meaningful_variables.csv')
+    else:
+        datafile=os.path.join(basedir,'Data',dataset,'meaningful_variables_noEZ_contrasts.csv')
+    d=pandas.read_csv(datafile,index_col=0)
+    return d
