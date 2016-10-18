@@ -8,7 +8,7 @@ import pandas as pd
 import sys
 
 sys.path.append('../utils')
-from data_preparation_utils import anonymize_data, calc_trial_order, download_data, get_bonuses, get_pay,  remove_failed_subjects
+from data_preparation_utils import anonymize_data, calc_trial_order, convert_date, download_data, get_bonuses, get_pay,  remove_failed_subjects
 from utils import get_info
 
 # Fix Python 2.x.
@@ -71,6 +71,7 @@ if job in ['extras', 'all']:
     (data.groupby('worker_id').count().finishtime).to_json(path.join(data_dir,  + 'worker_counts.json'))
     
     # add a few extras
+    convert_date(data)
     bonuses = get_bonuses(data)
     calc_time_taken(data)
     get_post_task_responses(data)   
