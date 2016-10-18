@@ -1,4 +1,20 @@
-install.packages(c('caret', 'e1071', 'jsonlite'), repos = 'http://cran.us.r-project.org')
+pkgTest <- function(x)
+  {
+    if (!require(x,character.only = TRUE))
+    {
+      install.packages(x,dep=TRUE,repos="http://cran.rstudio.com")
+    }
+    if (!require(x,character.only = TRUE))
+    {
+        source("http://bioconductor.org/biocLite.R")
+        biocLite(x)
+    }
+        if(!require(x,character.only = TRUE)) stop("Package not available from CRAN or bioconductor - something must be wrong")
+  }
+
+pkgTest('e1071')
+pkgTest('caret')
+pkgTest('jsonlite')
 library(e1071)
 library(caret)
 library(jsonlite)
