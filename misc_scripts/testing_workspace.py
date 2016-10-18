@@ -78,4 +78,3 @@ sns.plt.tick_params(labelsize = 20)
 DV_df, valence_df = extract_DVs(discovery_data, use_group_fun = False)
 DV_df.to_json(path.join(local_dir, 'mturk_discovery_DV.json'))
 valence_df.to_json(path.join(local_dir, 'mturk_discovery_DV_valence.json'))
-

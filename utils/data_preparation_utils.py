@@ -1,6 +1,7 @@
 '''
 Utility functions for the ontology project
 '''
+from datetime import datetime
 from expanalysis.experiments.processing import extract_row, extract_experiment
 from expanalysis.results import Result
 from expanalysis.experiments.utils import remove_duplicates, result_filter
@@ -71,6 +72,10 @@ def check_timing(df):
     errors = [df[abs(df['timing_error']) < 500]['timing_error'].mean(), df[df['timing_error'] < 500]['timing_error'].max()]
     return errors
 
+def convert_date(data):
+    new_date = data.loc[:,'finishtime'].map(lambda date: datetime.strptime(date[:-8],'%Y-%m-%dT%H:%M:%S'))
+    data.loc[:,'finishtime'] = new_date
+    
 def convert_item_names(to_convert):
     '''Convert array of variable names or columns/index of a dataframe. Assumes that all values either
     come from short of long variable names. If a dataframe is passed, variable conversion
