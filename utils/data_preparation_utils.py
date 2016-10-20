@@ -442,12 +442,12 @@ def remove_failed_subjects(data):
     return failed_data
     
 def save_task_data(data_loc, data):
-    path = data_loc + 'Individual_Measures/'
+    path = os.path.join(data_loc,'Individual_Measures')
     if not os.path.exists(path):
         os.makedirs(path)
     for exp_id in data.experiment_exp_id.unique():
         print('Saving %s...' % exp_id)
-        extract_experiment(data,exp_id).to_csv(path.join(path, exp_id + '.csv'))
+        extract_experiment(data,exp_id).to_csv(os.path.join(path, exp_id + '.csv'))
     
     
     

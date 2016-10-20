@@ -16,11 +16,30 @@ def set_discovery_sample(n, discovery_n, seed = None):
     sample = ['discovery']*discovery_n + ['validation']*(n-discovery_n)
     np.random.shuffle(sample)
     return sample
+
     
 seed = 1960
+
+#set discovery sample
 n = 500
 discovery_n = 200
 subjects = ['s' + str(i).zfill(3) for i in range(1,n+1)]
 subject_order = set_discovery_sample(n, discovery_n, seed)
 subject_assignment_df = pd.DataFrame({'dataset': subject_order}, index = subjects)
 subject_assignment_df.to_csv('../subject_assignment.csv')
+
+#define test-retest sample function
+
+def get_testretest_order(n, seed = seed):
+    """
+    :n: total size of sample
+    :discovery_n: number of discovery subjects
+    :param seed: if set, use as the seed for randomization
+    :return array: array specifying which subjects, in order, are discovery/validation
+    """
+    np.random.seed(seed)
+    order = np.random.permutation(range(0,200))
+    return order
+
+
+    

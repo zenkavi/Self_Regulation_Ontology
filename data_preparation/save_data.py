@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import sys
 sys.path.append('../utils')
-from data_preparation_utils import convert_var_names, drop_vars, get_items
+from data_preparation_utils import convert_var_names, drop_vars, get_items, save_task_data
 from utils import get_info
 
 #******************************
@@ -53,7 +53,7 @@ for data,directory in [(discovery_data, discovery_directory), (failed_data, fail
 
    
 # save Individual Measures
-# save_task_data(path.join(local_dir,'discovery_' + date), data)
+save_task_data(path.join(local_dir,'Discovery_' + date), discovery_data)
 
 
 # ************************************

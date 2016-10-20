@@ -15,7 +15,7 @@ from plot_utils import dendroheatmap
 from utils import get_behav_data
 
 # get dependent variables
-DV_df = get_behav_data('Discovery_10-11-2016', use_EZ = True)
+DV_df = get_behav_data('Discovery_10-14-2016', use_EZ = True)
     
 # ************************************
 # ************ Imputation *******************
