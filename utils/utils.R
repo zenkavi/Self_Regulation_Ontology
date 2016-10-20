@@ -1,4 +1,20 @@
-install.packages(c('caret', 'e1071', 'jsonlite'), repos = 'http://cran.us.r-project.org')
+pkgTest <- function(x)
+  {
+    if (!require(x,character.only = TRUE))
+    {
+      install.packages(x,dep=TRUE,repos="http://cran.rstudio.com")
+    }
+    if (!require(x,character.only = TRUE))
+    {
+        source("http://bioconductor.org/biocLite.R")
+        biocLite(x)
+    }
+        if(!require(x,character.only = TRUE)) stop("Package not available from CRAN or bioconductor - something must be wrong")
+  }
+
+pkgTest('e1071')
+pkgTest('caret')
+pkgTest('jsonlite')
 library(e1071)
 library(caret)
 library(jsonlite)
@@ -11,10 +27,10 @@ print_confusion_matrix <- function(y_true, y_pred){
 #Note difference in date notation!
 #Returns df with dv's for tasks (as opposed to surveys)
 #use_EZ=FALSE reads in data file without diffusion contrasts
-get_behav_data <- function(dataset, use_EZ=FALSE){
+get_behav_data <- function(dataset, use_EZ=TRUE){
   basedir <- get_info('base_directory')
   if(use_EZ==T){
-    datafile <- paste0(basedir, 'Data/', dataset, '/meaningful_variables_EZ_contrasts.csv')
+    datafile <- paste0(basedir, 'Data/', dataset, '/meaningful_variables.csv')
   }
   else {
     datafile <- paste0(basedir, 'Data/', dataset, '/meaningful_variables_noEZ_contrasts.csv')
