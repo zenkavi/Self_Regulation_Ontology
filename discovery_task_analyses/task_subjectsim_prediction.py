@@ -6,6 +6,10 @@ assess the effect of dropping a particular task on the similarity across subject
 import os,glob,sys,itertools
 import numpy,pandas
 import json
+from joblib import Parallel, delayed
+import multiprocessing
+
+num_cores = multiprocessing.cpu_count()
 
 from sklearn.preprocessing import scale
 from sklearn.decomposition import FactorAnalysis
@@ -39,13 +43,28 @@ allcombs=[i for i in itertools.combinations(range(32),8)]
 
 cc=numpy.zeros(len(allcombs))
 chosen_tasks={}
-for x,ct in enumerate(allcombs):
-        chosen_vars=[]
-        for i in ct:
-            vars=[j for j in range(len(tasknames)) if tasknames[j].split('.')[0]==tasks[i]]
-            chosen_vars+=vars
-            #print([tasknames[t] for t in vars])
 
-        chosen_data=data.ix[:,chosen_vars]
-        subcorr_subset=numpy.corrcoef(chosen_data.values)[numpy.triu_indices(nsubs,1)]
-        cc[x]=numpy.corrcoef(subcorr,subcorr_subset)[0,1]
+def get_subset_corr(x,ct,data):
+    tasknames=[i.split('.')[0] for i in data.columns]
+    tasks=list(set(tasknames))
+    chosen_vars=[]
+    for i in ct:
+        vars=[j for j in range(len(tasknames)) if tasknames[j].split('.')[0]==tasks[i]]
+        chosen_vars+=vars
+
+    chosen_data=data.ix[:,chosen_vars]
+    subcorr_subset=numpy.corrcoef(chosen_data.values)[numpy.triu_indices(nsubs,1)]
+    return(numpy.corrcoef(subcorr,subcorr_subset)[0,1])
+
+use_parallel=True
+num_cores=2
+if use_parallel:
+    cc = Parallel(n_jobs=num_cores)(delayed(get_subset_corr)(x,ct,data) for x,ct in enumerate(allcombs))
+
+else:
+    for x,ct in enumerate(allcombs):
+        cc[x]=get_subset_corr(x,ct,data)
+        if x>4:
+            break
+
+numpy.save('cc.npy',cc)
