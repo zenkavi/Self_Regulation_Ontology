@@ -3,7 +3,7 @@ assess the effect of dropping a particular task on the similarity across subject
 """
 
 
-import os,glob,sys
+import os,glob,sys,itertools
 import numpy,pandas
 import json
 
@@ -35,14 +35,12 @@ ntasks=8 # number of tasks to select - later include time
 
 tasknums=[i for i in range(len(tasks))]
 
-nruns=100000
-cc=numpy.zeros((len(tasks),nruns))
+allcombs=[i for i in itertools.combinations(range(32),8)]
+
+cc=numpy.zeros(len(allcombs))
 chosen_tasks={}
-for ntasks in range(2,len(tasks)):
-    for x in range(nruns):
-        numpy.random.shuffle(tasknums)
+for x,ct in enumerate(allcombs):
         chosen_vars=[]
-        ct=tasknums[:ntasks]
         for i in ct:
             vars=[j for j in range(len(tasknames)) if tasknames[j].split('.')[0]==tasks[i]]
             chosen_vars+=vars
@@ -50,10 +48,4 @@ for ntasks in range(2,len(tasks)):
 
         chosen_data=data.ix[:,chosen_vars]
         subcorr_subset=numpy.corrcoef(chosen_data.values)[numpy.triu_indices(nsubs,1)]
-        cc[ntasks,x]=numpy.corrcoef(subcorr,subcorr_subset)[0,1]
-        if x>1:
-            if cc[ntasks,x]>numpy.max(cc[ntasks,:(x-1)]):
-                chosen_tasks[ntasks]=tasknums[:ntasks]
-
-plt.plot(numpy.max(cc,1))
-plt.show()
+        cc[x]=numpy.corrcoef(subcorr,subcorr_subset)[0,1]
