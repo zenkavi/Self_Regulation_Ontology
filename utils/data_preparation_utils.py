@@ -440,6 +440,15 @@ def remove_failed_subjects(data):
     failed_data = data[data['worker_id'].isin(failed_workers)]
     data.drop(failed_data.index, inplace = True)
     return failed_data
+
+def remove_outliers(data):
+    quantiles = data.apply(lambda x: x.quantile([.25,.5,.75])).T
+    lowlimit = np.array(quantiles.iloc[:,1] - 3*(quantiles.iloc[:,1] - quantiles.iloc[:,0]))
+    highlimit = np.array(quantiles.iloc[:,1] + 3*(quantiles.iloc[:,2] - quantiles.iloc[:,1]))
+    data_mat = data.as_matrix()
+    data_mat[np.logical_or((data_mat<lowlimit), (data_mat>highlimit))] = np.nan
+    return pd.DataFrame(data_mat,index = data.index, columns = data.columns)
+    
     
 def save_task_data(data_loc, data):
     path = os.path.join(data_loc,'Individual_Measures')

@@ -1,3 +1,12 @@
+#get utils
+import sys
+sys.path.append('../utils')
+from graph_utils import calc_connectivity_mat, community_reorder, get_subgraph, get_visual_style, Graph_Analysis
+from graph_utils import plot_graph, print_community_members, threshold_proportional_sign
+from plot_utils import dendroheatmap
+from r_to_py_utils import missForest
+from utils import get_behav_data
+
 import bct
 from collections import OrderedDict as odict
 import fancyimpute
@@ -6,13 +15,6 @@ import numpy as np
 from os import path
 import pandas as pd
 import seaborn as sns
-import sys
-
-sys.path.append('../utils')
-from graph_utils import calc_connectivity_mat, community_reorder, get_subgraph, get_visual_style, Graph_Analysis
-from graph_utils import plot_graph, print_community_members, threshold_proportional_sign
-from plot_utils import dendroheatmap
-from utils import get_behav_data
 
 # get dependent variables
 DV_df = get_behav_data('Discovery_10-14-2016', use_EZ = True)
@@ -20,24 +22,25 @@ DV_df = get_behav_data('Discovery_10-14-2016', use_EZ = True)
 # ************************************
 # ************ Imputation *******************
 # ************************************
-DV_df_complete = fancyimpute.SoftImpute().complete(DV_df)
-DV_df_complete = pd.DataFrame(DV_df_complete, index = DV_df.index, columns = DV_df.columns)
+DV_df_imputed = missForest(DV_df)
 
 # ************************************
 # ************ Connectivity Matrix *******************
 # ************************************
+survey_columns = DV_df_imputed.filter(regex = 'survey').columns
+task_data = DV_df_imputed.drop(survey_columns, axis = 1)
 
-spearman_connectivity = calc_connectivity_mat(DV_df_complete, edge_metric = 'spearman')
-distance_connectivity = calc_connectivity_mat(DV_df_complete, edge_metric = 'distance')
+graph_data = task_data
+spearman_connectivity = calc_connectivity_mat(graph_data, edge_metric = 'spearman')
+distance_connectivity = calc_connectivity_mat(graph_data, edge_metric = 'distance')
 
 
 # ************************************
 # ********* Heatmaps *******************
 # ************************************
 # dendrogram heatmap
-plot_df = DV_df.corr(method = 'spearman')
 plot_df.columns = [' '.join(x.split('_')) for x in  plot_df.columns]
-fig = dendroheatmap(plot_df.corr(), labels = True)
+fig = dendroheatmap(spearman_connectivity, labels = True)
 
 
 # ************************************
