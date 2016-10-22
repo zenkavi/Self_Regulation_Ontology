@@ -180,6 +180,7 @@ def drop_vars(data, drop_vars = []):
                     "\.EZ_drift_incongruent$", "\.EZ_thresh_incongruent$", "\.EZ_non_decision_incongruent$", # ANT, local_global, simon, stroop
                     ".first_order", # bis11
                     "\.EZ_drift_con$", "\.EZ_drift_neg$", "\.EZ_thresh_con$", "\.EZ_thresh_neg$", "\.EZ_non_decision_con$", "\.EZ_non_decision_neg$", # directed forgetting
+                    "discount_rate", # kirby and discount titrate
                     "\.EZ_drift_AY", "\.EZ_drift_BX", "\.EZ_drift_BY", "\.EZ_thresh_AY", "\.EZ_thresh_BX", "\.EZ_thresh_BY", # DPX
                     "\.EZ_non_decision_AX", "\.EZ_non_decision_BX", "\.EZ_non_decision_BY", # DPX continued
                     "\.risky_choices$", # holt and laury
@@ -190,6 +191,7 @@ def drop_vars(data, drop_vars = []):
                     "letter.EZ_drift_stay$", "letter.EZ_thresh_stay$", "letter.EZ_non_decision_stay$", # local global letter continued
                     "letter.EZ_drift_switch$", "letter.EZ_thresh_switch$", "letter.EZ_non_decision_switch$", # local global letter continued
                     "\.EZ_drift_rec_", "\.EZ_drift_xrec_", "\.EZ_thresh_rec_", "\.EZ_thresh_xrec_", "\.EZ_non_decision_rec_", "\.EZ_non_decision_xrec_", # recent probes
+                    "DDS", "DNN", "DSD", "SDD", "SSS", "DDD", "stimulus_interference_rt", # shape matching
                      "go_acc","stop_acc","go_rt_error","go_rt_std_error", "go_rt","go_rt_std", # stop signal
                      "stop_rt_error","stop_rt_error_std","SS_delay", "^stop_signal.SSRT$", # stop signal continue
                      "\.EZ_drift_.*_switch", "\.EZ_thresh_.*_switch", "\.EZ_non_decision_.*_switch", "\.EZ_drift_task_stay", "\.EZ_thresh_task_stay", "\.EZ_non_decision_task_stay", # three by two
@@ -441,12 +443,12 @@ def remove_failed_subjects(data):
     data.drop(failed_data.index, inplace = True)
     return failed_data
 
-def remove_outliers(data, quantile_range = 1.5):
+def remove_outliers(data, quantile_range = 2.5):
     '''Removes outliers more than 1.5IQR below Q1 or above Q3
     '''
     quantiles = data.apply(lambda x: x.quantile([.25,.5,.75])).T
-    lowlimit = np.array(quantiles.iloc[:,0] - quantile_range*(quantiles.iloc[:,2] - quantiles.iloc[:,0]))
-    highlimit = np.array(quantiles.iloc[:,2] + quantile_range*(quantiles.iloc[:,2] - quantiles.iloc[:,0]))
+    lowlimit = np.array(quantiles.iloc[:,1] - quantile_range*(quantiles.iloc[:,2] - quantiles.iloc[:,0]))
+    highlimit = np.array(quantiles.iloc[:,1] + quantile_range*(quantiles.iloc[:,2] - quantiles.iloc[:,0]))
     data_mat = data.as_matrix()
     data_mat[np.logical_or((data_mat<lowlimit), (data_mat>highlimit))] = np.nan
     return pd.DataFrame(data_mat,index = data.index, columns = data.columns)
