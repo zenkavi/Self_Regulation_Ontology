@@ -13,7 +13,7 @@ def dendroheatmap(df, labels = True):
     """
     #clustering
     
-    row_clusters = linkage(df.values, method='complete', metric='euclidean')    
+    row_clusters = linkage(df.values, method='ward', metric='euclidean')    
     #dendrogram
     row_dendr = dendrogram(row_clusters, labels=df.columns, no_plot = True)
     df_rowclust = df.ix[row_dendr['leaves'],row_dendr['leaves']]
@@ -37,7 +37,7 @@ def dendroheatmap_left(df, labels = True):
     """
     #clustering
     
-    row_clusters = linkage(df.values, method='complete', metric='euclidean')    
+    row_clusters = linkage(df.values, method='ward', metric='euclidean')    
     #dendrogram
     row_dendr = dendrogram(row_clusters, labels=df.columns, no_plot = True)
     df_rowclust = df.ix[row_dendr['leaves'],row_dendr['leaves']]
