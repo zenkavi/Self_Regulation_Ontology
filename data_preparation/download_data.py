@@ -97,9 +97,9 @@ if job in ['post', 'all']:
         print('Finished loading raw data')
     
     #get subject assignment
-    subject_assignment = pd.read_csv('../subject_assignment.csv')
-    discovery_sample = list(subject_assignment.query('dataset == "discovery"').iloc[:,0])
-    validation_sample = list(subject_assignment.query('dataset == "validation"').iloc[:,0])
+    subject_assignment = pd.read_csv('samples/subject_assignment.csv', index_col = 0)
+    discovery_sample = list(subject_assignment.query('dataset == "discovery"').index)
+    validation_sample = list(subject_assignment.query('dataset == "validation"').index)
     extra_sample =  ['s' + str(i) for i in range(501,600)]
     
     # create dataframe to hold failed data

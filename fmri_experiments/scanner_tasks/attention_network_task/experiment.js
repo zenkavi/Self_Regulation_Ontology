@@ -127,7 +127,7 @@ var blocks = [block1_trials, block2_trials, block3_trials]
 /* Set up jsPsych blocks */
 /* ************************************ */
 /* define static blocks */
-var test_intro_block = {
+ var test_intro_block = {
 	type: 'poldrack-single-stim',
 	stimulus: '<div class = centerbox><div style = "font-size: 40px" class = center-text>Starting the test in 5 seconds. Get ready!</p></div>',
 	is_html: true,
@@ -268,8 +268,8 @@ var double_cue = {
 
 /* set up ANT experiment */
 var attention_network_task_experiment = [];
-setup_fmri_intro(attention_network_task_experiment, choices)
 attention_network_task_experiment.push(instructions_block);
+setup_fmri_intro(attention_network_task_experiment, choices)
 
 /* Set up ANT main task */
 var trial_num = 0

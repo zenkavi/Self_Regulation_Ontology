@@ -17,20 +17,18 @@ import pandas as pd
 import seaborn as sns
 
 # get dependent variables
-DV_df = get_behav_data('Discovery_10-14-2016', use_EZ = True)
+DV_df = get_behav_data('Discovery_10-21-2016', use_EZ = True)
     
 # ************************************
 # ************ Imputation *******************
 # ************************************
-DV_df_imputed = missForest(DV_df)
+DV_df_imputed, error = missForest(DV_df)
 
 # ************************************
 # ************ Connectivity Matrix *******************
 # ************************************
-survey_columns = DV_df_imputed.filter(regex = 'survey').columns
-task_data = DV_df_imputed.drop(survey_columns, axis = 1)
+graph_data = DV_df_imputed
 
-graph_data = task_data
 spearman_connectivity = calc_connectivity_mat(graph_data, edge_metric = 'spearman')
 distance_connectivity = calc_connectivity_mat(graph_data, edge_metric = 'distance')
 
@@ -61,28 +59,16 @@ def get_fully_connected_threshold(connectivity_matrix, initial_value = .1):
 
 
 
-# threshold positive graph
-t = .5
-plot_t = get_fully_connected_threshold(spearman_connectivity, .05)
-t_f = bct.threshold_proportional
-c_a = bct.community_louvain
-
-G_w, connectivity_adj, threshold_visual_style = Graph_Analysis(spearman_connectivity, community_alg = c_a, 
-                                                    thresh_func = t_f, threshold = t, plot_threshold = plot_t,
-                                                     print_options = {'lookup': {}}, 
-                                                    plot_options = {'inline': False})
-
 # distance graph
 t = 1
 plot_t = get_fully_connected_threshold(distance_connectivity, .05)
 t_f = bct.threshold_proportional
 c_a = lambda x: bct.community_louvain(x, gamma = 1)
 
-G_w, connectivity_adj, visual_style = Graph_Analysis(distance_connectivity, community_alg = c_a, thresh_func = t_f,
+G_distance, connectivity_adj, visual_style = Graph_Analysis(distance_connectivity, community_alg = c_a, thresh_func = t_f,
                                                       threshold = t, plot_threshold = plot_t,
                                                      print_options = {'lookup': {}}, 
                                                     plot_options = {'inline': False})
-
 
 # signed graph
 t = 1
@@ -90,7 +76,7 @@ t_f = threshold_proportional_sign
 c_a = bct.modularity_louvain_und_sign                                               
 
 # circle layout                                                  
-G_w, connectivity_mat, visual_style = Graph_Analysis(spearman_connectivity, community_alg = c_a, thresh_func = t_f,
+G_spearman, connectivity_mat, visual_style = Graph_Analysis(spearman_connectivity, community_alg = c_a, thresh_func = t_f,
                                                      reorder = True, threshold = t,  layout = 'circle', 
                                                      plot_threshold = plot_t, print_options = {'lookup': {}}, 
                                                     plot_options = {'inline': False})
