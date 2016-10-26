@@ -10,6 +10,7 @@ from joblib import Parallel, delayed
 import multiprocessing
 
 num_cores = multiprocessing.cpu_count()
+print('using %d cores'%num_cores)
 
 from sklearn.preprocessing import scale
 from sklearn.decomposition import FactorAnalysis
@@ -34,6 +35,7 @@ subcorr=numpy.corrcoef(cdata)[numpy.triu_indices(nsubs,1)]
 # get task names and indicator
 tasknames=[i.split('.')[0] for i in data.columns]
 tasks=list(set(tasknames))
+tasks.sort()
 
 ntasks=8 # number of tasks to select - later include time
 
@@ -47,6 +49,7 @@ chosen_tasks={}
 def get_subset_corr(x,ct,data):
     tasknames=[i.split('.')[0] for i in data.columns]
     tasks=list(set(tasknames))
+    tasks.sort()
     chosen_vars=[]
     for i in ct:
         vars=[j for j in range(len(tasknames)) if tasknames[j].split('.')[0]==tasks[i]]
