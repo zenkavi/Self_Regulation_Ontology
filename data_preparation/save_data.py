@@ -66,7 +66,7 @@ DV_df = pd.read_json(path.join(local_dir,'mturk_discovery_DV.json'))
 valence_df = pd.read_json(path.join(local_dir,'mturk_discovery_DV_valence.json'))
 
 #flip negative signed valence DVs
-flip_df = valence_df.replace(to_replace ={'Pos': 1, 'NA': 1, np.nan: 1, 'Neg': -1}).mean()
+flip_df = np.floor(valence_df.replace(to_replace ={'Pos': 1, 'NA': 1, np.nan: 1, 'Neg': -1}).mean())
 for c in DV_df.columns:
     try:
         DV_df.loc[:,c] = DV_df.loc[:,c] * flip_df.loc[c]
@@ -74,7 +74,7 @@ for c in DV_df.columns:
         continue
 #save valence
 flip_df.to_csv(path.join(directory, 'DV_valence.csv'))
-   
+
 #drop na columns
 DV_df.dropna(axis = 1, how = 'all', inplace = True)
 # drop other columns of no interest
