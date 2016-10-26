@@ -116,7 +116,7 @@ def convert_var_names(to_convert):
     '''
     assert(isinstance(to_convert, (list, np.ndarray, pd.DataFrame))), \
         'Object to convert must be a list, numpy array or pandas DataFrame'
-    var_lookup = pd.Series.from_csv('../data_preparation/variable_name_lookup.csv')
+    var_lookup = pd.Series.from_csv('../references/variable_name_lookup.csv')
     inverse_lookup = pd.Series(index = var_lookup.values, data = var_lookup.index)
     
     if type(to_convert) == pd.DataFrame:

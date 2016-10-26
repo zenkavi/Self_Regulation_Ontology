@@ -14,11 +14,7 @@ def missForest(data):
     imputed_df = pd.DataFrame(np.matrix(data_complete).T, index = data.index, columns = data.columns)
     return imputed_df, error
     
-    
-    import readline
-import rpy2.robjects as robjects
-from rpy2.robjects.packages import importr
-from rpy2.robjects import pandas2ri
+
 
 """
 not finished

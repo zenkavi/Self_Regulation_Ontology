@@ -66,7 +66,7 @@ DV_df = pd.read_json(path.join(local_dir,'mturk_discovery_DV.json'))
 valence_df = pd.read_json(path.join(local_dir,'mturk_discovery_DV_valence.json'))
 
 #flip negative signed valence DVs
-flip_df = valence_df.replace(to_replace ={'Pos': 1, 'NA': 1, np.nan: 1, 'Neg': -1}).mean()
+flip_df = np.floor(valence_df.replace(to_replace ={'Pos': 1, 'NA': 1, np.nan: 1, 'Neg': -1}).mean())
 for c in DV_df.columns:
     try:
         DV_df.loc[:,c] = DV_df.loc[:,c] * flip_df.loc[c]
@@ -74,7 +74,7 @@ for c in DV_df.columns:
         continue
 #save valence
 flip_df.to_csv(path.join(directory, 'DV_valence.csv'))
-   
+
 #drop na columns
 DV_df.dropna(axis = 1, how = 'all', inplace = True)
 # drop other columns of no interest
@@ -84,7 +84,7 @@ subset.to_csv(path.join(directory, 'meaningful_variables_exhaustive.csv'))
 noEZ_subset = drop_vars(subset, drop_vars = ['_EZ'])
 noEZ_subset.to_csv(path.join(directory, 'meaningful_variables_noEZ_contrasts.csv'))
 # make subset without acc/rt vars
-EZ_subset = drop_vars(subset, drop_vars = ['_acc', '_rt'])
+EZ_subset = drop_vars(subset, drop_vars = ['_acc', '\.(?!simple_rt)(.*_rt)'])
 EZ_subset.to_csv(path.join(directory, 'meaningful_variables_EZ_contrasts.csv'))
 # clean and save files that are selected for use
 selected_variables = EZ_subset
@@ -93,7 +93,7 @@ selected_variables_clean = remove_outliers(selected_variables)
 selected_variables_clean.to_csv(path.join(directory, 'meaningful_variables_clean_cutoff2.50IQR.csv'))
 
 #task data
-task_data = drop_vars(selected_variables, ['survey'])
+task_data = drop_vars(selected_variables, ['^(?!holt)^(?!cognitive_reflection)(.*survey)'])
 task_data.to_csv(path.join(directory, 'taskdata.csv'))
 task_data_clean = remove_outliers(task_data)
 task_data_clean.to_csv(path.join(directory, 'taskdata_clean_cutoff2.50IQR.csv'))
