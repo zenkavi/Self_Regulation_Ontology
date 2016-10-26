@@ -60,7 +60,6 @@ def get_subset_corr(x,ct,data):
     return(numpy.corrcoef(subcorr,subcorr_subset)[0,1])
 
 use_parallel=True
-num_cores=2
 if use_parallel:
     cc = Parallel(n_jobs=num_cores)(delayed(get_subset_corr)(x,ct,data) for x,ct in enumerate(allcombs))
 
