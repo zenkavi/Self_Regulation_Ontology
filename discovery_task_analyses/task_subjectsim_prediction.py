@@ -55,8 +55,9 @@ def get_subset_corr(x,ct,data):
         vars=[j for j in range(len(tasknames)) if tasknames[j].split('.')[0]==tasks[i]]
         chosen_vars+=vars
 
-    chosen_data=data.ix[:,chosen_vars]
-    subcorr_subset=numpy.corrcoef(chosen_data.values)[numpy.triu_indices(nsubs,1)]
+    chosen_data=data.ix[:,chosen_vars].values
+    chosen_data=scale(chosen_data)
+    subcorr_subset=numpy.corrcoef(chosen_data)[numpy.triu_indices(nsubs,1)]
     return(numpy.corrcoef(subcorr,subcorr_subset)[0,1])
 
 use_parallel=True
@@ -66,7 +67,7 @@ if use_parallel:
 
 else:
     for x,ct in enumerate(allcombs):
-        cc[x]=get_subset_corr(x,ct,data)
+        cc[x]=get_subset_corr(x,ct,cdata)
         if x>4:
             break
 
