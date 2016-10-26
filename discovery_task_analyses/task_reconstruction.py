@@ -11,7 +11,9 @@ import multiprocessing
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import StandardScaler
+from sklearn.kernel_ridge import KernelRidge
 
+use_kernel_ridge=True
 num_cores = multiprocessing.cpu_count()
 print('using %d cores'%num_cores)
 
@@ -60,7 +62,10 @@ def get_reconstruction_error(x,ct,data):
     kf = KFold(n_splits=4,shuffle=True)
     fulldata=data.values
     #subdata=data.ix[:,chosen_vars].values
-    linreg=LinearRegression()
+    if use_kernel_ridge:
+        linreg=KernelRidge(alpha=1)
+    else:
+       linreg=LinearRegression()
     scaler=StandardScaler()
     pred=numpy.zeros(fulldata.shape)
     for train, test in kf.split(fulldata):
@@ -84,5 +89,8 @@ else:
         cc[x]=get_reconstruction_error(x,ct,data)
         if x>4:
             break
-
-numpy.save('reconstruction_cc.npy',cc)
+if use_kernel_ridge:
+    krnote='kr_'
+else:
+    krnote='linreg_'
+numpy.save('reconstruction_%scc.npy'%krnote,cc)
