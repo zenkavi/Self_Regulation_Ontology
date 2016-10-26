@@ -1,5 +1,6 @@
 """
 assess the effect of dropping a particular task on the similarity across subjects
+computed over task and survey variables
 """
 
 
@@ -18,17 +19,27 @@ from sklearn import cross_validation
 
 # this is kludgey but it works
 sys.path.append('../utils')
-from utils import get_info,get_behav_data
+from utils import get_info,get_behav_data,get_survey_data
+from r_to_py_utils import missForest
 
 dataset=get_info('dataset')
 print('using dataset:',dataset)
 basedir=get_info('base_directory')
 derived_dir=os.path.join(basedir,'Data/Derived_Data/%s'%dataset)
 
+alldata=get_behav_data(dataset)
+surveydata=pandas.DataFrame()
+for k in alldata.columns:
+    if k.find('survey')>-1:
+        surveydata[k]=alldata[k]
 
 data=pandas.read_csv(os.path.join(derived_dir,'taskdata_clean_cutoff3.00IQR_imputed.csv'))
 
-cdata=scale(data.values)
+assert all(data.index == surveydata.index)
+
+alldata = surveydata.merge(data,'inner',right_index=True,left_index=True)
+alldata_imp=missForest(alldata)
+cdata=scale(alldata_imp[0].values)
 nsubs=data.shape[0]
 subcorr=numpy.corrcoef(cdata)[numpy.triu_indices(nsubs,1)]
 
@@ -66,8 +77,8 @@ if use_parallel:
 
 else:
     for x,ct in enumerate(allcombs):
-        cc[x]=get_subset_corr(x,ct,cdata)
+        cc[x]=get_subset_corr(x,ct,data)
         if x>4:
             break
 
-numpy.save('cc.npy',cc)
+numpy.save('cc_allvars.npy',cc)
