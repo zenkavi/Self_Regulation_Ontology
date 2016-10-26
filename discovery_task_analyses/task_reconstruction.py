@@ -12,8 +12,13 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.kernel_ridge import KernelRidge
+from sklearn.ensemble import RandomForestRegressor
 
-use_kernel_ridge=True
+if len(sys.argv)>1:
+   clf=sys.argv[1]
+   print('using ',clf)
+else:
+    clf='linear'
 num_cores = multiprocessing.cpu_count()
 print('using %d cores'%num_cores)
 
@@ -49,6 +54,7 @@ tasknums=[i for i in range(len(tasks))]
 allcombs=[i for i in itertools.combinations(range(32),8)]
 
 cc=numpy.zeros(len(allcombs))
+sse=numpy.zeros(len(allcombs))
 chosen_tasks={}
 
 def get_reconstruction_error(x,ct,data):
@@ -59,11 +65,13 @@ def get_reconstruction_error(x,ct,data):
     for i in ct:
         vars=[j for j in range(len(tasknames)) if tasknames[j].split('.')[0]==tasks[i]]
         chosen_vars+=vars
-    kf = KFold(n_splits=4,shuffle=True)
+    kf = KFold(n_splits=8,shuffle=True)
     fulldata=data.values
     #subdata=data.ix[:,chosen_vars].values
-    if use_kernel_ridge:
+    if clf=='kridge': 
         linreg=KernelRidge(alpha=1)
+    elif clf=='rf':
+        linreg=RandomForestRegressor()
     else:
        linreg=LinearRegression()
     scaler=StandardScaler()
@@ -78,7 +86,9 @@ def get_reconstruction_error(x,ct,data):
         subdata_test=fulldata_test[:,chosen_vars]
         linreg.fit(subdata_train,fulldata_train)
         pred[test,:]=linreg.predict(subdata_test)
-    return(numpy.corrcoef(fulldata.ravel(),pred.ravel())[0,1])
+    cc=numpy.corrcoef(fulldata.ravel(),pred.ravel())[0,1]
+    sse=(fulldata.ravel()-pred.ravel())**2
+    return cc,sse
 
 use_parallel=True
 if use_parallel:
@@ -86,11 +96,8 @@ if use_parallel:
 
 else:
     for x,ct in enumerate(allcombs):
-        cc[x]=get_reconstruction_error(x,ct,data)
+        cc[x],sse[x]=get_reconstruction_error(x,ct,data)
         if x>4:
             break
-if use_kernel_ridge:
-    krnote='kr_'
-else:
-    krnote='linreg_'
-numpy.save('reconstruction_%scc.npy'%krnote,cc)
+numpy.save('reconstruction_%s_cc.npy'%clf,cc)
+numpy.save('reconstruction_%s_sse.npy'%clf,sse)
