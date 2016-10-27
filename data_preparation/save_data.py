@@ -49,7 +49,6 @@ for data,directory in [(discovery_data, discovery_directory), (failed_data, fail
     convert_var_names(subjectsxitems)
     assert np.max([len(name) for name in subjectsxitems.columns])<=8, \
         "Found column names longer than 8 characters in short version"
-    subjectsxitems.to_csv(path.join(directory, 'short_subject_x_items.csv'))
 
    
 # save Individual Measures
@@ -84,7 +83,7 @@ subset.to_csv(path.join(directory, 'meaningful_variables_exhaustive.csv'))
 noEZ_subset = drop_vars(subset, drop_vars = ['_EZ'])
 noEZ_subset.to_csv(path.join(directory, 'meaningful_variables_noEZ_contrasts.csv'))
 # make subset without acc/rt vars
-EZ_subset = drop_vars(subset, drop_vars = ['_acc', '\.(?!simple_rt)(.*_rt)'])
+EZ_subset = drop_vars(subset, drop_vars = ['_acc', '_rt'], saved_vars = ['simple_rt', 'dospert_rt_survey'])
 EZ_subset.to_csv(path.join(directory, 'meaningful_variables_EZ_contrasts.csv'))
 # clean and save files that are selected for use
 selected_variables = EZ_subset
@@ -93,7 +92,7 @@ selected_variables_clean = remove_outliers(selected_variables)
 selected_variables_clean.to_csv(path.join(directory, 'meaningful_variables_clean_cutoff2.50IQR.csv'))
 
 #task data
-task_data = drop_vars(selected_variables, ['^(?!holt)^(?!cognitive_reflection)(.*survey)'])
+task_data = drop_vars(selected_variables, ['survey'], saved_vars = ['holt','cognitive_reflection'])
 task_data.to_csv(path.join(directory, 'taskdata.csv'))
 task_data_clean = remove_outliers(task_data)
 task_data_clean.to_csv(path.join(directory, 'taskdata_clean_cutoff2.50IQR.csv'))

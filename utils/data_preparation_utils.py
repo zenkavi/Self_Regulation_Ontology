@@ -167,39 +167,51 @@ def download_data(data_loc, access_token = None, filters = None, battery = None,
     print('Finished downloading data. Time taken: ' + str(finish_time))
     return data                 
 
-def drop_vars(data, drop_vars = []):
+def drop_vars(data, drop_vars = [], saved_vars = []):
     if len(drop_vars) == 0:
-        # variables that are calculated without regar to their actual interest
+        # variables that are calculated without regard to their actual interest
         basic_vars = ["\.missed_percent$","\.acc$","\.avg_rt_error$","\.std_rt_error$","\.avg_rt$","\.std_rt$"]
+        #unnecessary ddm params
+        ddm_vars = ['^(attention|directed|dot_pattern|local_global|recent_probes|shape_matching|simon|stroop|threebytwo).*\.EZ_(drift|thresh|non_decision)$', # all tasks where DDM is calculated over a particular condition
+                    "network_task.EZ_(drift|thresh|non_decision)_congruent$",  # ANT
+                    "\.EZ_(drift|thresh|non_decision)_incongruent$", # ANT, local_global, simon, stroop
+                    "\.EZ_(drift|thresh|non_decision)_con$", "\.EZ_(drift|thresh|non_decision)_neg$",  # directed forgetting
+                    "\.EZ_(drift|thresh|non_decision)_AY", "\.EZ_(drift|thresh|non_decision)_BX", "\.EZ_(drift|thresh|non_decision)_BY", #DPX
+                    "letter.EZ_(drift|thresh|non_decision)_congruent$", # local global letter
+                    "letter.EZ_(drift|thresh|non_decision)_stay$",  # local global letter continued
+                    "letter.EZ_drift_switch$", "letter.EZ_thresh_switch$", "letter.EZ_non_decision_switch$", # local global letter continued
+                    "\.EZ_(drift|thresh|non_decision)_rec_", "\.EZ_(drift|thresh|non_decision)_xrec_", # recent probes
+                    "\.EZ_(drift|thresh|non_decision)_.*_switch", "\.EZ_(drift|thresh|non_decision)_task_stay" # three by two
+                    ]
         # variables that are of theoretical interest, but we aren't certain enough to include in 2nd stage analysis
         exploratory_vars = ["\.congruency_seq", "\.post_error_slowing$"]
         # task variables that are irrelevent to second stage analysis, either because they are correlated
         # with other DV's or are just of no interest. Each row is a task
         task_vars = ["demographics", # demographics
-                    "network_task.EZ_drift_congruent$", "network_task.EZ_thresh_congruent$", "network_task.EZ_non_decision_congruent$", # ANT
-                    "\.EZ_drift_incongruent$", "\.EZ_thresh_incongruent$", "\.EZ_non_decision_incongruent$", # ANT, local_global, simon, stroop
                     ".first_order", # bis11
-                    "\.EZ_drift_con$", "\.EZ_drift_neg$", "\.EZ_thresh_con$", "\.EZ_thresh_neg$", "\.EZ_non_decision_con$", "\.EZ_non_decision_neg$", # directed forgetting
                     "discount_rate", # kirby and discount titrate
-                    "\.EZ_drift_AY", "\.EZ_drift_BX", "\.EZ_drift_BY", "\.EZ_thresh_AY", "\.EZ_thresh_BX", "\.EZ_thresh_BY", # DPX
-                    "\.EZ_non_decision_AX", "\.EZ_non_decision_BX", "\.EZ_non_decision_BY", # DPX continued
-                    "\.risky_choices$", # holt and laury
+                    "\.risky_choices$", "\.number_of_switches", # holt and laury
+                    "boxes_opened$", # information sampling task
                     "_total_points$", # IST
                     "\.go_acc$", "\.nogo_acc$", "\.go_rt$", #go_nogo
                     "_large$", "_medium$", "_small$", "\.warnings$", "_notnow$", "_now$", #kirby and delay discounting
-                    "letter.EZ_drift_congruent$", "letter.EZ_thresh_congruent$", "letter.EZ_non_decision_congruent$", # local global letter
-                    "letter.EZ_drift_stay$", "letter.EZ_thresh_stay$", "letter.EZ_non_decision_stay$", # local global letter continued
-                    "letter.EZ_drift_switch$", "letter.EZ_thresh_switch$", "letter.EZ_non_decision_switch$", # local global letter continued
-                    "\.EZ_drift_rec_", "\.EZ_drift_xrec_", "\.EZ_thresh_rec_", "\.EZ_thresh_xrec_", "\.EZ_non_decision_rec_", "\.EZ_non_decision_xrec_", # recent probes
+                    "PRP_slowing", # PRP_two_choices
                     "DDS", "DNN", "DSD", "SDD", "SSS", "DDD", "stimulus_interference_rt", # shape matching
                      "go_acc","stop_acc","go_rt_error","go_rt_std_error", "go_rt","go_rt_std", # stop signal
                      "stop_rt_error","stop_rt_error_std","SS_delay", "^stop_signal.SSRT$", # stop signal continue
-                     "\.EZ_drift_.*_switch", "\.EZ_thresh_.*_switch", "\.EZ_non_decision_.*_switch", "\.EZ_drift_task_stay", "\.EZ_thresh_task_stay", "\.EZ_non_decision_task_stay", # three by two
+                     "num_correct", "weighted_performance_score", # tower of london
                      "sentiment_label" # writing task
                     ]
-        drop_vars = basic_vars + exploratory_vars + task_vars
+        drop_vars = basic_vars + exploratory_vars + task_vars + ddm_vars
     drop_vars = '|'.join(drop_vars)
-    return data.drop(data.filter(regex=drop_vars).columns, axis = 1)
+    if len(saved_vars) > 0 :
+        saved_vars = '|'.join(saved_vars)
+        saved_columns = data.filter(regex=saved_vars)
+        dropped_data =  data.drop(data.filter(regex=drop_vars).columns, axis = 1)
+        final_data = dropped_data.join(saved_columns).sort_index(axis = 1)
+    else:
+        final_data = data.drop(data.filter(regex=drop_vars).columns, axis = 1)
+    return final_data
     
 def get_bonuses(data):
     if 'bonus_zscore' not in data.columns:
