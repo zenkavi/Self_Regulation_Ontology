@@ -33,7 +33,7 @@ var cues = ['nocue', 'center', 'double', 'spatial']
 var current_trial = 0
 var exp_stage = 'test'
 var test_stimuli = []
-var choices = [66, 89]
+var choices = [89, 71]
 var path = '/static/experiments/attention_network_task/images/'
 var images = [path + 'right_arrow.png', path + 'left_arrow.png', path + 'no_arrow.png']
 //preload
@@ -47,7 +47,7 @@ for (l = 0; l < locations.length; l++) {
 			stimulus: '<div class = centerbox><div class = ANT_text>+</div></div><div class = ANT_' + loc +
 				'><img class = ANT_img src = ' + images[2] + '></img><img class = ANT_img src = ' + images[2] + '></img><img class = ANT_img src = ' + images[1] + '></img><img class = ANT_img src = ' + images[2] + '></img><img class = ANT_img src = ' + images[2] + '></img></div></div>',
 			data: {
-				correct_response: 37,
+				correct_response: 89,
 				flanker_middle_direction: 'left',
 				flanker_type: 'neutral',
 				flanker_location: loc,
@@ -58,7 +58,7 @@ for (l = 0; l < locations.length; l++) {
 			stimulus: '<div class = centerbox><div class = ANT_text>+</div></div><div class = ANT_' + loc +
 				'><img class = ANT_img src = ' + images[1] + '></img><img class = ANT_img src = ' + images[1] + '></img><img class = ANT_img src = ' + images[1] + '></img><img class = ANT_img src = ' + images[1] + '></img><img class = ANT_img src = ' + images[1] + '></img></div></div>',
 			data: {
-				correct_response: 37,
+				correct_response: 89,
 				flanker_middle_direction: 'left',
 				flanker_type: 'congruent',
 				flanker_location: loc,
@@ -69,7 +69,7 @@ for (l = 0; l < locations.length; l++) {
 			stimulus: '<div class = centerbox><div class = ANT_text>+</div></div><div class = ANT_' + loc +
 				'><img class = ANT_img src = ' + images[0] + '></img><img class = ANT_img src = ' + images[0] + '></img><img class = ANT_img src = ' + images[1] + '></img><img class = ANT_img src = ' + images[0] + '></img><img class = ANT_img src = ' + images[0] + '></img></div></div>',
 			data: {
-				correct_response: 37,
+				correct_response: 89,
 				flanker_middle_direction: 'left',
 				flanker_type: 'incongruent',
 				flanker_location: loc,
@@ -80,7 +80,7 @@ for (l = 0; l < locations.length; l++) {
 			stimulus: '<div class = centerbox><div class = ANT_text>+</div></div><div class = ANT_' + loc +
 				'><img class = ANT_img src = ' + images[2] + '></img><img class = ANT_img src = ' + images[2] + '></img><img class = ANT_img src = ' + images[0] + '></img><img class = ANT_img src = ' + images[2] + '></img><img class = ANT_img src = ' + images[2] + '></img></div></div>',
 			data: {
-				correct_response: 39,
+				correct_response: 71,
 				flanker_middle_direction: 'right',
 				flanker_type: 'neutral',
 				flanker_location: loc,
@@ -91,7 +91,7 @@ for (l = 0; l < locations.length; l++) {
 			stimulus: '<div class = centerbox><div class = ANT_text>+</div></div><div class = ANT_' + loc +
 				'><img class = ANT_img src = ' + images[0] + '></img><img class = ANT_img src = ' + images[0] + '></img><img class = ANT_img src = ' + images[0] + '></img><img class = ANT_img src = ' + images[0] + '></img><img class = ANT_img src = ' + images[0] + '></img></div></div>',
 			data: {
-				correct_response: 39,
+				correct_response: 71,
 				flanker_middle_direction: 'right',
 				flanker_type: 'congruent',
 				flanker_location: loc,
@@ -102,7 +102,7 @@ for (l = 0; l < locations.length; l++) {
 			stimulus: '<div class = centerbox><div class = ANT_text>+</div></div><div class = ANT_' + loc +
 				'><img class = ANT_img src = ' + images[1] + '></img><img class = ANT_img src = ' + images[1] + '></img><img class = ANT_img src = ' + images[0] + '></img><img class = ANT_img src = ' + images[1] + '></img><img class = ANT_img src = ' + images[1] + '></img></div></div>',
 			data: {
-				correct_response: 39,
+				correct_response: 71,
 				flanker_middle_direction: 'right',
 				flanker_type: 'incongruent',
 				flanker_location: loc,
@@ -129,15 +129,15 @@ var blocks = [block1_trials, block2_trials, block3_trials]
 /* define static blocks */
  var test_intro_block = {
 	type: 'poldrack-single-stim',
-	stimulus: '<div class = centerbox><div style = "font-size: 40px" class = center-text>Starting the test in 5 seconds. Get ready!</p></div>',
+	stimulus: '<div class = centerbox><div style = "font-size: 40px" class = center-text>The test is about to start Get ready!</p></div>',
 	is_html: true,
 	choices: 'none',
-	timing_stim: 5000, 
-	timing_response: 5000,
+	timing_stim: 1500, 
+	timing_response: 1500,
 	data: {
 		trial_id: "rest block"
 	},
-	timing_post_trial: 1000
+	timing_post_trial: 500
 };
 
 var rest_block = {
