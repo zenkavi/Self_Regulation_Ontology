@@ -1,7 +1,7 @@
 """
 some util functions
 """
-
+from glob import glob
 import os,json
 import pandas
 from sklearn.metrics import confusion_matrix
@@ -14,14 +14,19 @@ def print_confusion_matrix(y_true,y_pred,labels=[0,1]):
     print('Actual\t0\t%d\t%d'%(cm[0,0],cm[0,1]))
     print('\t1\t%d\t%d'%(cm[1,0],cm[1,1]))
 
-def get_behav_data(dataset,use_EZ=False):
+def get_behav_data(dataset = None,file=None):
     basedir=get_info('base_directory')
-    if use_EZ:
-        datafile=os.path.join(basedir,'Data',dataset,'meaningful_variables_EZ_contrasts.csv')
+    if dataset == None:
+        files = glob(os.path.join(basedir,'Data/Discovery*'))
+        datadir = files[-1]
     else:
-        datafile=os.path.join(basedir,'Data',dataset,'meaningful_variables_noEZ_contrasts.csv')
-    d=pandas.read_csv(datafile,index_col=0)
-    return d
+        datadir = os.path.join(basedir,'Data',dataset)
+    if file == None:
+        datafile=os.path.join(datadir,'meaningful_variables.csv')
+    else:
+        datafile=os.path.join(datadir,file)
+    df=pandas.read_csv(datafile,index_col=0)
+    return df
 
 
 def get_info(item,infile='../Self_Regulation_Settings.txt'):
