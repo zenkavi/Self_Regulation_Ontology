@@ -19,7 +19,15 @@ if len(sys.argv)>1:
    print('using ',clf)
 else:
     clf='linear'
-num_cores = multiprocessing.cpu_count()
+
+if len(sys.argv)>2:
+   nsplits=int(sys.argv[2])
+   print('nsplits=',nsplits)
+else:
+    nsplits=8
+
+num_cores=2
+#num_cores = multiprocessing.cpu_count()
 print('using %d cores'%num_cores)
 
 from sklearn.preprocessing import scale
@@ -65,7 +73,7 @@ def get_reconstruction_error(x,ct,data):
     for i in ct:
         vars=[j for j in range(len(tasknames)) if tasknames[j].split('.')[0]==tasks[i]]
         chosen_vars+=vars
-    kf = KFold(n_splits=8,shuffle=True)
+    kf = KFold(n_splits=nsplits,shuffle=True)
     fulldata=data.values
     #subdata=data.ix[:,chosen_vars].values
     if clf=='kridge': 
