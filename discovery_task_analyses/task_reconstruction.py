@@ -24,7 +24,7 @@ if len(sys.argv)>2:
    nsplits=int(sys.argv[2])
    print('nsplits=',nsplits)
 else:
-    nsplits=8
+    nsplits=4
 
 num_cores=2
 #num_cores = multiprocessing.cpu_count()
@@ -62,7 +62,7 @@ tasknums=[i for i in range(len(tasks))]
 allcombs=[i for i in itertools.combinations(range(32),8)]
 
 cc=numpy.zeros(len(allcombs))
-sse=numpy.zeros(len(allcombs))
+mse=numpy.zeros(len(allcombs))
 chosen_tasks={}
 
 def get_reconstruction_error(x,ct,data):
@@ -94,18 +94,19 @@ def get_reconstruction_error(x,ct,data):
         subdata_test=fulldata_test[:,chosen_vars]
         linreg.fit(subdata_train,fulldata_train)
         pred[test,:]=linreg.predict(subdata_test)
-    cc=numpy.corrcoef(fulldata.ravel(),pred.ravel())[0,1]
-    sse=(fulldata.ravel()-pred.ravel())**2
-    return cc,sse
+        cc=numpy.corrcoef(scaler.transform(fulldata).ravel(),pred.ravel())[0,1]
+        mse=numpy.mean((scaler.transform(fulldata).ravel()-pred.ravel())**2)
 
-use_parallel=True
+    return cc,mse
+
+use_parallel=False
 if use_parallel:
     cc = Parallel(n_jobs=num_cores)(delayed(get_reconstruction_error)(x,ct,data) for x,ct in enumerate(allcombs))
 
 else:
     for x,ct in enumerate(allcombs):
-        cc[x],sse[x]=get_reconstruction_error(x,ct,data)
-        if x>4:
-            break
+        cc[x],mse[x]=get_reconstruction_error(x,ct,data)
+        if numpy.mod(x,100000)==0:
+            print(x/len(allcombs))
 numpy.save('reconstruction_%s_cc.npy'%clf,cc)
-numpy.save('reconstruction_%s_sse.npy'%clf,sse)
+numpy.save('reconstruction_%s_mse.npy'%clf,mse)
