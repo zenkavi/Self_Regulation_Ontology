@@ -93,14 +93,19 @@ readme_lines += ["variables_exhaustive.csv: all variables calculated for each me
 # drop other columns of no interest
 subset = drop_vars(DV_df)
 # make subset without EZ variables
-noEZ_subset = drop_vars(DV_df, saved_vars = ["\.acc$", "\.avg_rt$"])
-noEZ_subset = drop_vars(noEZ_subset, drop_vars = ['EZ'])
-noEZ_subset.to_csv(path.join(directory, 'meaningful_variables_noEZ.csv'))
-readme_lines += ["meaningful_variables_noEZ.csv: subset of exhaustive data to only meaningful variables with EZ DDM parameters removed\n\n"]
-# make subset without acc/rt vars
-EZ_subset = drop_vars(subset, drop_vars = ['_acc', '_rt'], saved_vars = ['simple_rt', 'dospert_rt_survey'])
+noDDM_subset = drop_vars(DV_df, saved_vars = ["\.acc$", "\.avg_rt$"])
+noDDM_subset = drop_vars(noDDM_subset, drop_vars = ['EZ', 'hddm'])
+noDDM_subset.to_csv(path.join(directory, 'meaningful_variables_noDDM.csv'))
+readme_lines += ["meaningful_variables_noDDM.csv: subset of exhaustive data to only meaningful variables with DDM parameters removed\n\n"]
+# make subset without acc/rt vars and just EZ DDM
+EZ_subset = drop_vars(subset, drop_vars = ['_acc', '_rt', 'hddm'], saved_vars = ['simple_rt', 'dospert_rt_survey'])
 EZ_subset.to_csv(path.join(directory, 'meaningful_variables_EZ.csv'))
-readme_lines += ["meaningful_variables_noEZ.csv: subset of exhaustive data to only meaningful variables with rt/acc parameters removed (replaced by EZ DDM params)\n\n"]
+readme_lines += ["meaningful_variables_EZ.csv: subset of exhaustive data to only meaningful variables with rt/acc parameters removed (replaced by EZ DDM params)\n\n"]
+# make subset without acc/rt vars and just hddm DDM
+hddm_subset = drop_vars(subset, drop_vars = ['_acc', '_rt', 'EZ'], saved_vars = ['simple_rt', 'dospert_rt_survey'])
+hddm_subset.to_csv(path.join(directory, 'meaningful_variables_hddm.csv'))
+readme_lines += ["meaningful_variables_hddm.csv: subset of exhaustive data to only meaningful variables with rt/acc parameters removed (replaced by hddm DDM params)\n\n"]
+
 
 # clean and save files that are selected for use
 selected_variables = EZ_subset
