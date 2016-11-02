@@ -1,6 +1,29 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
+var get_ITI = function() {
+  // ref: https://gist.github.com/nicolashery/5885280
+  function randomExponential(rate, randomUniform) {
+    // http://en.wikipedia.org/wiki/Exponential_distribution#Generating_exponential_variates
+    rate = rate || 1;
+
+    // Allow to pass a random uniform value or function
+    // Default to Math.random()
+    var U = randomUniform;
+    if (typeof randomUniform === 'function') U = randomUniform();
+    if (!U) U = Math.random();
+
+    return -Math.log(U) / rate;
+  }
+  gap = randomExponential(1/2)*1000
+  if (gap > 5000) {
+    gap = 5000
+  } else if (gap < 500) {
+    gap = 500
+  }
+  return gap
+}
+
 var randomDraw = function(lst) {
   var index = Math.floor(Math.random() * (lst.length))
   return lst[index]
@@ -20,27 +43,23 @@ var getFeedback = function() {
   var condition = curr_data.condition
   var response = curr_data.key_press
   var feedback_text = ''
-  var correct = -1
-  if (response == -1) {
-    feedback_text =  '<div class = centerbox><div class = center-text>Respond Faster!</p></div>'
-  } else if (condition == "AX" && response == 37) {
+  var correct = false
+  var correct_response = choices[1]
+  if (condition == "AX") {
+    correct_response = choices[0]
+  }
+  if (response == correct_response) {
+    correct = true
     feedback_text =  '<div class = centerbox><div style="color:green"; class = center-text>Correct!</div></div>'
-    correct = true
-  } else if (condition != "AX" && response == 40) {
-    feedback_text = '<div class = centerbox><div style="color:green"; class = center-text>Correct!</div></div>'
-    correct = true
+  } else if (response == -1) {
+    feedback_text =  '<div class = centerbox><div class = center-text>Respond Faster!</p></div>'
   } else {
     feedback_text = '<div class = centerbox><div style="color:red"; class = center-text>Incorrect</div></div>'
-    correct = false
   }
-  jsPsych.data.addDataToLastTrial({'correct': correct})
+  jsPsych.data.addDataToLastTrial({'correct': correct, 'correct_response': correct_response})
   return feedback_text
 }
 
-var getInstructFeedback = function() {
-    return '<div class = centerbox><p class = center-block-text>' + feedback_instruct_text +
-      '</p></div>'
-  }
 /* ************************************ */
 /* Define experimental variables */
 /* ************************************ */
@@ -79,78 +98,62 @@ var trial_proportions = ["AX", "AX", "AX", "AX", "AX", "AX", "AX", "AX", "AX", "
 var block1_list = jsPsych.randomization.repeat(trial_proportions, 2)
 var block2_list = jsPsych.randomization.repeat(trial_proportions, 2)
 var block3_list = jsPsych.randomization.repeat(trial_proportions, 2)
-var block4_list = jsPsych.randomization.repeat(trial_proportions, 2)
-var blocks = [block1_list, block2_list, block3_list, block4_list]
+var blocks = [block1_list, block2_list, block3_list]
 
 /* ************************************ */
 /* Set up jsPsych blocks */
 /* ************************************ */
-//Set up post task questionnaire
-var post_task_block = {
-   type: 'survey-text',
-   data: {
-       trial_id: "post task questions"
-   },
-   questions: ['<p class = center-block-text style = "font-size: 20px">Please summarize what you were asked to do in this task.</p>',
-              '<p class = center-block-text style = "font-size: 20px">Do you have any comments about this task?</p>'],
-   rows: [15, 15],
-   columns: [60,60]
+ var test_intro_block = {
+  type: 'poldrack-single-stim',
+  stimulus: '<div class = centerbox><div class = center-text>Get ready!</p></div>',
+  is_html: true,
+  choices: 'none',
+  timing_stim: 1500, 
+  timing_response: 1500,
+  data: {
+    trial_id: "rest block"
+  },
+  timing_post_trial: 500
 };
 
 /* define static blocks */
-var end_block = {
-  type: 'poldrack-text',
+ var end_block = {
+  type: 'poldrack-single-stim',
+  stimulus: '<div class = centerbox><div class = center-text><i>Fin</i></div></div>',
+  is_html: true,
+  choices: [32],
+  timing_response: -1,
+  response_ends_trial: true,
   data: {
     trial_id: "end",
-    exp_id: 'dot_pattern_expectancy'
+    exp_id: 'stroop'
   },
-  timing_response: 180000,
-  text: '<div class = centerbox><p class = center-block-text>Thanks for completing this task!</p><p class = center-block-text>Press <strong>enter</strong> to continue.</p></div>',
-  cont_key: [13],
   timing_post_trial: 0
 };
 
-var feedback_instruct_text =
-  'Welcome to the experiment. This experiment will last around 15 minutes. Press <strong>enter</strong> to begin.'
-var feedback_instruct_block = {
+/// This ensures that the subject does not read through the instructions too quickly.  If they do it too quickly, then we will go over the loop again.
+var instructions_block = {
   type: 'poldrack-text',
   data: {
     trial_id: "instruction"
   },
-  cont_key: [13],
-  text: getInstructFeedback,
-  timing_post_trial: 0,
-  timing_response: 180000
-};
-/// This ensures that the subject does not read through the instructions too quickly.  If they do it too quickly, then we will go over the loop again.
-var instructions_block = {
-  type: 'poldrack-instructions',
-  data: {
-    trial_id: "instruction"
-  },
-  pages: [
-    '<div class = centerbox><p class = block-text>In this task, on each trial you will see a group of blue circles presented for a short time, followed by the presentation of  group of black circles. For instance you may see:</p><br><p class = center-block-text><img src = "/static/experiments/dot_pattern_expectancy/images/cue2.png" ></img>&nbsp&nbsp&nbsp...followed by...&nbsp&nbsp&nbsp<img src = "/static/experiments/dot_pattern_expectancy/images/probe2.png" ></img></p></div>',
-    '<div class = centerbox><p class = block-text>Your job is to respond by pressing an arrow key during the presentation of the <strong>second</strong> group  of circles. One pair of circles is the <strong>target</strong> pair, and for this pair you should press the <strong>left</strong> arrow key. For any other pair of circles, you should press the <strong>down</strong> arrow key.</p><p class = block-text>After you respond you will get feedback about whether you were correct. The target pair is shown below:</p><br><p class = center-block-text><img src = "/static/experiments/dot_pattern_expectancy/images/' +
+  text: '<div class = centerbox><p style = "font-size:40px" class = center-block-text>Target Pair (press index finger):</p><p class = center-block-text><img src = "/static/experiments/dot_pattern_expectancy/images/' +
     valid_cue +
     '" ></img>&nbsp&nbsp&nbsp...followed by...&nbsp&nbsp&nbsp<img src = "/static/experiments/dot_pattern_expectancy/images/' +
-    valid_probe + '" ></img><br></br></p></div>',
-    '<div class = centerbox><p class = block-text>We will now start the experiment. Remember, press the left arrow key only after seeing the target pair. The target pair is shown below (for the last time). Memorize it!</p><p class = block-text>Answer as quickly and accurately as possible. You will start practice after you end the instructions.</p><br><p class = center-block-text><img src = "/static/experiments/dot_pattern_expectancy/images/' +
-    valid_cue +
-    '" ></img>&nbsp&nbsp&nbsp...followed by...&nbsp&nbsp&nbsp<img src = "/static/experiments/dot_pattern_expectancy/images/' +
-    valid_probe + '" ></img></p></div>'
-  ],
-  allow_keys: false,
-  show_clickable_nav: true,
+    valid_probe + '" ></img><br></br></p><p style = "font-size:40px" class = center-block-text>Otherwise press your middle finger</div>',
+  cont_key: [32],
   timing_post_trial: 1000
 };
 
 var rest_block = {
-  type: 'poldrack-text',
+  type: 'poldrack-single-stim',
+  stimulus: '<div class = centerbox><div class = center-text>Take a break!<br>Next run will start in a moment</div></div>',
+  is_html: true,
+  choices: 'none',
+  timing_response: 10000,
   data: {
-    trial_id: "rest"
+    trial_id: "rest_block"
   },
-  timing_response: 180000,
-  text: '<div class = centerbox><p class = block-text>Take a break! Press any key to continue.</p></div>',
   timing_post_trial: 1000
 };
 
@@ -162,10 +165,16 @@ var feedback_block = {
   data: {
     trial_id: "feedback",
   },
-  timing_post_trial: 0,
+  timing_post_trial: get_ITI,
   timing_stim: 1000,
   timing_response: 1000,
-  on_finish: function() {
+  on_finish: function(data) {
+    console.log('Trial Num: ', current_trial)
+    var correct = false
+    if (data.stimulus.indexOf('Correct!') != -1) {
+      correct = true
+    }
+    console.log('Correct Response? ', correct)
     jsPsych.data.addDataToLastTrial({
     	exp_stage: exp_stage,
     	trial_num: current_trial
@@ -189,21 +198,6 @@ var fixation_block = {
     jsPsych.data.addDataToLastTrial({exp_stage: exp_stage})
   }
 }
-
-var start_test_block = {
-  type: 'poldrack-text',
-  data: {
-    trial_id: "end"
-  },
-  timing_response: 180000,
-  text: '<div class = centerbox><p class = center-block-text>Done with practice. We will now start the test.</p><p class = center-block-text>Press <strong>enter</strong> to continue.</p></div>',
-  cont_key: [13],
-  timing_post_trial: 0,
-  on_finish: function() {
-  	current_trial = 0
-    exp_stage = 'test'
-  }
-};
 
 
 /* define test block cues and probes*/
@@ -294,7 +288,7 @@ var dot_pattern_expectancy_experiment = []
 dot_pattern_expectancy_experiment.push(instructions_block);
 setup_fmri_intro(dot_pattern_expectancy_experiment, choices)
 
-dot_pattern_expectancy_experiment.push(start_test_block);
+dot_pattern_expectancy_experiment.push(test_intro_block);
 for (b = 0; b < blocks.length; b++) {
   var block = blocks[b]
   for (i = 0; i < block.length; i++) {
@@ -331,5 +325,4 @@ for (b = 0; b < blocks.length; b++) {
   }
   dot_pattern_expectancy_experiment.push(rest_block)
 }
-dot_pattern_expectancy_experiment.push(post_task_block)
 dot_pattern_expectancy_experiment.push(end_block)

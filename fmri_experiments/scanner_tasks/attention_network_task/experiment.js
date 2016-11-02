@@ -8,20 +8,13 @@ var getInstructFeedback = function() {
 
 var post_trial_gap = function() {
 	var curr_trial = jsPsych.progress().current_trial_global
-	return 3500 - jsPsych.data.getData()[curr_trial - 1].rt - jsPsych.data.getData()[curr_trial - 4].block_duration
+	return 3500 - jsPsych.data.getData()[curr_trial - 1].block_duration - jsPsych.data.getData()[curr_trial - 4].block_duration
 }
 
 var get_RT = function() {
 	var curr_trial = jsPsych.progress().current_trial_global
 	return jsPsych.data.getData()[curr_trial].rt
 }
-
-var getInstructFeedback = function() {
-	return '<div class = centerbox><p class = center-block-text>' + feedback_instruct_text +
-		'</p></div>'
-}
-
-
 
 /* ************************************ */
 /* Define experimental variables */
@@ -129,66 +122,51 @@ var blocks = [block1_trials, block2_trials, block3_trials]
 /* define static blocks */
  var test_intro_block = {
 	type: 'poldrack-single-stim',
-	stimulus: '<div class = centerbox><div style = "font-size: 40px" class = center-text>The test is about to start Get ready!</p></div>',
+	stimulus: '<div class = centerbox><div class = center-text>Get ready!</div></div>',
 	is_html: true,
 	choices: 'none',
 	timing_stim: 1500, 
 	timing_response: 1500,
 	data: {
-		trial_id: "rest block"
+		trial_id: "test_start_block"
 	},
 	timing_post_trial: 500
 };
 
 var rest_block = {
 	type: 'poldrack-single-stim',
-	stimulus: '<div class = centerbox><div style = "font-size: 40px" class = center-text>Take a break! We will start in 10 seconds.</p></div>',
+	stimulus: '<div class = centerbox><div class = center-text>Take a break!<br>Next run will start in a moment</div></div>',
 	is_html: true,
 	choices: 'none',
-	timing_stim: 10000, 
-	timing_response: 1000,
+	timing_response: 10000,
 	data: {
-		trial_id: "rest block"
+		trial_id: "rest_block"
 	},
 	timing_post_trial: 1000
 };
 
-var end_block = {
-	type: 'poldrack-text',
-	text: '<div class = centerbox><p class = center-block-text>Thanks for completing this task!</p><p class = center-block-text>Press <strong>enter</strong> to continue.</p></div>',
-	cont_key: [13],
+ var end_block = {
+	type: 'poldrack-single-stim',
+	stimulus: '<div class = centerbox><div class = center-text><i>Fin</i></div></div>',
+	is_html: true,
+	choices: [32],
+	timing_response: -1,
+	response_ends_trial: true,
 	data: {
 		trial_id: "end",
-    	exp_id: 'attention_network_task'
+		exp_id: 'attention_network_task'
 	},
-	timing_response: 180000,
 	timing_post_trial: 0
 };
 
-var feedback_instruct_text =
-	'Welcome to the experiment. This experiment will take about 15 minutes. Press <strong>enter</strong> to begin.'
-var feedback_instruct_block = {
-	type: 'poldrack-text',
-	cont_key: [13],
-	text: getInstructFeedback,
-	data: {
-		trial_id: 'instruction'
-	},
-	timing_post_trial: 0,
-	timing_response: 180000
-};
-/// This ensures that the subject does not read through the instructions too quickly.  If they do it too quickly, then we will go over the loop again.
+
 var instructions_block = {
-	type: 'poldrack-instructions',
-	pages: [
-		'<div class = centerbox><p class = block-text>In this experiment you will see groups of five arrows and dashes pointing left or right (e.g &larr; &larr; &larr; &larr; &larr;, or &mdash; &mdash; &rarr; &mdash; &mdash;) presented randomly at the top or bottom of the screen.</p><p class = block-text>Your job is to indicate which way the central arrow is pointing by pressing the corresponding arrow key.</p></p></p></div>',
-		'<div class = centerbox><p class = block-text>Before the arrows and dashes come up, an * will occasionally come up somewhere on the screen.</p><p class = block-text>Irrespective of whether or where the * appears, it is important that you respond as quickly and accurately as possible by pressing the arrow key corresponding to the direction of the center arrow.</p><p class = block-text>After you end instructions we will start with practice. During practice you will receive feedback about whether your responses are correct. You will not receive feedback during the rest of the experiment.</p></div>'
-	],
-	allow_keys: false,
+	type: 'poldrack-text',
+	text: '<div class = centerbox><div class = center-text>Indicate which direction the center arrow is pointing<br><br><strong>Left:</strong> Index Finger<br><strong>Right:</strong> Middle Finger</div></div>',
 	data: {
 		trial_id: 'instruction'
 	},
-	show_clickable_nav: true,
+	cont_key: [32],
 	timing_post_trial: 1000
 };
 
@@ -334,7 +312,9 @@ for (b = 0; b < blocks.length; b++) {
 			timing_post_trial: 0,
 			on_finish: function(data) {
 				correct = data.key_press === data.correct_response
-				jsPsych.data.addDataToLastTrial({
+				console.log('Trial: ', data.trial_num)
+				console.log('Correct Response? ', correct)
+				jsPsych.data.addDataToLastTrial({ 
 					correct: correct,
 					exp_stage: exp_stage
 				})
@@ -358,6 +338,8 @@ for (b = 0; b < blocks.length; b++) {
 		}
 		attention_network_task_experiment.push(last_fixation)
 	}
-	attention_network_task_experiment.push(rest_block)
+	if (b < (blocks.length-1)) {
+		attention_network_task_experiment.push(rest_block)
+	}
 }
 attention_network_task_experiment.push(end_block)

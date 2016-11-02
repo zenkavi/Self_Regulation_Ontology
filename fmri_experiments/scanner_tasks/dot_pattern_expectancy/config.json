@@ -28,7 +28,7 @@
                          "Vanessa Sochat",
                          "Russell Poldrack"
                         ], 
-        "time":15,
+        "time":13,
         "reference": "http://www.mitpressjournals.org/doi/pdf/10.1162/jocn_a_00709",
         "notes": "Condition indicates cue/target trial type: AX, BX, AY, BY",
         "publish":"True",
