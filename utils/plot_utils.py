@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from os import path
+import numpy as np
 import pandas as pd
 from scipy.cluster.hierarchy import dendrogram, fcluster, linkage
 import seaborn as sns
@@ -7,6 +8,48 @@ import seaborn as sns
 #***************************************************
 # ********* Plotting Functions **********************
 #**************************************************
+
+def DDM_plot(v,t,a, sigma = .1, n = 10):
+    """ Make a plot of trajectories using ddm parameters (in seconds)
+    
+    """
+    # generate trajectory
+    v = v/1000
+    t =  t*1000
+    timesteps = np.arange(1000)
+    trajectories = []
+    for i in range(n):
+        y = [0]
+        for step in timesteps[1:]:
+            if step < t:
+                y += [0]
+            else:
+                y += [y[-1]+v+np.random.normal(0,sigma)]
+            if y[-1] > a:
+                trajectories.append((y,'correct'))
+                break
+            elif y[-1] < -a:
+                trajectories.append((y,'fail'))
+                break
+    # plot
+    sns.set_context('poster')
+    plot_start = int(max(0,t-50))
+    plt.figure()
+    plt.hold(True)
+    max_y = 0
+    for trajectory in trajectories:
+        y = trajectory[0]
+        color = ['red','green'][trajectory[1] == 'correct']
+        plt.plot(timesteps[plot_start:len(y)],y[plot_start:], c = color)
+        if len(y) > max_y:
+            max_y = len(y)
+    plt.hlines([a,-a],0,max_y+50,linestyles = 'dashed')
+    plt.xlim([plot_start,max_y+50])
+    plt.xlabel('Time Step (ms)')
+    plt.ylabel('Decision Variable')
+        
+
+
 def dendroheatmap(df, labels = True):
     """
     :df: plot hierarchical clustering and heatmap
