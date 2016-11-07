@@ -11,6 +11,43 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import scale
 from sklearn.decomposition import FactorAnalysis
 
+def get_reconstruction_error_vars(chosen_vars,data,nsplits=4,clf='kridge'):
+    """
+    get reconstruction error for chosen vars (not tasks)
+    """
+
+    kf = KFold(n_splits=nsplits,shuffle=True)
+    fulldata=data.values
+    if clf=='kridge':
+        linreg=KernelRidge(alpha=1)
+    elif clf=='rf':
+        linreg=RandomForestRegressor()
+    else:
+       linreg=LinearRegression()
+    scaler=StandardScaler()
+    pred=numpy.zeros(fulldata.shape)
+    for train, test in kf.split(fulldata):
+        # fit scaler to train data and apply to test
+        fulldata_train=scaler.fit_transform(fulldata[train,:])
+        fulldata_test=scaler.transform(fulldata[test,:])
+        subdata_train=fulldata_train[:,chosen_vars]
+        subdata_test=fulldata_test[:,chosen_vars]
+        linreg.fit(subdata_train,fulldata_train)
+        pred[test,:]=linreg.predict(subdata_test)
+    cc=numpy.corrcoef(scaler.transform(fulldata).ravel(),pred.ravel())[0,1]
+    return cc
+
+def get_subset_corr_vars(chosen_vars,data):
+    """
+    get subset correlation for chosen vars (not tasks)
+    """
+    
+    subcorr=numpy.corrcoef(data)[numpy.triu_indices(data.shape[0],1)]
+    chosen_data=data.ix[:,chosen_vars].values
+    chosen_data=scale(chosen_data)
+    subcorr_subset=numpy.corrcoef(chosen_data)[numpy.triu_indices(data.shape[0],1)]
+    return(numpy.corrcoef(subcorr,subcorr_subset)[0,1])
+
 def get_subset_corr(ct,data):
     subcorr=numpy.corrcoef(data)[numpy.triu_indices(data.shape[0],1)]
     tasknames=[i.split('.')[0] for i in data.columns]
