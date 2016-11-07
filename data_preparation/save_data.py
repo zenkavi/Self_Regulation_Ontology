@@ -127,8 +127,8 @@ task_data = drop_vars(selected_variables, ['survey'], saved_vars = ['holt','cogn
 task_data.to_csv(path.join(directory, 'taskdata.csv'))
 task_data_clean = drop_vars(selected_variables_clean, ['survey'], saved_vars = ['holt','cognitive_reflection'])
 task_data_clean.to_csv(path.join(directory, 'taskdata_clean.csv'))
-task_data_clean = drop_vars(selected_variables_imputed, ['survey'], saved_vars = ['holt','cognitive_reflection'])
-task_data_clean.to_csv(path.join(directory, 'taskdata_imputed.csv'))
+task_data_imputed = drop_vars(selected_variables_imputed, ['survey'], saved_vars = ['holt','cognitive_reflection'])
+task_data_imputed.to_csv(path.join(directory, 'taskdata_imputed.csv'))
 readme_lines += ["taskdata*.csv: taskdata are the same as meaningful_variables excluded surveys. Note that imputation is performed on the entire dataset including surveys\n\n"]
 
 from glob import glob
