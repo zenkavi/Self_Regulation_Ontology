@@ -1,27 +1,27 @@
 
 .ANT_up {
   height: 7vw;
-  width: 25vw;
+  width: 50vw;
   position:absolute;
   top:50%;
   left:50%;
   margin-right:-50%;
-  transform: translate(-50%,-300%);
+  transform: translate(-47%,-300%);
 }
 
 .ANT_down {
   height: 7vw;
-  width: 25vw;
+  width: 50vw;
   position:absolute;
   top:50%;
   left:50%;
   margin-right:-50%;
-  transform: translate(-50%,200%);
+  transform: translate(-47%,200%);
 }
 
 .ANT_text {
 	text-align: center;
-	font-size: 60px;
+	font-size: 80px;
   position: relative;
   top: 50%; 
   transform: translateY(-50%);
@@ -30,7 +30,7 @@
 
 .ANT_centercue_text {
 	text-align: center;
-	font-size: 60px;
+	font-size: 80px;
 	position: relative;
   top: 50%; 
   transform: translateY(-40%);

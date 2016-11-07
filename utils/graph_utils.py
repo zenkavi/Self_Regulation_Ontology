@@ -214,15 +214,15 @@ def plot_mat(mat, labels = []):
     return fig
     
 def print_community_members(G, lookup = {}, file = None):
-    assert set(['community','id','within_module_degree','name',  'eigen_centrality']) <=  set(G.vs.attribute_names()), \
+    assert set(['community','id','subgraph_eigen_centrality','name',  'eigen_centrality']) <=  set(G.vs.attribute_names()), \
         "Missing some required vertex attributes. Vertices must have id, name, part_coef, eigen_centrality, community and within_module_degree"
         
     if file:
-        f = open(file,'a')
+        f = open(file,'w')
     else:
         f = None
         
-    print('Key: Node index, Within Module Degree, Measure, Eigenvector centrality', file = f)
+    print('Key: Node index, Subgraph Eigen Centrality, Measure, Eigenvector centrality', file = f)
     for community in np.unique(G.vs['community']):
         #find members
         members = [lookup.get(v['name'],v['name']) for v in G.vs if v['community'] == community]
@@ -230,7 +230,7 @@ def print_community_members(G, lookup = {}, file = None):
         ids = [v['id'] for v in G.vs if v['community'] == community]
         eigen = ["{0:.2f}".format(v['eigen_centrality']) for v in G.vs if v['community'] == community]
         #sort by within degree
-        within_degrees = ["{0:.2f}".format(v['within_module_degree']) for v in G.vs if v['community'] == community]
+        within_degrees = ["{0:.2f}".format(v['subgraph_eigen_centrality']) for v in G.vs if v['community'] == community]
         to_print = list(zip(ids, within_degrees,  members, eigen))
         to_print.sort(key = lambda x: -float(x[1]))
         
@@ -392,7 +392,12 @@ def Graph_Analysis(data, weight = True, thresh_func = bct.threshold_proportional
     G.vs['id'] = range(len(G.vs))
     G.vs['name'] = column_names
     G.vs['within_module_degree'] = bct.module_degree_zscore(graph_mat,comm)
-    G.vs['part_coef'] = bct.participation_coef(graph_mat, comm)
+    if np.min(graph_mat) < 0:
+        participation_pos, participation_neg = bct.participation_coef_sign(graph_mat, comm)
+        G.vs['part_coef_pos'] = participation_pos
+        G.vs['part_coef_neg'] = participation_neg
+    else:
+        G.vs['part_coef'] = bct.participation_coef(graph_mat, comm)
     
     if weight:
         G.vs['eigen_centrality'] = G.eigenvector_centrality(directed = False, weights = G.es['weight'])
