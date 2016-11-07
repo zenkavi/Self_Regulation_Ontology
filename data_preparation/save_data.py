@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import sys
 sys.path.append('../utils')
-from data_preparation_utils import convert_var_names, drop_vars, get_items, remove_outliers, save_task_data
+from data_preparation_utils import convert_var_names, drop_failed_QC_vars, drop_vars, get_items, remove_outliers, save_task_data
 from utils import get_info
 from r_to_py_utils import missForest
 
@@ -72,6 +72,8 @@ directory = discovery_directory
 # get DV df
 DV_df = pd.read_json(path.join(local_dir,'mturk_discovery_DV.json'))
 valence_df = pd.read_json(path.join(local_dir,'mturk_discovery_DV_valence.json'))
+# drop failed QC vars
+drop_failed_QC_vars(DV_df,discovery_data)
 
 #flip negative signed valence DVs
 flip_df = np.floor(valence_df.replace(to_replace ={'Pos': 1, 'NA': 1, np.nan: 1, 'Neg': -1}).mean())
@@ -91,18 +93,18 @@ DV_df.to_csv(path.join(directory, 'variables_exhaustive.csv'))
 readme_lines += ["variables_exhaustive.csv: all variables calculated for each measure\n\n"]
 
 # drop other columns of no interest
-subset = drop_vars(DV_df)
+subset = drop_vars(DV_df, saved_vars = ['simple_reaction_time.avg_rt'])
 # make subset without EZ variables
 noDDM_subset = drop_vars(DV_df, saved_vars = ["\.acc$", "\.avg_rt$"])
 noDDM_subset = drop_vars(noDDM_subset, drop_vars = ['EZ', 'hddm'])
 noDDM_subset.to_csv(path.join(directory, 'meaningful_variables_noDDM.csv'))
 readme_lines += ["meaningful_variables_noDDM.csv: subset of exhaustive data to only meaningful variables with DDM parameters removed\n\n"]
 # make subset without acc/rt vars and just EZ DDM
-EZ_subset = drop_vars(subset, drop_vars = ['_acc', '_rt', 'hddm'], saved_vars = ['simple_rt', 'dospert_rt_survey'])
+EZ_subset = drop_vars(subset, drop_vars = ['_acc', '_rt', 'hddm'], saved_vars = ['simple_reaction_time.avg_rt', 'dospert_rt_survey'])
 EZ_subset.to_csv(path.join(directory, 'meaningful_variables_EZ.csv'))
 readme_lines += ["meaningful_variables_EZ.csv: subset of exhaustive data to only meaningful variables with rt/acc parameters removed (replaced by EZ DDM params)\n\n"]
 # make subset without acc/rt vars and just hddm DDM
-hddm_subset = drop_vars(subset, drop_vars = ['_acc', '_rt', 'EZ'], saved_vars = ['simple_rt', 'dospert_rt_survey'])
+hddm_subset = drop_vars(subset, drop_vars = ['_acc', '_rt', 'EZ'], saved_vars = ['simple_reaction_time.avg_rt', 'dospert_rt_survey'])
 hddm_subset.to_csv(path.join(directory, 'meaningful_variables_hddm.csv'))
 readme_lines += ["meaningful_variables_hddm.csv: subset of exhaustive data to only meaningful variables with rt/acc parameters removed (replaced by hddm DDM params)\n\n"]
 
@@ -112,7 +114,7 @@ selected_variables = EZ_subset
 selected_variables.to_csv(path.join(directory, 'meaningful_variables.csv'))
 readme_lines += ["meaningful_variables.csv: Same as meaningful_variables_EZ.csv\n\n"]
 selected_variables_clean = remove_outliers(selected_variables)
-selected_variables_clean.to_csv(path.join(directory, 'meaningful_variables_clean_cutoff2.50IQR.csv'))
+selected_variables_clean.to_csv(path.join(directory, 'meaningful_variables_clean.csv'))
 readme_lines += ["meaningful_variables_clean.csv: same as meaningful_variables.csv with outliers defined as greater than 2.5 IQR from median removed from each column\n\n"]
 
 # imputed data
