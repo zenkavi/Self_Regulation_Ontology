@@ -167,21 +167,27 @@ def download_data(data_loc, access_token = None, filters = None, battery = None,
     print('Finished downloading data. Time taken: ' + str(finish_time))
     return data                 
 
+def drop_failed_QC_vars(df, data):
+    failed_exps = data.query('passed_QC==False')
+    for i, values in failed_exps[['experiment_exp_id','worker_id']].iterrows():
+        df.loc[values[1],df.filter(regex = values[0]).columns] = np.nan
+        
+    
 def drop_vars(data, drop_vars = [], saved_vars = []):
     if len(drop_vars) == 0:
         # variables that are calculated without regard to their actual interest
         basic_vars = ["\.missed_percent$","\.acc$","\.avg_rt_error$","\.std_rt_error$","\.avg_rt$","\.std_rt$"]
         #unnecessary ddm params
-        ddm_vars = ['^(attention|directed|dot_pattern|local_global|recent_probes|shape_matching|simon|stroop|threebytwo).*\.EZ_(drift|thresh|non_decision)$', # all tasks where DDM is calculated over a particular condition
-                    "network_task.EZ_(drift|thresh|non_decision)_congruent$",  # ANT
-                    "\.EZ_(drift|thresh|non_decision)_incongruent$", # ANT, local_global, simon, stroop
-                    "\.EZ_(drift|thresh|non_decision)_con$", "\.EZ_(drift|thresh|non_decision)_neg$",  # directed forgetting
-                    "\.EZ_(drift|thresh|non_decision)_AY", "\.EZ_(drift|thresh|non_decision)_BX", "\.EZ_(drift|thresh|non_decision)_BY", #DPX
-                    "letter.EZ_(drift|thresh|non_decision)_congruent$", # local global letter
-                    "letter.EZ_(drift|thresh|non_decision)_stay$",  # local global letter continued
-                    "letter.EZ_drift_switch$", "letter.EZ_thresh_switch$", "letter.EZ_non_decision_switch$", # local global letter continued
-                    "\.EZ_(drift|thresh|non_decision)_rec_", "\.EZ_(drift|thresh|non_decision)_xrec_", # recent probes
-                    "\.EZ_(drift|thresh|non_decision)_.*_switch", "\.EZ_(drift|thresh|non_decision)_task_stay" # three by two
+        ddm_vars = ['^(attention|directed|dot_pattern|local_global|recent_probes|shape_matching|simon|stroop|threebytwo).*\.(EZ|hddm)_(drift|thresh|non_decision)$', # all tasks where DDM is calculated over a particular condition
+                    "network_task.(EZ|hddm)_(drift|thresh|non_decision)_congruent$",  # ANT
+                    "\.(EZ|hddm)_(drift|thresh|non_decision)_incongruent$", # ANT, local_global, simon, stroop
+                    "\.(EZ|hddm)_(drift|thresh|non_decision)_con$", "\.(EZ|hddm)_(drift|thresh|non_decision)_neg$",  # directed forgetting
+                    "\.(EZ|hddm)_(drift|thresh|non_decision)_AY", "\.(EZ|hddm)_(drift|thresh|non_decision)_BX", "\.(EZ|hddm)_(drift|thresh|non_decision)_BY", #DPX
+                    "letter.(EZ|hddm)_(drift|thresh|non_decision)_congruent$", # local global letter
+                    "letter.(EZ|hddm)_(drift|thresh|non_decision)_stay$",  # local global letter continued
+                    "letter.(EZ|hddm)_drift_switch$", "letter.(EZ|hddm)_thresh_switch$", "letter.(EZ|hddm)_non_decision_switch$", # local global letter continued
+                    "\.(EZ|hddm)_(drift|thresh|non_decision)_rec_", "\.(EZ|hddm)_(drift|thresh|non_decision)_xrec_", "hddm_non_decision_xrec", # recent probes
+                    "\.(EZ|hddm)_(drift|thresh|non_decision)_.*_switch", "\.(EZ|hddm)_(drift|thresh|non_decision)_task_stay" # three by two
                     ]
         # variables that are of theoretical interest, but we aren't certain enough to include in 2nd stage analysis
         exploratory_vars = ["\.congruency_seq", "\.post_error_slowing$"]
@@ -189,12 +195,11 @@ def drop_vars(data, drop_vars = [], saved_vars = []):
         # with other DV's or are just of no interest. Each row is a task
         task_vars = ["demographics", # demographics
                     ".first_order", # bis11
-                    "discount_rate", # kirby and discount titrate
                     "\.risky_choices$", "\.number_of_switches", # holt and laury
                     "boxes_opened$", # information sampling task
                     "_total_points$", # IST
                     "\.go_acc$", "\.nogo_acc$", "\.go_rt$", #go_nogo
-                    "_large$", "_medium$", "_small$", "\.warnings$", "_notnow$", "_now$", #kirby and delay discounting
+                    "discount_titrate.hyp_discount_rate", "kirby.hyp_discount_rate$", "kirby.percent_patient", "\.warnings$", "_notnow$", "_now$", #kirby and delay discounting
                     "PRP_slowing", # PRP_two_choices
                     "DDS", "DNN", "DSD", "SDD", "SSS", "DDD", "stimulus_interference_rt", # shape matching
                      "go_acc","stop_acc","go_rt_error","go_rt_std_error", "go_rt","go_rt_std", # stop signal
