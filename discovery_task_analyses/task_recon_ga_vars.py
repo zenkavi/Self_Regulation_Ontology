@@ -49,7 +49,10 @@ basedir=get_info('base_directory')
 derived_dir=os.path.join(basedir,'Data/Derived_Data/%s'%dataset)
 
 
-data=pandas.read_csv(os.path.join(derived_dir,'taskdata_clean_cutoff3.00IQR_imputed.csv'))
+data=get_behav_data('Discovery_11-07-2016', file = 'taskdata_imputed.csv')
+for c in data.columns:
+    if c.find('survey')>-1:
+        data.drop(c)
 taskvars=list(data.columns)
 
 if target=='all':
@@ -132,3 +135,13 @@ pickle.dump((bestp_saved,ccmax,population),open("ga_results_%s_%s.pkl"%(clf,targ
 
 #numpy.save('reconstruction_%s_cc.npy'%clf,cc)
 #numpy.save('reconstruction_%s_sse.npy'%clf,sse)
+
+# first run
+# 0 adaptive_n_back
+# 1 angling_risk_task_always_sunny
+# 2 attention_network_task
+# 4 choice_reaction_time
+# 5 cognitive_reflection_survey
+# 18 kirby
+# 29 spatial_span
+# 35 two_stage_decision
