@@ -106,7 +106,7 @@ if __name__ == '__main__':
     ccmax={}
     bestp_saved={}
     bestctr=0
-    clf='kridge'
+    clf='linear'
 
     start_time = time.time()
 
@@ -148,7 +148,7 @@ if __name__ == '__main__':
     saved_data['population']=population
     saved_data['dataset']=dataset
 
-    pickle.dump(saved_data,open("ga_results_tasks_%s_%s.pkl"%(clf,target),'wb'))
+    pickle.dump(saved_data,open("ga_results_tasks_%s_%s.pkl"%(clf,'-'.join(targets)),'wb'))
 
     #numpy.save('reconstruction_%s_cc.npy'%clf,cc)
     #numpy.save('reconstruction_%s_sse.npy'%clf,sse)
