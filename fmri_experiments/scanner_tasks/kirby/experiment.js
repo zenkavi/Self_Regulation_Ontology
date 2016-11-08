@@ -58,7 +58,7 @@ var stim_html = []
 //loop through each option to create html
 for (var i = 0; i < options.small_amt.length; i++) {
   stim_html[i] =
-    "<div class = centerbox id='container'><p class = center-block-text>Please select the option that you would prefer pressing <strong>left</strong> or <strong>right</strong>:</p><div class='table'><div class='row'><div id = 'option'><center><font color='green'>$" +
+    "<div class = centerbox id='container'><p class = center-block-text>Please select the option that you would prefer pressing the <strong>left</strong> or <strong>right</strong> button:</p><div class='table'><div class='row'><div id = 'option'><center><font color='green'>$" +
     options.small_amt[i] +
     "<br>today</font></center></div><div id = 'option'><center><font color='green'>$" + options.large_amt[
       i] + "<br>" + options.later_del[i] + " days</font></center></div></div></div></div>"
