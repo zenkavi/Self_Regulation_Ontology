@@ -7,15 +7,15 @@ document.onkeypress = function(evt) {
 	var which_key = String.fromCharCode(charCode);
 	var previous_v_position = select_position[1]
 	// control cursor
-	if (which_key == 'a') {
+	if (which_key == 'g') {
 		select_position[0] = Math.max(0,select_position[0]-1)
-	} else if (which_key == 'd') {
+	} else if (which_key == 'b') {
 		select_position[0] = Math.min(4,select_position[0]+1)
-	} else if (which_key == 'w') {
+	} else if (which_key == 'r') {
 		select_position[1] = Math.max(0,select_position[1]-1)
-	} else if (which_key == 's') {
+	} else if (which_key == 'y') {
 		select_position[1] = Math.min(5,select_position[1]+1)
-	} else if (which_key == ' ') {
+	} else if (which_key == 'm') {
 		if (clickedCards.indexOf(currID) == -1) {
 			document.getElementById(currID).onclick();
 			$('#' + currID).click()
@@ -503,7 +503,7 @@ var reset_block = {
 /* create experiment definition array */
 var information_sampling_task_experiment = [];
 information_sampling_task_experiment.push(instructions_block);
-setup_fmri_intro(information_sampling_task_experiment, [66,89,71,82])
+setup_fmri_intro(information_sampling_task_experiment, [66,89,71,82, 80])
 
 if (Math.random() < 0.5) { // do the FW first, then DW
 	information_sampling_task_experiment.push(FW_intro_block);

@@ -66,10 +66,10 @@ var getFeedback = function() {
 
 // task specific variables
 var current_trial = 0
-var choices = [89, 71]
+var choices = [71, 66]
 var correct_responses = [
-  ["index finger", 89],
-  ["middle finger", 71]
+  ["index finger", 71],
+  ["middle finger", 66]
 ]
 var exp_stage = 'tests'
 var path = '/static/experiments/dot_pattern_expectancy/images/'

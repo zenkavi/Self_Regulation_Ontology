@@ -28,7 +28,7 @@ var get_ITI = function() {
 /* Define experimental variables */
 /* ************************************ */
 // task specific variables
-var choices = [89,71,82]
+var choices = [82,71,66]
 var congruent_stim = [{
 	stimulus: '<div class = centerbox><div class = stroop-stim style = "color:red">RED</div></div>',
 	data: {
@@ -137,7 +137,7 @@ var instructions_block = {
 	data: {
 		trial_id: "instruction"
 	},
-	text: '<div class = center-text>Respond to the <strong>ink color</strong> of the word!<br><br><span style = "color:red;padding-left:40px">WORD</span>: index finger<br><span style = "color:green;padding-left:80px">WORD</span>: middle finger<br><span style = "color:blue">WORD</span>: ring finger</div>',
+	text: '<div class = center-text>Respond to the <strong>ink color</strong> of the word!<br><br><span style = "color:red;padding-left:40px">WORD</span>: Up<br><span style = "color:green;padding-left:80px">WORD</span>: Left<br><span style = "color:blue">WORD</span>: Right</div>',
 	cont_key: [32],
 	timing_post_trial: 1000
 };

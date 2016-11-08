@@ -38,7 +38,7 @@ var get_ITI = function() {
 /* Define experimental variables */
 /* ************************************ */
 // task specific variables
-var choices = [89,71]
+var choices = [71,66]
 var bonus_list = [] //keeps track of choices for bonus
 //hard coded options in the amounts and order specified in Kirby and Marakovic (1996)
 var options = {
@@ -92,7 +92,7 @@ var instructions_block = {
   data: {
     trial_id: "instruction"
   },
-  text: '<div class = centerbox><div class = center-text style="font-size:40px">Choose your preferred choice using your index or middle finger.</div></div>',
+  text: '<div class = centerbox><div class = center-text style="font-size:40px">Choose your preferred choice using the left or right button.</div></div>',
     cont_key: [32],
   timing_post_trial: 1000
 };

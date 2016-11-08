@@ -26,7 +26,7 @@ var cues = ['nocue', 'center', 'double', 'spatial']
 var current_trial = 0
 var exp_stage = 'test'
 var test_stimuli = []
-var choices = [89, 71]
+var choices = [71, 66]
 var path = '/static/experiments/attention_network_task/images/'
 var images = [path + 'right_arrow.png', path + 'left_arrow.png', path + 'no_arrow.png']
 //preload
