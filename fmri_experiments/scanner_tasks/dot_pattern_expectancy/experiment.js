@@ -137,10 +137,10 @@ var instructions_block = {
   data: {
     trial_id: "instruction"
   },
-  text: '<div class = centerbox><p style = "font-size:40px" class = center-block-text>Target Pair (press index finger):</p><p class = center-block-text><img src = "/static/experiments/dot_pattern_expectancy/images/' +
+  text: '<div class = centerbox><p style = "font-size:40px" class = center-block-text>Target Pair (press left):</p><p class = center-block-text><img src = "/static/experiments/dot_pattern_expectancy/images/' +
     valid_cue +
     '" ></img>&nbsp&nbsp&nbsp...followed by...&nbsp&nbsp&nbsp<img src = "/static/experiments/dot_pattern_expectancy/images/' +
-    valid_probe + '" ></img><br></br></p><p style = "font-size:40px" class = center-block-text>Otherwise press your middle finger</div>',
+    valid_probe + '" ></img><br></br></p><p style = "font-size:40px" class = center-block-text>Otherwise press right</div>',
   cont_key: [32],
   timing_post_trial: 1000
 };

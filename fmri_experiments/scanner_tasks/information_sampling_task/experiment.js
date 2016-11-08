@@ -503,7 +503,7 @@ var reset_block = {
 /* create experiment definition array */
 var information_sampling_task_experiment = [];
 information_sampling_task_experiment.push(instructions_block);
-setup_fmri_intro(information_sampling_task_experiment, [66,89,71,82, 80])
+setup_fmri_intro(information_sampling_task_experiment, [66,89,71,82, 77])
 
 if (Math.random() < 0.5) { // do the FW first, then DW
 	information_sampling_task_experiment.push(FW_intro_block);

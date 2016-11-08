@@ -40,7 +40,7 @@ for (l = 0; l < locations.length; l++) {
 			stimulus: '<div class = centerbox><div class = ANT_text>+</div></div><div class = ANT_' + loc +
 				'><img class = ANT_img src = ' + images[2] + '></img><img class = ANT_img src = ' + images[2] + '></img><img class = ANT_img src = ' + images[1] + '></img><img class = ANT_img src = ' + images[2] + '></img><img class = ANT_img src = ' + images[2] + '></img></div></div>',
 			data: {
-				correct_response: 89,
+				correct_response: choices[0],
 				flanker_middle_direction: 'left',
 				flanker_type: 'neutral',
 				flanker_location: loc,
@@ -51,7 +51,7 @@ for (l = 0; l < locations.length; l++) {
 			stimulus: '<div class = centerbox><div class = ANT_text>+</div></div><div class = ANT_' + loc +
 				'><img class = ANT_img src = ' + images[1] + '></img><img class = ANT_img src = ' + images[1] + '></img><img class = ANT_img src = ' + images[1] + '></img><img class = ANT_img src = ' + images[1] + '></img><img class = ANT_img src = ' + images[1] + '></img></div></div>',
 			data: {
-				correct_response: 89,
+				correct_response: choices[0],
 				flanker_middle_direction: 'left',
 				flanker_type: 'congruent',
 				flanker_location: loc,
@@ -62,7 +62,7 @@ for (l = 0; l < locations.length; l++) {
 			stimulus: '<div class = centerbox><div class = ANT_text>+</div></div><div class = ANT_' + loc +
 				'><img class = ANT_img src = ' + images[0] + '></img><img class = ANT_img src = ' + images[0] + '></img><img class = ANT_img src = ' + images[1] + '></img><img class = ANT_img src = ' + images[0] + '></img><img class = ANT_img src = ' + images[0] + '></img></div></div>',
 			data: {
-				correct_response: 89,
+				correct_response: choices[0],
 				flanker_middle_direction: 'left',
 				flanker_type: 'incongruent',
 				flanker_location: loc,
@@ -73,7 +73,7 @@ for (l = 0; l < locations.length; l++) {
 			stimulus: '<div class = centerbox><div class = ANT_text>+</div></div><div class = ANT_' + loc +
 				'><img class = ANT_img src = ' + images[2] + '></img><img class = ANT_img src = ' + images[2] + '></img><img class = ANT_img src = ' + images[0] + '></img><img class = ANT_img src = ' + images[2] + '></img><img class = ANT_img src = ' + images[2] + '></img></div></div>',
 			data: {
-				correct_response: 71,
+				correct_response: choices[1],
 				flanker_middle_direction: 'right',
 				flanker_type: 'neutral',
 				flanker_location: loc,
@@ -84,7 +84,7 @@ for (l = 0; l < locations.length; l++) {
 			stimulus: '<div class = centerbox><div class = ANT_text>+</div></div><div class = ANT_' + loc +
 				'><img class = ANT_img src = ' + images[0] + '></img><img class = ANT_img src = ' + images[0] + '></img><img class = ANT_img src = ' + images[0] + '></img><img class = ANT_img src = ' + images[0] + '></img><img class = ANT_img src = ' + images[0] + '></img></div></div>',
 			data: {
-				correct_response: 71,
+				correct_response: choices[1],
 				flanker_middle_direction: 'right',
 				flanker_type: 'congruent',
 				flanker_location: loc,
@@ -95,7 +95,7 @@ for (l = 0; l < locations.length; l++) {
 			stimulus: '<div class = centerbox><div class = ANT_text>+</div></div><div class = ANT_' + loc +
 				'><img class = ANT_img src = ' + images[1] + '></img><img class = ANT_img src = ' + images[1] + '></img><img class = ANT_img src = ' + images[0] + '></img><img class = ANT_img src = ' + images[1] + '></img><img class = ANT_img src = ' + images[1] + '></img></div></div>',
 			data: {
-				correct_response: 71,
+				correct_response: choices[1],
 				flanker_middle_direction: 'right',
 				flanker_type: 'incongruent',
 				flanker_location: loc,
