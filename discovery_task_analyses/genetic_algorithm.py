@@ -39,8 +39,14 @@ def get_initial_population_tasks(popsize,nvars,data,ntasks):
 
 def get_population_fitness_vars(pop,data,nsplits,clf,obj_weight):
     # first get cc for each item in population
-    cc_recon=[get_reconstruction_error_vars(cv,data,nsplits,clf) for cv in pop]
-    cc_subsim=[get_subset_corr_vars(cv,data) for cv in pop]
+    if obj_weight[0]>0:
+        cc_recon=[get_reconstruction_error_vars(cv,data,nsplits,clf) for cv in pop]
+    else:
+        cc_recon=[0]
+    if obj_weight[1]>0:
+        cc_subsim=[get_subset_corr_vars(cv,data) for cv in pop]
+    else:
+        cc_subsim=[0]
     maxcc=[numpy.max(cc_recon),numpy.max(cc_subsim)]
     cc_recon=scale(cc_recon)
     cc_subsim=scale(cc_subsim)
