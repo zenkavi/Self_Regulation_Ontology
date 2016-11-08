@@ -18,7 +18,7 @@ except NameError: pass
 # get options
 job = input('Type "download", "extras", "post", "DV",  or "all": ')
 # sample = 'discovery'
-sample = 'retest'
+sample = 'all'
 if job == 'more':
     job = input('More: Type "download", "extras", "post" or "both": ')
 #     sample = input('Type "discovery", "validation" or "incomplete". Use commas to separate multiple samples or "all": ')
