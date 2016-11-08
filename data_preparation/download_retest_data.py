@@ -17,12 +17,15 @@ except NameError: pass
     
 # get options
 job = input('Type "download", "extras", "post", "DV",  or "all": ')
-sample = 'discovery'
+# sample = 'discovery'
+sample = 'retest'
 if job == 'more':
     job = input('More: Type "download", "extras", "post" or "both": ')
-    sample = input('Type "discovery", "validation" or "incomplete". Use commas to separate multiple samples or "all": ')
+#     sample = input('Type "discovery", "validation" or "incomplete". Use commas to separate multiple samples or "all": ')
+    sample = input('Type "retest" or "incomplete". Use commas to separate multiple samples or "all": ')
     if sample == 'all':
-        sample = ['discovery','validation','incomplete']
+#         sample = ['discovery','validation','incomplete']
+        sample = ['retest','incomplete']
     else:
         sample = sample.split(',')   
         
@@ -97,10 +100,13 @@ if job in ['post', 'all']:
         print('Finished loading raw data')
     
     #get subject assignment
-    subject_assignment = pd.read_csv('samples/subject_assignment.csv', index_col = 0)
-    discovery_sample = list(subject_assignment.query('dataset == "discovery"').index)
-    validation_sample = list(subject_assignment.query('dataset == "validation"').index)
-    extra_sample =  ['s' + str(i) for i in range(501,600)]
+    # subject_assignment = pd.read_csv('samples/subject_assignment.csv', index_col = 0)
+    subject_assignment_retest = pd.read_csv('samples/subject_assignment_retest.csv', index_col = 0)
+    # discovery_sample = list(subject_assignment.query('dataset == "discovery"').index)
+    # validation_sample = list(subject_assignment.query('dataset == "validation"').index)
+    retest_sample = list(subject_assignment_retest.query('dataset == "retest"').index)
+    # extra_sample =  ['s' + str(i) for i in range(501,600)]
+    extra_sample =  ['s' + str(i) for i in range(51,100)]
     
     # create dataframe to hold failed data
     failed_data = pd.DataFrame()
@@ -113,42 +119,59 @@ if job in ['post', 'all']:
     extra_workers = np.sort(extra_data.worker_id.unique())
     print('Finished processing extra data')    
     
+    if 'retest' in sample:
+        # only get retest data
+        retest_data = data.query('worker_id in %s' % retest_sample).reset_index(drop = True)
+        post_process_data(retest_data)
+        failures = remove_failed_subjects(retest_data)
+        failed_data = pd.concat([failed_data,failures])
+        # add extra workers if necessary
+        num_failures = len(failures.worker_id.unique())
+        if num_failures > 0:
+            makeup_workers = extra_workers[0:num_failures]
+            new_data = extra_data[extra_data['worker_id'].isin(makeup_workers)]
+            retest_data = pd.concat([retest_data, new_data]).reset_index(drop = True)
+            extra_data.drop(new_data.index, inplace = True)
+        retest_data.to_json(path.join(data_dir,'mturk_retest_data_post.json'))
+        print('Finished saving post-processed retest data')
+
     # preprocess and save each sample individually
-    if 'discovery' in sample:
-        # only get discovery data
-        discovery_data = data.query('worker_id in %s' % discovery_sample).reset_index(drop = True)
-        post_process_data(discovery_data)
-        failures = remove_failed_subjects(discovery_data)
-        failed_data = pd.concat([failed_data,failures])
-        # add extra workers if necessary
-        num_failures = len(failures.worker_id.unique())
-        if num_failures > 0:
-            makeup_workers = extra_workers[0:num_failures]
-            new_data = extra_data[extra_data['worker_id'].isin(makeup_workers)]
-            discovery_data = pd.concat([discovery_data, new_data]).reset_index(drop = True)
-            extra_data.drop(new_data.index, inplace = True)
-        discovery_data.to_json(path.join(data_dir,'mturk_discovery_data_post.json'))
-        print('Finished saving post-processed discovery data')
+    # if 'discovery' in sample:
+    #     # only get discovery data
+    #     discovery_data = data.query('worker_id in %s' % discovery_sample).reset_index(drop = True)
+    #     post_process_data(discovery_data)
+    #     failures = remove_failed_subjects(discovery_data)
+    #     failed_data = pd.concat([failed_data,failures])
+    #     # add extra workers if necessary
+    #     num_failures = len(failures.worker_id.unique())
+    #     if num_failures > 0:
+    #         makeup_workers = extra_workers[0:num_failures]
+    #         new_data = extra_data[extra_data['worker_id'].isin(makeup_workers)]
+    #         discovery_data = pd.concat([discovery_data, new_data]).reset_index(drop = True)
+    #         extra_data.drop(new_data.index, inplace = True)
+    #     discovery_data.to_json(path.join(data_dir,'mturk_discovery_data_post.json'))
+    #     print('Finished saving post-processed discovery data')
         
-    if 'validation' in sample:
-        # only get validation data
-        validation_data = data.query('worker_id in %s' % validation_sample).reset_index(drop = True)
-        post_process_data(validation_data)
-        failures = remove_failed_subjects(validation_data)
-        failed_data = pd.concat([failed_data,failures])
-        # add extra workers if necessary
-        num_failures = len(failures.worker_id.unique())
-        if num_failures > 0:
-            makeup_workers = extra_workers[0:num_failures]
-            new_data = extra_data[extra_data['worker_id'].isin(makeup_workers)]
-            validation_data = pd.concat([validation_data, new_data]).reset_index(drop = True)
-            extra_data.drop(new_data.index, inplace = True)
-        validation_data.to_json(path.join(data_dir,'mturk_validation_data_post.json'))
-        print('Finished saving post-processed validation data')
+    # if 'validation' in sample:
+    #     # only get validation data
+    #     validation_data = data.query('worker_id in %s' % validation_sample).reset_index(drop = True)
+    #     post_process_data(validation_data)
+    #     failures = remove_failed_subjects(validation_data)
+    #     failed_data = pd.concat([failed_data,failures])
+    #     # add extra workers if necessary
+    #     num_failures = len(failures.worker_id.unique())
+    #     if num_failures > 0:
+    #         makeup_workers = extra_workers[0:num_failures]
+    #         new_data = extra_data[extra_data['worker_id'].isin(makeup_workers)]
+    #         validation_data = pd.concat([validation_data, new_data]).reset_index(drop = True)
+    #         extra_data.drop(new_data.index, inplace = True)
+    #     validation_data.to_json(path.join(data_dir,'mturk_validation_data_post.json'))
+    #     print('Finished saving post-processed validation data')
         
     if 'incomplete' in sample:
         # only get incomplete data
-        incomplete_data = data.query('worker_id not in %s' % (validation_sample + discovery_sample + extra_sample)).reset_index(drop = True)
+        # incomplete_data = data.query('worker_id not in %s' % (validation_sample + discovery_sample + extra_sample)).reset_index(drop = True)
+        incomplete_data = data.query('worker_id not in %s' % (retest_sample + extra_sample)).reset_index(drop = True)
         post_process_data(incomplete_data)
         remove_failed_subjects(incomplete_data)
         incomplete_data.to_json(data_dir + 'mturk_incomplete_data_post.json')
@@ -159,7 +182,8 @@ if job in ['post', 'all']:
     print('Finished saving post-processed failed data')
     
 if job in ['DV', 'all']:
-    for sample in ['discovery', 'failed']:
+    # for sample in ['discovery', 'failed']:
+    for sample in ['retest', 'failed']:
         data = pd.read_json(data_dir + 'mturk_' + sample + '_data_post.json')
         #calculate DVs
         DV_df, valence_df = extract_DVs(data)
