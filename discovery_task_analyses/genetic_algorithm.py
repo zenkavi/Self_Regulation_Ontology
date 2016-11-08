@@ -56,11 +56,17 @@ def get_population_fitness_vars(pop,data,nsplits,clf,obj_weight):
 def get_population_fitness_tasks(pop,data,nsplits,clf,obj_weight):
     # first get cc for each item in population
     #cc_recon = Parallel(n_jobs=num_cores,verbose=5,max_nbytes=1e4)(delayed(get_reconstruction_error)(ct,data,nsplits,clf) for ct in pop)
-    cc_recon=[get_reconstruction_error(ct,data,nsplits,clf,1) for ct in pop]
-    if __USE_MULTIPROC__:
-        cc_subsim=Parallel(n_jobs=num_cores)(delayed(get_subset_corr)(ct,data) for ct in pop)
+    if obj_weight[0]>0:
+        cc_recon=[get_reconstruction_error(ct,data,nsplits,clf,-1) for ct in pop]
     else:
-        cc_subsim=[get_subset_corr(ct,data) for ct in pop]
+        cc_recon=[0]
+    if obj_weight[1]>0:
+        if __USE_MULTIPROC__:
+            cc_subsim=Parallel(n_jobs=num_cores)(delayed(get_subset_corr)(ct,data) for ct in pop)
+        else:
+            cc_subsim=[get_subset_corr(ct,data) for ct in pop]
+    else:
+        cc_subsim=[0]
     maxcc=[numpy.max(cc_recon),numpy.max(cc_subsim)]
     cc_recon=scale(cc_recon)
     cc_subsim=scale(cc_subsim)
