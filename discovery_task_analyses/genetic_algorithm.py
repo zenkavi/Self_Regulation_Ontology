@@ -8,7 +8,7 @@ from sklearn.preprocessing import scale
 from search_objectives import get_reconstruction_error_vars,get_subset_corr_vars
 from search_objectives import get_reconstruction_error,get_subset_corr
 
-__USE_MULTIPROC__=True
+__USE_MULTIPROC__=False
 
 if __USE_MULTIPROC__:
     from joblib import Parallel, delayed
@@ -17,7 +17,10 @@ if __USE_MULTIPROC__:
         num_cores=int(os.environ['NUMCORES'])
     else:
         num_cores = multiprocessing.cpu_count()
-    print('multiproc: using %d cores'%num_cores)
+    if num_cores==0:
+        __USE_MULTIPROC__=False
+    else:
+        print('multiproc: using %d cores'%num_cores)
 
 def get_initial_population_vars(popsize,nvars,data,taskvaridx):
     poplist=[]
@@ -47,7 +50,7 @@ def get_population_fitness_vars(pop,data,nsplits,clf,obj_weight):
 def get_population_fitness_tasks(pop,data,nsplits,clf,obj_weight):
     # first get cc for each item in population
     if __USE_MULTIPROC__:
-        cc_recon = Parallel(n_jobs=num_cores)(delayed(get_reconstruction_error)(ct,data,nsplits,clf) for ct in pop)
+        cc_recon = Parallel(n_jobs=num_cores,verbose=5,max_nbytes=1e4)(delayed(get_reconstruction_error)(ct,data,nsplits,clf) for ct in pop)
     else:
         cc_recon=[get_reconstruction_error(ct,data,nsplits,clf) for ct in pop]
     cc_subsim=[get_subset_corr(ct,data) for ct in pop]
