@@ -103,7 +103,7 @@ var blocks = [block1_list, block2_list, block3_list]
 /* ************************************ */
 /* Set up jsPsych blocks */
 /* ************************************ */
- var test_intro_block = {
+var start_test_block = {
   type: 'poldrack-single-stim',
   stimulus: '<div class = centerbox><div class = center-text>Get ready!</p></div>',
   is_html: true,
@@ -111,7 +111,7 @@ var blocks = [block1_list, block2_list, block3_list]
   timing_stim: 1500, 
   timing_response: 1500,
   data: {
-    trial_id: "rest block"
+    trial_id: "test_start_block"
   },
   timing_post_trial: 500
 };
@@ -288,7 +288,7 @@ var dot_pattern_expectancy_experiment = []
 dot_pattern_expectancy_experiment.push(instructions_block);
 setup_fmri_intro(dot_pattern_expectancy_experiment, choices)
 
-dot_pattern_expectancy_experiment.push(test_intro_block);
+dot_pattern_expectancy_experiment.push(start_test_block);
 for (b = 0; b < blocks.length; b++) {
   var block = blocks[b]
   for (i = 0; i < block.length; i++) {
