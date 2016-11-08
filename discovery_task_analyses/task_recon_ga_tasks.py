@@ -20,7 +20,7 @@ from genetic_algorithm import select_parents_tasks,crossover_tasks,immigrate_tas
 
 # this is kludgey but it works
 sys.path.append('../utils')
-from utils import get_info,get_behav_data
+from utils import get_info,get_behav_data,get_demographics
 #from r_to_py_utils import missForest
 
 if __name__ == '__main__':
@@ -37,10 +37,8 @@ if __name__ == '__main__':
     else:
         nsplits=8
 
-    target='all' # or 'all' or 'task'
+    targets=['task','survey','demog']
     objective_weights=[1.0,0.0] # weights for reconstruction and correlation
-
-    assert target in ['all','task']
 
     dataset=get_info('dataset')
     print('using dataset:',dataset)
@@ -62,8 +60,8 @@ if __name__ == '__main__':
     tasks=list(set(tasknames))
     tasks.sort()
 
-    if target=='all':
-        print('targeting all variables')
+    if 'survey' in targets:
+        print('including survey variables')
         alldata=get_behav_data(dataset)
         surveydata=pandas.DataFrame()
         for k in alldata.columns:
@@ -72,19 +70,28 @@ if __name__ == '__main__':
 
         assert all(data.index == surveydata.index)
 
-        alldata = surveydata.merge(data,'inner',right_index=True,left_index=True)
+        data = surveydata.merge(data,'inner',right_index=True,left_index=True)
 
-        taskvaridx=[i for i in range(len(alldata.columns)) if alldata.columns[i] in taskvars]
+    if 'demog' in targets:
+        demogvars=['BMI','Age','Sex','RetirementAccount','ChildrenNumber',
+                    'CreditCardDebt','TrafficTicketsLastYearCount',
+                    'TrafficAccidentsLifeCount','ArrestedChargedLifeCount',
+                    'LifetimeSmoke100Cigs','AlcoholHowManyDrinksDay',
+                    'CannabisPast6Months','Nervous',
+                    'Hopeless', 'RestlessFidgety', 'Depressed',
+                    'EverythingIsEffort','Worthless']
+        print('including demographic variables')
+        demogdata=get_demographics(dataset,var_subset=demogvars)
+        assert all(data.index == demogdata.index)
+        data = demogdata.merge(data,'inner',right_index=True,left_index=True)
 
-        # there are very few missing values, so just use a fast but dump imputation
-        #data=missForest(alldata)[0]
-        if numpy.sum(numpy.isnan(alldata.values))>0:
-            data_imp=fancyimpute.SimpleFill().complete(alldata.values)
-            data=pandas.DataFrame(data_imp,index=alldata.index,columns=alldata.columns)
-    else:
-        print('targeting task variables')
-        taskvaridx=[i for i in range(data.shape[1])]
 
+    taskvaridx=[i for i in range(len(data.columns)) if data.columns[i] in taskvars]
+
+    # there are very few missing values, so just use a fast but dumb imputation here
+    if numpy.sum(numpy.isnan(data.values))>0:
+        data_imp=fancyimpute.SimpleFill().complete(data.values)
+        data=pandas.DataFrame(data_imp,index=data.index,columns=data.columns)
 
     # set up genetic algorithm
     nvars=8
