@@ -110,12 +110,14 @@ def get_demographics(dataset,var_subset=None):
     for i,survey in enumerate(['demographics_ordinal','alcohol_drugs_ordinal','health_ordinal']):
         infile=os.path.join(basedir,'Data/Derived_Data/%s/surveydata/%s.tsv'%(dataset,survey))
         if i==0:
-            alldata=pandas.read_csv(infile,index_col=0,sep='\t')
+            alldata=pandas.DataFrame.from_csv(infile,index_col=0,sep='\t')
         else:
-            data=pandas.read_csv(infile,index_col=0,sep='\t')
+            data=pandas.DataFrame.from_csv(infile,index_col=0,sep='\t')
             alldata=alldata.merge(data,'inner',right_index=True,left_index=True)
-    alldata['WeightPounds'][alldata['WeightPounds']<80]=numpy.nan
-    alldata['HeightInches'][alldata['HeightInches']<36]=numpy.nan
+    badweight=alldata['WeightPounds']<80
+    badheight=alldata['HeightInches']<36
+    alldata.loc[badweight,'WeightPounds']=numpy.nan
+    alldata.loc[badheight,'HeightInches']=numpy.nan
     alldata['BMI']=alldata['WeightPounds']*0.45 / (alldata['HeightInches']*0.025)**2
 
     if not var_subset is None:
