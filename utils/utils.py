@@ -100,3 +100,18 @@ def get_single_dataset(dataset,survey):
     metadata=load_metadata(survey,os.path.join(basedir,
         'data/Derived_Data/%s/metadata'%dataset))
     return data,metadata
+
+def get_demographics(dataset,var_subset=None):
+    """
+    misnomer - actually get demographics, alc/drug, and health
+    """
+    basedir=get_info('base_directory')
+
+    for i,survey in enumerate(['demographics_ordinal','alcohol_drugs_ordinal','health_ordinal']):
+        infile=os.path.join(basedir,'data/Derived_Data/%s/surveydata/%s.tsv'%(dataset,survey))
+        if i==0:
+            alldata=pandas.read_csv(infile,index_col=0,sep='\t')
+        else:
+            data=pandas.read_csv(infile,index_col=0,sep='\t')
+            alldata=alldata.merge(data,'inner',right_index=True,left_index=True)
+    return(alldata)
