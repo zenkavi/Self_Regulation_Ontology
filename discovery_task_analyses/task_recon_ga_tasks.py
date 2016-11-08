@@ -106,6 +106,7 @@ if __name__ == '__main__':
     population=get_initial_population_tasks(initpopsize,nvars,data,ntasks)
 
     for generation in range(ngen):
+        roundstart=time.time()
         population,cc,maxcc=select_parents_tasks(population,data,nselect,clf,
                                                 obj_weight=objective_weights)
         ccmax[generation]=[numpy.max(cc)]+maxcc
@@ -124,7 +125,7 @@ if __name__ == '__main__':
         population=crossover_tasks(population,data,ntasks,nbabies=nbabies)
         population=immigrate_tasks(population,nimmigrants,nvars,data,ntasks)
         print(generation,ccmax[generation])
-        print('Time elapsed (secs):', time.time()-start_time)
+        print('Time elapsed (secs):', time.time()-roundstart)
 
 
     bestp.sort()
