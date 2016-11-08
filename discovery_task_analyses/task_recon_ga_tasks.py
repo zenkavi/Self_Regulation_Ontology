@@ -124,6 +124,7 @@ if __name__ == '__main__':
         population=crossover_tasks(population,data,ntasks,nbabies=nbabies)
         population=immigrate_tasks(population,nimmigrants,nvars,data,ntasks)
         print(generation,ccmax[generation])
+        print('Time elapsed (secs):', time.time()-start_time)
 
 
     bestp.sort()
