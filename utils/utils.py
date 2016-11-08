@@ -3,7 +3,7 @@ some util functions
 """
 from glob import glob
 import os,json
-import pandas
+import pandas,numpy
 from sklearn.metrics import confusion_matrix
 
 def print_confusion_matrix(y_true,y_pred,labels=[0,1]):
@@ -114,8 +114,13 @@ def get_demographics(dataset,var_subset=None):
         else:
             data=pandas.read_csv(infile,index_col=0,sep='\t')
             alldata=alldata.merge(data,'inner',right_index=True,left_index=True)
+    alldata['WeightPounds'][alldata['WeightPounds']<80]=numpy.nan
+    alldata['HeightInches'][alldata['HeightInches']<36]=numpy.nan
+    alldata['BMI']=alldata['WeightPounds']*0.45 / (alldata['HeightInches']*0.025)**2
+
     if not var_subset is None:
         for c in alldata.columns:
             if not c in var_subset:
                 del alldata[c]
+
     return(alldata)
