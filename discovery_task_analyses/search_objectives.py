@@ -23,7 +23,7 @@ def get_reconstruction_error_vars(chosen_vars,data,nsplits=4,clf='kridge'):
     elif clf=='rf':
         linreg=RandomForestRegressor()
     else:
-       linreg=LinearRegression()
+       linreg=LinearRegression(n_jobs=-1)
     scaler=StandardScaler()
     pred=numpy.zeros(fulldata.shape)
     for train, test in kf.split(fulldata):
@@ -41,7 +41,7 @@ def get_subset_corr_vars(chosen_vars,data):
     """
     get subset correlation for chosen vars (not tasks)
     """
-    
+
     subcorr=numpy.corrcoef(data)[numpy.triu_indices(data.shape[0],1)]
     chosen_data=data.ix[:,chosen_vars].values
     chosen_data=scale(chosen_data)
