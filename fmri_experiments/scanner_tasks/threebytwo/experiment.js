@@ -258,7 +258,7 @@ var instructions_block = {
 	timing_post_trial: 1000
 };
 
- var end_block = {
+var end_block = {
 	type: 'poldrack-single-stim',
 	stimulus: '<div class = centerbox><div class = center-text><i>Fin</i></div></div>',
 	is_html: true,
