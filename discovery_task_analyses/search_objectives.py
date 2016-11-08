@@ -76,7 +76,7 @@ def get_reconstruction_error(ct,data,nsplits=4,clf='kridge',n_jobs=1):
     fulldata=data.values
     #subdata=data.ix[:,chosen_vars].values
     if clf=='kridge':
-        linreg=KernelRidge(alpha=1,n_jobs=n_jobs)
+        linreg=KernelRidge(alpha=1)
     elif clf=='rf':
         linreg=RandomForestRegressor()
     else:
