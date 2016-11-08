@@ -8,7 +8,7 @@ from sklearn.preprocessing import scale
 from search_objectives import get_reconstruction_error_vars,get_subset_corr_vars
 from search_objectives import get_reconstruction_error,get_subset_corr
 
-__USE_MULTIPROC__=True
+__USE_MULTIPROC__=False
 
 if __USE_MULTIPROC__:
     from joblib import Parallel, delayed
