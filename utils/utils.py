@@ -108,7 +108,7 @@ def get_demographics(dataset,var_subset=None):
     basedir=get_info('base_directory')
 
     for i,survey in enumerate(['demographics_ordinal','alcohol_drugs_ordinal','health_ordinal']):
-        infile=os.path.join(basedir,'data/Derived_Data/%s/surveydata/%s.tsv'%(dataset,survey))
+        infile=os.path.join(basedir,'Data/Derived_Data/%s/surveydata/%s.tsv'%(dataset,survey))
         if i==0:
             alldata=pandas.read_csv(infile,index_col=0,sep='\t')
         else:
