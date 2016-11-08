@@ -48,13 +48,9 @@ def get_population_fitness_vars(pop,data,nsplits,clf,obj_weight):
     return cc,maxcc
 
 def get_population_fitness_tasks(pop,data,nsplits,clf,obj_weight):
-    if __USE_MULTIPROC__:
-        n_jobs=num_cores
-    else:
-        n_jobs=1
     # first get cc for each item in population
     #cc_recon = Parallel(n_jobs=num_cores,verbose=5,max_nbytes=1e4)(delayed(get_reconstruction_error)(ct,data,nsplits,clf) for ct in pop)
-    cc_recon=[get_reconstruction_error(ct,data,nsplits,clf,n_jobs) for ct in pop]
+    cc_recon=[get_reconstruction_error(ct,data,nsplits,clf,1) for ct in pop]
     if __USE_MULTIPROC__:
         cc_subsim=Parallel(n_jobs=num_cores)(delayed(get_subset_corr)(ct,data) for ct in pop)
     else:
