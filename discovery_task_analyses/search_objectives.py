@@ -42,14 +42,14 @@ def get_subset_corr_vars(chosen_vars,data):
     get subset correlation for chosen vars (not tasks)
     """
 
-    subcorr=numpy.corrcoef(data)[numpy.triu_indices(data.shape[0],1)]
+    subcorr=numpy.corrcoef(scale(data.values))[numpy.triu_indices(data.shape[0],1)]
     chosen_data=data.ix[:,chosen_vars].values
     chosen_data=scale(chosen_data)
     subcorr_subset=numpy.corrcoef(chosen_data)[numpy.triu_indices(data.shape[0],1)]
     return(numpy.corrcoef(subcorr,subcorr_subset)[0,1])
 
 def get_subset_corr(ct,data):
-    subcorr=numpy.corrcoef(data)[numpy.triu_indices(data.shape[0],1)]
+    subcorr=numpy.corrcoef(scale(data.values))[numpy.triu_indices(data.shape[0],1)]
     tasknames=[i.split('.')[0] for i in data.columns]
     tasks=list(set(tasknames))
     tasks.sort()
