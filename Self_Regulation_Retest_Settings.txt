@@ -1,0 +1,2 @@
+expfactory_token:
+base_directory:/Users/zeynepenkavi/Dropbox/PoldrackLab/Self_Regulation_Ontology/
