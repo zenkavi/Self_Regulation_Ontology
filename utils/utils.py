@@ -114,4 +114,8 @@ def get_demographics(dataset,var_subset=None):
         else:
             data=pandas.read_csv(infile,index_col=0,sep='\t')
             alldata=alldata.merge(data,'inner',right_index=True,left_index=True)
+    if not var_subset is None:
+        for c in alldata.columns:
+            if not c in var_subset:
+                del alldata[c]
     return(alldata)
