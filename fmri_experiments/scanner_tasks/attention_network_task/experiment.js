@@ -162,7 +162,7 @@ var rest_block = {
 
 var instructions_block = {
 	type: 'poldrack-text',
-	text: '<div class = centerbox><div class = center-text>Indicate which direction the center arrow is pointing<br><br><strong>Left:</strong> Index Finger<br><strong>Right:</strong> Middle Finger</div></div>',
+	text: '<div class = centerbox><div class = center-text>Indicate which direction the center arrow is pointing using the left and right keys.</div>',
 	data: {
 		trial_id: 'instruction'
 	},
