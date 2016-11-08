@@ -30,11 +30,11 @@ if job == 'more':
         sample = sample.split(',')   
         
 #load Data
-token = get_info('expfactory_token', infile='../Self_Regulation_Settings_Retest.txt')
+token = get_info('expfactory_token', infile='../Self_Regulation_Retest_Settings.txt')
 try:
-    data_dir=get_info('data_directory', infile='../Self_Regulation_Settings_Retest.txt')
+    data_dir=get_info('data_directory', infile='../Self_Regulation_Retest_Settings.txt')
 except Exception:
-    data_dir=path.join(get_info('base_directory', infile='../Self_Regulation_Settings_Retest.txt'),'Data')
+    data_dir=path.join(get_info('base_directory', infile='../Self_Regulation_Retest_Settings.txt'),'Data')
 
 if job == 'download' or job == "all":
     #***************************************************
