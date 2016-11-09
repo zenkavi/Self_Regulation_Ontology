@@ -3,7 +3,7 @@ objective functions for search
 """
 
 import pandas,numpy
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression,Lasso,LassoCV,MultiTaskLassoCV
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.kernel_ridge import KernelRidge
@@ -11,30 +11,111 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import scale
 from sklearn.decomposition import FactorAnalysis
 
-def get_reconstruction_error_vars(chosen_vars,data,nsplits=4,clf='kridge',n_jobs=1):
+
+def get_subset_corr(ct,taskdata,targetdata):
+    subcorr=numpy.corrcoef(scale(targetdata.values))[numpy.triu_indices(targetdata.shape[0],1)]
+
+    tasknames=[i.split('.')[0] for i in taskdata.columns]
+    tasks=list(set(tasknames))
+    tasks.sort()
+    chosen_vars=[]
+    for i in ct:
+        vars=[j for j in range(len(tasknames)) if tasknames[j].split('.')[0]==tasks[i]]
+        chosen_vars+=vars
+    chosen_data=taskdata.ix[:,chosen_vars].values
+    chosen_data=scale(chosen_data)
+    subcorr_subset=numpy.corrcoef(chosen_data)[numpy.triu_indices(chosen_data.shape[0],1)]
+    return(numpy.corrcoef(subcorr,subcorr_subset)[0,1])
+
+def get_reconstruction_error(ct,taskdata,targetdata_orig,nsplits=4,
+                            clf='kridge',n_jobs=1,remove_chosen_from_test=True,
+                            verbose=False):
+    targetdata=targetdata_orig.copy()
+    tasknames=[i.split('.')[0] for i in taskdata.columns]
+    tasks=list(set(tasknames))
+    tasks.sort()
+    chosen_vars=[]
+    varnames=taskdata.columns
+    if verbose:
+        print('selected tasks:',[tasks[i] for i in ct])
+        print(ct)
+
+    #print(ct,tasks,tasknames)
+    for i in ct:
+        vars=[j for j in range(len(tasknames)) if tasknames[j].split('.')[0]==tasks[i]]
+        chosen_vars+=vars
+    if verbose:
+        print('selected vars:',[varnames[j] for j in chosen_vars])
+    # remove chosen vars from test set
+    if remove_chosen_from_test:
+        delnames=[]
+        for t in chosen_vars:
+            if varnames[t] in targetdata:
+                del targetdata[varnames[t]]
+                delnames.append(varnames[t])
+        if verbose:
+            print('removed %d chosen vars'%len(delnames),delnames)
+    taskdata=taskdata.values
+    targetdata=targetdata.values
+
+    kf = KFold(n_splits=nsplits,shuffle=True)
+    #subdata=data.ix[:,chosen_vars].values
+    if clf=='kridge':
+        linreg=KernelRidge(alpha=0.5)
+    if clf=='lasso':
+        linreg=Lasso(alpha=0.1)
+    elif clf=='rf':
+        linreg=RandomForestRegressor()
+    else:
+       linreg=LinearRegression(n_jobs=n_jobs)
+
+    scaler=StandardScaler()
+    predacc_insample=[]
+    pred=numpy.zeros(targetdata.shape)
+    for train, test in kf.split(targetdata):
+        taskdata_train=scaler.fit_transform(taskdata[train,:])
+        taskdata_train=taskdata_train[:,chosen_vars]
+        taskdata_test=scaler.transform(taskdata[test,:])
+        taskdata_test=taskdata_test[:,chosen_vars]
+        targetdata_train=scaler.fit_transform(targetdata[train,:])
+        targetdata_test=scaler.transform(targetdata[test,:])
+        linreg.fit(taskdata_train,targetdata_train)
+        pred[test,:]=linreg.predict(taskdata_test)
+        predacc_insample.append(numpy.corrcoef(linreg.predict(taskdata_train).ravel(),
+                                targetdata_train.ravel())[0,1])
+        #print(linreg.predict(taskdata_train))
+    cc=numpy.corrcoef(scaler.transform(targetdata).ravel(),pred.ravel())[0,1]
+    return cc,numpy.mean(predacc_insample)
+
+
+# functions for variable rather than task selection
+
+def get_reconstruction_error_vars(chosen_vars,taskdata,targetdata,nsplits=4,clf='kridge',n_jobs=1):
     """
     get reconstruction error for chosen vars (not tasks)
     """
 
     kf = KFold(n_splits=nsplits,shuffle=True)
-    fulldata=data.values
+    taskdata=taskdata.values
+    targetdata=targetdata.values
+
     if clf=='kridge':
-        linreg=KernelRidge(alpha=1)
+        linreg=KernelRidge(alpha=0.5)
     elif clf=='rf':
         linreg=RandomForestRegressor()
     else:
        linreg=LinearRegression(n_jobs=n_jobs)
     scaler=StandardScaler()
-    pred=numpy.zeros(fulldata.shape)
-    for train, test in kf.split(fulldata):
+    pred=numpy.zeros(targetdata.shape)
+    for train, test in kf.split(targetdata):
         # fit scaler to train data and apply to test
-        fulldata_train=scaler.fit_transform(fulldata[train,:])
-        fulldata_test=scaler.transform(fulldata[test,:])
-        subdata_train=fulldata_train[:,chosen_vars]
-        subdata_test=fulldata_test[:,chosen_vars]
-        linreg.fit(subdata_train,fulldata_train)
-        pred[test,:]=linreg.predict(subdata_test)
-    cc=numpy.corrcoef(scaler.transform(fulldata).ravel(),pred.ravel())[0,1]
+        taskdata_train=scaler.fit_transform(taskdata[train,chosen_vars])
+        taskdata_test=scaler.transform(taskdata[test,chosen_vars])
+        targetdata_train=scaler.fit_transform(targetdata[train,:])
+        targetdata_test=scaler.transform(targetdata[test,:])
+        linreg.fit(taskdata_train,targetdata_train)
+        pred[test,:]=linreg.predict(taskdata_test)
+    cc=numpy.corrcoef(scaler.transform(targetdata).ravel(),pred.ravel())[0,1]
     return cc
 
 def get_subset_corr_vars(chosen_vars,data):
@@ -47,51 +128,3 @@ def get_subset_corr_vars(chosen_vars,data):
     chosen_data=scale(chosen_data)
     subcorr_subset=numpy.corrcoef(chosen_data)[numpy.triu_indices(data.shape[0],1)]
     return(numpy.corrcoef(subcorr,subcorr_subset)[0,1])
-
-def get_subset_corr(ct,data):
-    subcorr=numpy.corrcoef(scale(data.values))[numpy.triu_indices(data.shape[0],1)]
-    tasknames=[i.split('.')[0] for i in data.columns]
-    tasks=list(set(tasknames))
-    tasks.sort()
-    chosen_vars=[]
-    for i in ct:
-        vars=[j for j in range(len(tasknames)) if tasknames[j].split('.')[0]==tasks[i]]
-        chosen_vars+=vars
-
-    chosen_data=data.ix[:,chosen_vars].values
-    chosen_data=scale(chosen_data)
-    subcorr_subset=numpy.corrcoef(chosen_data)[numpy.triu_indices(data.shape[0],1)]
-    return(numpy.corrcoef(subcorr,subcorr_subset)[0,1])
-
-def get_reconstruction_error(ct,data,nsplits=4,clf='kridge',n_jobs=1):
-    tasknames=[i.split('.')[0] for i in data.columns]
-    tasks=list(set(tasknames))
-    tasks.sort()
-    chosen_vars=[]
-    #print(ct,tasks,tasknames)
-    for i in ct:
-        vars=[j for j in range(len(tasknames)) if tasknames[j].split('.')[0]==tasks[i]]
-        chosen_vars+=vars
-    kf = KFold(n_splits=nsplits,shuffle=True)
-    fulldata=data.values
-    #subdata=data.ix[:,chosen_vars].values
-    if clf=='kridge':
-        linreg=KernelRidge(alpha=1)
-    elif clf=='rf':
-        linreg=RandomForestRegressor()
-    else:
-       linreg=LinearRegression(n_jobs=n_jobs)
-    scaler=StandardScaler()
-    pred=numpy.zeros(fulldata.shape)
-    for train, test in kf.split(fulldata):
-        #fulldata_train=fulldata[train,:]
-        #fulldata_test=fulldata[test,:]
-        # fit scaler to train data and apply to test
-        fulldata_train=scaler.fit_transform(fulldata[train,:])
-        fulldata_test=scaler.transform(fulldata[test,:])
-        subdata_train=fulldata_train[:,chosen_vars]
-        subdata_test=fulldata_test[:,chosen_vars]
-        linreg.fit(subdata_train,fulldata_train)
-        pred[test,:]=linreg.predict(subdata_test)
-    cc=numpy.corrcoef(scaler.transform(fulldata).ravel(),pred.ravel())[0,1]
-    return cc
