@@ -352,8 +352,8 @@ local_global_letter.switch_cost_EZ_non_decision,1.0
 local_global_letter.switch_cost_EZ_thresh,1.0
 local_global_letter.switch_cost_acc,1.0
 local_global_letter.switch_cost_rt,-1.0
-local_global_letter.swithc_cost_hddm_drift,1.0
-local_global_letter.swithc_cost_hddm_thresh,1.0
+local_global_letter.switch_cost_hddm_drift,1.0
+local_global_letter.switch_cost_hddm_thresh,1.0
 mindful_attention_awareness_survey.mindfulness,1.0
 motor_selective_stop_signal.EZ_drift,1.0
 motor_selective_stop_signal.EZ_non_decision,-1.0
