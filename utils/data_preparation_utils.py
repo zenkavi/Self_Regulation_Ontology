@@ -178,7 +178,7 @@ def drop_vars(data, drop_vars = [], saved_vars = []):
         # variables that are calculated without regard to their actual interest
         basic_vars = ["\.missed_percent$","\.acc$","\.avg_rt_error$","\.std_rt_error$","\.avg_rt$","\.std_rt$"]
         #unnecessary ddm params
-        ddm_vars = ['^(attention|directed|dot_pattern|local_global|recent_probes|shape_matching|simon|stroop|threebytwo).*\.(EZ|hddm)_(drift|thresh|non_decision)$', # all tasks where DDM is calculated over a particular condition
+        ddm_vars = ['^(attention|directed|dot_pattern|local_global|recent_probes|shape_matching|simon|stroop|threebytwo).*\.EZ_(drift|thresh|non_decision)$', # all tasks where DDM is calculated over a particular condition
                     "network_task.(EZ|hddm)_(drift|thresh|non_decision)_congruent$",  # ANT
                     "\.(EZ|hddm)_(drift|thresh|non_decision)_incongruent$", # ANT, local_global, simon, stroop
                     "\.(EZ|hddm)_(drift|thresh|non_decision)_con$", "\.(EZ|hddm)_(drift|thresh|non_decision)_neg$",  # directed forgetting

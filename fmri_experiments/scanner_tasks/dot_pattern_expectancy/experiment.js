@@ -68,8 +68,8 @@ var getFeedback = function() {
 var current_trial = 0
 var choices = [71, 66]
 var correct_responses = [
-  ["index finger", 71],
-  ["middle finger", 66]
+  ["left button", 71],
+  ["right button", 66]
 ]
 var exp_stage = 'tests'
 var path = '/static/experiments/dot_pattern_expectancy/images/'
