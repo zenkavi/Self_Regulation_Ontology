@@ -1,3 +1,5 @@
+import sys
+sys.path.append('/corral-repl/utexas/poldracklab/users/zenkavi/expfactory-analysis')
 from expanalysis.experiments.jspsych import calc_time_taken, get_post_task_responses
 from expanalysis.experiments.processing import post_process_data, extract_DVs
 from expanalysis.results import get_filters
@@ -5,9 +7,9 @@ import json
 import numpy as np
 from os import path
 import pandas as pd
-import sys
 
 sys.path.append('/corral-repl/utexas/poldracklab/users/zenkavi/Self_Regulation_Ontology/utils')
+
 from data_preparation_utils import anonymize_data, calc_trial_order, convert_date, download_data, get_bonuses, get_pay,  remove_failed_subjects
 from utils import get_info
 
