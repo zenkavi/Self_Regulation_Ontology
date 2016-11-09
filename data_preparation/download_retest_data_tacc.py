@@ -12,7 +12,7 @@ from data_preparation_utils import anonymize_data, calc_trial_order, convert_dat
 from utils import get_info
 
 if len(sys.argv) < 2:
-    sys.exit("Usage: download_retest_data_tacc.py job sample")
+    sys.exit("Usage: download_retest_data_tacc.py 'all' '['retest', 'incomplete']'")
 
 job = sys.argv[1]
 sample = sys.argv[2]
