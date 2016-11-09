@@ -32,19 +32,18 @@ def get_initial_population_tasks(popsize,nvars,ntasks):
 
 def get_population_fitness_tasks(pop,taskdata,targetdata,nsplits,clf,obj_weight):
     # first get cc for each item in population
-    #cc_recon = Parallel(n_jobs=num_cores,verbose=5,max_nbytes=1e4)(delayed(get_reconstruction_error)(ct,data,nsplits,clf) for ct in pop)
     cc_recon=numpy.zeros(len(pop))
     predacc_insample=numpy.zeros(len(pop))
     if obj_weight[0]>0:
         if __USE_MULTIPROC__:
-            cc_recon=Parallel(n_jobs=num_cores,verbose=5)(delayed(get_reconstruction_error)(ct,taskdata,targetdata,nsplits,clf,-1) for ct in pop)
+            cc_recon=Parallel(n_jobs=num_cores)(delayed(get_reconstruction_error)(ct,taskdata,targetdata,nsplits,clf,-1) for ct in pop)
         else:
             cc_recon=[get_reconstruction_error(ct,taskdata,targetdata,nsplits,clf,-1) for ct in pop]
     else:
         cc_recon=[0]
     if obj_weight[1]>0:
         if __USE_MULTIPROC__:
-            cc_subsim=Parallel(n_jobs=num_cores,verbose=5)(delayed(get_subset_corr)(ct,taskdata,targetdata) for ct in pop)
+            cc_subsim=Parallel(n_jobs=num_cores)(delayed(get_subset_corr)(ct,taskdata,targetdata) for ct in pop)
         else:
             cc_subsim=[get_subset_corr(ct,taskdata,targetdata) for ct in pop]
     else:
