@@ -3,7 +3,7 @@ objective functions for search
 """
 
 import pandas,numpy
-from sklearn.linear_model import LinearRegression,Lasso,LassoCV,MultiTaskLassoCV
+from sklearn.linear_model import LinearRegression,Lasso,LassoCV,MultiTaskLassoCV,RandomizedLasso
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.kernel_ridge import KernelRidge
@@ -62,7 +62,9 @@ def get_reconstruction_error(ct,taskdata,targetdata_orig,nsplits=4,
     #subdata=data.ix[:,chosen_vars].values
     if clf=='kridge':
         linreg=KernelRidge(alpha=0.5)
-    if clf=='lasso':
+    elif clf=='randlasso':
+        linreg=RandomizedLasso()
+    elif clf=='lasso':
         linreg=Lasso(alpha=0.1)
     elif clf=='rf':
         linreg=RandomForestRegressor()
@@ -85,7 +87,7 @@ def get_reconstruction_error(ct,taskdata,targetdata_orig,nsplits=4,
                                 targetdata_train.ravel())[0,1])
         #print(linreg.predict(taskdata_train))
     cc=numpy.corrcoef(scaler.transform(targetdata).ravel(),pred.ravel())[0,1]
-    return cc,numpy.mean(predacc_insample)
+    return cc #,numpy.mean(predacc_insample)
 
 
 # functions for variable rather than task selection

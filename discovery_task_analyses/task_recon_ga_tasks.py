@@ -38,7 +38,7 @@ else:
 
 targets=['survey','demog','task'] #'survey','task'
 
-objective_weights=[1,0] # weights for reconstruction and correlation
+objective_weights=[0.5,0.5] # weights for reconstruction and correlation
 
 dataset=get_info('dataset')
 print('using dataset:',dataset)

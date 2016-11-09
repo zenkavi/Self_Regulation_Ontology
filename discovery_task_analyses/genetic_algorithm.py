@@ -8,7 +8,7 @@ from sklearn.preprocessing import scale
 from search_objectives import get_reconstruction_error_vars,get_subset_corr_vars
 from search_objectives import get_reconstruction_error,get_subset_corr
 
-__USE_MULTIPROC__=False
+__USE_MULTIPROC__=True
 
 if __USE_MULTIPROC__:
     from joblib import Parallel, delayed
@@ -36,13 +36,15 @@ def get_population_fitness_tasks(pop,taskdata,targetdata,nsplits,clf,obj_weight)
     cc_recon=numpy.zeros(len(pop))
     predacc_insample=numpy.zeros(len(pop))
     if obj_weight[0]>0:
-        for i,ct in enumerate(pop):
-            cc_recon[i],predacc_insample[i]=get_reconstruction_error(ct,taskdata,targetdata,nsplits,clf,-1)
+        if __USE_MULTIPROC__:
+            cc_recon=Parallel(n_jobs=num_cores,verbose=5)(delayed(get_reconstruction_error)(ct,taskdata,targetdata,nsplits,clf,-1) for ct in pop)
+        else:
+            cc_recon=[get_reconstruction_error(ct,taskdata,targetdata,nsplits,clf,-1) for ct in pop]
     else:
         cc_recon=[0]
     if obj_weight[1]>0:
         if __USE_MULTIPROC__:
-            cc_subsim=Parallel(n_jobs=num_cores)(delayed(get_subset_corr)(ct,taskdata,targetdata) for ct in pop)
+            cc_subsim=Parallel(n_jobs=num_cores,verbose=5)(delayed(get_subset_corr)(ct,taskdata,targetdata) for ct in pop)
         else:
             cc_subsim=[get_subset_corr(ct,taskdata,targetdata) for ct in pop]
     else:
@@ -50,10 +52,6 @@ def get_population_fitness_tasks(pop,taskdata,targetdata,nsplits,clf,obj_weight)
     maxcc=[numpy.max(cc_recon),numpy.max(cc_subsim)]
     cc_recon=scale(cc_recon)
     cc_subsim=scale(cc_subsim)
-    try:
-        print('insample_predacc:',numpy.mean(predacc_insample))
-    except:
-        pass
     try:
         print('corr recon-subsim:',numpy.corrcoef(cc_recon,cc_subsim)[0,1])
     except:
