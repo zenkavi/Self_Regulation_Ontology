@@ -7,34 +7,40 @@ from os import path
 import pandas as pd
 import sys
 
-sys.path.append('../utils')
+sys.path.append('/corral-repl/utexas/poldracklab/users/zenkavi/Self_Regulation_Ontology/utils')
 from data_preparation_utils import anonymize_data, calc_trial_order, convert_date, download_data, get_bonuses, get_pay,  remove_failed_subjects
 from utils import get_info
 
-# Fix Python 2.x.
-try: input = raw_input
-except NameError: pass
+if len(sys.argv) < 2:
+    sys.exit("Usage: download_retest_data_tacc.py job sample")
+
+job = sys.argv[1]
+sample = sys.argv[2]
+
+# # Fix Python 2.x.
+# try: input = raw_input
+# except NameError: pass
     
-# get options
-job = input('Type "download", "extras", "post", "DV",  or "all": ')
-# sample = 'discovery'
-sample = 'all'
-if job == 'more':
-    job = input('More: Type "download", "extras", "post" or "both": ')
-#     sample = input('Type "discovery", "validation" or "incomplete". Use commas to separate multiple samples or "all": ')
-    sample = input('Type "retest" or "incomplete". Use commas to separate multiple samples or "all": ')
-    if sample == 'all':
-#         sample = ['discovery','validation','incomplete']
-        sample = ['retest','incomplete']
-    else:
-        sample = sample.split(',')   
+# # get options
+# job = input('Type "download", "extras", "post", "DV",  or "all": ')
+# # sample = 'discovery'
+# sample = 'all'
+# if job == 'more':
+#     job = input('More: Type "download", "extras", "post" or "both": ')
+# #     sample = input('Type "discovery", "validation" or "incomplete". Use commas to separate multiple samples or "all": ')
+#     sample = input('Type "retest" or "incomplete". Use commas to separate multiple samples or "all": ')
+#     if sample == 'all':
+# #         sample = ['discovery','validation','incomplete']
+#         sample = ['retest','incomplete']
+#     else:
+#         sample = sample.split(',')   
         
 #load Data
-token = get_info('expfactory_token', infile='../Self_Regulation_Retest_Settings.txt')
+token = get_info('expfactory_token', infile='/corral-repl/utexas/poldracklab/users/zenkavi/Self_Regulation_Ontology/Self_Regulation_Retest_Settings_Tacc.txt')
 try:
-    data_dir=get_info('data_directory', infile='../Self_Regulation_Retest_Settings.txt')
+    data_dir=get_info('data_directory', infile='/corral-repl/utexas/poldracklab/users/zenkavi/Self_Regulation_Ontology/Self_Regulation_Retest_Settings_Tacc.txt')
 except Exception:
-    data_dir=path.join(get_info('base_directory', infile='../Self_Regulation_Retest_Settings.txt'),'Data')
+    data_dir=path.join(get_info('base_directory', infile='/corral-repl/utexas/poldracklab/users/zenkavi/Self_Regulation_Ontology/Self_Regulation_Retest_Settings_Tacc.txt'),'Data')
 
 if job == 'download' or job == "all":
     #***************************************************

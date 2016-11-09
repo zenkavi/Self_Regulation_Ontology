@@ -1,0 +1,2 @@
+expfactory_token:/corral-repl/utexas/poldracklab/users/zenkavi/private_files/expfactory_token.txt
+base_directory:/corral-repl/utexas/poldracklab/users/zenkavi/Self_Regulation_Ontology
