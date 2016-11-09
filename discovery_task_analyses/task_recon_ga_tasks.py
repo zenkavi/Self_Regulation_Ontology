@@ -23,7 +23,7 @@ from utils import get_info,get_behav_data,get_demographics
 class Params:
     def __init__(self):
         self.targets=['survey','demog','task']  # targets for reconstruction and correlation
-        self.objective_weights=[1,0] # weights for reconstruction and correlation respectively
+        self.objective_weights=[0,1] # weights for reconstruction and correlation respectively
         self.nvars=8  # number of selected tasks
         self.ngen=2500  # maximum number of GA generations
         self.initpopsize=500  # initial population size
@@ -36,7 +36,12 @@ class Params:
         self.nsplits=8
         self.dataset=get_info('dataset')
         self.basedir=get_info('base_directory')
-
+        self.ntasks=None
+        self.n_jobs=1
+        self.remove_chosen_from_test=True
+        self.verbose=False
+        self.lasso_alpha=0.1
+        self.linreg_n_jobs=-1
 
 params=Params()
 
@@ -46,7 +51,7 @@ derived_dir=os.path.join(params.basedir,'Data/Derived_Data/%s'%params.dataset)
 data_dir=os.path.join(params.basedir,'Data/%s'%params.dataset)
 
 taskdata,taskvars,tasks=get_taskdata(params.dataset)
-ntasks=len(tasks)
+params.ntasks=len(tasks)
 targetdata=load_targetdata(params.dataset,params.targets,taskdata)
 targetdata=impute_targetdata(targetdata)
 
@@ -60,15 +65,14 @@ bestp_saved={}
 bestctr=0
 
 # get initial population
-population=get_initial_population_tasks(params.initpopsize,params.nvars,ntasks)
+population=get_initial_population_tasks(params)
 
 # perform selection for maximum of ngen generations
 for generation in range(params.ngen):
     roundstart=time.time()
     # cc here is the average z-score for the mulitobjective
     # maxcc contains the max for each of the individual objectives
-    population,cc,maxcc=select_parents_tasks(population,taskdata,targetdata,params.nselect,params.clf,
-                                            obj_weight=params.objective_weights)
+    population,cc,maxcc=select_parents_tasks(population,taskdata,targetdata,params)
     ccmax[generation]=[numpy.max(cc)]+maxcc
 
     # store the best scoring set of tasks and count to see if we have
@@ -85,8 +89,8 @@ for generation in range(params.ngen):
         break
 
     # crossover and immigrate
-    population=crossover_tasks(population,ntasks,nbabies=params.nbabies)
-    population=immigrate_tasks(population,params.nimmigrants,params.nvars,ntasks)
+    population=crossover_tasks(population,params)
+    population=immigrate_tasks(population,params)
 
     print('gen ',generation,'(Z,recon,subcorr):',ccmax[generation])
     print('Time elapsed (secs):', time.time()-roundstart)
@@ -99,6 +103,8 @@ for i in bestp:
 
 print('Time elapsed (secs):', time.time()-start_time)
 
+params.hash=binascii.hexlify(os.urandom(4)).decode('utf-8')
+
 saved_data={}
 saved_data['bestp_saved']=bestp_saved
 saved_data['ccmax']=ccmax
@@ -108,6 +114,5 @@ saved_data['params']=params
 
 # add a random hash to the file name so that we can run it multiple times
 # and it will save to different files
-hash=binascii.hexlify(os.urandom(4)).decode('utf-8')
 
-pickle.dump(saved_data,open("ga_results_tasks_%s_%s_%s.pkl"%(clf,'-'.join(targets),hash),'wb'))
+pickle.dump(saved_data,open("ga_results_tasks_%s_%s_%s.pkl"%(params.clf,'-'.join(params.targets),params.hash),'wb'))

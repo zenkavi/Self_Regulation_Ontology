@@ -27,16 +27,14 @@ def get_subset_corr(ct,taskdata,targetdata):
     subcorr_subset=numpy.corrcoef(chosen_data)[numpy.triu_indices(chosen_data.shape[0],1)]
     return(numpy.corrcoef(subcorr,subcorr_subset)[0,1])
 
-def get_reconstruction_error(ct,taskdata,targetdata_orig,nsplits=4,
-                            clf='kridge',n_jobs=1,remove_chosen_from_test=True,
-                            verbose=False):
+def get_reconstruction_error(ct,taskdata,targetdata_orig,params):
     targetdata=targetdata_orig.copy()
     tasknames=[i.split('.')[0] for i in taskdata.columns]
     tasks=list(set(tasknames))
     tasks.sort()
     chosen_vars=[]
     varnames=taskdata.columns
-    if verbose:
+    if params.verbose>2:
         print('selected tasks:',[tasks[i] for i in ct])
         print(ct)
 
@@ -44,32 +42,32 @@ def get_reconstruction_error(ct,taskdata,targetdata_orig,nsplits=4,
     for i in ct:
         vars=[j for j in range(len(tasknames)) if tasknames[j].split('.')[0]==tasks[i]]
         chosen_vars+=vars
-    if verbose:
+    if params.verbose>2:
         print('selected vars:',[varnames[j] for j in chosen_vars])
     # remove chosen vars from test set
-    if remove_chosen_from_test:
+    if params.remove_chosen_from_test:
         delnames=[]
         for t in chosen_vars:
             if varnames[t] in targetdata:
                 del targetdata[varnames[t]]
                 delnames.append(varnames[t])
-        if verbose:
+        if params.verbose>2:
             print('removed %d chosen vars'%len(delnames),delnames)
     taskdata=taskdata.values
     targetdata=targetdata.values
 
-    kf = KFold(n_splits=nsplits,shuffle=True)
+    kf = KFold(n_splits=params.nsplits,shuffle=True)
     #subdata=data.ix[:,chosen_vars].values
-    if clf=='kridge':
-        linreg=KernelRidge(alpha=0.5)
-    elif clf=='randlasso':
+    if params.clf=='kridge':
+        linreg=KernelRidge(alpha=params.kridge_alpha)
+    elif params.clf=='randlasso':
         linreg=RandomizedLasso()
-    elif clf=='lasso':
-        linreg=Lasso(alpha=0.1)
-    elif clf=='rf':
+    elif params.clf=='lasso':
+        linreg=Lasso(alpha=params.lasso_alpha)
+    elif params.clf=='rf':
         linreg=RandomForestRegressor()
     else:
-       linreg=LinearRegression(n_jobs=n_jobs)
+       linreg=LinearRegression(n_jobs=params.linreg_n_jobs)
 
     scaler=StandardScaler()
     predacc_insample=[]
