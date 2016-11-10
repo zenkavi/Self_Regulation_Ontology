@@ -74,9 +74,11 @@ for i in bestp:
 if __TEST_DECIMATE__:
     try:
         assert bestp==tasks_to_keep
-        print('decimation test passed!')
+        print('DECIMATION TEST PASSED!')
     except AssertionError:
-        print('decimation test failed!')
+        print('DECIMATION TEST FAILED!!!!!!!')
+        print(bestp,'estimated')
+        print(tasks_to_keep,'true')
 
 print('Time elapsed (secs):', time.time()-gasearch.params.start_time)
 
