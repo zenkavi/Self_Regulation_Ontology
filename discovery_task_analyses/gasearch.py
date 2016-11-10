@@ -132,7 +132,9 @@ class GASearch:
         """
         print('DANGER: Replacing all variables except for these with noise:')
         if tasks_to_keep is None:
-            tasks_to_keep=numpy.random.randint(self.params.ntasks,size=self.params.nvars)
+            idx=[i for i in range(self.params.ntasks)]
+            numpy.random.shuffle(idx)
+            tasks_to_keep=idx[:self.params.nvars]
         tasks_to_keep.sort()
         print(tasks_to_keep)
         tasknames_to_keep=[self.tasks[i] for i in tasks_to_keep]
