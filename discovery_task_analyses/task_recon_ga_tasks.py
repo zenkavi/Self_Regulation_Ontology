@@ -20,7 +20,7 @@ from utils import get_info,get_behav_data,get_demographics
 __TEST_DECIMATE__=True
 # set up variables
 
-gasearch=GASearch(objective_weights=[0.5,0.5])
+gasearch=GASearch(objective_weights=[0,1])
 gasearch.get_taskdata()
 if __TEST_DECIMATE__:
     tasks_to_keep=gasearch.decimate_task_data()
@@ -72,7 +72,12 @@ for i in bestp:
     print(i,gasearch.tasks[i])
 
 if __TEST_DECIMATE__:
-    assert all(bestp==tasks_to_keep)
+    try:
+        assert bestp==tasks_to_keep
+        print('decimation test passed!')
+    except AssertionError:
+        print('decimation test failed!')
+
 print('Time elapsed (secs):', time.time()-gasearch.params.start_time)
 
 gasearch.params.hash=binascii.hexlify(os.urandom(4)).decode('utf-8')
