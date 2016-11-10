@@ -159,7 +159,7 @@ if job in ['post', 'all']:
     print('Finished saving post-processed failed data')
     
 if job in ['DV', 'all']:
-    for sample in ['discovery', 'failed']:
+    for sample in ['discovery']:
         data = pd.read_json(data_dir + 'mturk_' + sample + '_data_post.json')
         #calculate DVs
         DV_df, valence_df = extract_DVs(data)
