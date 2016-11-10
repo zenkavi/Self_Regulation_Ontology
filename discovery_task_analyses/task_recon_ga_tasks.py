@@ -17,11 +17,13 @@ sys.path.append('../utils')
 from utils import get_info,get_behav_data,get_demographics
 #from r_to_py_utils import missForest
 
+__TEST_DECIMATE__=True
 # set up variables
 
 gasearch=GASearch(objective_weights=[0.5,0.5])
 gasearch.get_taskdata()
-gasearch.decimate_task_data()
+if __TEST_DECIMATE__:
+    tasks_to_keep=gasearch.decimate_task_data()
 
 gasearch.load_targetdata()
 gasearch.impute_targetdata()
@@ -69,6 +71,8 @@ print('best set')
 for i in bestp:
     print(i,gasearch.tasks[i])
 
+if __TEST_DECIMATE__:
+    assert all(bestp==tasks_to_keep)
 print('Time elapsed (secs):', time.time()-gasearch.params.start_time)
 
 gasearch.params.hash=binascii.hexlify(os.urandom(4)).decode('utf-8')

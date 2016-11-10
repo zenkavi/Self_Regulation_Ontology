@@ -94,6 +94,7 @@ class GASearch:
         self.bestp_saved={}
         self.bestctr=0
         self.population=[]
+        self.tasks=None
         self.targetdata=None
         self.__USE_MULTIPROC__=True
 
@@ -124,24 +125,22 @@ class GASearch:
         self.params.ntasks=len(self.tasks)
         self.tasks.sort()
 
-    def decimate_task_data(self,tasks_to_keep=['adaptive_n_back',
-             'angling_risk_task_always_sunny',
-             'attention_network_task',
-             'bickel_titrator',
-             'choice_reaction_time',
-             'columbia_card_task_cold',
-             'columbia_card_task_hot',
-             'dietary_decision',]):
+    def decimate_task_data(self,tasks_to_keep=None):
         """
         choose 8 tasks and replace all other tasks with random noise
         this is mean for testing only
         """
         print('DANGER: Replacing all variables except for these with noise:')
+        if tasks_to_keep is None:
+            tasks_to_keep=numpy.random.randint(self.params.ntasks,size=self.params.nvars)
+        tasks_to_keep.sort()
         print(tasks_to_keep)
+        tasknames_to_keep=[self.tasks[i] for i in tasks_to_keep]
         for c in self.taskdata.columns:
             task=c.split('.')[0]
-            if not task in tasks_to_keep:
+            if not task in tasknames_to_keep:
                 self.taskdata[c]=numpy.random.randn(self.taskdata[c].shape[0])
+        return tasks_to_keep
 
     def load_targetdata(self):
 
