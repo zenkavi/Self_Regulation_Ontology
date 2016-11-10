@@ -4,29 +4,23 @@ sys.path.append('../utils')
 from graph_utils import calc_connectivity_mat, community_reorder, get_subgraph, get_visual_style, Graph_Analysis
 from graph_utils import plot_graph, print_community_members, threshold_proportional_sign
 from plot_utils import dendroheatmap
-from r_to_py_utils import missForest
 from utils import get_behav_data
 from data_preparation_utils import drop_vars
 
 import bct
-from collections import OrderedDict as odict
-import fancyimpute
 import igraph
 import numpy as np
-from os import path
 import pandas as pd
 import seaborn as sns
 
 # get dependent variables
-DV_df = get_behav_data('Discovery_10-21-2016', file = 'meaningful_variables_clean_cutoff2.50IQR.csv')
+DV_df = get_behav_data('Discovery_11-07-2016', file = 'meaningful_variables_imputed.csv')
     
 # ************************************
 # ************ Imputation *******************
 # ************************************
-DV_df_imputed, error = missForest(DV_df)
-
+    
 print('Finished imputing data')
-
 task_data = drop_vars(DV_df, ['survey'], saved_vars = ['cognitive_reflection'])
 
 # ************************************
@@ -42,8 +36,7 @@ print('Finished creating connectivity matrices')
 # ********* Heatmaps *******************
 # ************************************
 # dendrogram heatmap
-fig = dendroheatmap(spearman_connectivity, labels = True)
-
+fig, column_order = dendroheatmap(spearman_connectivity, labels = True)
 
 # ************************************
 # ********* Graphs *******************
@@ -85,7 +78,9 @@ G_spearman, connectivity_mat, visual_style = Graph_Analysis(spearman_connectivit
                                                      plot_threshold = t, print_options = {'lookup': {}}, 
                                                     plot_options = {'inline': False})
 
-
+# *********************************
+# Task Analysis
+# ********************************
 def node_importance(v):
     return (v['subgraph_eigen_centrality'], v['community'])
 
@@ -117,7 +112,12 @@ plot_df = pd.melt(plot_df, id_vars = 'task', var_name = 'community', value_name 
 sns.set_context('poster')
 sns.barplot(x = 'community', y = 'sum centrality', data = plot_df, hue = 'task')
 leg = sns.plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', ncol=1)
-sns.plt.savefig('Plots/task_importance.pdf', bbox_inches = 'tight', pad_inches = 2)
+sns.plt.savefig('Plots/task_importance.pdf', bbox_inches = 'tight', pad_inches = 2, dpi = 300)
+
+with sns.color_palette(['b','g','r','gray']):
+    ax = sns.barplot(x = 'task', y = 'sum centrality', data = plot_df, ci = False)
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=-45, rotation_mode = "anchor", ha = 'left')
+    sns.plt.savefig('Plots/community_importance.png', dpi = 300, bbox_inches = 'tight', pad_inches = 2)
 
 # save graph
 # distance graph
@@ -141,8 +141,16 @@ for gamma in np.arange(.5,2,.05):
     ref_community = G_w.vs['community']
                                             
         
-                                                    
-                                                     
+# other graph exploration
+plot_data = pd.DataFrame([G_spearman.vs['part_coef_pos'], 
+                          G_spearman.vs['subgraph_eigen_centrality'],
+                          G_spearman.vs['community']], index = ['Participation', 'Community Centrality', 'Community']).T
+sns.set_context('poster')
+sns.lmplot('Participation', 'Community Centrality', data = plot_data, hue = 'Community', fit_reg = False, size = 10, scatter_kws={"s": 100})
+sns.plt.ylim([-.05,1.05])
+sns.plt.savefig('/home/ian/tmp/plot1.png',dpi = 300)                                                
+
+
 subgraph = community_reorder(get_subgraph(G_w,2))
 print_community_members(subgraph)
 subgraph_visual_style = get_visual_style(subgraph, vertex_size = 'eigen_centrality')

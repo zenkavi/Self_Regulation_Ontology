@@ -66,10 +66,10 @@ var getFeedback = function() {
 
 // task specific variables
 var current_trial = 0
-var choices = [89, 71]
+var choices = [71, 66]
 var correct_responses = [
-  ["index finger", 89],
-  ["middle finger", 71]
+  ["left button", 71],
+  ["right button", 66]
 ]
 var exp_stage = 'tests'
 var path = '/static/experiments/dot_pattern_expectancy/images/'
@@ -103,7 +103,7 @@ var blocks = [block1_list, block2_list, block3_list]
 /* ************************************ */
 /* Set up jsPsych blocks */
 /* ************************************ */
- var test_intro_block = {
+var start_test_block = {
   type: 'poldrack-single-stim',
   stimulus: '<div class = centerbox><div class = center-text>Get ready!</p></div>',
   is_html: true,
@@ -111,7 +111,7 @@ var blocks = [block1_list, block2_list, block3_list]
   timing_stim: 1500, 
   timing_response: 1500,
   data: {
-    trial_id: "rest block"
+    trial_id: "test_start_block"
   },
   timing_post_trial: 500
 };
@@ -137,10 +137,10 @@ var instructions_block = {
   data: {
     trial_id: "instruction"
   },
-  text: '<div class = centerbox><p style = "font-size:40px" class = center-block-text>Target Pair (press index finger):</p><p class = center-block-text><img src = "/static/experiments/dot_pattern_expectancy/images/' +
+  text: '<div class = centerbox><p style = "font-size:40px" class = center-block-text>Target Pair (press left):</p><p class = center-block-text><img src = "/static/experiments/dot_pattern_expectancy/images/' +
     valid_cue +
     '" ></img>&nbsp&nbsp&nbsp...followed by...&nbsp&nbsp&nbsp<img src = "/static/experiments/dot_pattern_expectancy/images/' +
-    valid_probe + '" ></img><br></br></p><p style = "font-size:40px" class = center-block-text>Otherwise press your middle finger</div>',
+    valid_probe + '" ></img><br></br></p><p style = "font-size:40px" class = center-block-text>Otherwise press right</div>',
   cont_key: [32],
   timing_post_trial: 1000
 };
@@ -288,7 +288,7 @@ var dot_pattern_expectancy_experiment = []
 dot_pattern_expectancy_experiment.push(instructions_block);
 setup_fmri_intro(dot_pattern_expectancy_experiment, choices)
 
-dot_pattern_expectancy_experiment.push(test_intro_block);
+dot_pattern_expectancy_experiment.push(start_test_block);
 for (b = 0; b < blocks.length; b++) {
   var block = blocks[b]
   for (i = 0; i < block.length; i++) {

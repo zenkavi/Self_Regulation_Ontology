@@ -1,27 +1,40 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
-var select_position = [0,0]
 document.onkeypress = function(evt) {
 	evt = evt || window.event;
 	var charCode = evt.keyCode || evt.which; 
 	var which_key = String.fromCharCode(charCode);
+	var previous_v_position = select_position[1]
 	// control cursor
-	if (which_key == 'a') {
+	if (which_key == 'g') {
 		select_position[0] = Math.max(0,select_position[0]-1)
-	} else if (which_key == 'd') {
+	} else if (which_key == 'b') {
 		select_position[0] = Math.min(4,select_position[0]+1)
-	} else if (which_key == 'w') {
+	} else if (which_key == 'r') {
 		select_position[1] = Math.max(0,select_position[1]-1)
-	} else if (which_key == 's') {
-		select_position[1] = Math.min(4,select_position[1]+1)
-	} else if (which_key == ' ') {
-		if (clickedCards.indexOf(i) == -1) {
-			currID = select_position[1]*5+(select_position[0]+1)
+	} else if (which_key == 'y') {
+		select_position[1] = Math.min(5,select_position[1]+1)
+	} else if (which_key == 'm') {
+		if (clickedCards.indexOf(currID) == -1) {
 			document.getElementById(currID).onclick();
 			$('#' + currID).click()
 		}
 	}
+	document.getElementById(currID).style.opacity = "1";
+	if (select_position[1] != 5) {
+		currID = select_position[1]*5+(select_position[0]+1)
+	} else {
+		if (select_position[0] < 2) {
+			currID = 26
+		} else if (select_position[0] > 2) {
+			currID = 27
+		} else if (previous_v_position < 5) {
+			currID = Math.random()<.5 ? 26: 27
+		}
+		select_position[0] = 2
+	}
+	document.getElementById(currID).style.opacity = "0.5";
 }
 
 var getInstructFeedback = function() {
@@ -154,7 +167,6 @@ var getRound = function() {
 
 
 var chooseCard = function(clicked_id) {
-	console.log('click')
 	numClicks = numClicks + 1
 	currID = parseInt(clicked_id)
 	clickedCards.push(currID)
@@ -168,6 +180,8 @@ var makeChoice = function(clicked_id) {
 
 
 var resetRound = function() {
+	select_position = [2,2]
+	currID = 12
 	DWPoints = 250
 	FWPoints = 0
 	roundOver = 0
@@ -270,8 +284,32 @@ var getDWPoints = function() {
 var getFWPoints = function() {
 	return "<div class = centerbox><p class = center-text>Total Points: " + totFWPoints + "</p></div>"
 }
+
+var get_ITI = function() {
+  // ref: https://gist.github.com/nicolashery/5885280
+  function randomExponential(rate, randomUniform) {
+    // http://en.wikipedia.org/wiki/Exponential_distribution#Generating_exponential_variates
+    rate = rate || 1;
+
+    // Allow to pass a random uniform value or function
+    // Default to Math.random()
+    var U = randomUniform;
+    if (typeof randomUniform === 'function') U = randomUniform();
+    if (!U) U = Math.random();
+
+    return -Math.log(U) / rate;
+  }
+  gap = randomExponential(1/2)*1000
+  if (gap > 5000) {
+    gap = 5000
+  } else if (gap < 500) {
+  	gap = 500
+  }
+  return gap
+}
+
 var get_post_gap = function() {
-	return Math.max(1000,(17-total_trial_time)*1000)
+	return Math.max(1000,(15-total_trial_time)*1000) + get_ITI()
 }
 
 /* ************************************ */
@@ -282,6 +320,8 @@ var sumInstructTime = 0 //ms
 var instructTimeThresh = 0 ///in seconds
 
 // task specific variables
+var select_position = [2,2]
+var currID = 12
 var exp_stage = ''
 var num_trials = 10
 var reward = 0 //reward value
@@ -311,50 +351,45 @@ for (var c = 0; c<colors.length; c++) {
 }
 jsPsych.pluginAPI.preloadImages(images)
 resetRound()
-instructionsSetup = getBoard(colors, 'instruction')
 
 /* ************************************ */
 /* Set up jsPsych blocks */
 /* ************************************ */
 /* define static blocks */
-var end_block = {
-	type: 'poldrack-text',
+ var end_block = {
+	type: 'poldrack-single-stim',
+	stimulus: '<div class = centerbox><div class = center-text><i>Fin</i></div></div>',
+	is_html: true,
+	choices: [32],
+	timing_response: -1,
+	response_ends_trial: true,
 	data: {
 		trial_id: "end",
-		exp_id: 'information_sampling_task'
+		exp_id: 'stroop'
 	},
-	text: '<div class = centerbox><p class = center-block-text>Finished with this task.</p><p class = center-block-text>Press <strong>enter</strong> to continue.</p></div>',
-	cont_key: [13],
 	timing_post_trial: 0
 };
+
 
 var instructions_block = {
 	type: 'poldrack-text',
 	data: {
 		trial_id: "instruction"
 	},
-	text: '<div class = centerbox><p class = block-text>In this experiment, you will see small  squares arranged in a 5 by 5 matrix. Initially all the squares will be greyed out, but when you click on a box it will reveal itself to be one of two colors corresponding to two larger squares at the bottom of the screen.<p class = block-text>Your task is to decide which color you think is in the majority.</p></div>',
+	text: '<div class = centerbox><div class = center-text>Uncover boxes and figure out which color is more common. Try to win as many points as possible! Use the control pad to move around and the center button to select.</div></div>',
 	cont_key: [32],
 	timing_post_trial: 1000
 };
 
-var start_test_block = {
-	type: 'poldrack-text',
-	data: {
-		trial_id: "test_intro"
-	},
-	text: '<div class = centerbox><p class = block-text>Each trial will look like that. There will be two conditions that affect how your reward will be counted.</p><p class = block-text>In the <strong>Decreasing Win </strong>condition, you will start out at 250 points.  Every box opened until you make your choice deducts 10 points from this total.  So for example, if you open 7 boxes before you make a correct choice, your score for that round would be 180.  An incorrect decision loses 100 points regardless of how many boxes opened.</p><p class = block-text>In the <strong>Fixed Win </strong> condition, you will start out at 0 points.  A correct decision will lead to a gain of 100 points, regardless of the number of boxes opened.  Similarly, an incorrect decision will lead to a loss of 100 points. <br><br> In both conditions try to win as many points as possible. Press <strong>enter</strong> to continue.</p></div>',
-	cont_key: [13],
-	timing_post_trial: 1000,
-};
-
 var DW_intro_block = {
-	type: 'poldrack-text',
+	type: 'poldrack-single-stim',
 	data: {
 		trial_id: "DW_intro"
 	},
-	text: '<div class = centerbox><p class = block-text>You are beginning rounds under the <strong>Decreasing Win</strong> condition.</p><p class = block-text>Remember, you will start out with 250 points.  Every box opened until you make a correct choice deducts 10 points from this total, after which the remaining will be how much you have gained for the round.  An incorrect decision loses 100 points regardless of number of boxes opened.  Try to win as many points as you can. <br><br>Press <strong>enter</strong> to continue.</div>',
-	cont_key: [13],
+	stimulus: '<div class = centerbox><div class = center-text>In these trials you will start out with 250 points. Every box opened deducts 10 points from this total, which you will receive if you make a correct decision. An incorrect choice loses 100 points regardless of number of boxes opened.</div></div>',
+	is_html: true,
+	choices: 'none',
+	timing_response: 10000,
 	timing_post_trial: 0,
 	on_finish: function() {
 		exp_stage = 'Decreasing Win'
@@ -364,19 +399,22 @@ var DW_intro_block = {
 };
 
 var FW_intro_block = {
-	type: 'poldrack-text',
+	type: 'poldrack-single-stim',
 	data: {
-		trial_id: "FW_intro"
+		trial_id: "DW_intro"
 	},
-	text: '<div class = centerbox><p class = block-text>You are beginning rounds under the <strong>Fixed Win</strong> condition.</p><p class = block-text>Remember, you will start out with 0 points.  If you make a correct choice, you will gain 100 points.  An incorrect decision loses 100 points regardless of number of boxes opened. Try to win as many points as you can.<br><br>Press <strong>enter</strong> to continue.</div>',
-	cont_key: [13],
+	stimulus: '<div class = centerbox><div class = center-text>In these trials you will start out with 0 points.  If you make a correct choice, you will gain 100 points.  An incorrect choice loses 100 points.</div></div>',
+	is_html: true,
+	choices: 'none',
+	timing_response: 10000,
 	timing_post_trial: 0,
 	on_finish: function() {
-		exp_stage = 'Fixed Win'
+		exp_stage = 'Decreasing Win'
 		current_trial = 0
 		trial_start_time = new Date()
 	}
 };
+
 
 var rewardFW_block = {
 	type: 'poldrack-single-stim',
@@ -465,7 +503,7 @@ var reset_block = {
 /* create experiment definition array */
 var information_sampling_task_experiment = [];
 information_sampling_task_experiment.push(instructions_block);
-information_sampling_task_experiment.push(start_test_block);
+setup_fmri_intro(information_sampling_task_experiment, [66,89,71,82, 77])
 
 if (Math.random() < 0.5) { // do the FW first, then DW
 	information_sampling_task_experiment.push(FW_intro_block);
