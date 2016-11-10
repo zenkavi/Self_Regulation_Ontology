@@ -26,7 +26,7 @@ class GASearchParams:
         nimmigrants=500,   # number of new immigrants in each generation
         nbabies=4,    # number of offspring of each survivor
         mutation_rate=None,   # mutation rate for offspring
-        convergence_threshold=2,  # number of stable generations for convergence
+        convergence_threshold=10,  # number of stable generations for convergence
         clf='lasso',
         num_cores=1,
         nsplits=8,
