@@ -86,7 +86,7 @@ gasearch.params.hash=binascii.hexlify(os.urandom(4)).decode('utf-8')
 
 # add a random hash to the file name so that we can run it multiple times
 # and it will save to different files
-
-pickle.dump(gasearch,
-    open("ga_results_tasks_%s_%s_%s_%s.pkl"%(gasearch.params.clf,'-'.join(gasearch.params.targets),
+if not __TEST_DECIMATE__:
+    pickle.dump(gasearch,
+      open("ga_results_tasks_%s_%s_%s_%s.pkl"%(gasearch.params.clf,'-'.join(gasearch.params.targets),
         '-'.join(['%s'%i for i in gasearch.params.objective_weights]),gasearch.params.hash),'wb'))
