@@ -168,32 +168,6 @@ for (j = 0; j < numconditions; j++) {
 /* ************************************ */
 /* Set up jsPsych blocks */
 /* ************************************ */
-// Set up attention check node
-var attention_check_block = {
-	type: 'attention-check',
-	timing_response: 180000,
-	response_ends_trial: true,
-	timing_post_trial: 200
-}
-
-var attention_node = {
-	timeline: [attention_check_block],
-	conditional_function: function() {
-		return run_attention_checks
-	}
-}
-
-//Set up post task questionnaire
-var post_task_block = {
-   type: 'survey-text',
-   data: {
-       trial_id: "post task questions"
-   },
-   questions: ['<p class = center-block-text style = "font-size: 20px">Please summarize what you were asked to do in this task.</p>',
-              '<p class = center-block-text style = "font-size: 20px">Do you have any comments about this task?</p>'],
-   rows: [15, 15],
-   columns: [60,60]
-};
 
 /* define static blocks  */
 var end_block = {
@@ -209,7 +183,7 @@ var end_block = {
 };
 
 var feedback_instruct_text =
-	'Welcome to the experiment. Press <strong>enter</strong> to begin.'
+	'Welcome to the practice phase for this experiment. Press <strong>enter</strong> to begin.'
 var feedback_instruct_block = {
 	type: 'poldrack-text',
 	data: {
@@ -274,7 +248,7 @@ var prompt_fixation_block = {
 
 /* Initialize 'feedback text' and set up feedback blocks */
 var practice_feedback_text =
-	'We will now start with a practice session. In this practice  concentrate on responding quickly and accurately to each shape. Press <strong>enter</strong> to continue.'
+	'We will now start with a practice session. Please concentrate on responding quickly and accurately to each shape. Press <strong>enter</strong> to continue.'
 var practice_feedback_block = {
 	type: 'poldrack-text',
 	data: {
