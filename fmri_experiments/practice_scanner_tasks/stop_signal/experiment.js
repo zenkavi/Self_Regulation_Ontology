@@ -1,66 +1,6 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
-function evalAttentionChecks() {
-	var check_percent = 1
-	if (run_attention_checks) {
-		var attention_check_trials = jsPsych.data.getTrialsOfType('attention-check')
-		var checks_passed = 0
-		for (var i = 0; i < attention_check_trials.length; i++) {
-			if (attention_check_trials[i].correct === true) {
-				checks_passed += 1
-			}
-		}
-		check_percent = checks_passed / attention_check_trials.length
-	}
-	return check_percent
-}
-
-function assessPerformance() {
-	/* Function to calculate the "credit_var", which is a boolean used to
-	credit individual experiments in expfactory. 
-	 */
-	var experiment_data = jsPsych.data.getTrialsOfType('stop-signal');
-	var missed_count = 0;
-	var trial_count = 0;
-	var rt_array = [];
-	var rt = 0;
-	var avg_rt = -1;
-	//record choices participants made
-	var choice_counts = {}
-	choice_counts[-1] = 0
-	for (var k = 0; k < choices.length; k++) {
-		choice_counts[choices[k]] = 0
-	}
-	for (var i = 0; i < experiment_data.length; i++) {
-		trial_count += 1
-		rt = experiment_data[i].rt
-		key = experiment_data[i].key_press
-		choice_counts[key] += 1
-		if (rt == -1) {
-			missed_count += 1
-		} else {
-			rt_array.push(rt)
-		}
-
-	}
-	//calculate average rt
-	if (rt_array.length !== 0) {
-		avg_rt = math.median(rt_array)
-	} else {
-		avg_rt = -1
-	}
-	//calculate whether response distribution is okay
-	var responses_ok = true
-	Object.keys(choice_counts).forEach(function(key, index) {
-		if (choice_counts[key] > trial_count * 0.85) {
-			responses_ok = false
-		}
-	})
-	credit_var = (avg_rt > 200) && responses_ok
-	jsPsych.data.addDataToLastTrial({"credit_var": credit_var})
-}
-
 var randomDraw = function(lst) {
 	var index = Math.floor(Math.random() * (lst.length))
 	return lst[index]
@@ -68,71 +8,6 @@ var randomDraw = function(lst) {
 
 var getPracticeFeedback = function() {
 	return '<div class = centerbox><p class = block-text>' + practice_feedback_text + '</p></div>'
-}
-
-/* After each test block let the subject know their average RT and accuracy. If they succeed or fail on too many stop signal trials, give them a reminder */
-var getTestFeedback = function() {
-	var data = test_block_data
-	var rt_array = [];
-	var sum_correct = 0;
-	var go_length = 0;
-	var stop_length = 0;
-	var num_responses = 0;
-	var successful_stops = 0;
-	for (var i = 0; i < data.length; i++) {
-		if (data[i].SS_trial_type == "go") {
-			go_length += 1
-			if (data[i].rt != -1) {
-				num_responses += 1
-				rt_array.push(data[i].rt);
-				if (data[i].key_press == data[i].correct_response) {
-					sum_correct += 1
-				}
-			}
-		} else {
-			stop_length += 1
-			if (data[i].rt == -1) {
-				successful_stops += 1
-			}
-		}
-	}
-	var average_rt = -1;
-    if (rt_array.length !== 0) {
-      average_rt = math.median(rt_array);
-      rtMedians.push(average_rt)
-    }
-	var rt_diff = 0
-	if (rtMedians.length !== 0) {
-		rt_diff = (average_rt - rtMedians.slice(-1)[0])
-	}
-	var GoCorrect_percent = sum_correct / go_length;
-	var missed_responses = (go_length - num_responses) / go_length
-	var StopCorrect_percent = successful_stops / stop_length
-	stopAccMeans.push(StopCorrect_percent)
-	var stopAverage = math.mean(stopAccMeans)
-
-	test_feedback_text = "<br>Done with a test block. Please take this time to read your feedback and to take a short break! Press <strong>enter</strong> to continue after you have read the feedback."
-	test_feedback_text += "</p><p class = block-text><strong>Average reaction time:  " + Math.round(average_rt) + " ms. Accuracy for non-star trials: " + Math.round(GoCorrect_percent * 100)+ "%</strong>" 
-	if (average_rt > RT_thresh || rt_diff > rt_diff_thresh) {
-		test_feedback_text +=
-			'</p><p class = block-text>You have been responding too slowly, please respond to each shape as quickly and as accurately as possible.'
-	}
-	if (missed_responses >= missed_response_thresh) {
-		test_feedback_text +=
-			'</p><p class = block-text><strong>We have detected a number of trials that required a response, where no response was made.  Please ensure that you are responding to each shape, unless a star appears.</strong>'
-	}
-	if (GoCorrect_percent < accuracy_thresh) {
-		test_feedback_text += '</p><p class = block-text>Your accuracy is too low. Remember, the correct keys are as follows: ' + prompt_text
-	}
-	if (StopCorrect_percent < (0.5-stop_thresh) || stopAverage < 0.45){
-			 	test_feedback_text +=
-			 		'</p><p class = block-text><strong>Remember to try and withhold your response when you see a stop signal.</strong>'	
-	} else if (StopCorrect_percent > (0.5+stop_thresh) || stopAverage > 0.55){
-	 	test_feedback_text +=
-	 		'</p><p class = block-text><strong>Remember, do not slow your responses to the shape to see if a star will appear before you respond.  Please respond to each shape as quickly and as accurately as possible.</strong>'
-	}
-
-	return '<div class = centerbox><p class = block-text>' + test_feedback_text + '</p></div>'
 }
 
 /* Staircase procedure. After each successful stop, make the stop signal delay longer (making stopping harder) */
@@ -328,14 +203,13 @@ var end_block = {
     	exp_id: 'stop_signal'
 	},
 	timing_response: 180000,
-	text: '<div class = centerbox><p class = center-block-text>Thanks for completing this task!</p><p class = center-block-text>Press <strong>enter</strong> to continue.</p></div>',
+	text: '<div class = centerbox><p class = center-block-text>Thanks for completing this practice!</p><p class = center-block-text>Press <strong>enter</strong> to continue.</p></div>',
 	cont_key: [13],
 	timing_post_trial: 0,
-	on_finish: assessPerformance
 };
 
 var feedback_instruct_text =
-	'Welcome to the experiment. This experiment will take about 30 minutes. Press <strong>enter</strong> to begin.'
+	'Welcome to the experiment. Press <strong>enter</strong> to begin.'
 var feedback_instruct_block = {
 	type: 'poldrack-text',
 	data: {
@@ -383,18 +257,6 @@ var instruction_node = {
 	}
 }
 
-var fixation_block = {
-	type: 'poldrack-single-stim',
-	stimulus: '<div class = centerbox><div class = fixation>+</div></div>',
-	is_html: true,
-	choices: 'none',
-	data: {
-		trial_id: "fixation",
-		exp_stage: "test"
-	},
-	timing_post_trial: 0,
-	timing_response: 500
-}
 
 var prompt_fixation_block = {
 	type: 'poldrack-single-stim',
@@ -422,20 +284,6 @@ var practice_feedback_block = {
 	timing_response: 180000,
 	cont_key: [13],
 	text: getPracticeFeedback
-};
-
-var test_feedback_block = {
-	type: 'poldrack-text',
-	data: {
-		trial_id: "feedback",
-		exp_stage: "test"
-	},
-	timing_response: 180000,
-	cont_key: [13],
-	text: getTestFeedback,
-	on_finish: function() {
-		test_block_data = []
-	}
 };
 
 /* reset SSD block */
@@ -620,10 +468,6 @@ var practice_node = {
 			practice_repetition_thresh) {
 			// end the loop
 		    current_trial = 0
-			practice_feedback_text +=
-				'</p><p class = block-text>Done with practice. We will now begin the ' + numconditions *
-				numblocks +
-				' test blocks. There will be a break after each block. Press <strong>enter</strong> to continue.'
 			return false;
 		} else {
 			//rerandomize stim and stop_trial order
@@ -663,66 +507,4 @@ stop_signal_experiment.push(NoSS_practice_node)
 stop_signal_experiment.push(practice_node)
 stop_signal_experiment.push(practice_feedback_block)
 
-/* Test blocks */
-ss_freq = randomDraw(['high', 'low'])
-	// Loop through the two conditions
-for (c = 0; c < numconditions; c++) {
-	var blocks = condition_blocks[c]
-		// Loop through the multiple blocks within each condition
-	for (b = 0; b < numblocks; b++) {
-		stop_signal_exp_block = []
-		var block = blocks[b]
-		if (ss_freq == "high") {
-			var stop_trials = jsPsych.randomization.repeat(['stop', 'stop', 'go', 'go', 'go'],
-				test_block_len / 5)
-		} else {
-			var stop_trials = jsPsych.randomization.repeat(['stop', 'go', 'go', 'go', 'go'], test_block_len /
-				5)
-		}
-		// Loop through each trial within the block
-		for (i = 0; i < test_block_len; i++) {
-			stop_signal_exp_block.push(fixation_block)
-			var trial_data = jQuery.extend(true, {}, block.data[i])
-			trial_data.condition = ss_freq
-			trial_data.exp_stage = 'test'
-			var stop_signal_block = {
-				type: 'stop-signal',
-				stimulus: block.stimulus[i],
-				SS_stimulus: stop_signal,
-				SS_trial_type: stop_trials[i],
-				data: trial_data,
-				is_html: true,
-				choices: choices,
-				timing_stim: 850,
-				timing_response: 1850,
-				SSD: getSSD,
-				timing_SS: 500,
-				timing_post_trial: 0,
-				on_finish: function(data) {
-					updateSSD(data)
-					jsPsych.data.addDataToLastTrial({
-						exp_stage: 'test',
-						trial_num: current_trial
-					})
-					current_trial += 1
-					test_block_data.push(data)
-				}
-			}
-			stop_signal_exp_block.push(stop_signal_block)
-		}
-
-		stop_signal_experiment = stop_signal_experiment.concat(stop_signal_exp_block)
-		if ($.inArray(b + c, [0, 4]) != -1) {
-			stop_signal_experiment.push(attention_node)
-		}
-		stop_signal_experiment.push(test_feedback_block)
-	}
-	stop_signal_experiment.push(reset_block)
-	if (ss_freq == "high") {
-		ss_freq = "low"
-	} else {
-		ss_freq = "high"
-	}
-}
-stop_signal_experiment.push(post_task_block)
 stop_signal_experiment.push(end_block)
