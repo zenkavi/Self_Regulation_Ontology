@@ -204,10 +204,11 @@ class GASearch:
         maxcc=[numpy.max(cc_recon),numpy.max(cc_subsim)]
         cc_recon=scale(cc_recon)
         cc_subsim=scale(cc_subsim)
-        try:
-            print('corr recon-subsim:',numpy.corrcoef(cc_recon,cc_subsim)[0,1])
-        except:
-            pass
+        if self.params.verbose>0:
+            try:
+                print('corr recon-subsim:',numpy.corrcoef(cc_recon,cc_subsim)[0,1])
+            except:
+                pass
         self.cc=cc_recon*self.params.objective_weights[0] + cc_subsim*self.params.objective_weights[1]
         return maxcc
 
