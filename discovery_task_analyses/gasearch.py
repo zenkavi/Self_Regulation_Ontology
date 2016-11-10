@@ -86,8 +86,8 @@ class GASearchParams:
 
 class GASearch:
 
-    def __init__(self):
-        self.params=GASearchParams()
+    def __init__(self,**kwargs):
+        self.params=GASearchParams(**kwargs)
         self.ccmax={}
         self.cc_sorted=None
         self.cc=None

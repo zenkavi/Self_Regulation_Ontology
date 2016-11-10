@@ -19,7 +19,7 @@ from utils import get_info,get_behav_data,get_demographics
 
 # set up variables
 
-gasearch=GASearch()
+gasearch=GASearch(objective_weights=[0.5,0.5])
 gasearch.get_taskdata()
 gasearch.load_targetdata()
 gasearch.impute_targetdata()
