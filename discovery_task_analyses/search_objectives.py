@@ -38,7 +38,6 @@ def get_reconstruction_error(ct,taskdata,targetdata_orig,params):
         print('selected tasks:',[tasks[i] for i in ct])
         print(ct)
 
-    #print(ct,tasks,tasknames)
     for i in ct:
         vars=[j for j in range(len(tasknames)) if tasknames[j].split('.')[0]==tasks[i]]
         chosen_vars+=vars
