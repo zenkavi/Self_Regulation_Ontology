@@ -1,65 +1,6 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
-function evalAttentionChecks() {
-  var check_percent = 1
-  if (run_attention_checks) {
-    var attention_check_trials = jsPsych.data.getTrialsOfType('attention-check')
-    var checks_passed = 0
-    for (var i = 0; i < attention_check_trials.length; i++) {
-      if (attention_check_trials[i].correct === true) {
-        checks_passed += 1
-      }
-    }
-    check_percent = checks_passed / attention_check_trials.length
-  }
-  return check_percent
-}
-
-function assessPerformance() {
-	/* Function to calculate the "credit_var", which is a boolean used to
-	credit individual experiments in expfactory. */
-	var experiment_data = jsPsych.data.getTrialsOfType('poldrack-single-stim')
-	var missed_count = 0
-	var trial_count = 0
-	var rt_array = []
-	var rt = 0
-		//record choices participants made
-	var choice_counts = {}
-	choice_counts[-1] = 0
-	for (var k = 0; k < choices.length; k++) {
-    choice_counts[choices[k]] = 0
-  }
-	for (var i = 0; i < experiment_data.length; i++) {
-		if (experiment_data[i].possible_responses != 'none') {
-			trial_count += 1
-			rt = experiment_data[i].rt
-			key = experiment_data[i].key_press
-			choice_counts[key] += 1
-			if (rt == -1) {
-				missed_count += 1
-			} else {
-				rt_array.push(rt)
-			}
-		}
-	}
-	//calculate average rt
-	var avg_rt = -1
-	if (rt_array.length !== 0) {
-		avg_rt = math.median(rt_array)
-	} 
-	//calculate whether response distribution is okay
-	var responses_ok = true
-	Object.keys(choice_counts).forEach(function(key, index) {
-		if (choice_counts[key] > trial_count * 0.9) {
-			responses_ok = false
-		}
-	})
-	var missed_percent = missed_count/trial_count
-	credit_var = (missed_percent < 0.4 && avg_rt > 200 && responses_ok)
-	jsPsych.data.addDataToLastTrial({"credit_var": credit_var})
-}
-
 var randomDraw = function(lst) {
   var index = Math.floor(Math.random() * (lst.length))
   return lst[index]
@@ -142,45 +83,10 @@ var trial_proportions = ["AX", "AX", "AX", "AX", "AX", "AX", "AX", "AX", "AX", "
   "BX", "AY", "AY", "BY"
 ]
 var practice_block = jsPsych.randomization.repeat(trial_proportions, 2)
-var block1_list = jsPsych.randomization.repeat(trial_proportions, 2)
-var block2_list = jsPsych.randomization.repeat(trial_proportions, 2)
-var block3_list = jsPsych.randomization.repeat(trial_proportions, 2)
-var block4_list = jsPsych.randomization.repeat(trial_proportions, 2)
-var blocks = [block1_list, block2_list, block3_list, block4_list]
 
 /* ************************************ */
 /* Set up jsPsych blocks */
 /* ************************************ */
-// Set up attention check node
-var attention_check_block = {
-  type: 'attention-check',
-  data: {
-    trial_id: "attention_check"
-  },
-  timing_response: 180000,
-  response_ends_trial: true,
-  timing_post_trial: 200
-}
-
-var attention_node = {
-  timeline: [attention_check_block],
-  conditional_function: function() {
-    return run_attention_checks
-  }
-}
-
-//Set up post task questionnaire
-var post_task_block = {
-   type: 'survey-text',
-   data: {
-       trial_id: "post task questions"
-   },
-   questions: ['<p class = center-block-text style = "font-size: 20px">Please summarize what you were asked to do in this task.</p>',
-              '<p class = center-block-text style = "font-size: 20px">Do you have any comments about this task?</p>'],
-   rows: [15, 15],
-   columns: [60,60]
-};
-
 /* define static blocks */
 var end_block = {
   type: 'poldrack-text',
@@ -189,14 +95,13 @@ var end_block = {
     exp_id: 'dot_pattern_expectancy'
   },
   timing_response: 180000,
-  text: '<div class = centerbox><p class = center-block-text>Thanks for completing this task!</p><p class = center-block-text>Press <strong>enter</strong> to continue.</p></div>',
+  text: '<div class = centerbox><p class = center-block-text>Thanks for completing this practice!</p><p class = center-block-text>Press <strong>enter</strong> to continue.</p></div>',
   cont_key: [13],
   timing_post_trial: 0,
-  on_finish: assessPerformance
 };
 
 var feedback_instruct_text =
-  'Welcome to the experiment. This experiment will last around 15 minutes. Press <strong>enter</strong> to begin.'
+  'Welcome to the experiment.  Press <strong>enter</strong> to begin.'
 var feedback_instruct_block = {
   type: 'poldrack-text',
   data: {
@@ -251,15 +156,6 @@ var instruction_node = {
   }
 }
 
-var rest_block = {
-  type: 'poldrack-text',
-  data: {
-    trial_id: "rest"
-  },
-  timing_response: 180000,
-  text: '<div class = centerbox><p class = block-text>Take a break! Press any key to continue.</p></div>',
-  timing_post_trial: 1000
-};
 
 var feedback_block = {
   type: 'poldrack-single-stim',
@@ -296,21 +192,6 @@ var fixation_block = {
     jsPsych.data.addDataToLastTrial({exp_stage: exp_stage})
   }
 }
-
-var start_test_block = {
-  type: 'poldrack-text',
-  data: {
-    trial_id: "end"
-  },
-  timing_response: 180000,
-  text: '<div class = centerbox><p class = center-block-text>Done with practice. We will now start the test.</p><p class = center-block-text>Press <strong>enter</strong> to continue.</p></div>',
-  cont_key: [13],
-  timing_post_trial: 0,
-  on_finish: function() {
-  	current_trial = 0
-    exp_stage = 'test'
-  }
-};
 
 
 /* define test block cues and probes*/
@@ -431,48 +312,4 @@ for (i = 0; i < practice_block.length; i++) {
   dot_pattern_expectancy_experiment.push(probe)
   dot_pattern_expectancy_experiment.push(feedback_block)
 }
-
-
-
-dot_pattern_expectancy_experiment.push(start_test_block);
-for (b = 0; b < blocks.length; b++) {
-  var block = blocks[b]
-  for (i = 0; i < block.length; i++) {
-    switch (block[i]) {
-      case "AX":
-        cue = jQuery.extend(true, {}, A_cue)
-        probe = jQuery.extend(true, {}, X_probe)
-        cue.data.condition = "AX"
-        probe.data.condition = "AX"
-        break;
-      case "BX":
-        cue = jQuery.extend(true, {}, other_cue)
-        probe = jQuery.extend(true, {}, X_probe)
-        cue.data.condition = "BX"
-        probe.data.condition = "BX"
-        break;
-      case "AY":
-        cue = jQuery.extend(true, {}, A_cue)
-        probe = jQuery.extend(true, {}, other_probe)
-        cue.data.condition = "AY"
-        probe.data.condition = "AY"
-        break;
-      case "BY":
-        cue = jQuery.extend(true, {}, other_cue)
-        probe = jQuery.extend(true, {}, other_probe)
-        cue.data.condition = "BY"
-        probe.data.condition = "BY"
-        break;
-    }
-    dot_pattern_expectancy_experiment.push(cue)
-    dot_pattern_expectancy_experiment.push(fixation_block)
-    dot_pattern_expectancy_experiment.push(probe)
-    dot_pattern_expectancy_experiment.push(feedback_block)
-  }
-  if ($.inArray(b, [0, 1, 3]) != -1) {
-    dot_pattern_expectancy_experiment.push(attention_node)
-  }
-  dot_pattern_expectancy_experiment.push(rest_block)
-}
-dot_pattern_expectancy_experiment.push(post_task_block)
 dot_pattern_expectancy_experiment.push(end_block)
