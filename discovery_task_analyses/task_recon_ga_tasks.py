@@ -17,7 +17,7 @@ sys.path.append('../utils')
 from utils import get_info,get_behav_data,get_demographics
 #from r_to_py_utils import missForest
 
-__TEST_DECIMATE__=True
+__TEST_DECIMATE__=False
 # set up variables
 
 gasearch=GASearch(objective_weights=[0,1])
