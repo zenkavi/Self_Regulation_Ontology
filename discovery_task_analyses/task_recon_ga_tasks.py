@@ -21,6 +21,8 @@ from utils import get_info,get_behav_data,get_demographics
 
 gasearch=GASearch(objective_weights=[0.5,0.5])
 gasearch.get_taskdata()
+gasearch.decimate_task_data()
+
 gasearch.load_targetdata()
 gasearch.impute_targetdata()
 print('using targets:',gasearch.params.targets)
