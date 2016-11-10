@@ -9,7 +9,6 @@ import numpy,pandas
 import binascii
 from joblib import Parallel, delayed
 import multiprocessing
-from sklearn.preprocessing import scale
 
 from gasearch import GASearchParams,GASearch
 
@@ -19,7 +18,6 @@ from utils import get_info,get_behav_data,get_demographics
 #from r_to_py_utils import missForest
 
 # set up variables
-
 
 gasearch=GASearch()
 gasearch.get_taskdata()
