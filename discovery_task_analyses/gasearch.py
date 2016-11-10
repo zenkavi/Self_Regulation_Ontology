@@ -16,43 +16,73 @@ from utils import get_info,get_behav_data,get_demographics
 
 
 class GASearchParams:
-    def __init__(self):
-        self.targets=['survey','demog','task']  # targets for reconstruction and correlation
-        self.objective_weights=[0,1] # weights for reconstruction and correlation respectively
+    def __init__(self,
+        targets=['survey','demog','task'],  # targets for reconstruction and correlation
+        objective_weights=[0,1], # weights for reconstruction and correlation respectively
+        nvars=8,  # number of selected tasks
+        ngen=2500,  # maximum number of GA generations
+        initpopsize=500,  # initial population size
+        nselect=50,  #number selected to survive at each generation
+        nimmigrants=500,   # number of new immigrants in each generation
+        nbabies=4,    # number of offspring of each survivor
+        mutation_rate=None,   # mutation rate for offspring
+        convergence_threshold=2,  # number of stable generations for convergence
+        clf='lasso',
+        num_cores=1,
+        nsplits=8,
+        dataset=None,
+        n_jobs=1,
+        remove_chosen_from_test=True,
+        verbose=1,  # minimal level of verbosity
+        lasso_alpha=0.1,
+        linreg_n_jobs=-1,
+        taskdatafile= 'taskdata_imputed.csv',
+        drop_tasks=['cognitive_reflection_survey','writing_task'],
+        demogvars=['BMI','Age','Sex','RetirementAccount','ChildrenNumber',
+                                'CreditCardDebt','TrafficTicketsLastYearCount',
+                                'TrafficAccidentsLifeCount','ArrestedChargedLifeCount',
+                                'LifetimeSmoke100Cigs','AlcoholHowManyDrinksDay',
+                                'CannabisPast6Months','Nervous',
+                                'Hopeless', 'RestlessFidgety', 'Depressed',
+                                'EverythingIsEffort','Worthless']):
+
+        self.targets=targets
+        self.objective_weights=objective_weights
         assert numpy.sum(self.objective_weights)==1
-        self.nvars=8  # number of selected tasks
-        self.ngen=2500  # maximum number of GA generations
-        self.initpopsize=500  # initial population size
-        self.nselect=50  #number selected to survive at each generation
-        self.nimmigrants=500   # number of new immigrants in each generation
-        self.nbabies=4    # number of offspring of each survivor
-        self.mutation_rate=1/self.nvars   # mutation rate for offspring
-        self.convergence_threshold=2  # number of stable generations for convergence
-        self.clf='lasso'
-        self.num_cores=1
-        self.nsplits=8
-        self.dataset=get_info('dataset')
-        self.basedir=get_info('base_directory')
-        self.ntasks=None
-        self.n_jobs=1
-        self.remove_chosen_from_test=True
-        self.verbose=1  # minimal level of verbosity
-        self.lasso_alpha=0.1
-        self.linreg_n_jobs=-1
-        self.derived_dir=os.path.join(self.basedir,'Data/Derived_Data/%s'%self.dataset)
-        self.data_dir=os.path.join(self.basedir,'Data/%s'%self.dataset)
-        self.taskdatafile= 'taskdata_imputed.csv'
-        self.drop_tasks=['cognitive_reflection_survey','writing_task']
+        self.nvars=nvars
+        self.ngen=ngen
+        self.initpopsize=initpopsize
+        self.nselect=nselect
+        self.nimmigrants=nimmigrants
+        self.nbabies=nbabies
+        if mutation_rate is None:
+            self.mutation_rate=1/self.nvars
+        else:
+            self.mutation_rate=mutation_rate
+        self.convergence_threshold=convergence_threshold
+        self.clf=clf
+        self.num_cores=num_cores
+        self.nsplits=nsplits
+        self.n_jobs=n_jobs
+        self.remove_chosen_from_test=remove_chosen_from_test
+        self.verbose=verbose  # minimal level of verbosity
+        self.lasso_alpha=lasso_alpha
+        self.linreg_n_jobs=linreg_n_jobs
+        if dataset is None:
+            self.dataset=get_info('dataset')
+        else:
+            self.dataset=dataset
         if self.verbose>0:
             print('using dataset:',self.dataset)
+        self.basedir=get_info('base_directory')
+        self.derived_dir=os.path.join(self.basedir,'Data/Derived_Data/%s'%self.dataset)
+        self.data_dir=os.path.join(self.basedir,'Data/%s'%self.dataset)
+        self.taskdatafile= taskdatafile
+        self.drop_tasks=drop_tasks
+        self.demogvars=demogvars
+
         self.start_time = None
-        self.demogvars=['BMI','Age','Sex','RetirementAccount','ChildrenNumber',
-                        'CreditCardDebt','TrafficTicketsLastYearCount',
-                        'TrafficAccidentsLifeCount','ArrestedChargedLifeCount',
-                        'LifetimeSmoke100Cigs','AlcoholHowManyDrinksDay',
-                        'CannabisPast6Months','Nervous',
-                        'Hopeless', 'RestlessFidgety', 'Depressed',
-                        'EverythingIsEffort','Worthless']
+        self.ntasks=None
 
 class GASearch:
 
