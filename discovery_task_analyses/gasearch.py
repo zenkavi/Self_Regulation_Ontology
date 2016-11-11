@@ -281,6 +281,7 @@ class GASearch:
                 cc_recon=[get_reconstruction_error(ct,self.taskdata,self.targetdata,self.params) for ct in pop]
         else:
             cc_recon=[0]
+        cc_recon=numpy.array(cc_recon)
         print("ccrecon shape",numpy.array(cc_recon).shape)
         if self.params.objective_weights[1]>0:
             if self.__USE_MULTIPROC__:
