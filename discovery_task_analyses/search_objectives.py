@@ -59,8 +59,8 @@ def get_reconstruction_error(ct,taskdata,targetdata_orig,params):
     #subdata=data.ix[:,chosen_vars].values
     if params.clf=='kridge':
         linreg=KernelRidge(alpha=params.kridge_alpha)
-    elif params.clf=='randlasso':
-        linreg=RandomizedLasso()
+    elif params.clf=='elasticnetcv':
+        linreg=MultiTaskElasticNetCV()
     elif params.clf=='lasso':
         linreg=Lasso(alpha=params.lasso_alpha)
     elif params.clf=='rf':
