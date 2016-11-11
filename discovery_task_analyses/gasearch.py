@@ -18,6 +18,7 @@ from utils import get_info,get_behav_data,get_demographics
 class GASearchParams:
     def __init__(self,
         targets=['survey','demog','task'],  # targets for reconstruction and correlation
+        pcacomps=[0,0,0], # pca components for task, survey, and demographics respectively
         objective_weights=[0,1], # weights for reconstruction and correlation respectively
         nvars=8,  # number of selected tasks
         ngen=2500,  # maximum number of GA generations
@@ -37,7 +38,8 @@ class GASearchParams:
         lasso_alpha=0.1,
         linreg_n_jobs=-1,
         taskdatafile= 'taskdata_imputed.csv',
-        drop_tasks=['cognitive_reflection_survey','writing_task'],
+        behavdatafile= 'meaningful_variables_imputed.csv',
+        drop_tasks=['writing_task'],
         demogvars=['BMI','Age','Sex','RetirementAccount','ChildrenNumber',
                                 'CreditCardDebt','TrafficTicketsLastYearCount',
                                 'TrafficAccidentsLifeCount','ArrestedChargedLifeCount',
@@ -50,6 +52,7 @@ class GASearchParams:
         self.objective_weights=objective_weights
         assert numpy.sum(self.objective_weights)==1
         self.nvars=nvars
+        self.behavdatafile=behavdatafile
         self.ngen=ngen
         self.initpopsize=initpopsize
         self.nselect=nselect
@@ -111,6 +114,7 @@ class GASearch:
 
     def get_taskdata(self):
         self.taskdata=get_behav_data(self.params.dataset,self.params.taskdatafile)
+        # could use pandas filter
         for c in self.taskdata.columns:
             taskname=c.split('.')[0]
             if taskname in self.params.drop_tasks:
@@ -154,7 +158,7 @@ class GASearch:
                 print('%d missing values'%numpy.sum(numpy.isnan(self.taskdata.values)))
 
         if 'survey' in self.params.targets:
-            alldata=get_behav_data(self.params.dataset)
+            alldata=get_behav_data(self.params.dataset,self.params.behavdatafile)
             self.surveydata=pandas.DataFrame()
             for k in alldata.columns:
                 if k.find('survey')>-1:
@@ -249,6 +253,7 @@ class GASearch:
                 print(len(self.population))
                 print(famidx)
                 raise Exception('breaking')
+            #TODO: do real recombination with exclusion instead of this hack
             parents=list(numpy.unique(numpy.hstack((subpop[0],subpop[1]))))
             if len(set(parents))<len(subpop[1]):
                 continue

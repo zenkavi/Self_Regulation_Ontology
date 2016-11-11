@@ -20,7 +20,11 @@ from utils import get_info,get_behav_data,get_demographics
 __TEST_DECIMATE__=False
 # set up variables
 
-gasearch=GASearch(objective_weights=[0,1])
+#TODO: allow separate optimization of reconstruction (both types) for survey/task,
+# and reconstruction for demographics
+#TODO: include ability to predict principal components rather than variables
+
+gasearch=GASearch(objective_weights=[1,0])
 gasearch.get_taskdata()
 if __TEST_DECIMATE__:
     tasks_to_keep=gasearch.decimate_task_data()
