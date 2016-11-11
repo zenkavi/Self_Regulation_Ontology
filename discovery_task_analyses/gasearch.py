@@ -52,6 +52,10 @@ class GASearchParams:
 
         self.targets=targets
         self.usepca=usepca
+        if self.usepca:
+            self.remove_chosen_from_test=False
+        else:
+            self.remove_chosen_from_test=remove_chosen_from_test
         self.objective_weights=objective_weights
         assert numpy.sum(self.objective_weights)==1
         self.nvars=nvars
@@ -70,7 +74,6 @@ class GASearchParams:
         self.num_cores=num_cores
         self.nsplits=nsplits
         self.n_jobs=n_jobs
-        self.remove_chosen_from_test=remove_chosen_from_test
         self.verbose=verbose  # minimal level of verbosity
         self.lasso_alpha=lasso_alpha
         self.linreg_n_jobs=linreg_n_jobs
@@ -102,6 +105,10 @@ class GASearch:
         self.population=[]
         self.tasks=None
         self.targetdata=None
+        self.targetdata__pca_varexplained=None
+        self.targetdata_source=None # 0=task, 1=survey, 2=demog
+        self.varexp={}
+
         self.__USE_MULTIPROC__=True
 
         if self.__USE_MULTIPROC__:
@@ -160,8 +167,10 @@ class GASearch:
                 print('target: task, %d variables'%self.taskdata.shape[1])
                 print('%d missing values'%numpy.sum(numpy.isnan(self.taskdata.values)))
             if self.params.usepca:
-                self.targetdata=compute_pca_cval(self.targetdata,flag='task')
-                print('using PCA for task: %d dims'%self.targetdata.shape[1])
+                self.targetdata,self.varexp['task']=compute_pca_cval(self.targetdata,flag='task')
+                print('using PCA for task: %d dims, %f variance explained'%(self.targetdata.shape[1],
+                                            numpy.sum(self.varexp['task'])))
+            self.targetdata_source=numpy.zeros(self.targetdata.shape[1])
 
         if 'survey' in self.params.targets:
             alldata=get_behav_data(self.params.dataset,self.params.behavdatafile)
@@ -173,14 +182,16 @@ class GASearch:
                 print('target: survey, %d variables'%self.surveydata.shape[1])
                 print('%d missing values'%numpy.sum(numpy.isnan(self.surveydata.values)))
             if self.params.usepca:
-                self.surveydata=compute_pca_cval(self.surveydata,flag='survey')
-                print('using PCA for survey: %d dims'%self.surveydata.shape[1])
-
+                self.surveydata,self.varexp['survey']=compute_pca_cval(self.surveydata,flag='survey')
+                print('using PCA for survey: %d dims, %f variance explained'%(self.surveydata.shape[1],
+                                            numpy.sum(self.varexp['survey'])))
             if not self.targetdata is None:
                 assert all(self.taskdata.index == self.surveydata.index)
                 self.targetdata = self.surveydata.merge(self.targetdata,'inner',right_index=True,left_index=True)
+                self.targetdata_source=numpy.hstack((self.targetdata_source,numpy.ones(self.surveydata.shape[1])))
             else:
                 self.targetdata=self.surveydata
+                self.targetdata_source=numpy.zeros(self.surveydata.shape[1])
 
         if 'demog' in self.params.targets:
             self.demogdata=get_demographics(self.params.dataset,var_subset=self.params.demogvars)
@@ -194,13 +205,16 @@ class GASearch:
                                     columns=self.demogdata.columns)
 
             if self.params.usepca:
-                self.demogdata=compute_pca_cval(self.demogdata,flag='demog')
-                print('using PCA for demographics: %d dims'%self.demogdata.shape[1])
+                self.demogdata,self.varexp['demog']=compute_pca_cval(self.demogdata,flag='demog')
+                print('using PCA for demographics: %d dims, %f variance explained'%(self.demogdata.shape[1],
+                                            numpy.sum(self.varexp['demog'])))
             if not self.targetdata is None:
                 assert all(self.taskdata.index == self.demogdata.index)
                 self.targetdata = self.demogdata.merge(self.targetdata,'inner',right_index=True,left_index=True)
+                self.targetdata_source=numpy.hstack((self.targetdata_source,numpy.ones(self.demogdata.shape[1])))
             else:
                 self.targetdata=self.demogdata
+                self.targetdata_source=numpy.zeros(self.demogdata.shape[1])
 
     def impute_targetdata(self):
         """
@@ -272,16 +286,27 @@ class GASearch:
                 print(len(self.population))
                 print(famidx)
                 raise Exception('breaking')
-            #TODO: do real recombination with exclusion instead of this hack
+
+            p1=subpop[0]
+            p2=subpop[1]
             parents=list(numpy.unique(numpy.hstack((subpop[0],subpop[1]))))
             if len(set(parents))<len(subpop[1]):
                 continue
             for b in range(self.params.nbabies):
                 numpy.random.shuffle(parents)
+                recomb_location=numpy.random.randint(self.params.nvars)
+                baby=p1[:recomb_location]+p2[recomb_location:self.params.nvars]
+                assert len(baby)==self.params.nvars
                 baby=parents[:len(subpop[1])]
                 nmutations=numpy.floor(len(baby)*numpy.random.rand()*self.params.mutation_rate).astype('int')
                 alts=[i for i in range(self.params.ntasks) if not i in baby]
                 numpy.random.shuffle(alts)
+                nmissing=self.params.nvars-len(set(baby))
+                if nmissing>0:  # duplicate found
+                    baby=list(set(baby))
+                    baby[len(set(baby)):self.params.nvars]=alts[:nmissing]
+                    assert len(baby)==self.params.nvars
+                    alts=[i for i in range(self.params.ntasks) if not i in baby]
                 for m in range(nmutations):
                     mutpos=numpy.random.randint(len(baby))
                     baby[mutpos]=alts[m]
