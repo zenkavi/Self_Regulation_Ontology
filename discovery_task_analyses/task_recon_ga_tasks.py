@@ -17,14 +17,14 @@ sys.path.append('../utils')
 from utils import get_info,get_behav_data,get_demographics
 #from r_to_py_utils import missForest
 
-__TEST_DECIMATE__=True
+__TEST_DECIMATE__=False
 # set up variables
 
 #TODO: allow separate optimization of reconstruction (both types) for survey/task,
 # and reconstruction for demographics
 
-gasearch=GASearch(objective_weights=[1,0],targets=['survey'],
-                usepca=True,clf='elasticnetcv')
+gasearch=GASearch(objective_weights=[1,0],targets=['task'],
+                usepca=True,clf='lassocv')
 gasearch.get_taskdata()
 if __TEST_DECIMATE__:
     tasks_to_keep=gasearch.decimate_task_data()

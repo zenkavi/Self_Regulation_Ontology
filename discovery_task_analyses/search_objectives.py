@@ -3,7 +3,7 @@ objective functions for search
 """
 
 import pandas,numpy
-from sklearn.linear_model import LinearRegression,Lasso,LassoCV,MultiTaskElasticNetCV,RandomizedLasso
+from sklearn.linear_model import LinearRegression,Lasso,LassoCV,MultiTaskLassoCV,RandomizedLasso
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.kernel_ridge import KernelRidge
@@ -59,8 +59,8 @@ def get_reconstruction_error(ct,taskdata,targetdata_orig,params):
     #subdata=data.ix[:,chosen_vars].values
     if params.clf=='kridge':
         linreg=KernelRidge(alpha=params.kridge_alpha)
-    elif params.clf=='elasticnetcv':
-        linreg=MultiTaskElasticNetCV()
+    elif params.clf=='lassocv':
+        linreg=MultiTaskLassoCV(alphas=[10**x for x in numpy.arange(-6,8)])
     elif params.clf=='lasso':
         linreg=Lasso(alpha=params.lasso_alpha)
     elif params.clf=='rf':
