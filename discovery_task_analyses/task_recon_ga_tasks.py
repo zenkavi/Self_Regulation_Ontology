@@ -24,13 +24,14 @@ __TEST_DECIMATE__=False
 # and reconstruction for demographics
 #TODO: include ability to predict principal components rather than variables
 
-gasearch=GASearch(objective_weights=[1,0])
+gasearch=GASearch(objective_weights=[0.5,0.5],
+                remove_chosen_from_test=False)
 gasearch.get_taskdata()
 if __TEST_DECIMATE__:
     tasks_to_keep=gasearch.decimate_task_data()
 
 gasearch.load_targetdata()
-gasearch.impute_targetdata()
+#gasearch.impute_targetdata()
 print('using targets:',gasearch.params.targets)
 print('%d variables in taskdata'%gasearch.taskdata.shape[1])
 print('%d variables in targetdata'%gasearch.targetdata.shape[1])

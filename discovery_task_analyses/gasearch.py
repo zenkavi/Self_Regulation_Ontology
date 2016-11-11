@@ -10,6 +10,8 @@ from joblib import Parallel, delayed
 import multiprocessing
 from sklearn.preprocessing import scale
 
+from compute_scores import compute_pca_cval
+
 sys.path.append('../utils')
 from utils import get_info,get_behav_data,get_demographics
 
@@ -18,7 +20,7 @@ from utils import get_info,get_behav_data,get_demographics
 class GASearchParams:
     def __init__(self,
         targets=['survey','demog','task'],  # targets for reconstruction and correlation
-        pcacomps=[0,0,0], # pca components for task, survey, and demographics respectively
+        usepca=True, # should we collapse targetdata into PCs?
         objective_weights=[0,1], # weights for reconstruction and correlation respectively
         nvars=8,  # number of selected tasks
         ngen=2500,  # maximum number of GA generations
@@ -49,6 +51,7 @@ class GASearchParams:
                                 'EverythingIsEffort','Worthless']):
 
         self.targets=targets
+        self.usepca=usepca
         self.objective_weights=objective_weights
         assert numpy.sum(self.objective_weights)==1
         self.nvars=nvars
@@ -156,6 +159,9 @@ class GASearch:
             if self.params.verbose>0:
                 print('target: task, %d variables'%self.taskdata.shape[1])
                 print('%d missing values'%numpy.sum(numpy.isnan(self.taskdata.values)))
+            if self.params.usepca:
+                self.targetdata=compute_pca_cval(self.targetdata,flag='task')
+                print('using PCA for task: %d dims'%self.targetdata.shape[1])
 
         if 'survey' in self.params.targets:
             alldata=get_behav_data(self.params.dataset,self.params.behavdatafile)
@@ -166,6 +172,10 @@ class GASearch:
             if self.params.verbose>0:
                 print('target: survey, %d variables'%self.surveydata.shape[1])
                 print('%d missing values'%numpy.sum(numpy.isnan(self.surveydata.values)))
+            if self.params.usepca:
+                self.surveydata=compute_pca_cval(self.surveydata,flag='survey')
+                print('using PCA for survey: %d dims'%self.surveydata.shape[1])
+
             if not self.targetdata is None:
                 assert all(self.taskdata.index == self.surveydata.index)
                 self.targetdata = self.surveydata.merge(self.targetdata,'inner',right_index=True,left_index=True)
@@ -177,6 +187,15 @@ class GASearch:
             if self.params.verbose>0:
                 print('target: demog, %d variables'%self.demogdata.shape[1])
                 print('%d missing values'%numpy.sum(numpy.isnan(self.demogdata.values)))
+            if numpy.sum(numpy.isnan(self.demogdata.values))>0:
+                demogdata_imp=fancyimpute.SimpleFill().complete(self.demogdata.values)
+                self.demogdata=pandas.DataFrame(demogdata_imp,
+                                    index=self.demogdata.index,
+                                    columns=self.demogdata.columns)
+
+            if self.params.usepca:
+                self.demogdata=compute_pca_cval(self.demogdata,flag='demog')
+                print('using PCA for demographics: %d dims'%self.demogdata.shape[1])
             if not self.targetdata is None:
                 assert all(self.taskdata.index == self.demogdata.index)
                 self.targetdata = self.demogdata.merge(self.targetdata,'inner',right_index=True,left_index=True)
