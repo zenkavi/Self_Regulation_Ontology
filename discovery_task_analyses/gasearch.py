@@ -242,7 +242,8 @@ class GASearch:
             else:
                 self.targetdata=self.demogdata
                 self.targetdata_source=numpy.zeros(self.demogdata.shape[1])
-
+        # make weights sum to one so that correlations are interpretable later
+        self.varexp_weights=self.varexp_weights/numpy.sum(self.varexp_weights)
 
     def impute_targetdata(self):
         """
@@ -296,7 +297,7 @@ class GASearch:
             except:
                 pass
         if self.params.weight_by_variance:
-            cc_recon=(cc_recon.dot(self.varexp_weights))/len(self.varexp_weights)
+            cc_recon=cc_recon.dot(self.varexp_weights)
         else:
             cc_recon=numpy.mean(cc_recon,1)
         maxcc=[numpy.max(cc_recon),numpy.max(cc_subsim)]
