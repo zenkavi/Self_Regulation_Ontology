@@ -289,8 +289,6 @@ class GASearch:
                 cc_subsim=[get_subset_corr(ct,self.taskdata,self.targetdata) for ct in self.population]
         else:
             cc_subsim=[0]
-        cc_recon=scale(cc_recon)
-        cc_subsim=scale(cc_subsim)
         if self.params.verbose>0:
             try:
                 print('corr recon-subsim:',numpy.corrcoef(cc_recon,cc_subsim)[0,1])
@@ -300,8 +298,10 @@ class GASearch:
             cc_recon=(cc_recon.dot(self.varexp_weights))/len(self.varexp_weights)
         else:
             cc_recon=numpy.mean(cc_recon,1)
-        self.cc=cc_recon*self.params.objective_weights[0] + cc_subsim*self.params.objective_weights[1]
         maxcc=[numpy.max(cc_recon),numpy.max(cc_subsim)]
+        cc_recon=scale(cc_recon)
+        cc_subsim=scale(cc_subsim)
+        self.cc=cc_recon*self.params.objective_weights[0] + cc_subsim*self.params.objective_weights[1]
         return maxcc
 
 
