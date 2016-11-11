@@ -234,6 +234,9 @@ class GASearch:
             self.population.append(idx[:self.params.nvars])
 
     def select_parents_tasks(self):
+        """
+        simple truncation selection scheme
+        """
         maxcc=self.get_population_fitness_tasks()
         idx=numpy.argsort(self.cc)[::-1]
         self.population=[self.population[i] for i in idx[:self.params.nselect]]
