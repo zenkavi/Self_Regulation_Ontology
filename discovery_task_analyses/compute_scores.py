@@ -23,4 +23,4 @@ def compute_pca_cval(df,flag,n_components=None):
         #print(n,pca_scores[-1])
     pca.n_components = n_components[numpy.argsort(pca_scores)[-1]]
     data=pandas.DataFrame(pca.fit_transform(X),index=df.index,columns=['%s-PC%d'%(flag,i) for i in range(1,pca.n_components+1)])
-    return data
+    return data,pca.explained_variance_ratio_
