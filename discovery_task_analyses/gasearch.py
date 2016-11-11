@@ -16,13 +16,12 @@ from compute_scores import compute_pca_cval
 sys.path.append('../utils')
 from utils import get_info,get_behav_data,get_demographics
 
-
-
 class GASearchParams:
     def __init__(self,
         targets=['survey','demog','task'],  # targets for reconstruction and correlation
         usepca=True, # should we collapse targetdata into PCs?
         objective_weights=[0,1], # weights for reconstruction and correlation respectively
+        weight_by_variance=False,
         nvars=8,  # number of selected tasks
         ngen=2500,  # maximum number of GA generations
         initpopsize=500,  # initial population size
@@ -34,6 +33,7 @@ class GASearchParams:
         clf='lasso',
         num_cores=1,
         nsplits=8,
+        fit_thresh=0.1,
         dataset=None,
         n_jobs=1,
         remove_chosen_from_test=True,
@@ -53,6 +53,7 @@ class GASearchParams:
 
         self.targets=targets
         self.usepca=usepca
+        self.weight_by_variance=weight_by_variance
         if self.usepca:
             self.remove_chosen_from_test=False
         else:
@@ -74,6 +75,7 @@ class GASearchParams:
         self.clf=clf
         self.num_cores=num_cores
         self.nsplits=nsplits
+        self.fit_thresh=fit_thresh
         self.n_jobs=n_jobs
         self.verbose=verbose  # minimal level of verbosity
         self.lasso_alpha=lasso_alpha
@@ -109,6 +111,7 @@ class GASearch:
         self.targetdata__pca_varexplained=None
         self.targetdata_source=None # 0=task, 1=survey, 2=demog
         self.varexp={}
+        self.varexp_weights=None
 
         self.__USE_MULTIPROC__=True
 
@@ -181,6 +184,7 @@ class GASearch:
                 print('%d missing values'%numpy.sum(numpy.isnan(self.taskdata.values)))
             if self.params.usepca:
                 self.targetdata,self.varexp['task']=compute_pca_cval(self.targetdata,flag='task')
+                self.varexp_weights=self.varexp['task']
                 print('using PCA for task: %d dims, %f variance explained'%(self.targetdata.shape[1],
                                             numpy.sum(self.varexp['task'])))
             self.targetdata_source=numpy.zeros(self.targetdata.shape[1])
@@ -198,10 +202,16 @@ class GASearch:
                 self.surveydata,self.varexp['survey']=compute_pca_cval(self.surveydata,flag='survey')
                 print('using PCA for survey: %d dims, %f variance explained'%(self.surveydata.shape[1],
                                             numpy.sum(self.varexp['survey'])))
+                self.varexp_weights=self.varexp['task']
+                if self.varexp_weights is None:
+                    self.varexp_weights=self.varexp['survey']
+                else:
+                    self.varexp_weights=numpy.hstack((self.varexp_weights,self.varexp['survey']))
             if not self.targetdata is None:
                 assert all(self.taskdata.index == self.surveydata.index)
                 self.targetdata = self.surveydata.merge(self.targetdata,'inner',right_index=True,left_index=True)
                 self.targetdata_source=numpy.hstack((self.targetdata_source,numpy.ones(self.surveydata.shape[1])))
+
             else:
                 self.targetdata=self.surveydata
                 self.targetdata_source=numpy.zeros(self.surveydata.shape[1])
@@ -221,6 +231,10 @@ class GASearch:
                 self.demogdata,self.varexp['demog']=compute_pca_cval(self.demogdata,flag='demog')
                 print('using PCA for demographics: %d dims, %f variance explained'%(self.demogdata.shape[1],
                                             numpy.sum(self.varexp['demog'])))
+                if self.varexp_weights is None:
+                    self.varexp_weights=self.varexp['demog']
+                else:
+                    self.varexp_weights=numpy.hstack((self.varexp_weights,self.varexp['demog']))
             if not self.targetdata is None:
                 assert all(self.taskdata.index == self.demogdata.index)
                 self.targetdata = self.demogdata.merge(self.targetdata,'inner',right_index=True,left_index=True)
@@ -228,6 +242,7 @@ class GASearch:
             else:
                 self.targetdata=self.demogdata
                 self.targetdata_source=numpy.zeros(self.demogdata.shape[1])
+
 
     def impute_targetdata(self):
         """
@@ -258,7 +273,7 @@ class GASearch:
 
     def get_population_fitness_tasks(self):
         # first get cc for each item in population
-        cc_recon=numpy.zeros(len(self.population))
+        #cc_recon=numpy.zeros(len(self.population))
         if self.params.objective_weights[0]>0:
             if self.__USE_MULTIPROC__:
                 cc_recon=Parallel(n_jobs=self.params.num_cores)(delayed(get_reconstruction_error)(ct,self.taskdata,self.targetdata,self.params) for ct in self.population)
@@ -266,6 +281,7 @@ class GASearch:
                 cc_recon=[get_reconstruction_error(ct,self.taskdata,self.targetdata,self.params) for ct in pop]
         else:
             cc_recon=[0]
+        print("ccrecon shape",numpy.array(cc_recon).shape)
         if self.params.objective_weights[1]>0:
             if self.__USE_MULTIPROC__:
                 cc_subsim=Parallel(n_jobs=self.params.num_cores)(delayed(get_subset_corr)(ct,self.taskdata,self.targetdata) for ct in self.population)
@@ -281,6 +297,10 @@ class GASearch:
                 print('corr recon-subsim:',numpy.corrcoef(cc_recon,cc_subsim)[0,1])
             except:
                 pass
+        if self.params.weight_by_variance:
+            cc_recon=cc_recon.dot(self.varexp_weights)
+        else:
+            cc_recon=numpy.mean(cc_recon)
         self.cc=cc_recon*self.params.objective_weights[0] + cc_subsim*self.params.objective_weights[1]
         return maxcc
 
@@ -335,3 +355,6 @@ class GASearch:
             numpy.random.shuffle(idx)
             immigrants.append(idx[:self.params.nvars])
         return self.population+immigrants
+
+    def get_final_pred_accuracy(self):
+        lasso=Lasso(alpha=self.params.lasso_alpha)

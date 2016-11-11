@@ -80,11 +80,20 @@ def get_reconstruction_error(ct,taskdata,targetdata_orig,params):
         targetdata_test=scaler.transform(targetdata[test,:])
         linreg.fit(taskdata_train,targetdata_train)
         pred[test,:]=linreg.predict(taskdata_test)
-        predacc_insample.append(numpy.corrcoef(linreg.predict(taskdata_train).ravel(),
-                                targetdata_train.ravel())[0,1])
+        insampfit=numpy.corrcoef(linreg.predict(taskdata_train).ravel(),
+                                targetdata_train.ravel())[0,1]
+        if  insampfit< params.fit_thresh:
+            print('WARNING: In-sample fit is low (%f)'%insampfit)
         #print(linreg.predict(taskdata_train))
+    # compute cc separately for each variable
+    targetdata_scaled=scaler.transform(targetdata)
+    ccall=numpy.zeros(pred.shape[1])
+    for i in range(pred.shape[1]):
+        ccall[i]=numpy.corrcoef(targetdata_scaled[:,i],pred[:,i])[0,1]
     cc=numpy.corrcoef(scaler.transform(targetdata).ravel(),pred.ravel())[0,1]
-    return cc #,numpy.mean(predacc_insample)
+    if params.verbose>8:
+        print(cc,numpy.mean(ccall))
+    return ccall #,numpy.mean(predacc_insample)
 
 
 # functions for variable rather than task selection
