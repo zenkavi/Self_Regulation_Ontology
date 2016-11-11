@@ -3,7 +3,7 @@ objective functions for search
 """
 
 import pandas,numpy
-from sklearn.linear_model import LinearRegression,Lasso,LassoCV,MultiTaskLassoCV,RandomizedLasso
+from sklearn.linear_model import LinearRegression,Lasso,LassoCV,MultiTaskElasticNetCV,RandomizedLasso
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.kernel_ridge import KernelRidge
