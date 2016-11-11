@@ -9,6 +9,7 @@ import fancyimpute
 from joblib import Parallel, delayed
 import multiprocessing
 from sklearn.preprocessing import scale
+from sklearn.linear_model import MultiTaskLassoCV
 
 from compute_scores import compute_pca_cval
 
@@ -138,6 +139,18 @@ class GASearch:
         self.tasks=list(set(tasknames))
         self.params.ntasks=len(self.tasks)
         self.tasks.sort()
+
+    def estimate_lasso_param(self):
+        if self.params.verbose>0:
+            print('estimating lasso param using CV')
+        lasso=MultiTaskLassoCV(alphas=[10**x for x in numpy.arange(-6,8,0.5)])
+        lasso.fit(self.taskdata,self.targetdata)
+        self.params.lasso_alpha=lasso.alpha_
+        score=lasso.score(self.taskdata,self.targetdata)
+        if self.params.verbose>0:
+            print('alpha=%f, r^2=%f'%(lasso.alpha_,score))
+        if score<0.5:
+            print('WARNING: poor fit to training data')
 
     def decimate_task_data(self,tasks_to_keep=None):
         """

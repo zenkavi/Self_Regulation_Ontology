@@ -23,8 +23,8 @@ __TEST_DECIMATE__=False
 #TODO: allow separate optimization of reconstruction (both types) for survey/task,
 # and reconstruction for demographics
 
-gasearch=GASearch(objective_weights=[1,0],targets=['task'],
-                usepca=True,clf='lassocv')
+gasearch=GASearch(objective_weights=[1,0],targets=['task','survey','demog'],
+                usepca=True)
 gasearch.get_taskdata()
 if __TEST_DECIMATE__:
     tasks_to_keep=gasearch.decimate_task_data()
@@ -34,6 +34,8 @@ gasearch.load_targetdata()
 print('using targets:',gasearch.params.targets)
 print('%d variables in taskdata'%gasearch.taskdata.shape[1])
 print('%d variables in targetdata'%gasearch.targetdata.shape[1])
+
+#gasearch.estimate_lasso_param()
 
 # get initial population
 gasearch.params.start_time=time.time()
