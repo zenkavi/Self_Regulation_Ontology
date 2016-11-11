@@ -21,6 +21,7 @@ class GASearchParams:
         targets=['survey','demog','task'],  # targets for reconstruction and correlation
         usepca=True, # should we collapse targetdata into PCs?
         objective_weights=[0,1], # weights for reconstruction and correlation respectively
+        target_weights=None,
         weight_by_variance=False,
         nvars=8,  # number of selected tasks
         ngen=2500,  # maximum number of GA generations
@@ -52,12 +53,16 @@ class GASearchParams:
                                 'EverythingIsEffort','Worthless']):
 
         self.targets=targets
+        # default to equal weighting across targets
+        if target_weights is None:
+            self.target_weights=numpy.ones(len(targets))/len(targets)
         self.usepca=usepca
-        self.weight_by_variance=weight_by_variance
         if self.usepca:
             self.remove_chosen_from_test=False
+            self.weight_by_variance=weight_by_variance
         else:
             self.remove_chosen_from_test=remove_chosen_from_test
+            self.weight_by_variance=False
         self.objective_weights=objective_weights
         assert numpy.sum(self.objective_weights)==1
         self.nvars=nvars
@@ -184,7 +189,7 @@ class GASearch:
                 print('%d missing values'%numpy.sum(numpy.isnan(self.taskdata.values)))
             if self.params.usepca:
                 self.targetdata,self.varexp['task']=compute_pca_cval(self.targetdata,flag='task')
-                self.varexp_weights=self.varexp['task']
+                self.varexp_weights=self.varexp['task']*self.params.target_weights[0]
                 print('using PCA for task: %d dims, %f variance explained'%(self.targetdata.shape[1],
                                             numpy.sum(self.varexp['task'])))
             self.targetdata_source=numpy.zeros(self.targetdata.shape[1])
@@ -204,9 +209,9 @@ class GASearch:
                                             numpy.sum(self.varexp['survey'])))
                 self.varexp_weights=self.varexp['task']
                 if self.varexp_weights is None:
-                    self.varexp_weights=self.varexp['survey']
+                    self.varexp_weights=self.varexp['survey']*self.params.target_weights[1]
                 else:
-                    self.varexp_weights=numpy.hstack((self.varexp_weights,self.varexp['survey']))
+                    self.varexp_weights=numpy.hstack((self.varexp_weights,self.varexp['survey']*self.params.target_weights[1]))
             if not self.targetdata is None:
                 assert all(self.taskdata.index == self.surveydata.index)
                 self.targetdata = self.surveydata.merge(self.targetdata,'inner',right_index=True,left_index=True)
@@ -232,9 +237,9 @@ class GASearch:
                 print('using PCA for demographics: %d dims, %f variance explained'%(self.demogdata.shape[1],
                                             numpy.sum(self.varexp['demog'])))
                 if self.varexp_weights is None:
-                    self.varexp_weights=self.varexp['demog']
+                    self.varexp_weights=self.varexp['demog']*self.params.target_weights[2]
                 else:
-                    self.varexp_weights=numpy.hstack((self.varexp_weights,self.varexp['demog']))
+                    self.varexp_weights=numpy.hstack((self.varexp_weights,self.varexp['demog']*self.params.target_weights[2]))
             if not self.targetdata is None:
                 assert all(self.taskdata.index == self.demogdata.index)
                 self.targetdata = self.demogdata.merge(self.targetdata,'inner',right_index=True,left_index=True)
@@ -243,7 +248,8 @@ class GASearch:
                 self.targetdata=self.demogdata
                 self.targetdata_source=numpy.zeros(self.demogdata.shape[1])
         # make weights sum to one so that correlations are interpretable later
-        self.varexp_weights=self.varexp_weights/numpy.sum(self.varexp_weights)
+        if self.varexp_weights is not None:
+            self.varexp_weights=self.varexp_weights/numpy.sum(self.varexp_weights)
 
     def impute_targetdata(self):
         """
