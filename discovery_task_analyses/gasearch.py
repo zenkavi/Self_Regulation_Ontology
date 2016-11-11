@@ -298,7 +298,7 @@ class GASearch:
             except:
                 pass
         if self.params.weight_by_variance:
-            cc_recon=cc_recon.dot(self.varexp_weights)
+            cc_recon=(cc_recon.dot(self.varexp_weights))/len(self.varexp_weights)
         else:
             cc_recon=numpy.mean(cc_recon)
         self.cc=cc_recon*self.params.objective_weights[0] + cc_subsim*self.params.objective_weights[1]
