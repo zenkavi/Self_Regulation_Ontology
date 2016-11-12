@@ -11,6 +11,18 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import scale
 from sklearn.decomposition import FactorAnalysis
 
+def get_time_fitness(ct,params):
+    """
+    see if total time is over threshold
+    """
+
+    totaltime=0
+    for t in ct:
+        totaltime+=params.tasktime[t]
+    if totaltime>params.max_task_time:
+        return -1
+    else:
+        return 1
 
 def get_subset_corr(ct,taskdata,targetdata):
     subcorr=numpy.corrcoef(scale(targetdata.values))[numpy.triu_indices(targetdata.shape[0],1)]
