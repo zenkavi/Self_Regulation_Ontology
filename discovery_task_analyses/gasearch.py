@@ -49,9 +49,7 @@ class GASearchParams:
                                 'CreditCardDebt','TrafficTicketsLastYearCount',
                                 'TrafficAccidentsLifeCount','ArrestedChargedLifeCount',
                                 'LifetimeSmoke100Cigs','AlcoholHowManyDrinksDay',
-                                'CannabisPast6Months','Nervous',
-                                'Hopeless', 'RestlessFidgety', 'Depressed',
-                                'EverythingIsEffort','Worthless']):
+                                'CannabisPast6Months']):
 
         self.targets=targets
         # default to equal weighting across targets
@@ -304,9 +302,13 @@ class GASearch:
                 cc_recon=Parallel(n_jobs=self.params.num_cores)(delayed(get_reconstruction_error)(ct,self.taskdata,self.targetdata,self.params) for ct in self.population)
             else:
                 cc_recon=[get_reconstruction_error(ct,self.taskdata,self.targetdata,self.params) for ct in pop]
+            cc_recon=numpy.array(cc_recon)
+            if self.params.weight_by_variance:
+                cc_recon=cc_recon.dot(self.varexp_weights)
+            else:
+                cc_recon=numpy.mean(cc_recon,1)
         else:
             cc_recon=[0]
-        cc_recon=numpy.array(cc_recon)
         print("ccrecon shape",numpy.array(cc_recon).shape)
         if self.params.objective_weights[1]>0:
             if self.__USE_MULTIPROC__:
@@ -320,10 +322,6 @@ class GASearch:
                 print('corr recon-subsim:',numpy.corrcoef(cc_recon,cc_subsim)[0,1])
             except:
                 pass
-        if self.params.weight_by_variance:
-            cc_recon=cc_recon.dot(self.varexp_weights)
-        else:
-            cc_recon=numpy.mean(cc_recon,1)
         maxcc=[numpy.max(cc_recon),numpy.max(cc_subsim)]
         cc_recon=scale(cc_recon)
         cc_subsim=scale(cc_subsim)
