@@ -48,10 +48,13 @@ class GASearchParams:
         taskdatafile= 'taskdata_imputed.csv',
         behavdatafile= 'meaningful_variables_imputed.csv',
         drop_tasks=['writing_task'],
-        demogvars=['BMI','Age','Sex','RetirementAccount','ChildrenNumber',
+        demogvars=['BMI','RetirementAccount','ChildrenNumber','DivorceCount',
+                                'HouseholdIncome','SmokeEveryDay','CigsPerDay',
                                 'CreditCardDebt','TrafficTicketsLastYearCount',
                                 'TrafficAccidentsLifeCount','ArrestedChargedLifeCount',
                                 'LifetimeSmoke100Cigs','AlcoholHowManyDrinksDay',
+                                'AlcoholHowOften','AlcoholHowOften6Drinks',
+                                'HowOftenCantStopDrinking','CannabisHowOften',
                                 'CannabisPast6Months']):
 
         self.targets=targets
