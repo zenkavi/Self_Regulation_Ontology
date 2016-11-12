@@ -73,10 +73,10 @@ for generation in range(gasearch.params.ngen):
 
 # print best outcome
 bestp.sort()
-print('best set')
+print('best set: task (time)')
 totaltasktime=0
 for i in bestp:
-    print(i,gasearch.tasks[i])
+    print(i,gasearch.tasks[i],'(%f)'%tasktime[i])
     totaltasktime+=gasearch.params.tasktime[i]
 print('total task time:',totaltasktime)
 if __TEST_DECIMATE__:
