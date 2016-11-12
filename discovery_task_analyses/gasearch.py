@@ -47,7 +47,7 @@ class GASearchParams:
         linreg_n_jobs=-1,
         taskdatafile= 'taskdata_imputed.csv',
         behavdatafile= 'meaningful_variables_imputed.csv',
-        drop_tasks=['writing_task'],
+        drop_tasks=['writing_task','simple_reaction_time'],
         demogvars=['BMI','RetirementAccount','ChildrenNumber','DivorceCount',
                                 'HouseholdIncome','SmokeEveryDay','CigsPerDay',
                                 'CreditCardDebt','TrafficTicketsLastYearCount',
