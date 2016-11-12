@@ -309,6 +309,8 @@ class GASearch:
                 cc_recon=numpy.mean(cc_recon,1)
         else:
             cc_recon=[0]
+        if verbose>9:
+            print("ccrecon shape",numpy.array(cc_recon).shape)
         print("ccrecon shape",numpy.array(cc_recon).shape)
         if self.params.objective_weights[1]>0:
             if self.__USE_MULTIPROC__:
