@@ -41,6 +41,7 @@ class GASearchParams:
         max_task_time=100, # set to >500 to turn off penalty
         tasktimefile='task_time_guess.csv',
         remove_chosen_from_test=True,
+        constrain_single_stop_task=True,
         verbose=1,  # minimal level of verbosity
         lasso_alpha=0.1,
         linreg_n_jobs=-1,
@@ -82,6 +83,7 @@ class GASearchParams:
         self.num_cores=num_cores
         self.max_task_time=max_task_time
         self.tasktimefile=tasktimefile
+        self.constrain_single_stop_task=constrain_single_stop_task
         self.nsplits=nsplits
         self.fit_thresh=fit_thresh
         self.n_jobs=n_jobs
@@ -152,6 +154,7 @@ class GASearch:
         self.tasks=list(set(tasknames))
         self.params.ntasks=len(self.tasks)
         self.tasks.sort()
+        self.params.stoptasks=[i for i,t in enumerate(self.tasks) if t.find('stop_signal')>-1]
 
     def get_tasktimes(self):
         """
@@ -315,7 +318,10 @@ class GASearch:
             time_penalty=get_time_fitness(ct,self.params)
             if time_penalty<0:
                 self.population.remove(ct)
-
+        if self.params.constrain_single_stop_task:
+            for ct in self.population:
+                if len(set(self.params.stoptasks).intersection(ct))>1:
+                    self.population.remove(ct)
         if self.params.objective_weights[0]>0:
             if self.__USE_MULTIPROC__:
                 cc_recon=Parallel(n_jobs=self.params.num_cores)(delayed(get_reconstruction_error)(ct,self.taskdata,self.targetdata,self.params) for ct in self.population)
