@@ -21,7 +21,8 @@ class GASearchParams:
         targets=['survey','demog','task'],  # targets for reconstruction and correlation
         usepca=True, # should we collapse targetdata into PCs?
         objective_weights=[0,1], # weights for reconstruction and correlation respectively
-        target_weights=None,
+        target_weights=[1/3,1/3,1/3],
+        normalize_weights_by_numvars=True,
         weight_by_variance=False,
         nvars=8,  # number of selected tasks
         ngen=2500,  # maximum number of GA generations
@@ -54,9 +55,9 @@ class GASearchParams:
 
         self.targets=targets
         # default to equal weighting across targets
-        if target_weights is None:
-            self.target_weights=numpy.ones(len(targets))/len(targets)
+        self.target_weights=target_weights
         self.usepca=usepca
+        self.normalize_weights_by_numvars=normalize_weights_by_numvars
         if self.usepca:
             self.remove_chosen_from_test=False
             self.weight_by_variance=weight_by_variance
@@ -180,7 +181,6 @@ class GASearch:
         return tasks_to_keep
 
     def load_targetdata(self):
-
         if 'task' in self.params.targets:
             self.targetdata=get_behav_data(self.params.dataset,self.params.taskdatafile )
             assert all(self.taskdata.index == self.targetdata.index)
@@ -189,7 +189,6 @@ class GASearch:
                 print('%d missing values'%numpy.sum(numpy.isnan(self.taskdata.values)))
             if self.params.usepca:
                 self.targetdata,self.varexp['task']=compute_pca_cval(self.targetdata,flag='task')
-                self.varexp_weights=self.varexp['task']*self.params.target_weights[0]
                 print('using PCA for task: %d dims, %f variance explained'%(self.targetdata.shape[1],
                                             numpy.sum(self.varexp['task'])))
             self.targetdata_source=numpy.zeros(self.targetdata.shape[1])
@@ -207,11 +206,6 @@ class GASearch:
                 self.surveydata,self.varexp['survey']=compute_pca_cval(self.surveydata,flag='survey')
                 print('using PCA for survey: %d dims, %f variance explained'%(self.surveydata.shape[1],
                                             numpy.sum(self.varexp['survey'])))
-                self.varexp_weights=self.varexp['task']
-                if self.varexp_weights is None:
-                    self.varexp_weights=self.varexp['survey']*self.params.target_weights[1]
-                else:
-                    self.varexp_weights=numpy.hstack((self.varexp_weights,self.varexp['survey']*self.params.target_weights[1]))
             if not self.targetdata is None:
                 assert all(self.taskdata.index == self.surveydata.index)
                 self.targetdata = self.surveydata.merge(self.targetdata,'inner',right_index=True,left_index=True)
@@ -236,10 +230,6 @@ class GASearch:
                 self.demogdata,self.varexp['demog']=compute_pca_cval(self.demogdata,flag='demog')
                 print('using PCA for demographics: %d dims, %f variance explained'%(self.demogdata.shape[1],
                                             numpy.sum(self.varexp['demog'])))
-                if self.varexp_weights is None:
-                    self.varexp_weights=self.varexp['demog']*self.params.target_weights[2]
-                else:
-                    self.varexp_weights=numpy.hstack((self.varexp_weights,self.varexp['demog']*self.params.target_weights[2]))
             if not self.targetdata is None:
                 assert all(self.taskdata.index == self.demogdata.index)
                 self.targetdata = self.demogdata.merge(self.targetdata,'inner',right_index=True,left_index=True)
@@ -248,9 +238,37 @@ class GASearch:
                 self.targetdata=self.demogdata
                 self.targetdata_source=numpy.zeros(self.demogdata.shape[1])
         # make weights sum to one so that correlations are interpretable later
-        if self.varexp_weights is not None:
-            self.varexp_weights=self.varexp_weights/numpy.sum(self.varexp_weights)
+        #TODO: add an index for datasets and move the varexp_Weights computation down here
 
+        if self.params.normalize_weights_by_numvars:
+            if 'task' in self.params.targets:
+                self.params.target_weights[0]=(self.targetdata.shape[1]/self.taskdata.shape[1])*self.params.target_weights[0]
+            if 'survey' in self.params.targets:
+                self.params.target_weights[1]=(self.targetdata.shape[1]/self.surveydata.shape[1])*self.params.target_weights[1]
+            if 'demog' in self.params.targets:
+                self.params.target_weights[2]=(self.targetdata.shape[1]/self.demogdata.shape[1])*self.params.target_weights[2]
+
+        if self.params.usepca:
+            if 'task' in self.params.targets:
+                    self.varexp_weights=self.varexp['task']*self.params.target_weights[0]
+
+            if 'survey' in self.params.targets:
+                    if self.varexp_weights is None:
+                        self.varexp_weights=self.varexp['survey']*self.params.target_weights[1]
+                    else:
+                        self.varexp_weights=numpy.hstack((self.varexp_weights,self.varexp['survey']*self.params.target_weights[1]))
+
+            if 'demog' in self.params.targets:
+                    if self.varexp_weights is None:
+                        self.varexp_weights=self.varexp['demog']*self.params.target_weights[2]
+                    else:
+                        self.varexp_weights=numpy.hstack((self.varexp_weights,self.varexp['demog']*self.params.target_weights[2]))
+
+            # normalize weights
+            if self.varexp_weights is not None:
+                self.varexp_weights=self.varexp_weights/numpy.sum(self.varexp_weights)
+        else:
+            print('WARNING: Target weighting not yet implemented for non-pca case')
     def impute_targetdata(self):
         """
         there are very few missing values, so just use a fast but dumb imputation here

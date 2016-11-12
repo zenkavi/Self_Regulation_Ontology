@@ -23,8 +23,8 @@ __TEST_DECIMATE__=False
 #TODO: allow separate optimization of reconstruction (both types) for survey/task,
 # and reconstruction for demographics
 
-gasearch=GASearch(objective_weights=[1,0],targets=['task','survey','demog'],
-                usepca=False)
+gasearch=GASearch(objective_weights=[1,0],targets=['survey'],
+                usepca=True)
 gasearch.get_taskdata()
 if __TEST_DECIMATE__:
     tasks_to_keep=gasearch.decimate_task_data()
