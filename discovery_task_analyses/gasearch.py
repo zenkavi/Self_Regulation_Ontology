@@ -2,7 +2,7 @@
 class definitions for GASearch and GASearchParams
 """
 
-from search_objectives import get_reconstruction_error,get_subset_corr
+from search_objectives import get_reconstruction_error,get_subset_corr,get_time_fitness
 import os,glob,sys,itertools,time,pickle
 import numpy,pandas
 import fancyimpute
@@ -38,6 +38,8 @@ class GASearchParams:
         fit_thresh=0.1,
         dataset=None,
         n_jobs=1,
+        max_task_time=100, # set to >500 to turn off penalty
+        tasktimefile='task_time_guess.csv',
         remove_chosen_from_test=True,
         verbose=1,  # minimal level of verbosity
         lasso_alpha=0.1,
@@ -78,6 +80,8 @@ class GASearchParams:
         self.convergence_threshold=convergence_threshold
         self.clf=clf
         self.num_cores=num_cores
+        self.max_task_time=max_task_time
+        self.tasktimefile=tasktimefile
         self.nsplits=nsplits
         self.fit_thresh=fit_thresh
         self.n_jobs=n_jobs
@@ -99,6 +103,7 @@ class GASearchParams:
 
         self.start_time = None
         self.ntasks=None
+        self.tasktime=None
 
 class GASearch:
 
@@ -130,6 +135,7 @@ class GASearch:
                 print('multiproc: using %d cores'%self.params.num_cores)
 
 
+
     def get_taskdata(self):
         self.taskdata=get_behav_data(self.params.dataset,self.params.taskdatafile)
         # could use pandas filter
@@ -146,6 +152,15 @@ class GASearch:
         self.tasks=list(set(tasknames))
         self.params.ntasks=len(self.tasks)
         self.tasks.sort()
+
+    def get_tasktimes(self):
+        """
+        load task timing data
+        """
+        df=pandas.DataFrame.from_csv(self.params.tasktimefile,header=None)
+        self.params.tasktime=[]
+        for t in self.tasks:
+            self.params.tasktime.append(df.loc[t].values[0])
 
     def estimate_lasso_param(self):
         if self.params.verbose>0:
@@ -295,8 +310,12 @@ class GASearch:
         return maxcc
 
     def get_population_fitness_tasks(self):
-        # first get cc for each item in population
-        #cc_recon=numpy.zeros(len(self.population))
+        # first remove any that are over the time limit
+        for ct in self.population:
+            time_penalty=get_time_fitness(ct,self.params)
+            if time_penalty<0:
+                self.population.remove(ct)
+
         if self.params.objective_weights[0]>0:
             if self.__USE_MULTIPROC__:
                 cc_recon=Parallel(n_jobs=self.params.num_cores)(delayed(get_reconstruction_error)(ct,self.taskdata,self.targetdata,self.params) for ct in self.population)
@@ -309,9 +328,8 @@ class GASearch:
                 cc_recon=numpy.mean(cc_recon,1)
         else:
             cc_recon=[0]
-        if verbose>9:
+        if self.params.verbose>9:
             print("ccrecon shape",numpy.array(cc_recon).shape)
-        print("ccrecon shape",numpy.array(cc_recon).shape)
         if self.params.objective_weights[1]>0:
             if self.__USE_MULTIPROC__:
                 cc_subsim=Parallel(n_jobs=self.params.num_cores)(delayed(get_subset_corr)(ct,self.taskdata,self.targetdata) for ct in self.population)
