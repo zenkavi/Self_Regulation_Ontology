@@ -23,13 +23,15 @@ __TEST_DECIMATE__=False
 #TODO: allow separate optimization of reconstruction (both types) for survey/task,
 # and reconstruction for demographics
 
-gasearch=GASearch(objective_weights=[1,0],targets=['survey'],
+gasearch=GASearch(objective_weights=[1,0],targets=['demog'],
                 usepca=True)
 gasearch.get_taskdata()
 if __TEST_DECIMATE__:
     tasks_to_keep=gasearch.decimate_task_data()
 
 gasearch.load_targetdata()
+gasearch.get_tasktimes()
+
 #gasearch.impute_targetdata()
 print('using targets:',gasearch.params.targets)
 print('%d variables in taskdata'%gasearch.taskdata.shape[1])
@@ -72,9 +74,11 @@ for generation in range(gasearch.params.ngen):
 # print best outcome
 bestp.sort()
 print('best set')
+totaltasktime=0
 for i in bestp:
     print(i,gasearch.tasks[i])
-
+    totaltasktime+=gasearch.params.tasktime[i]
+print('total task time:',totaltasktime)
 if __TEST_DECIMATE__:
     try:
         assert bestp==tasks_to_keep
