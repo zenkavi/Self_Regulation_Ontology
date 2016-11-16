@@ -1,3 +1,5 @@
+import sys
+sys.path.append('/Users/zeynepenkavi/Dropbox/PoldrackLab/expfactory-analysis')
 from expanalysis.experiments.jspsych import calc_time_taken, get_post_task_responses
 from expanalysis.experiments.processing import post_process_data, extract_DVs
 from expanalysis.results import get_filters
@@ -5,9 +7,8 @@ import json
 import numpy as np
 from os import path
 import pandas as pd
-import sys
 
-sys.path.append('../utils')
+sys.path.append('/Users/zeynepenkavi/Dropbox/PoldrackLab/Self_Regulation_Ontology/utils')
 from data_preparation_utils import anonymize_data, calc_trial_order, convert_date, download_data, get_bonuses, get_pay,  remove_failed_subjects
 from utils import get_info
 
@@ -30,11 +31,11 @@ if job == 'more':
         sample = sample.split(',')   
         
 #load Data
-token = get_info('expfactory_token', infile='../Self_Regulation_Retest_Settings.txt')
+token = get_info('expfactory_token', infile='/Users/zeynepenkavi/Dropbox/PoldrackLab/Self_Regulation_Ontology/Self_Regulation_Retest_Settings.txt')
 try:
-    data_dir=get_info('data_directory', infile='../Self_Regulation_Retest_Settings.txt')
+    data_dir=get_info('data_directory', infile='/Users/zeynepenkavi/Dropbox/PoldrackLab/Self_Regulation_Ontology/Self_Regulation_Retest_Settings.txt')
 except Exception:
-    data_dir=path.join(get_info('base_directory', infile='../Self_Regulation_Retest_Settings.txt'),'Data')
+    data_dir=path.join(get_info('base_directory', infile='/Users/zeynepenkavi/Dropbox/PoldrackLab/Self_Regulation_Ontology/Self_Regulation_Retest_Settings.txt'),'Data')
 
 if job == 'download' or job == "all":
     #***************************************************
@@ -55,37 +56,45 @@ if job == 'download' or job == "all":
     #load Data
     f = open(token)
     access_token = f.read().strip()  
-    data = download_data(data_dir, access_token, filters = filters,  battery = 'Self Regulation Retest Battery')
+    data = download_data(data_dir, access_token, filters = filters,  battery = 'Self Regulation Retest Battery', url = "http://expfactory.org/api/results/?page=4263")
     data.reset_index(drop = True, inplace = True)
     
 if job in ['extras', 'all']:
     #Process Data
     if job == "extras":
         #load Data
-        data = pd.read_json(path.join(data_dir,  + 'mturk_data.json'))
+        data = pd.read_json(path.join(data_dir,  'mturk_data.json'))
         data.reset_index(drop = True, inplace = True)
         print('Finished loading raw data')
     
     #anonymize data
     worker_lookup = anonymize_data(data)
-    json.dump(worker_lookup, open(path.join(data_dir,  + 'worker_lookup.json','w')))
+    json.dump(worker_lookup, open(path.join(data_dir,  'worker_lookup.json'),'w'))
     
     # record subject completion statistics
-    (data.groupby('worker_id').count().finishtime).to_json(path.join(data_dir,  + 'worker_counts.json'))
+    (data.groupby('worker_id').count().finishtime).to_json(path.join(data_dir,   'worker_counts.json'))
     
     # add a few extras
     convert_date(data)
-    bonuses = get_bonuses(data)
+    try:
+        bonuses = get_bonuses(data)
+    except Exception:
+        print('Error in getting bonuses')
+    #Figure out why doing it the second time works
+    try:
+        bonuses = get_bonuses(data)
+    except Exception:
+        print('Error in getting bonuses')
     calc_time_taken(data)
     get_post_task_responses(data)   
     calc_trial_order(data)
     
     # save data
-    data.to_json(path.join(data_dir,  + 'mturk_data_extras.json'))
+    data.to_json(path.join(data_dir,   'mturk_data_extras.json'))
     
     # calculate pay
     pay = get_pay(data)
-    pay.to_json(path.join(data_dir,  + 'worker_pay.json'))
+    pay.to_json(path.join(data_dir,   'worker_pay.json'))
     print('Finished saving worker pay')
     
 if job in ['post', 'all']:
@@ -95,13 +104,13 @@ if job in ['post', 'all']:
         try:
             data = pd.read_json(path.join(data_dir, 'mturk_data_extras.json'))
         except ValueError:
-            data = pd.read_json(path.join(data_dir,  + 'mturk_data.json'))
+            data = pd.read_json(path.join(data_dir,   'mturk_data.json'))
         data.reset_index(drop = True, inplace = True)
         print('Finished loading raw data')
     
     #get subject assignment
     # subject_assignment = pd.read_csv('samples/subject_assignment.csv', index_col = 0)
-    subject_assignment_retest = pd.read_csv('samples/subject_assignment_retest.csv', index_col = 0)
+    subject_assignment_retest = pd.read_csv('/Users/zeynepenkavi/Dropbox/PoldrackLab/Self_Regulation_Ontology/data_preparation/samples/subject_assignment_retest.csv', index_col = 0)
     # discovery_sample = list(subject_assignment.query('dataset == "discovery"').index)
     # validation_sample = list(subject_assignment.query('dataset == "validation"').index)
     retest_sample = list(subject_assignment_retest.query('dataset == "retest"').index)
@@ -113,11 +122,14 @@ if job in ['post', 'all']:
     # preprocess extras
     # only get extra data
     extra_data = data.query('worker_id in %s' % extra_sample).reset_index(drop = True)
-    post_process_data(extra_data)
-    failures = remove_failed_subjects(extra_data)
-    failed_data = pd.concat([failed_data,failures])
-    extra_workers = np.sort(extra_data.worker_id.unique())
-    print('Finished processing extra data')    
+    try:
+        post_process_data(extra_data)
+        failures = remove_failed_subjects(extra_data)
+        failed_data = pd.concat([failed_data,failures])
+        extra_workers = np.sort(extra_data.worker_id.unique())
+        print('Finished processing extra data')
+    except Exception:
+        print('Error in processing extra data')
     
     if 'retest' in sample:
         # only get retest data
@@ -128,46 +140,16 @@ if job in ['post', 'all']:
         # add extra workers if necessary
         num_failures = len(failures.worker_id.unique())
         if num_failures > 0:
-            makeup_workers = extra_workers[0:num_failures]
-            new_data = extra_data[extra_data['worker_id'].isin(makeup_workers)]
-            retest_data = pd.concat([retest_data, new_data]).reset_index(drop = True)
-            extra_data.drop(new_data.index, inplace = True)
+            try:
+                makeup_workers = extra_workers[0:num_failures]
+                new_data = extra_data[extra_data['worker_id'].isin(makeup_workers)]
+                retest_data = pd.concat([retest_data, new_data]).reset_index(drop = True)
+                extra_data.drop(new_data.index, inplace = True)
+            except Exception:
+                print('Error in imputing extra workers')
         retest_data.to_json(path.join(data_dir,'mturk_retest_data_post.json'))
         print('Finished saving post-processed retest data')
 
-    # preprocess and save each sample individually
-    # if 'discovery' in sample:
-    #     # only get discovery data
-    #     discovery_data = data.query('worker_id in %s' % discovery_sample).reset_index(drop = True)
-    #     post_process_data(discovery_data)
-    #     failures = remove_failed_subjects(discovery_data)
-    #     failed_data = pd.concat([failed_data,failures])
-    #     # add extra workers if necessary
-    #     num_failures = len(failures.worker_id.unique())
-    #     if num_failures > 0:
-    #         makeup_workers = extra_workers[0:num_failures]
-    #         new_data = extra_data[extra_data['worker_id'].isin(makeup_workers)]
-    #         discovery_data = pd.concat([discovery_data, new_data]).reset_index(drop = True)
-    #         extra_data.drop(new_data.index, inplace = True)
-    #     discovery_data.to_json(path.join(data_dir,'mturk_discovery_data_post.json'))
-    #     print('Finished saving post-processed discovery data')
-        
-    # if 'validation' in sample:
-    #     # only get validation data
-    #     validation_data = data.query('worker_id in %s' % validation_sample).reset_index(drop = True)
-    #     post_process_data(validation_data)
-    #     failures = remove_failed_subjects(validation_data)
-    #     failed_data = pd.concat([failed_data,failures])
-    #     # add extra workers if necessary
-    #     num_failures = len(failures.worker_id.unique())
-    #     if num_failures > 0:
-    #         makeup_workers = extra_workers[0:num_failures]
-    #         new_data = extra_data[extra_data['worker_id'].isin(makeup_workers)]
-    #         validation_data = pd.concat([validation_data, new_data]).reset_index(drop = True)
-    #         extra_data.drop(new_data.index, inplace = True)
-    #     validation_data.to_json(path.join(data_dir,'mturk_validation_data_post.json'))
-    #     print('Finished saving post-processed validation data')
-        
     if 'incomplete' in sample:
         # only get incomplete data
         # incomplete_data = data.query('worker_id not in %s' % (validation_sample + discovery_sample + extra_sample)).reset_index(drop = True)
@@ -176,7 +158,7 @@ if job in ['post', 'all']:
         remove_failed_subjects(incomplete_data)
         incomplete_data.to_json(data_dir + 'mturk_incomplete_data_post.json')
         print('Finished saving post-processed incomplete data')
-    # save failed data
+    # save failed data (only for complete data?)
     failed_data = failed_data.reset_index(drop = True)
     failed_data.to_json(data_dir + 'mturk_failed_data_post.json')
     print('Finished saving post-processed failed data')

@@ -1,2 +1,3 @@
 expfactory_token:/Users/zeynepenkavi/Downloads/expfactory_token.txt
 base_directory:/Users/zeynepenkavi/Dropbox/PoldrackLab/Self_Regulation_Ontology/
+data_directory:/Users/zeynepenkavi/Dropbox/PoldrackLab/Self_Regulation_Ontology/Data/Retest_Data/
