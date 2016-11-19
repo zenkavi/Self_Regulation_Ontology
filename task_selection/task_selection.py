@@ -23,7 +23,7 @@ __TEST_DECIMATE__=False
 #TODO: allow separate optimization of reconstruction (both types) for survey/task,
 # and reconstruction for demographics
 
-gasearch=GASearch(objective_weights=[1,0],targets=['demog'],
+gasearch=GASearch(objective_weights=[1,0],targets=['task'],
                 usepca=True)
 gasearch.get_taskdata()
 if __TEST_DECIMATE__:
@@ -95,6 +95,8 @@ gasearch.params.hash=binascii.hexlify(os.urandom(4)).decode('utf-8')
 # add a random hash to the file name so that we can run it multiple times
 # and it will save to different files
 if not __TEST_DECIMATE__:
+    if not os.path.exists('outputs'):
+        os.mkdir('outputs')
     pickle.dump(gasearch,
-      open("ga_results_tasks_%s_%s_%s_%s.pkl"%(gasearch.params.clf,'-'.join(gasearch.params.targets),
+      open("outputs/ga_results_tasks_%s_%s_%s_%s.pkl"%(gasearch.params.clf,'-'.join(gasearch.params.targets),
         '-'.join(['%s'%i for i in gasearch.params.objective_weights]),gasearch.params.hash),'wb'))

@@ -39,14 +39,14 @@ class GASearchParams:
         dataset=None,
         n_jobs=1,
         max_task_time=100, # set to >500 to turn off penalty
-        tasktimefile='task_time_guess.csv',
+        tasktimefile='time_estimates.csv',
         remove_chosen_from_test=True,
         constrain_single_stop_task=True,
         verbose=1,  # minimal level of verbosity
         lasso_alpha=0.1,
         linreg_n_jobs=-1,
-        taskdatafile= 'taskdata_imputed.csv',
-        behavdatafile= 'meaningful_variables_imputed.csv',
+        taskdatafile= 'taskdata_imputed_for_task_selection.csv',
+        behavdatafile= 'meaningful_variables_imputed_for_task_selection.csv',
         drop_tasks=['writing_task','simple_reaction_time'],
         demogvars=['BMI','RetirementAccount','ChildrenNumber','DivorceCount',
                                 'HouseholdIncome','SmokeEveryDay','CigsPerDay',
