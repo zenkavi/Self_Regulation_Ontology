@@ -14,7 +14,7 @@ import pandas as pd
 import seaborn as sns
 
 # get dependent variables
-DV_df = get_behav_data('Discovery_11-07-2016', file = 'meaningful_variables_imputed.csv')
+DV_df = get_behav_data(file = 'meaningful_variables_imputed.csv')
     
 # ************************************
 # ************ Imputation *******************
@@ -26,7 +26,7 @@ task_data = drop_vars(DV_df, ['survey'], saved_vars = ['cognitive_reflection'])
 # ************************************
 # ************ Connectivity Matrix *******************
 # ************************************
-graph_data = task_data
+graph_data = DV_df
 
 spearman_connectivity = calc_connectivity_mat(graph_data, edge_metric = 'spearman')
 distance_connectivity = calc_connectivity_mat(graph_data, edge_metric = 'distance')

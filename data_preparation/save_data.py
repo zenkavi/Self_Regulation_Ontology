@@ -1,5 +1,5 @@
 import datetime
-from expanalysis.experiments.processing import  extract_experiment
+from expanalysis.experiments.processing import  extract_experiment, calc_exp_DVs
 from os import makedirs, path
 import numpy as np
 import pandas as pd
@@ -52,16 +52,17 @@ for data,directory in [(discovery_data, discovery_directory), (failed_data, fail
     convert_var_names(subjectsxitems)
     assert np.max([len(name) for name in subjectsxitems.columns])<=8, \
         "Found column names longer than 8 characters in short version"
+    # save Individual Measures
+    save_task_data(directory, discovery_data)
 
 readme_lines += ["demographics_survey.csv: demographic information from expfactory-surveys\n\n"]
 readme_lines += ["alcohol_drug_survey.csv: alcohol, smoking, marijuana and other drugs from expfactory-surveys\n\n"]
 readme_lines += ["ky_survey.csv: mental health and neurological/health conditions from expfactory-surveys\n\n"]
 readme_lines += ["items.csv.gz: gzipped csv of all item information across surveys\n\n"]
 readme_lines += ["subject_x_items.csv: reshaped items.csv such that rows are subjects and columns are individual items\n\n"]
+readme_lines += ["Individual Measures: directory containing gzip compressed files for each individual measures\n\n"]
 
 
-# save Individual Measures
-# save_task_data(path.join(local_dir,'Discovery_' + date), discovery_data)
 
 
 # ************************************
@@ -93,7 +94,7 @@ DV_df.to_csv(path.join(directory, 'variables_exhaustive.csv'))
 readme_lines += ["variables_exhaustive.csv: all variables calculated for each measure\n\n"]
 
 # drop other columns of no interest
-subset = drop_vars(DV_df, saved_vars = ['simple_reaction_time.avg_rt'])
+subset = drop_vars(DV_df, saved_vars = ['simple_reaction_time.avg_rt', 'shift_task.acc'])
 # make subset without EZ variables
 noDDM_subset = drop_vars(DV_df, saved_vars = ["\.acc$", "\.avg_rt$"])
 noDDM_subset = drop_vars(noDDM_subset, drop_vars = ['EZ', 'hddm'])
@@ -130,6 +131,12 @@ task_data_clean.to_csv(path.join(directory, 'taskdata_clean.csv'))
 task_data_imputed = drop_vars(selected_variables_imputed, ['survey'], saved_vars = ['holt','cognitive_reflection'])
 task_data_imputed.to_csv(path.join(directory, 'taskdata_imputed.csv'))
 readme_lines += ["taskdata*.csv: taskdata are the same as meaningful_variables excluded surveys. Note that imputation is performed on the entire dataset including surveys\n\n"]
+
+# create task selection dataset
+task_selection_data = drop_vars(selected_variables_imputed, ['stop_signal.SSRT_low', '^stop_signal.proactive'])
+task_selection_data.to_csv(path.join(directory,'meaningful_variables_imputed_for_task_selection.csv'))
+task_selection_taskdata = drop_vars(task_data_imputed, ['stop_signal.SSRT_low', '^stop_signal.proactive'])
+task_selection_taskdata.to_csv(path.join(directory,'taskdata_imputed_for_task_selection.csv'))
 
 from glob import glob
 files = glob(path.join(directory,'*csv'))

@@ -1,0 +1,87 @@
+@-webkit-keyframes movetop {
+    80% {opacity:1;}
+	100% {opacity:.4; transform: translate(-50%, -115%);}
+}
+
+@keyframes movetop {
+    80% {opacity:1;}
+	100% {opacity:.4; transform: translate(-50%, -115%);}
+}
+
+.selected{
+	-webkit-animation: movetop 1s forwards;
+	animation: movetop 1s forwards;
+	border: 4px dotted red;
+}
+
+
+@-webkit-keyframes fade {
+	80% {opacity: 1;}
+    100% {opacity: 0;}
+}
+
+@keyframes fade {
+	80% {opacity: 1;}
+    100% {opacity: 0;}
+}
+
+.faded {
+	opacity: .4;
+	filter: alpha(opacity=40);	
+}
+
+.fade {
+	-webkit-animation: fade 1s forwards;
+	animation: fade 1s forwards;
+}
+
+.decision-stim {
+    display: block;
+    height: 10vw;
+	position:absolute;
+	top:50%;
+	left:50%;
+	transform: translate(-50%,-50%);
+} 	
+
+
+.decision-left {
+	width: 18vw;
+	height: 18vw;
+  position:absolute;
+  top:50%;
+  left:50%;
+  margin-right:-50%;
+  transform: translate(-125%,-5%);
+}
+
+.decision-right {
+	width: 18vw;
+	height: 18vw;
+  position:absolute;
+  top:50%;
+  left:50%;
+  margin-right:-50%;
+  transform: translate(25%,-5%);
+}
+
+.decision-top {
+  width: 18vw;
+  height: 18vw;
+  position:absolute;
+  top:50%;
+  left:50%;
+  margin-right:-50%;
+  transform: translate(-50%,-115%);
+  border-style: solid;
+  border-color: white;
+}
+
+.decision-fb {
+    width:200px;
+  position:absolute;
+  top:50%;
+  left:50%;
+  margin-right:-50%;
+  transform: translate(-50%,-5%);
+}
