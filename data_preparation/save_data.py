@@ -132,6 +132,12 @@ task_data_imputed = drop_vars(selected_variables_imputed, ['survey'], saved_vars
 task_data_imputed.to_csv(path.join(directory, 'taskdata_imputed.csv'))
 readme_lines += ["taskdata*.csv: taskdata are the same as meaningful_variables excluded surveys. Note that imputation is performed on the entire dataset including surveys\n\n"]
 
+# create task selection dataset
+task_selection_data = drop_vars(selected_variables_imputed, ['stop_signal.SSRT_low', '^stop_signal.proactive'])
+task_selection_data.to_csv(path.join(directory,'meaningful_variables_imputed_for_task_selection.csv'))
+task_selection_taskdata = drop_vars(task_data_imputed, ['stop_signal.SSRT_low', '^stop_signal.proactive'])
+task_selection_taskdata.to_csv(path.join(directory,'taskdata_imputed_for_task_selection.csv'))
+
 from glob import glob
 files = glob(path.join(directory,'*csv'))
 for f in files:

@@ -172,7 +172,6 @@ def drop_failed_QC_vars(df, data):
     for i, values in failed_exps[['experiment_exp_id','worker_id']].iterrows():
         df.loc[values[1],df.filter(regex = values[0]).columns] = np.nan
         
-    
 def drop_vars(data, drop_vars = [], saved_vars = []):
     if len(drop_vars) == 0:
         # variables that are calculated without regard to their actual interest
