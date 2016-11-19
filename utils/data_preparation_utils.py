@@ -178,16 +178,7 @@ def drop_vars(data, drop_vars = [], saved_vars = []):
         # variables that are calculated without regard to their actual interest
         basic_vars = ["\.missed_percent$","\.acc$","\.avg_rt_error$","\.std_rt_error$","\.avg_rt$","\.std_rt$"]
         #unnecessary ddm params
-        ddm_vars = ['^(attention|directed|dot_pattern|local_global|recent_probes|shape_matching|simon|stroop|threebytwo).*\.EZ_(drift|thresh|non_decision)$', # all tasks where DDM is calculated over a particular condition
-                    "network_task.(EZ|hddm)_(drift|thresh|non_decision)_congruent$",  # ANT
-                    "\.(EZ|hddm)_(drift|thresh|non_decision)_incongruent$", # ANT, local_global, simon, stroop
-                    "\.(EZ|hddm)_(drift|thresh|non_decision)_con$", "\.(EZ|hddm)_(drift|thresh|non_decision)_neg$",  # directed forgetting
-                    "\.(EZ|hddm)_(drift|thresh|non_decision)_AY", "\.(EZ|hddm)_(drift|thresh|non_decision)_BX", "\.(EZ|hddm)_(drift|thresh|non_decision)_BY", #DPX
-                    "letter.(EZ|hddm)_(drift|thresh|non_decision)_congruent$", # local global letter
-                    "letter.(EZ|hddm)_(drift|thresh|non_decision)_stay$",  # local global letter continued
-                    "letter.(EZ|hddm)_drift_switch$", "letter.(EZ|hddm)_thresh_switch$", "letter.(EZ|hddm)_non_decision_switch$", # local global letter continued
-                    "\.(EZ|hddm)_(drift|thresh|non_decision)_rec_", "\.(EZ|hddm)_(drift|thresh|non_decision)_xrec_", "hddm_non_decision_xrec", # recent probes
-                    "\.(EZ|hddm)_(drift|thresh|non_decision)_.*_switch", "\.(EZ|hddm)_(drift|thresh|non_decision)_task_stay" # three by two
+        ddm_vars = ['.*\.(EZ|hddm)_(drift|thresh|non_decision).+$', '.*\..+EZ_(thresh|non_decision)' # all tasks where DDM is calculated over a particular condition
                     ]
         # variables that are of theoretical interest, but we aren't certain enough to include in 2nd stage analysis
         exploratory_vars = ["\.congruency_seq", "\.post_error_slowing$"]
@@ -204,6 +195,7 @@ def drop_vars(data, drop_vars = [], saved_vars = []):
                     "DDS", "DNN", "DSD", "SDD", "SSS", "DDD", "stimulus_interference_rt", # shape matching
                      "go_acc","stop_acc","go_rt_error","go_rt_std_error", "go_rt","go_rt_std", # stop signal
                      "stop_rt_error","stop_rt_error_std","SS_delay", "^stop_signal.SSRT$", # stop signal continue
+                     "threebytwo.*inhibition", # threebytwo
                      "num_correct", "weighted_performance_score", # tower of london
                      "sentiment_label" # writing task
                     ]
@@ -477,7 +469,7 @@ def save_task_data(data_loc, data):
         os.makedirs(path)
     for exp_id in data.experiment_exp_id.unique():
         print('Saving %s...' % exp_id)
-        extract_experiment(data,exp_id).to_csv(os.path.join(path, exp_id + '.csv'))
+        extract_experiment(data,exp_id).to_csv(os.path.join(path, exp_id + '.csv.gz'), compression = 'gzip')
     
     
     

@@ -8,12 +8,12 @@ from utils import get_info
 
 
 #load Data
-token = get_info('expfactory_token')
 try:
     data_dir=get_info('data_directory')
 except Exception:
     data_dir=path.join(get_info('base_directory'),'Data')
-print(data_dir)  
+data = pd.read_json(path.join(data_dir,'mturk_discovery_data_post.json'))
+
 #parse arguments
 exp_id = sys.argv[1]
 if len(sys.argv) > 2:
@@ -21,9 +21,8 @@ if len(sys.argv) > 2:
 else:
     out_dir = data_dir
 
-# load data
-data = pd.read_json(data_dir + 'mturk_discovery_data_post.json')
 #calculate DVs
-DV_df, valence_df = get_exp_DVs(data, exp_id)
-DV_df.to_json(path.join(out_dir, 'mturk_discovery_DV.json'))
-valence_df.to_json(path.join(out_dir, 'mturk_discovery_DV_valence.json'))
+DV_df, valence_df, description = get_exp_DVs(data, exp_id, use_group_fun = True)
+if not DV_df is None:
+    DV_df.to_json(path.join(out_dir, exp_id + '_discovery_DV.json'))
+    valence_df.to_json(path.join(out_dir, exp_id + '_discovery_DV_valence.json'))

@@ -1,4 +1,4 @@
-from expanalysis.experiments.processing import extract_DVs
+from expanalysis.experiments.processing import get_battery_DVs
 from os import path
 import pandas as pd
 import sys
@@ -16,6 +16,6 @@ except Exception:
 for sample in ['discovery']:
     data = pd.read_json(data_dir + 'mturk_' + sample + '_data_post.json')
     #calculate DVs
-    DV_df, valence_df = extract_DVs(data)
+    DV_df, valence_df = get_battery_DVs(data)
     DV_df.to_json(path.join(data_dir, 'mturk_' + sample + '_DV.json'))
     valence_df.to_json(path.join(data_dir, 'mturk_' + sample + '_DV_valence.json'))
