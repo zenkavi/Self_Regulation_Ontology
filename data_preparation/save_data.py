@@ -118,6 +118,11 @@ selected_variables_clean = remove_outliers(selected_variables)
 selected_variables_clean.to_csv(path.join(directory, 'meaningful_variables_clean.csv'))
 readme_lines += ["meaningful_variables_clean.csv: same as meaningful_variables.csv with outliers defined as greater than 2.5 IQR from median removed from each column\n\n"]
 
+# assert that selected variables match list in reference
+meaningful_variables_reference = pd.Series.from_csv('../references/meaningful_variables_reference.csv')
+assert set(meaningful_variables_reference.index) == set(selected_variables.columns), \
+"Mismatch between reference meaningful variables and currently calculated variables"
+
 # imputed data
 selected_variables_imputed, error = missForest(selected_variables_clean)
 selected_variables_imputed.to_csv(path.join(directory, 'meaningful_variables_imputed.csv'))
