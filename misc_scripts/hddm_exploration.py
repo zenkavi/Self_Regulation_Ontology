@@ -39,7 +39,7 @@ DDM_params = {}
 for method in ['hddm','EZ']:
     for param in ['drift','thresh','non_decision']:
         DDM_params['%s_%s' % (method, param)] = DV_df.filter(regex = '\.%s_%s$' % (method, param)).as_matrix().flatten()
-pd.DataFrame(DDM_params)
+DDM_params = pd.DataFrame(DDM_params)
     
     
 # generate figs

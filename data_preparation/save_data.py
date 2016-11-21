@@ -92,7 +92,7 @@ readme_lines += ["DV_valence.csv: Subjective assessment of whether each variable
 DV_df.dropna(axis = 1, how = 'all', inplace = True)
 DV_df.to_csv(path.join(directory, 'variables_exhaustive.csv'))
 readme_lines += ["variables_exhaustive.csv: all variables calculated for each measure\n\n"]
-
+  
 # drop other columns of no interest
 subset = drop_vars(DV_df, saved_vars = ['simple_reaction_time.avg_rt', 'shift_task.acc'])
 # make subset without EZ variables
@@ -111,9 +111,9 @@ readme_lines += ["meaningful_variables_hddm.csv: subset of exhaustive data to on
 
 
 # clean and save files that are selected for use
-selected_variables = EZ_subset
+selected_variables = hddm_subset
 selected_variables.to_csv(path.join(directory, 'meaningful_variables.csv'))
-readme_lines += ["meaningful_variables.csv: Same as meaningful_variables_EZ.csv\n\n"]
+readme_lines += ["meaningful_variables.csv: Same as meaningful_variables_hddm.csv\n\n"]
 selected_variables_clean = remove_outliers(selected_variables)
 selected_variables_clean.to_csv(path.join(directory, 'meaningful_variables_clean.csv'))
 readme_lines += ["meaningful_variables_clean.csv: same as meaningful_variables.csv with outliers defined as greater than 2.5 IQR from median removed from each column\n\n"]

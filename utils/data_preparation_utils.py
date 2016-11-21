@@ -177,8 +177,7 @@ def drop_vars(data, drop_vars = [], saved_vars = []):
         # variables that are calculated without regard to their actual interest
         basic_vars = ["\.missed_percent$","\.acc$","\.avg_rt_error$","\.std_rt_error$","\.avg_rt$","\.std_rt$"]
         #unnecessary ddm params
-        ddm_vars = ['.*\.(EZ|hddm)_(drift|thresh|non_decision).+$', '.*\..+EZ_(thresh|non_decision)' # all tasks where DDM is calculated over a particular condition
-                    ]
+        ddm_vars = ['.*\.(EZ|hddm)_(drift|thresh|non_decision).+$']
         # variables that are of theoretical interest, but we aren't certain enough to include in 2nd stage analysis
         exploratory_vars = ["\.congruency_seq", "\.post_error_slowing$"]
         # task variables that are irrelevent to second stage analysis, either because they are correlated
