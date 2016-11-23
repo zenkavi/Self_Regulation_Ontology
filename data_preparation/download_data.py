@@ -17,15 +17,8 @@ except NameError: pass
     
 # get options
 job = input('Type "download", "extras", "post", or "all": ')
-sample = 'discovery'
-if job == 'more':
-    job = input('More: Type "download", "extras", "post" or "both": ')
-    sample = input('Type "discovery", "validation" or "incomplete". Use commas to separate multiple samples or "all": ')
-    if sample == 'all':
-        sample = ['discovery','validation','incomplete']
-    else:
-        sample = sample.split(',')   
-        
+sample = ['discovery', 'validation', 'incomplete']
+
 #load Data
 token = get_info('expfactory_token')
 try:
