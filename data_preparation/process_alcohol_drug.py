@@ -7,25 +7,6 @@ from metadata_utils import metadata_subtract_one,metadata_replace_zero_with_nan
 from metadata_utils import metadata_change_two_to_zero_for_no,metadata_reverse_scale
 from metadata_utils import write_metadata
 
-from utils import get_info
-
-dataset=get_info('dataset')
-print('using dataset:',dataset)
-basedir=get_info('base_directory')
-datadir=os.path.join(basedir,'data/%s'%dataset)
-outdir=os.path.join(basedir,'data/Derived_Data/%s'%dataset)
-if not os.path.exists(outdir):
-    os.mkdir(outdir)
-
-def get_data(datadir=datadir):
-
-    datafile=os.path.join(datadir,'alcohol_drugs.csv')
-    data=pandas.read_csv(datafile,index_col=0)
-    data=data.rename(columns={'worker_id':'worker'})
-    return data,basedir
-
-
-
 def get_alcohol_drug_items(data):
     alcohol_drug_items={}
     for i,r in data.iterrows():
@@ -78,16 +59,12 @@ def setup_itemid_dict():
     return id_to_name,nominalvars
 
 def get_metadata(alcohol_drug_items):
-
     id_to_name,nominalvars=setup_itemid_dict()
     alcohol_drug_dict={"MeasurementToolMetadata": {"Description": 'Health',
             "TermURL": ''}}
     for i in alcohol_drug_items:
             r=alcohol_drug_items[i]
-            if not pandas.isnull(r.options):
-                itemoptions=eval(r.options)
-            else:
-                itemoptions=None
+            itemoptions=r.options
             itemid='_'.join(r['id'].split('_')[:4])
             assert itemid not in alcohol_drug_dict  # check for duplicates
             alcohol_drug_dict[itemid]={}
@@ -156,36 +133,37 @@ def fix_item(d,v,metadata):
 
     return d,metadata
 
-def save_alcohol_drug_data(data,survey_metadata,
-              outdir=os.path.join(outdir,'surveydata')):
+def save_alcohol_drug_data(data,survey_metadata,outdir):
     id_to_name,nominalvars=setup_itemid_dict()
     if not os.path.exists(outdir):
         os.mkdir(outdir)
 
     unique_items=list(data.item_id.unique())
-    surveydata=pandas.DataFrame(index=list(data.worker.unique()))
+    surveydata=pandas.DataFrame(index=list(data.worker_id.unique()))
     for i in unique_items:
         qresult=data.query('item_id=="%s"'%i)
         matchitem=qresult.response
-        matchitem.index=qresult['worker']
+        matchitem.index=qresult['worker_id']
         matchitem,survey_metadata[id_to_name[i]]=fix_item(matchitem,i,survey_metadata[id_to_name[i]])
         surveydata.ix[matchitem.index,i]=matchitem
 
     surveydata_renamed=surveydata.rename(columns=id_to_name)
-    surveydata_renamed.to_csv(os.path.join(outdir,'alcohol_drugs.tsv'),sep='\t')
+    surveydata_renamed.to_csv(os.path.join(outdir,'alcohol_drugs.csv'))
     for v in nominalvars:
         del surveydata[v]
     surveydata_renamed_ord=surveydata.rename(columns=id_to_name)
-    surveydata_renamed_ord.to_csv(os.path.join(outdir,'alcohol_drugs_ordinal.tsv'),sep='\t')
+    surveydata_renamed_ord.to_csv(os.path.join(outdir,'alcohol_drugs_ordinal.csv'))
 
     return outdir,surveydata_renamed
-
-if __name__=='__main__':
+    
+def process_alcohol_drug(data, outdir, meta_outdir):
     id_to_name,nominalvars=setup_itemid_dict()
-    data,basedir=get_data()
     alcohol_drug_items=get_alcohol_drug_items(data)
     alcohol_drug_metadata=get_metadata(alcohol_drug_items)
     data=add_alcohol_drug_item_labels(data)
-    datadir,surveydata_renamed=save_alcohol_drug_data(data,alcohol_drug_metadata)
+    datadir,surveydata_renamed=save_alcohol_drug_data(data,alcohol_drug_metadata, outdir)
     metadatadir=write_metadata(alcohol_drug_metadata,'alcohol_drugs.json',
-        outdir=os.path.join(outdir,'metadata'))
+        outdir=meta_outdir)
+    return surveydata_renamed
+        
+
