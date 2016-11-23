@@ -37,8 +37,6 @@ def get_behav_data(dataset = None,file=None):
                 return
     return df
 
-
-
 def get_info(item,infile='../Self_Regulation_Settings.txt'):
     """
     get info from settings file
@@ -95,18 +93,3 @@ def load_metadata(variable,basedir):
             metadata=json.load(outfile)
     return metadata
 
-
-def get_single_dataset(dataset,survey):
-    basedir=get_info('base_directory')
-    infile=os.path.join(basedir,'data/Derived_Data/%s/surveydata/%s.tsv'%(dataset,survey))
-    print(infile)
-    assert os.path.exists(infile)
-    if survey.find('ordinal')>-1:
-        survey=survey.replace('_ordinal','')
-    mdfile=os.path.join(basedir,'data/Derived_Data/%s/metadata/%s.json'%(dataset,survey))
-    print(mdfile)
-    assert os.path.exists(mdfile)
-    data=pandas.read_csv(infile,index_col=0,sep='\t')
-    metadata=load_metadata(survey,os.path.join(basedir,
-        'data/Derived_Data/%s/metadata'%dataset))
-    return data,metadata

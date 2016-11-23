@@ -3,12 +3,14 @@ from expanalysis.experiments.processing import  extract_experiment, calc_exp_DVs
 from os import makedirs, path
 import numpy as np
 import pandas as pd
+from process_alcohol_drug import process_alcohol_drug
+from process_demographics import process_demographics
+from process_health import process_health
 import sys
 sys.path.append('../utils')
 from data_preparation_utils import convert_var_names, drop_failed_QC_vars, drop_vars, get_items, remove_outliers, save_task_data
 from utils import get_info
 from r_to_py_utils import missForest
-
 
 #******************************
 #*** Save Data *********
@@ -34,12 +36,21 @@ discovery_data = pd.read_json(path.join(local_dir,'mturk_discovery_data_post.jso
 failed_data = pd.read_json(path.join(local_dir,'mturk_failed_data_post.json')).reset_index(drop = True)
 
 for data,directory in [(discovery_data, discovery_directory), (failed_data, failed_directory)]:
+    meta_dir = path.join(directory,'metadata')
+    if not path.exists(meta_dir):
+        makedirs(meta_dir)
     # save target datasets
     print('Saving to %s...' % directory)
     print('Saving target measures...')
-    extract_experiment(data,'demographics_survey').to_csv(path.join(directory, 'demographics.csv'))
-    extract_experiment(data, 'alcohol_drugs_survey').to_csv(path.join(directory, 'alcohol_drugs.csv'))
-    extract_experiment(data, 'k6_survey').to_csv(path.join(directory, 'k6_health.csv'))
+    demog_data = extract_experiment(data,'demographics_survey')
+    demog_data = process_demographics(demog_data, directory, meta_dir)
+    alcohol_drug_data = extract_experiment(data,'alcohol_drugs_survey')
+    alcohol_drug_data = process_alcohol_drug(alcohol_drug_data, directory, meta_dir)
+    health_data = extract_experiment(data,'k6_survey')
+    health_data = process_health(health_data, directory, meta_dir)
+    #concatenate targets
+    target_data = pd.concat([demog_data, alcohol_drug_data, health_data], axis = 1)
+    target_data.to_csv(path.join(directory,'demographic_targets.csv'))
     # save items
     items_df = get_items(data)
     print('Saving items...')
@@ -120,7 +131,7 @@ readme_lines += ["meaningful_variables_clean.csv: same as meaningful_variables.c
 
 # assert that selected variables match list in reference
 meaningful_variables_reference = pd.Series.from_csv('../references/meaningful_variables_reference.csv')
-assert set(meaningful_variables_reference.index) == set(selected_variables.columns), \
+assert set(meaningful_variables_reference.index[:-1]) == set(selected_variables.columns), \
 "Mismatch between reference meaningful variables and currently calculated variables"
 
 # imputed data
@@ -145,6 +156,7 @@ task_selection_taskdata.to_csv(path.join(directory,'taskdata_imputed_for_task_se
 
 from glob import glob
 files = glob(path.join(directory,'*csv'))
+files = [f for f in files if not any(i in f for i in ['demographic','health','alcohol_drug'])]
 for f in files:
     name = f.split('/')[-1]
     df = pd.DataFrame.from_csv(f)
