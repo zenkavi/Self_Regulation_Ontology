@@ -48,9 +48,12 @@ for data,directory in [(discovery_data, discovery_directory), (failed_data, fail
     alcohol_drug_data = process_alcohol_drug(alcohol_drug_data, directory, meta_dir)
     health_data = extract_experiment(data,'k6_survey')
     health_data = process_health(health_data, directory, meta_dir)
-    #concatenate targets
+    # concatenate targets
     target_data = pd.concat([demog_data, alcohol_drug_data, health_data], axis = 1)
-    target_data.to_csv(path.join(directory,'demographic_targets.csv'))
+    target_data.to_csv(path.join(directory,'demographic_health.csv'))
+    # save demographic targets reference
+    if directory == discovery_directory:
+        np.savetxt('../references/demographic_health_reference.csv', target_data.columns, fmt = '%s', delimiter=",")
     # save items
     items_df = get_items(data)
     print('Saving items...')
@@ -89,6 +92,7 @@ drop_failed_QC_vars(DV_df,discovery_data)
 
 #flip negative signed valence DVs
 valence_df = valence_df.replace(to_replace={np.nan: 'NA'})
+valence_list = [i.dropna().unique()[0] if len(i.dropna().unique()) > 0 else np.nan for col,i in valence_df.iteritems()]
 flip_df = np.floor(valence_df.replace(to_replace ={'Pos': 1, 'NA': 1, 'Neg': -1}).mean())
 for c in DV_df.columns:
     try:
@@ -128,10 +132,13 @@ selected_variables_clean = remove_outliers(selected_variables)
 selected_variables_clean.to_csv(path.join(directory, 'meaningful_variables_clean.csv'))
 readme_lines += ["meaningful_variables_clean.csv: same as meaningful_variables.csv with outliers defined as greater than 2.5 IQR from median removed from each column\n\n"]
 
+#save selected variables
+selected_variables_reference = pd.Series(data = valence_list, index = valence_df.columns)
+selected_variables_reference.loc[selected_variables.columns].to_csv('../references/selected_variables_reference.csv')
 # assert that selected variables match list in reference
-selected_variables_reference = pd.Series.from_csv('../references/selected_variables_reference.csv')
-assert set(selected_variables_reference.index[:-1]) == set(selected_variables.columns), \
-"Mismatch between reference meaningful variables and currently calculated variables"
+#selected_variables_reference = pd.Series.from_csv('../references/selected_variables_reference.csv')
+#assert set(selected_variables_reference.index[:-1]) == set(selected_variables.columns), \
+#"Mismatch between reference meaningful variables and currently calculated variables"
 
 # imputed data
 selected_variables_imputed, error = missForest(selected_variables_clean)
@@ -152,6 +159,8 @@ task_selection_data = drop_vars(selected_variables_imputed, ['stop_signal.SSRT_l
 task_selection_data.to_csv(path.join(directory,'meaningful_variables_imputed_for_task_selection.csv'))
 task_selection_taskdata = drop_vars(task_data_imputed, ['stop_signal.SSRT_low', '^stop_signal.proactive'])
 task_selection_taskdata.to_csv(path.join(directory,'taskdata_imputed_for_task_selection.csv'))
+#save selected variables
+selected_variables_reference.loc[task_selection_data.columns].to_csv('../references/selected_variables_for_task_selection_reference.csv')
 
 from glob import glob
 files = glob(path.join(directory,'*csv'))
