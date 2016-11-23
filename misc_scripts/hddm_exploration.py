@@ -9,7 +9,7 @@ from utils import get_behav_data
 from data_preparation_utils import drop_vars
 
 
-DV_df = get_behav_data('Discovery_11-15-2016', file = 'variables_exhaustive.csv')
+DV_df = get_behav_data(file = 'variables_exhaustive.csv')
 subset = drop_vars(DV_df, saved_vars = ['\.std_rt$','\.avg_rt$','\.acc$'])
 
 ddm_tasks = np.unique([c.split('.')[0] for c in DV_df.filter(regex = 'EZ').columns])
@@ -41,7 +41,15 @@ for method in ['hddm','EZ']:
         DDM_params['%s_%s' % (method, param)] = DV_df.filter(regex = '\.%s_%s$' % (method, param)).as_matrix().flatten()
 DDM_params = pd.DataFrame(DDM_params)
     
-    
+# correlate non decision with accuracy and rt
+for param in ['drift','non_decision','thresh']:
+    param_rt = DV_df.filter(regex = ddm_regex + '.*(hddm_%s$|(go|avg)_rt$)' % param)    
+    correlations = np.diag(param_rt.corr(),1)[0::2]
+    print('%s correlations with RT: %s' % (param, np.mean(correlations)))
+    param_acc = DV_df.filter(regex = ddm_regex + '.*(hddm_%s$|(go_acc|\.acc$))' % param)    
+    correlations = np.diag(param_acc.corr(),1)[0::2]
+    print('%s correlations with Acc: %s' % (param, np.mean(correlations)))
+
 # generate figs
 figs = {}
 for param, df in [('drift', drift), ('thresh', thresh), ('non_decision', non_decision)]:
@@ -51,7 +59,6 @@ for param, df in [('drift', drift), ('thresh', thresh), ('non_decision', non_dec
         task_subset = df.filter(regex = '^%s' % task)
         task_subset = reorder_cols(param, task_subset)
         corr_mat = task_subset.corr()
-        param_task_correlations.append(correlations)
         fig = sns.plt.figure()
         sns.heatmap(corr_mat)
         param_figs.append(fig)

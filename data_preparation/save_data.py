@@ -88,7 +88,8 @@ valence_df = pd.read_json(path.join(local_dir,'mturk_discovery_DV_valence.json')
 drop_failed_QC_vars(DV_df,discovery_data)
 
 #flip negative signed valence DVs
-flip_df = np.floor(valence_df.replace(to_replace ={'Pos': 1, 'NA': 1, np.nan: 1, 'Neg': -1}).mean())
+valence_df = valence_df.replace(to_replace={np.nan: 'NA'})
+flip_df = np.floor(valence_df.replace(to_replace ={'Pos': 1, 'NA': 1, 'Neg': -1}).mean())
 for c in DV_df.columns:
     try:
         DV_df.loc[:,c] = DV_df.loc[:,c] * flip_df.loc[c]
@@ -97,7 +98,6 @@ for c in DV_df.columns:
 #save valence
 flip_df.to_csv(path.join(directory, 'DV_valence.csv'))
 readme_lines += ["DV_valence.csv: Subjective assessment of whether each variable's 'natural' direction implies 'better' self regulation\n\n"]
-
 
 #drop na columns
 DV_df.dropna(axis = 1, how = 'all', inplace = True)
@@ -120,7 +120,6 @@ hddm_subset = drop_vars(subset, drop_vars = ['_acc', '_rt', 'EZ'], saved_vars = 
 hddm_subset.to_csv(path.join(directory, 'meaningful_variables_hddm.csv'))
 readme_lines += ["meaningful_variables_hddm.csv: subset of exhaustive data to only meaningful variables with rt/acc parameters removed (replaced by hddm DDM params)\n\n"]
 
-
 # clean and save files that are selected for use
 selected_variables = hddm_subset
 selected_variables.to_csv(path.join(directory, 'meaningful_variables.csv'))
@@ -130,8 +129,8 @@ selected_variables_clean.to_csv(path.join(directory, 'meaningful_variables_clean
 readme_lines += ["meaningful_variables_clean.csv: same as meaningful_variables.csv with outliers defined as greater than 2.5 IQR from median removed from each column\n\n"]
 
 # assert that selected variables match list in reference
-meaningful_variables_reference = pd.Series.from_csv('../references/meaningful_variables_reference.csv')
-assert set(meaningful_variables_reference.index[:-1]) == set(selected_variables.columns), \
+selected_variables_reference = pd.Series.from_csv('../references/selected_variables_reference.csv')
+assert set(selected_variables_reference.index[:-1]) == set(selected_variables.columns), \
 "Mismatch between reference meaningful variables and currently calculated variables"
 
 # imputed data
