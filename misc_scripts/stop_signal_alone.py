@@ -28,7 +28,7 @@ for c in df.condition.unique():
     #SSRT
     go_trials = c_df.query('SS_trial_type == "go"')
     stop_trials = c_df.query('SS_trial_type == "stop"')
-    sorted_go = go_trials.query('rt != -1').rt.sort_values(ascending = False)
+    sorted_go = go_trials.query('rt != -1').rt.sort_values(ascending = True)
     prob_stop_failure = (1-stop_trials.stopped.mean())
     corrected = prob_stop_failure/numpy.mean(go_trials.rt!=-1)
     index = corrected*len(sorted_go)
