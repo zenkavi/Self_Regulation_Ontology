@@ -143,10 +143,10 @@ def convert_var_names(to_convert):
             return  [inverse_lookup.loc[c] if c in inverse_lookup.index else c for c in to_convert]
             
     
-def download_data(data_loc, access_token = None, filters = None, battery = None, save = True, url = None):
+def download_data(data_loc, access_token = None, filters = None, battery = None, save = True, url = None, last_url = None):
     start_time = time()
     #Load Results from Database
-    results = Result(access_token, filters = filters, url = url)
+    results = Result(access_token, filters = filters, url = url, last_url = last_url)
     data = results.data
     if battery:
         data = result_filter(data, battery = battery)
