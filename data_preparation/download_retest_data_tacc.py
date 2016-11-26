@@ -14,12 +14,13 @@ from data_preparation_utils import anonymize_data, calc_trial_order, convert_dat
 from utils import get_info
 
 if len(sys.argv) < 2:
-    sys.exit("Usage: download_retest_data_tacc.py 'all' '['retest', 'incomplete']' 'http://expfactory.org/api/results' 'http://expfactory.org/api/results/?page=3' ")
+    sys.exit("Usage: download_retest_data_tacc.py 'all' '['retest', 'incomplete']' 'http://expfactory.org/api/results' 'http://expfactory.org/api/results/?page=3' '1' ")
 
 job = sys.argv[1]
 sample = sys.argv[2]
 url = sys.argv[3]
 last_url = sys.argv[4]
+job_num = sys.argv[5]
         
 #load Data
 token = get_info('expfactory_token', infile='/corral-repl/utexas/poldracklab/users/zenkavi/Self_Regulation_Ontology/Self_Regulation_Retest_Settings_Tacc.txt')
@@ -46,24 +47,27 @@ if job == 'download' or job == "all":
     #**************************************************  
     #load Data
     f = open(token)
-    access_token = f.read().strip()  
-    data = download_data(data_dir, access_token, filters = filters,  battery = 'Self Regulation Retest Battery', url = url, last_url = last_url)
+    access_token = f.read().strip()
+    mturk_data_file_name = 'mturk_data_'+job_num+'.json'
+    data = download_data(data_dir, access_token, filters = filters,  battery = 'Self Regulation Retest Battery', url = url, last_url = last_url, file_name = mturk_data_file_name)
     data.reset_index(drop = True, inplace = True)
     
 if job in ['extras', 'all']:
     #Process Data
     if job == "extras":
         #load Data
-        data = pd.read_json(path.join(data_dir, 'mturk_data_'+time.strftime("%m_%d_%Y-%I_%M_%S")+'.json'))
+        data = pd.read_json(path.join(data_dir, 'mturk_data_',job_num,'.json'))
         data.reset_index(drop = True, inplace = True)
         print('Finished loading raw data')
     
     #anonymize data
     worker_lookup = anonymize_data(data)
-    json.dump(worker_lookup, open(path.join(data_dir, 'worker_lookup_'+time.strftime("%m_%d_%Y-%I_%M_%S")+'.json','w')))
+    worker_lookup_file_name = 'worker_lookup_'+job_num+'.json'
+    json.dump(worker_lookup, open(path.join(data_dir, worker_lookup_file_name),'w'))
     
     # record subject completion statistics
-    (data.groupby('worker_id').count().finishtime).to_json(path.join(data_dir, 'worker_counts'+time.strftime("%m_%d_%Y-%I_%M_%S")+'.json'))
+    worker_counts_file_name = 'worker_counts'+job_num+'.json'
+    (data.groupby('worker_id').count().finishtime).to_json(path.join(data_dir, worker_counts_file_name))
     
     # add a few extras
     convert_date(data)
@@ -73,11 +77,13 @@ if job in ['extras', 'all']:
     calc_trial_order(data)
     
     # save data
-    data.to_json(path.join(data_dir, 'mturk_data_extras'+time.strftime("%m_%d_%Y-%I_%M_%S")+'.json'))
+    mturk_data_extras_file_name = 'mturk_data_extras'+job_num+'.json'
+    data.to_json(path.join(data_dir, mturk_data_extras_file_name))
     
     # calculate pay
     pay = get_pay(data)
-    pay.to_json(path.join(data_dir, 'worker_pay'+time.strftime("%m_%d_%Y-%I_%M_%S")+'.json'))
+    worker_pay_file_name='worker_pay'+job_num+'.json'
+    pay.to_json(path.join(data_dir, worker_pay_file_name))
     print('Finished saving worker pay')
 
     

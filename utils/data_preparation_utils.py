@@ -143,7 +143,7 @@ def convert_var_names(to_convert):
             return  [inverse_lookup.loc[c] if c in inverse_lookup.index else c for c in to_convert]
             
     
-def download_data(data_loc, access_token = None, filters = None, battery = None, save = True, url = None, last_url = None):
+def download_data(data_loc, access_token = None, filters = None, battery = None, save = True, url = None, last_url = None, file_name=None):
     start_time = time()
     #Load Results from Database
     results = Result(access_token, filters = filters, url = url, last_url = last_url)
@@ -160,7 +160,9 @@ def download_data(data_loc, access_token = None, filters = None, battery = None,
     
     # if saving, save the data and the lookup file for anonymized workers
     if save == True:
-        data.to_json(data_loc + 'mturk_data.json')
+        if file_name == None:
+            file_name = 'mturk_data.json'
+        data.to_json(data_loc + file_name)
         print('Finished saving')
     
     finish_time = (time() - start_time)/60
