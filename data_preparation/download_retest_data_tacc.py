@@ -13,10 +13,10 @@ sys.path.append('/corral-repl/utexas/poldracklab/users/zenkavi/Self_Regulation_O
 from data_preparation_utils import anonymize_data, calc_trial_order, convert_date, download_data, get_bonuses, get_pay,  remove_failed_subjects
 from utils import get_info
 
-#if len(sys.argv) < 2:
+#if len(sys.argv) < 5:
 #    sys.exit("Usage: download_retest_data_tacc.py 'all' '['retest', 'incomplete']' 'http://expfactory.org/api/results' 'http://expfactory.org/api/results/?page=3' '1' ")
 
-if len(sys.argv) < 2:
+if len(sys.argv) < 4:
     sys.exit("Usage: download_retest_data_tacc.py 'Self Regulation Retest Battery' 'http://expfactory.org/api/results' 'http://expfactory.org/api/results/?page=3' '1' ")
 
 
