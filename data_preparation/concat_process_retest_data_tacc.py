@@ -23,7 +23,7 @@ data_dir=get_info('data_directory', infile='/corral-repl/utexas/poldracklab/user
 
 data = pd.DataFrame()
 
-for f in path.listdir(data_dir):
+for f in os.listdir(data_dir):
     if f.find("mturk_data") != -1:
         tmp = pd.read_json(path.join(data_dir, f))
         data = pd.concat([data, tmp])
