@@ -28,7 +28,9 @@ for f in os.listdir(data_dir):
         tmp = pd.read_json(path.join(data_dir, f))
         data = pd.concat([data, tmp])
 
-print('Finished loading raw data')        
+data.to_json(data_dir + 'mturk_data_all.json')
+        
+print('Finished loading raw data and saved concattaneted data')        
         
 #anonymize data
 worker_lookup = anonymize_data(data)
