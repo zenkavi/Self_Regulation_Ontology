@@ -32,12 +32,10 @@ print('Finished loading raw data')
         
 #anonymize data
 worker_lookup = anonymize_data(data)
-worker_lookup_file_name = 'worker_lookup_'+job_num+'.json'
-json.dump(worker_lookup, open(path.join(data_dir, worker_lookup_file_name),'w'))
+json.dump(worker_lookup, open(path.join(data_dir, 'worker_lookup.json'),'w'))
 
 # record subject completion statistics
-worker_counts_file_name = 'worker_counts'+job_num+'.json'
-(data.groupby('worker_id').count().finishtime).to_json(path.join(data_dir, worker_counts_file_name))
+(data.groupby('worker_id').count().finishtime).to_json(path.join(data_dir, 'worker_counts.json'))
 
 # add a few extras
 convert_date(data)
@@ -47,11 +45,9 @@ get_post_task_responses(data)
 calc_trial_order(data)
 
 # save data
-mturk_data_extras_file_name = 'mturk_data_extras'+job_num+'.json'
-data.to_json(path.join(data_dir, mturk_data_extras_file_name))
+data.to_json(path.join(data_dir, 'mturk_data_extras.json'))
 
 # calculate pay
 pay = get_pay(data)
-worker_pay_file_name='worker_pay'+job_num+'.json'
-pay.to_json(path.join(data_dir, worker_pay_file_name))
+pay.to_json(path.join(data_dir, 'worker_pay.json'))
 print('Finished saving worker pay')
