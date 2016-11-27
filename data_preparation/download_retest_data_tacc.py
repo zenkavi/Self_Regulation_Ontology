@@ -26,7 +26,7 @@ if len(sys.argv) < 4:
 #last_url = sys.argv[4]
 #job_num = sys.argv[5]
 
-batter_name = sys.argv[1]
+battery_name = sys.argv[1]
 url = sys.argv[2]
 last_url = sys.argv[3]
 job_num = sys.argv[4]
@@ -58,7 +58,7 @@ for col in drop_columns:
 f = open(token)
 access_token = f.read().strip()
 mturk_data_file_name = 'mturk_data_'+job_num+'.json'
-data = download_data(data_dir, access_token, filters = filters,  battery = batter_name, url = url, last_url = last_url, file_name = mturk_data_file_name)
+data = download_data(data_dir, access_token, filters = filters,  battery = battery_name, url = url, last_url = last_url, file_name = mturk_data_file_name)
 data.reset_index(drop = True, inplace = True)    
 
 #if job == 'download' or job == "all":
