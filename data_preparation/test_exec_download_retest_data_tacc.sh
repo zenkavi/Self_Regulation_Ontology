@@ -1,7 +1,0 @@
-#!/bin/bash
-python /corral-repl/utexas/poldracklab/users/zenkavi/Self_Regulation_Ontology/data_preparation/download_retest_data_tacc.py "Self Regulation Retest Battery" "http://expfactory.org/api/results/?page=4518" "http://expfactory.org/api/results/?page=4523" "100"
-python /corral-repl/utexas/poldracklab/users/zenkavi/Self_Regulation_Ontology/data_preparation/download_retest_data_tacc.py "Self Regulation Retest Battery" "http://expfactory.org/api/results/?page=4523" "http://expfactory.org/api/results/?page=4528" "101"
-python /corral-repl/utexas/poldracklab/users/zenkavi/Self_Regulation_Ontology/data_preparation/download_retest_data_tacc.py "Self Regulation Retest Battery" "http://expfactory.org/api/results/?page=4528" "http://expfactory.org/api/results/?page=4533" "102"
-python /corral-repl/utexas/poldracklab/users/zenkavi/Self_Regulation_Ontology/data_preparation/download_retest_data_tacc.py "Self Regulation Retest Battery" "http://expfactory.org/api/results/?page=4533" "http://expfactory.org/api/results/?page=4538" "103"
-python /corral-repl/utexas/poldracklab/users/zenkavi/Self_Regulation_Ontology/data_preparation/download_retest_data_tacc.py "Self Regulation Retest Battery" "http://expfactory.org/api/results/?page=4538" "http://expfactory.org/api/results/?page=4543" "104"
-python /corral-repl/utexas/poldracklab/users/zenkavi/Self_Regulation_Ontology/data_preparation/download_retest_data_tacc.py "Self Regulation Retest Battery" "http://expfactory.org/api/results/?page=4543" "http://expfactory.org/api/results/?page=4548" "105"
