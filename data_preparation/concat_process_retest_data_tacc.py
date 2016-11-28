@@ -28,6 +28,7 @@ for f in os.listdir(data_dir):
         tmp = pd.read_json(path.join(data_dir, f))
         data = pd.concat([data, tmp])
 
+data.reset_index(drop = True, inplace = True)        
 data.to_json(data_dir + 'mturk_data_all.json')
         
 print('Finished loading raw data and saved concattaneted data')        
