@@ -9,5 +9,3 @@ python /corral-repl/utexas/poldracklab/users/zenkavi/Self_Regulation_Ontology/da
 python /corral-repl/utexas/poldracklab/users/zenkavi/Self_Regulation_Ontology/data_preparation/download_retest_data_tacc.py "Self Regulation Retest Battery" "http://expfactory.org/api/results/?page=3905" "http://expfactory.org/api/results/?page=3910" "782"
 python /corral-repl/utexas/poldracklab/users/zenkavi/Self_Regulation_Ontology/data_preparation/download_retest_data_tacc.py "Self Regulation Retest Battery" "http://expfactory.org/api/results/?page=3930" "http://expfactory.org/api/results/?page=3935" "787"
 python /corral-repl/utexas/poldracklab/users/zenkavi/Self_Regulation_Ontology/data_preparation/download_retest_data_tacc.py "Self Regulation Retest Battery" "http://expfactory.org/api/results/?page=3935" "http://expfactory.org/api/results/?page=3940" "788"
-
-
