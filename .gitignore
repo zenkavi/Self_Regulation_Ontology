@@ -1,4 +1,6 @@
 Data/Local
+Data/Retest_Data
+Data/Retest_Data_NewApi
 Plots
 .fuse*
 *.pyl
