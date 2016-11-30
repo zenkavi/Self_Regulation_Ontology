@@ -146,12 +146,9 @@ stim_selected_stop_signal.hddm_non_decision,NA
 stim_selected_stop_signal.hddm_thresh,Pos
 stim_selected_stop_signal.SSRT,Neg
 stop_signal.SSRT_high,Neg
-stop_signal.SSRT_low,Neg
 stop_signal.hddm_drift,Pos
 stop_signal.hddm_non_decision,NA
 stop_signal.hddm_thresh,Pos
-stop_signal.proactive_SSRT_speeding,Pos
-stop_signal.proactive_slowing,Pos
 stroop.hddm_drift,Pos
 stroop.hddm_non_decision,NA
 stroop.hddm_thresh,Pos
