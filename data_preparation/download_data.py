@@ -120,6 +120,7 @@ if job in ['post', 'all']:
             new_data = extra_data[extra_data['worker_id'].isin(makeup_workers)]
             discovery_data = pd.concat([discovery_data, new_data]).reset_index(drop = True)
             extra_data.drop(new_data.index, inplace = True)
+            extra_workers = np.sort(extra_data.worker_id.unique())
         discovery_data.to_json(path.join(data_dir,'mturk_discovery_data_post.json'))
         print('Finished saving post-processed discovery data')
         
@@ -136,6 +137,7 @@ if job in ['post', 'all']:
             new_data = extra_data[extra_data['worker_id'].isin(makeup_workers)]
             validation_data = pd.concat([validation_data, new_data]).reset_index(drop = True)
             extra_data.drop(new_data.index, inplace = True)
+            extra_workers = np.sort(extra_data.worker_id.unique())
         validation_data.to_json(path.join(data_dir,'mturk_validation_data_post.json'))
         print('Finished saving post-processed validation data')
         
