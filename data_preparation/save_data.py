@@ -91,8 +91,8 @@ valence_df = pd.read_json(path.join(local_dir,'mturk_discovery_DV_valence.json')
 drop_failed_QC_vars(DV_df,discovery_data)
 
 #flip negative signed valence DVs
+valence_list = [i.dropna().unique()[0] if len(i.dropna().unique()) > 0 else 'NA' for col,i in valence_df.iteritems()]
 valence_df = valence_df.replace(to_replace={np.nan: 'NA'})
-valence_list = [i.dropna().unique()[0] if len(i.dropna().unique()) > 0 else np.nan for col,i in valence_df.iteritems()]
 flip_df = np.floor(valence_df.replace(to_replace ={'Pos': 1, 'NA': 1, 'Neg': -1}).mean())
 for c in DV_df.columns:
     try:
