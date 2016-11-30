@@ -3,12 +3,14 @@ from expanalysis.experiments.processing import  extract_experiment, calc_exp_DVs
 from os import makedirs, path
 import numpy as np
 import pandas as pd
+from process_alcohol_drug import process_alcohol_drug
+from process_demographics import process_demographics
+from process_health import process_health
 import sys
 sys.path.append('../utils')
 from data_preparation_utils import convert_var_names, drop_failed_QC_vars, drop_vars, get_items, remove_outliers, save_task_data
 from utils import get_info
 from r_to_py_utils import missForest
-
 
 #******************************
 #*** Save Data *********
@@ -34,12 +36,24 @@ discovery_data = pd.read_json(path.join(local_dir,'mturk_discovery_data_post.jso
 failed_data = pd.read_json(path.join(local_dir,'mturk_failed_data_post.json')).reset_index(drop = True)
 
 for data,directory in [(discovery_data, discovery_directory), (failed_data, failed_directory)]:
+    meta_dir = path.join(directory,'metadata')
+    if not path.exists(meta_dir):
+        makedirs(meta_dir)
     # save target datasets
     print('Saving to %s...' % directory)
     print('Saving target measures...')
-    extract_experiment(data,'demographics_survey').to_csv(path.join(directory, 'demographics.csv'))
-    extract_experiment(data, 'alcohol_drugs_survey').to_csv(path.join(directory, 'alcohol_drugs.csv'))
-    extract_experiment(data, 'k6_survey').to_csv(path.join(directory, 'k6_health.csv'))
+    demog_data = extract_experiment(data,'demographics_survey')
+    demog_data = process_demographics(demog_data, directory, meta_dir)
+    alcohol_drug_data = extract_experiment(data,'alcohol_drugs_survey')
+    alcohol_drug_data = process_alcohol_drug(alcohol_drug_data, directory, meta_dir)
+    health_data = extract_experiment(data,'k6_survey')
+    health_data = process_health(health_data, directory, meta_dir)
+    # concatenate targets
+    target_data = pd.concat([demog_data, alcohol_drug_data, health_data], axis = 1)
+    target_data.to_csv(path.join(directory,'demographic_health.csv'))
+    # save demographic targets reference
+    if directory == discovery_directory:
+        np.savetxt('../references/demographic_health_reference.csv', target_data.columns, fmt = '%s', delimiter=",")
     # save items
     items_df = get_items(data)
     print('Saving items...')
@@ -77,7 +91,9 @@ valence_df = pd.read_json(path.join(local_dir,'mturk_discovery_DV_valence.json')
 drop_failed_QC_vars(DV_df,discovery_data)
 
 #flip negative signed valence DVs
-flip_df = np.floor(valence_df.replace(to_replace ={'Pos': 1, 'NA': 1, np.nan: 1, 'Neg': -1}).mean())
+valence_df = valence_df.replace(to_replace={np.nan: 'NA'})
+valence_list = [i.dropna().unique()[0] if len(i.dropna().unique()) > 0 else np.nan for col,i in valence_df.iteritems()]
+flip_df = np.floor(valence_df.replace(to_replace ={'Pos': 1, 'NA': 1, 'Neg': -1}).mean())
 for c in DV_df.columns:
     try:
         DV_df.loc[:,c] = DV_df.loc[:,c] * flip_df.loc[c]
@@ -87,12 +103,11 @@ for c in DV_df.columns:
 flip_df.to_csv(path.join(directory, 'DV_valence.csv'))
 readme_lines += ["DV_valence.csv: Subjective assessment of whether each variable's 'natural' direction implies 'better' self regulation\n\n"]
 
-
 #drop na columns
 DV_df.dropna(axis = 1, how = 'all', inplace = True)
 DV_df.to_csv(path.join(directory, 'variables_exhaustive.csv'))
 readme_lines += ["variables_exhaustive.csv: all variables calculated for each measure\n\n"]
-
+  
 # drop other columns of no interest
 subset = drop_vars(DV_df, saved_vars = ['simple_reaction_time.avg_rt', 'shift_task.acc'])
 # make subset without EZ variables
@@ -109,14 +124,21 @@ hddm_subset = drop_vars(subset, drop_vars = ['_acc', '_rt', 'EZ'], saved_vars = 
 hddm_subset.to_csv(path.join(directory, 'meaningful_variables_hddm.csv'))
 readme_lines += ["meaningful_variables_hddm.csv: subset of exhaustive data to only meaningful variables with rt/acc parameters removed (replaced by hddm DDM params)\n\n"]
 
-
 # clean and save files that are selected for use
-selected_variables = EZ_subset
+selected_variables = hddm_subset
 selected_variables.to_csv(path.join(directory, 'meaningful_variables.csv'))
-readme_lines += ["meaningful_variables.csv: Same as meaningful_variables_EZ.csv\n\n"]
+readme_lines += ["meaningful_variables.csv: Same as meaningful_variables_hddm.csv\n\n"]
 selected_variables_clean = remove_outliers(selected_variables)
 selected_variables_clean.to_csv(path.join(directory, 'meaningful_variables_clean.csv'))
 readme_lines += ["meaningful_variables_clean.csv: same as meaningful_variables.csv with outliers defined as greater than 2.5 IQR from median removed from each column\n\n"]
+
+#save selected variables
+selected_variables_reference = pd.Series(data = valence_list, index = valence_df.columns)
+selected_variables_reference.loc[selected_variables.columns].to_csv('../references/selected_variables_reference.csv')
+# assert that selected variables match list in reference
+#selected_variables_reference = pd.Series.from_csv('../references/selected_variables_reference.csv')
+#assert set(selected_variables_reference.index[:-1]) == set(selected_variables.columns), \
+#"Mismatch between reference meaningful variables and currently calculated variables"
 
 # imputed data
 selected_variables_imputed, error = missForest(selected_variables_clean)
@@ -137,9 +159,12 @@ task_selection_data = drop_vars(selected_variables_imputed, ['stop_signal.SSRT_l
 task_selection_data.to_csv(path.join(directory,'meaningful_variables_imputed_for_task_selection.csv'))
 task_selection_taskdata = drop_vars(task_data_imputed, ['stop_signal.SSRT_low', '^stop_signal.proactive'])
 task_selection_taskdata.to_csv(path.join(directory,'taskdata_imputed_for_task_selection.csv'))
+#save selected variables
+selected_variables_reference.loc[task_selection_data.columns].to_csv('../references/selected_variables_for_task_selection_reference.csv')
 
 from glob import glob
 files = glob(path.join(directory,'*csv'))
+files = [f for f in files if not any(i in f for i in ['demographic','health','alcohol_drug'])]
 for f in files:
     name = f.split('/')[-1]
     df = pd.DataFrame.from_csv(f)

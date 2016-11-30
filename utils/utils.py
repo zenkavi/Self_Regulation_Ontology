@@ -5,6 +5,7 @@ from glob import glob
 import os,json
 import pandas
 from sklearn.metrics import confusion_matrix
+import zipfile
 
 def print_confusion_matrix(y_true,y_pred,labels=[0,1]):
     cm=confusion_matrix(y_true,y_pred)
@@ -22,12 +23,19 @@ def get_behav_data(dataset = None,file=None):
     else:
         datadir = os.path.join(basedir,'Data',dataset)
     if file == None:
-        datafile=os.path.join(datadir,'meaningful_variables.csv')
+        file = 'meaningful_variables.csv'
+    datafile=os.path.join(datadir,file)
+    if os.path.exists(datafile):
+        df=pandas.read_csv(datafile,index_col=0)
     else:
-        datafile=os.path.join(datadir,file)
-    df=pandas.read_csv(datafile,index_col=0)
+        with zipfile.ZipFile('../Data/previous_releases.zip') as z:
+            try:
+                with z.open(os.path.join(dataset, file)) as f:
+                    df = pandas.DataFrame.from_csv(f)
+            except KeyError:
+                print('Error: %s not found in %s' % (file, dataset))
+                return
     return df
-
 
 def get_info(item,infile='../Self_Regulation_Settings.txt'):
     """
@@ -85,18 +93,3 @@ def load_metadata(variable,basedir):
             metadata=json.load(outfile)
     return metadata
 
-
-def get_single_dataset(dataset,survey):
-    basedir=get_info('base_directory')
-    infile=os.path.join(basedir,'data/Derived_Data/%s/surveydata/%s.tsv'%(dataset,survey))
-    print(infile)
-    assert os.path.exists(infile)
-    if survey.find('ordinal')>-1:
-        survey=survey.replace('_ordinal','')
-    mdfile=os.path.join(basedir,'data/Derived_Data/%s/metadata/%s.json'%(dataset,survey))
-    print(mdfile)
-    assert os.path.exists(mdfile)
-    data=pandas.read_csv(infile,index_col=0,sep='\t')
-    metadata=load_metadata(survey,os.path.join(basedir,
-        'data/Derived_Data/%s/metadata'%dataset))
-    return data,metadata
