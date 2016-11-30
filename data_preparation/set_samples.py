@@ -39,8 +39,8 @@ subject_assignment_df.to_csv('../subject_assignment.csv')
 # ************************************
 
 #define test-retest sample function
-data_dir=get_info('data_directory')
-local_dir = path.join(data_dir,'Local')
+data_dir=get_info('base_directory')
+local_dir = path.join(data_dir,'Data','Local')
 # read preprocessed data
 discovery_data = pd.read_json(path.join(local_dir,'mturk_discovery_data_post.json')).reset_index(drop = True)
 worker_lookup = json.load(open(path.join(local_dir,"worker_lookup.json"),'r'))
@@ -58,7 +58,7 @@ def get_testretest_order(n = 200, seed = seed):
 
 def get_retest_workers(data):
     retest_order = get_testretest_order()
-    retest_workers_anonym = np.sort(data.worker_id.unique())[retest_order[:50]]
+    retest_workers_anonym = np.sort(data.worker_id.unique())[retest_order[:150]]
     retest_workers = [worker_lookup[w] for w in retest_workers_anonym]
     return pd.Series(retest_workers)
     
