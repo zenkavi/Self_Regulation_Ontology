@@ -29,7 +29,7 @@ if not path.exists(local_dir):
     makedirs(local_dir)
 
 # read preprocessed data
-data_labels = ['discovery', 'validation', 'failed']
+data_labels = ['discovery', 'validation']
 datasets = []
 for label in data_labels:
     directory = path.join(data_dir,label.title() + '_' + date)
