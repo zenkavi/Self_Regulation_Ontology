@@ -139,7 +139,6 @@ if job in ['post', 'all']:
         # only get incomplete data
         incomplete_data = data.query('worker_id not in %s' % (validation_sample + discovery_sample + extra_sample)).reset_index(drop = True)
         post_process_data(incomplete_data)
-        remove_failed_subjects(incomplete_data)
         incomplete_data.to_json(data_dir + 'mturk_incomplete_data_post.json')
         print('Finished saving post-processed incomplete data')
     # save failed data
