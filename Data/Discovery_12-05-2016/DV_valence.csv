@@ -659,3 +659,6 @@ upps_impulsivity_survey.lack_of_premeditation,-1.0
 upps_impulsivity_survey.negative_urgency,-1.0
 upps_impulsivity_survey.positive_urgency,-1.0
 upps_impulsivity_survey.sensation_seeking,-1.0
+writing_task.neutral_probability,1.0
+writing_task.positive_probability,1.0
+writing_task.sentiment_label,1.0
