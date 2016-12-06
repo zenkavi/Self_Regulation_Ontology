@@ -141,10 +141,10 @@ simon.simon_hddm_drift,Pos
 simple_reaction_time.avg_rt,Pos
 spatial_span.forward_span,Pos
 spatial_span.reverse_span,Pos
-stim_selected_stop_signal.hddm_drift,Pos
-stim_selected_stop_signal.hddm_non_decision,NA
-stim_selected_stop_signal.hddm_thresh,Pos
-stim_selected_stop_signal.SSRT,Neg
+stim_selective_stop_signal.SSRT,Neg
+stim_selective_stop_signal.hddm_drift,Pos
+stim_selective_stop_signal.hddm_non_decision,NA
+stim_selective_stop_signal.hddm_thresh,Pos
 stop_signal.SSRT_high,Neg
 stop_signal.hddm_drift,Pos
 stop_signal.hddm_non_decision,NA
