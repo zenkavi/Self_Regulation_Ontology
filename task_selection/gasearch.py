@@ -20,6 +20,7 @@ class GASearchParams:
     def __init__(self,
         targets=['survey','demog','task'],  # targets for reconstruction and correlation
         usepca=True, # should we collapse targetdata into PCs?
+        use_full_dataset=True, # combine discovery and validation datasets
         objective_weights=[0,1], # weights for reconstruction and correlation respectively
         target_weights=[1/3,1/3,1/3],
         normalize_weights_by_numvars=True,
@@ -61,6 +62,7 @@ class GASearchParams:
         # default to equal weighting across targets
         self.target_weights=target_weights
         self.usepca=usepca
+        self.use_full_dataset=use_full_dataset
         self.normalize_weights_by_numvars=normalize_weights_by_numvars
         if self.usepca:
             self.remove_chosen_from_test=False
@@ -142,7 +144,8 @@ class GASearch:
 
 
     def get_taskdata(self):
-        self.taskdata=get_behav_data(self.params.dataset,self.params.taskdatafile)
+        self.taskdata=get_behav_data(self.params.dataset,self.params.taskdatafile,
+                                    full_dataset = self.params.use_full_dataset)
         # could use pandas filter
         for c in self.taskdata.columns:
             taskname=c.split('.')[0]
@@ -201,7 +204,8 @@ class GASearch:
 
     def load_targetdata(self):
         if 'task' in self.params.targets:
-            self.targetdata=get_behav_data(self.params.dataset,self.params.taskdatafile )
+            self.targetdata=get_behav_data(self.params.dataset,self.params.taskdatafile,
+                                            full_dataset=self.params.use_full_dataset)
             assert all(self.taskdata.index == self.targetdata.index)
             if self.params.verbose>0:
                 print('target: task, %d variables'%self.taskdata.shape[1])
@@ -213,7 +217,8 @@ class GASearch:
             self.targetdata_source=numpy.zeros(self.targetdata.shape[1])
 
         if 'survey' in self.params.targets:
-            alldata=get_behav_data(self.params.dataset,self.params.behavdatafile)
+            alldata=get_behav_data(self.params.dataset,self.params.behavdatafile,
+                                                full_dataset=self.params.use_full_dataset)
             self.surveydata=pandas.DataFrame()
             for k in alldata.columns:
                 if k.find('survey')>-1:
@@ -235,7 +240,8 @@ class GASearch:
                 self.targetdata_source=numpy.zeros(self.surveydata.shape[1])
 
         if 'demog' in self.params.targets:
-            self.demogdata=get_demographics(self.params.dataset,var_subset=self.params.demogvars)
+            self.demogdata=get_demographics(self.params.dataset,var_subset=self.params.demogvars,
+                                                full_dataset=self.params.use_full_dataset)
             if self.params.verbose>0:
                 print('target: demog, %d variables'%self.demogdata.shape[1])
                 print('%d missing values'%numpy.sum(numpy.isnan(self.demogdata.values)))
