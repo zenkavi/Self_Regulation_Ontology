@@ -3,7 +3,7 @@ some util functions
 """
 from glob import glob
 import os,json
-import pandas
+import pandas,numpy
 import re
 from sklearn.metrics import confusion_matrix
 import zipfile
@@ -122,19 +122,32 @@ def get_single_dataset(dataset,survey):
         'data/Derived_Data/%s/metadata'%dataset))
     return data,metadata
 
-def get_demographics(dataset,var_subset=None):
+def get_demographics(dataset,var_subset=None,full_dataset=False):
     """
     misnomer - actually get demographics, alc/drug, and health
     """
     basedir=get_info('base_directory')
-
-    for i,survey in enumerate(['demographics_ordinal','alcohol_drugs_ordinal','health_ordinal']):
-        infile=os.path.join(basedir,'Data/Derived_Data/%s/surveydata/%s.tsv'%(dataset,survey))
-        if i==0:
-            alldata=pandas.DataFrame.from_csv(infile,index_col=0,sep='\t')
+    if not full_dataset:
+        datasets=[dataset]
+    else:
+        if dataset.find('Discovery')==0:
+            datasets=[dataset,dataset.replace('Discovery','Validation')]
         else:
-            data=pandas.DataFrame.from_csv(infile,index_col=0,sep='\t')
-            alldata=alldata.merge(data,'inner',right_index=True,left_index=True)
+            datasets=[dataset,dataset.replace('Validation','Discovery')]
+        print('using datasets:',datasets)
+    ds_all={}
+    for ds in datasets:
+      for i,survey in enumerate(['demographics_ordinal','alcohol_drugs_ordinal','health_ordinal']):
+        infile=os.path.join(basedir,'Data/%s/%s.csv'%(ds,survey))
+        if i==0:
+            ds_all[ds]=pandas.DataFrame.from_csv(infile,index_col=0,sep=',')
+        else:
+            data=pandas.DataFrame.from_csv(infile,index_col=0,sep=',')
+            ds_all[ds]=ds_all[ds].merge(data,'inner',right_index=True,left_index=True)
+    if len(ds_all)==1:
+        alldata=ds_all[ds]
+    else:
+        alldata=pandas.concat([ds_all[ds] for ds in ds_all.keys()])
     badweight=alldata['WeightPounds']<80
     badheight=alldata['HeightInches']<36
     alldata.loc[badweight,'WeightPounds']=numpy.nan
