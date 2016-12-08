@@ -8,16 +8,16 @@ import numpy as np
 from os import path
 import pandas as pd
 
-sys.path.append('/Users/zeynepenkavi/Dropbox/PoldrackLab/Self_Regulation_Ontology/utils')
+sys.path.append('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/utils')
 from data_preparation_utils import anonymize_data, calc_trial_order, convert_date, download_data, get_bonuses, get_pay,  remove_failed_subjects
 from utils import get_info
 
 #load Data
-token = get_info('expfactory_token', infile='/Users/zeynepenkavi/Dropbox/PoldrackLab/Self_Regulation_Ontology/Self_Regulation_Retest_Settings_Local_NewApi.txt')
+token = get_info('expfactory_token', infile='/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Self_Regulation_Retest_Settings_Local_NewApi.txt')
 try:
-    data_dir=get_info('data_directory', infile='/Users/zeynepenkavi/Dropbox/PoldrackLab/Self_Regulation_Ontology/Self_Regulation_Retest_Settings_Local_NewApi.txt')
+    data_dir=get_info('data_directory', infile='/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Self_Regulation_Retest_Settings_Local_NewApi.txt')
 except Exception:
-    data_dir=path.join(get_info('base_directory', infile='/Users/zeynepenkavi/Dropbox/PoldrackLab/Self_Regulation_Ontology/Self_Regulation_Retest_Settings_Local_NewApi.txt'),'Data')
+    data_dir=path.join(get_info('base_directory', infile='/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Self_Regulation_Retest_Settings_Local_NewApi.txt'),'Data')
 
 #***************************************************
 # ********* Load Data **********************
