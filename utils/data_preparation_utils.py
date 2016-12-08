@@ -177,8 +177,7 @@ def drop_vars(data, drop_vars = [], saved_vars = []):
         # variables that are calculated without regard to their actual interest
         basic_vars = ["\.missed_percent$","\.acc$","\.avg_rt_error$","\.std_rt_error$","\.avg_rt$","\.std_rt$"]
         #unnecessary ddm params
-        ddm_vars = ['.*\.(EZ|hddm)_(drift|thresh|non_decision).+$', '.*\..+EZ_(thresh|non_decision)' # all tasks where DDM is calculated over a particular condition
-                    ]
+        ddm_vars = ['.*\.(EZ|hddm)_(drift|thresh|non_decision).+$']
         # variables that are of theoretical interest, but we aren't certain enough to include in 2nd stage analysis
         exploratory_vars = ["\.congruency_seq", "\.post_error_slowing$"]
         # task variables that are irrelevent to second stage analysis, either because they are correlated
@@ -466,7 +465,7 @@ def save_task_data(data_loc, data):
     path = os.path.join(data_loc,'Individual_Measures')
     if not os.path.exists(path):
         os.makedirs(path)
-    for exp_id in data.experiment_exp_id.unique():
+    for exp_id in np.sort(data.experiment_exp_id.unique()):
         print('Saving %s...' % exp_id)
         extract_experiment(data,exp_id).to_csv(os.path.join(path, exp_id + '.csv.gz'), compression = 'gzip')
     

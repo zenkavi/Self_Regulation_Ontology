@@ -3,8 +3,10 @@ some util functions
 """
 from glob import glob
 import os,json
-import pandas,numpy
+import pandas
+import re
 from sklearn.metrics import confusion_matrix
+import zipfile
 
 def print_confusion_matrix(y_true,y_pred,labels=[0,1]):
     cm=confusion_matrix(y_true,y_pred)
@@ -14,20 +16,39 @@ def print_confusion_matrix(y_true,y_pred,labels=[0,1]):
     print('Actual\t0\t%d\t%d'%(cm[0,0],cm[0,1]))
     print('\t1\t%d\t%d'%(cm[1,0],cm[1,1]))
 
-def get_behav_data(dataset = None,file=None):
+def get_behav_data(dataset = None,file=None, full_dataset=False):
+    d = {'Discovery': 'Validation', 'Validation': 'Discovery'}
     basedir=get_info('base_directory')
+    pattern = re.compile('|'.join(d.keys()))
     if dataset == None:
         files = glob(os.path.join(basedir,'Data/Discovery*'))
         datadir = files[-1]
     else:
         datadir = os.path.join(basedir,'Data',dataset)
-    if file == None:
-        datafile=os.path.join(datadir,'meaningful_variables.csv')
+    if full_dataset == True:
+        second_datadir = pattern.sub(lambda x: d[x.group()], datadir)
+        datadirs = [datadir, second_datadir]
     else:
+        datadirs = [datadir]
+    print('Getting datasets...:\n', '\n '.join(datadirs))
+    if file == None:
+        file = 'meaningful_variables.csv'
+    data = pandas.DataFrame()
+    for datadir in datadirs:
         datafile=os.path.join(datadir,file)
-    df=pandas.read_csv(datafile,index_col=0)
-    return df
-
+        if os.path.exists(datafile):
+            df=pandas.read_csv(datafile,index_col=0)
+        else:
+            with zipfile.ZipFile('../Data/previous_releases.zip') as z:
+                try:
+                    with z.open(os.path.join(os.path.basename(datadir), file)) as f:
+                        df = pandas.DataFrame.from_csv(f)
+                except KeyError:
+                    print('Error: %s not found in %s' % (file, datadir))
+                    df = pandas.DataFrame()
+                    continue
+        data = pandas.concat([df,data])
+    return data
 
 def get_info(item,infile='../Self_Regulation_Settings.txt'):
     """
