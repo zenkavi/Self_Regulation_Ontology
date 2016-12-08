@@ -7,24 +7,6 @@ from metadata_utils import metadata_subtract_one,metadata_replace_zero_with_nan
 from metadata_utils import metadata_change_two_to_zero_for_no
 from metadata_utils import write_metadata
 
-from utils import get_info
-
-dataset=get_info('dataset')
-print('using dataset:',dataset)
-basedir=get_info('base_directory')
-datadir=os.path.join(basedir,'data/%s'%dataset)
-outdir=os.path.join(basedir,'data/Derived_Data/%s'%dataset)
-if not os.path.exists(outdir):
-    os.mkdir(outdir)
-
-def get_data(datadir=datadir):
-
-    datafile=os.path.join(datadir,'demographics.csv')
-
-    data=pandas.read_csv(datafile,index_col=0)
-    data=data.rename(columns={'worker_id':'worker'})
-    return data,datadir
-
 def get_demog_items(data):
     demog_items={}
     for i,r in data.iterrows():
@@ -81,17 +63,12 @@ def setup_itemid_dict():
     return id_to_name,nominalvars
 
 def get_metadata(demog_items):
-
     id_to_name,nominalvars=setup_itemid_dict()
-
     demog_dict={"MeasurementToolMetadata": {"Description": 'Demographics',
             "TermURL": ''}}
     for i in demog_items:
             r=demog_items[i]
-            if not pandas.isnull(r.options):
-                itemoptions=eval(r.options)
-            else:
-                itemoptions=None
+            itemoptions=r.options
             itemid='_'.join(r['id'].split('_')[:3])
             assert itemid not in demog_dict  # check for duplicates
             demog_dict[itemid]={}
@@ -116,7 +93,6 @@ def get_metadata(demog_items):
         else:
             demog_dict_renamed[id_to_name[k]]=demog_dict[k]
     return demog_dict_renamed
-
 
 
 def add_demog_item_labels(data):
@@ -166,36 +142,40 @@ def fix_item(d,v,metadata):
 
     return d,metadata
 
-def save_demog_data(data,survey_metadata,
-              outdir=os.path.join(outdir, 'surveydata')):
+def save_demog_data(data,survey_metadata, outdir):
     id_to_name,nominalvars=setup_itemid_dict()
     if not os.path.exists(outdir):
         os.mkdir(outdir)
 
     unique_items=list(data.item_id.unique())
-    surveydata=pandas.DataFrame(index=list(data.worker.unique()))
+    surveydata=pandas.DataFrame(index=list(data.worker_id.unique()))
     for i in unique_items:
         qresult=data.query('item_id=="%s"'%i)
         matchitem=qresult.response
-        matchitem.index=qresult['worker']
+        matchitem.index=qresult['worker_id']
         matchitem,survey_metadata[id_to_name[i]]=fix_item(matchitem,i,survey_metadata[id_to_name[i]])
         surveydata.ix[matchitem.index,i]=matchitem
 
     surveydata_renamed=surveydata.rename(columns=id_to_name)
-    surveydata_renamed.to_csv(os.path.join(outdir,'demographics.tsv'),sep='\t')
+    surveydata_renamed.to_csv(os.path.join(outdir,'demographics.csv'))
     for v in nominalvars:
         del surveydata[v]
     surveydata_renamed_ord=surveydata.rename(columns=id_to_name)
-    surveydata_renamed_ord.to_csv(os.path.join(outdir,'demographics_ordinal.tsv'),sep='\t')
+    surveydata_renamed_ord.to_csv(os.path.join(outdir,'demographics_ordinal.csv'))
 
     return outdir,surveydata_renamed
 
-if __name__=='__main__':
+def process_demographics(data, outdir, meta_outdir):
     id_to_name,nominalvars=setup_itemid_dict()
-    data,basedir=get_data()
     demog_items=get_demog_items(data)
     demog_metadata=get_metadata(demog_items)
     data=add_demog_item_labels(data)
-    datadir,surveydata_renamed=save_demog_data(data,demog_metadata)
+    datadir,surveydata_renamed=save_demog_data(data,demog_metadata, outdir)
     metadatadir=write_metadata(demog_metadata,'demographics.json',
-        outdir=os.path.join(outdir,'metadata'))
+        outdir=meta_outdir)
+    return surveydata_renamed
+        
+
+    
+    
+    

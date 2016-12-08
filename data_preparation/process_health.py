@@ -4,26 +4,6 @@ import os,sys
 sys.path.append('../utils')
 from metadata_utils import write_metadata,metadata_reverse_scale
 
-from utils import get_info
-
-dataset=get_info('dataset')
-print('using dataset:',dataset)
-basedir=get_info('base_directory')
-datadir=os.path.join(basedir,'Data/%s'%dataset)
-outdir=os.path.join(basedir,'Data/Derived_Data/%s'%dataset)
-if not os.path.exists(outdir):
-    os.mkdir(outdir)
-
-def get_data(datadir=datadir):
-
-    datafile=os.path.join(datadir,'k6_health.csv')
-
-    data=pandas.read_csv(datafile,index_col=0)
-    data=data.rename(columns={'worker_id':'worker'})
-    return data,datadir
-
-
-
 def get_health_items(data):
     health_items={}
     for i,r in data.iterrows():
@@ -63,16 +43,12 @@ def setup_itemid_dict():
     return id_to_name,nominalvars
 
 def get_metadata(health_items):
-    all_itemids=[]
     id_to_name,nominalvars=setup_itemid_dict()
     health_dict={"MeasurementToolMetadata": {"Description": 'Health',
             "TermURL": ''}}
     for i in health_items:
             r=health_items[i]
-            if not pandas.isnull(r.options):
-                itemoptions=eval(r.options)
-            else:
-                itemoptions=None
+            itemoptions=r.options
             itemid='_'.join(r['id'].split('_')[:3])
             assert itemid not in health_dict  # check for duplicates
             health_dict[itemid]={}
@@ -122,36 +98,36 @@ def fix_item(d,v,metadata):
         metadata=metadata_reverse_scale(metadata)
     return d,metadata
 
-def save_health_data(data,health_metadata,
-              outdir=os.path.join(outdir,'surveydata')):
+def save_health_data(data,health_metadata,outdir):
     id_to_name,nominalvars=setup_itemid_dict()
     if not os.path.exists(outdir):
         os.mkdir(outdir)
 
     unique_items=list(data.item_id.unique())
-    surveydata=pandas.DataFrame(index=list(data.worker.unique()),columns=unique_items)
+    surveydata=pandas.DataFrame(index=list(data.worker_id.unique()),columns=unique_items)
     for i in unique_items:
         qresult=data.query('item_id=="%s"'%i)
         matchitem=qresult.response.to_frame()
-        matchitem.index=qresult['worker']
+        matchitem.index=qresult['worker_id']
         matchitem,health_metadata[id_to_name[i]]=fix_item(matchitem,i,health_metadata[id_to_name[i]])
         surveydata.ix[matchitem.index,i]=matchitem.response
 
     surveydata_renamed=surveydata.rename(columns=id_to_name)
-    surveydata_renamed.to_csv(os.path.join(outdir,'health.tsv'),sep='\t')
+    surveydata_renamed.to_csv(os.path.join(outdir,'health.csv'))
     for v in nominalvars:
         del surveydata[v]
     surveydata_renamed_ord=surveydata.rename(columns=id_to_name)
-    surveydata_renamed_ord.to_csv(os.path.join(outdir,'health_ordinal.tsv'),sep='\t')
+    surveydata_renamed_ord.to_csv(os.path.join(outdir,'health_ordinal.csv'))
 
     return outdir,surveydata_renamed
-
-if __name__=='__main__':
+    
+def process_health(data, outdir, meta_outdir):
     id_to_name,nominalvars=setup_itemid_dict()
-    data,basedir=get_data()
     health_items=get_health_items(data)
     health_metadata=get_metadata(health_items)
     data=add_health_item_labels(data)
-    datadir,surveydata_renamed=save_health_data(data,health_metadata)
+    datadir,surveydata_renamed=save_health_data(data,health_metadata, outdir)
     metadatadir=write_metadata(health_metadata,'health.json',
-        outdir=os.path.join(outdir,'metadata'))
+        outdir=meta_outdir)
+    return surveydata_renamed
+        

@@ -1,0 +1,23 @@
+,LifetimeSmoke100Cigs,HowLongSmoked,SmokeEveryDay,CigsPerDay,HowSoonSmokeAfterWaking,OtherTobaccoProducts,AlcoholHowOften,AlcoholHowManyDrinksDay,AlcoholHowOften6Drinks,HowOftenCantStopDrinking,HowOftenFailedActivitiesDrinking,HowOftenDrinkMorning,HowOftenGuiltRemorseDrinking,HowOftenUnableRememberDrinking,InjuredDrinking,RelativeFriendConcernedDrinking,CannabisPast6Months,CannabisHowOften,CannabisHoursStoned,HowOftenCantStopCannabis,HowOftenFailedActivitiesCannabis,HowOftenDevotedTimeCannabis,HowOftenMemoryConcentrationProblemCannabis,HowOftenHazardousCannabis,CannabisConsideredReduction,OtherDrugs,AbuseMoreThanOneDrugAtATime,AbleToStopDrugs,BlackoutFlashbackDrugUse,FeelBadGuiltyDrugUse,SpouseParentsComplainDrugUse,NeglectedFamilyDrugUse,EngagedInIllegalActsToObtainDrugs,WidthdrawalSymptoms,MedicalProblemsDueToDrugUse
+s045,1.0,2,2,7,5,Chewing tobacco (dip),1,2,2,1,2,1,1,3,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+s050,0.0,1,0,0,0,I don't smoke,0,1,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+s072,0.0,0,0,0,0,I don't smoke,0,1,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0, 1,0, 1,0,0,0,0,0,0,0
+s148,1.0,0,0,3,4,E-cigarettes,1,1,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0, 1,0,0,0,0,0,0,0
+s164,1.0,3,0,0,0,I don't smoke,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,,0,0,0,0, 1,0,0,0,0,0,0,0
+s300,0.0,1,0,0,0,I don't smoke,0,1,4,0,0,0,0,1,1,0,1,4,2,4,1,0,0,0,0, 1, 1, 1,0,0,0,0,0,0,0
+s306,0.0,0,0,0,0,I don't smoke,3,5,3,3,3,3,3,2,1,1,0,,,,,,,,,0,0,0,0,0,0,0,0,0,0
+s361,0.0,0,0,0,0,I don't smoke,0,1,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+s367,0.0,0,0,0,0,I don't smoke,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0, 1,0,0,0,0,0,0,0
+s385,1.0,7,1,0,0,I don't smoke,0,1,0,0,0,0,0,1,1,1,1,1,3,0,0,0,0,0,0,0,0, 1,0,0,0,0,0,0,0
+s442,0.0,0,0,0,0,I don't smoke,0,1,0,0,0,0,0,1,0,0,0,,,,,,,,,0,0, 1,0,0,0,0,0,0,0
+s518,1.0,6,3,4,1,Don't Know,1,1,0,0,0,0,0,1,2,1,0,,,,,,,,,0,0, 1,0,0,0,0,0,0,0
+s519,0.0,0,0,0,0,I don't smoke,1,1,0,0,0,0,0,1,1,1,0,0,,,,,,,,0,0,0,0,0,0,0,0,0,0
+s525,1.0,6,0,0,0,I don't smoke,3,2,1,0,1,0,0,2,1,1,0,0,,0,0,0,0,0,2, 1,0, 1,0,0,0,0,0,0,0
+s530,0.0,3,2,2,2,Chewing tobacco (dip),2,5,3,3,2,2,2,3,3,2,0,3,3,2,3,2,3,1,2,0,0,0,0,0,0,0,0,0,0
+s532,1.0,7,3,4,2,Don't Know,4,2,2,1,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0, 1,0,0,0,0,0,0,0
+s536,0.0,0,0,1,0,I don't smoke,0,1,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0, 1,0,0,0,0,0,0,0
+s537,0.0,0,0,0,0,I don't smoke,2,2,1,0,0,0,0,1,1,1,1,2,0,0,0,0,0,0,0,0,0, 1,0,0,0,0,0,0,0
+s540,1.0,7,3,4,1,E-hookah or vape pens,2,1,0,0,0,0,0,1,1,1,0,,,,,,,,,0,0, 1,0,0,0,0,0,0,0
+s547,1.0,3,2,2,3,E-cigarettes,1,2,1,1,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+s555,0.0,0,0,0,0,I don't smoke,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+s558,0.0,0,0,0,0,I don't smoke,0,1,0,0,0,0,0,1,1,1,0,,,,,,,,,0,0,0,0,0,0,0,0,0,0
