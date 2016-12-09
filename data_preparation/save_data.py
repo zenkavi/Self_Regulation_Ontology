@@ -1,5 +1,5 @@
 import datetime
-from expanalysis.experiments.processing import  extract_experiment, calc_exp_DVs
+from expanalysis.experiments.processing import  extract_experiment
 from os import makedirs, path
 import numpy as np
 import pandas as pd
@@ -87,7 +87,6 @@ for data,directory, DV_df, valence_df in datasets:
     readme_lines += ["items.csv.gz: gzipped csv of all item information across surveys\n\n"]
     readme_lines += ["subject_x_items.csv: reshaped items.csv such that rows are subjects and columns are individual items\n\n"]
     readme_lines += ["Individual Measures: directory containing gzip compressed files for each individual measures\n\n"]
-
     # ************************************
     # ********* Save DV dataframes **
     # ************************************
