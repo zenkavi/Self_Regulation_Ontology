@@ -8,3 +8,11 @@ Plots
 *.pyc
 internal_settings.json
 Self_Regulation_Settings.txt
+batch_files/*csv
+batch_files/*model
+batch_files/*.db
+batch_files/.out
+batch_files/.err
+batch_files/output
+batch_files/hddm*
+batch_files/previous_models

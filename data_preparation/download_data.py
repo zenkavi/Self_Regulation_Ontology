@@ -120,6 +120,7 @@ if job in ['post', 'all']:
             new_data = extra_data[extra_data['worker_id'].isin(makeup_workers)]
             discovery_data = pd.concat([discovery_data, new_data]).reset_index(drop = True)
             extra_data.drop(new_data.index, inplace = True)
+            extra_workers = np.sort(extra_data.worker_id.unique())
         discovery_data.to_json(path.join(data_dir,'mturk_discovery_data_post.json'))
         print('Finished saving post-processed discovery data')
         
@@ -129,13 +130,8 @@ if job in ['post', 'all']:
         post_process_data(validation_data)
         failures = remove_failed_subjects(validation_data)
         failed_data = pd.concat([failed_data,failures])
-        # add extra workers if necessary
-        num_failures = len(failures.worker_id.unique())
-        if num_failures > 0:
-            makeup_workers = extra_workers[0:num_failures]
-            new_data = extra_data[extra_data['worker_id'].isin(makeup_workers)]
-            validation_data = pd.concat([validation_data, new_data]).reset_index(drop = True)
-            extra_data.drop(new_data.index, inplace = True)
+        # add extra workers to validation dataset
+        validation_data = pd.concat([validation_data, extra_data]).reset_index(drop = True)
         validation_data.to_json(path.join(data_dir,'mturk_validation_data_post.json'))
         print('Finished saving post-processed validation data')
         
@@ -143,7 +139,6 @@ if job in ['post', 'all']:
         # only get incomplete data
         incomplete_data = data.query('worker_id not in %s' % (validation_sample + discovery_sample + extra_sample)).reset_index(drop = True)
         post_process_data(incomplete_data)
-        remove_failed_subjects(incomplete_data)
         incomplete_data.to_json(data_dir + 'mturk_incomplete_data_post.json')
         print('Finished saving post-processed incomplete data')
     # save failed data

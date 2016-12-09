@@ -15,7 +15,6 @@ from r_to_py_utils import missForest
 #******************************
 #*** Save Data *********
 #******************************
-readme_lines = []
 date = datetime.date.today().strftime("%m-%d-%Y")
 
 #load Data
@@ -24,18 +23,31 @@ try:
 except Exception:
     data_dir=path.join(get_info('base_directory'),'Data')
 
-discovery_directory = path.join(data_dir, 'Discovery_' + date)
-failed_directory = path.join(data_dir, 'Failed_' + date)
+
 local_dir = path.join(data_dir,'Local')
-for directory in [discovery_directory, failed_directory, local_dir]:
-    if not path.exists(directory):
-        makedirs(directory)
+if not path.exists(local_dir):
+    makedirs(local_dir)
 
 # read preprocessed data
-discovery_data = pd.read_json(path.join(local_dir,'mturk_discovery_data_post.json')).reset_index(drop = True)
-failed_data = pd.read_json(path.join(local_dir,'mturk_failed_data_post.json')).reset_index(drop = True)
+data_labels = ['discovery', 'validation']
+datasets = []
+for label in data_labels:
+    directory = path.join(data_dir,label.title() + '_' + date)
+    if not path.exists(directory):
+        makedirs(directory)
+    data = pd.read_json(path.join(local_dir,'mturk_' + label + '_data_post.json')).reset_index(drop = True)
+    try:
+        DVs = pd.read_json(path.join(local_dir,'mturk_' + label + '_DV.json'))
+        DVs_valence = pd.read_json(path.join(local_dir,'mturk_' + label + '_DV_valence.json'))
+    except ValueError:
+        print("Couldn't find %s DV datasets" % label)
+        DVs = []
+        DVs_valence = []
+    datasets.append((data,directory, DVs, DVs_valence))
 
-for data,directory in [(discovery_data, discovery_directory), (failed_data, failed_directory)]:
+# calculate DVs
+for data,directory, DV_df, valence_df in datasets:
+    readme_lines = []
     meta_dir = path.join(directory,'metadata')
     if not path.exists(meta_dir):
         makedirs(meta_dir)
@@ -52,7 +64,7 @@ for data,directory in [(discovery_data, discovery_directory), (failed_data, fail
     target_data = pd.concat([demog_data, alcohol_drug_data, health_data], axis = 1)
     target_data.to_csv(path.join(directory,'demographic_health.csv'))
     # save demographic targets reference
-    if directory == discovery_directory:
+    if 'Discovery' in directory:
         np.savetxt('../references/demographic_health_reference.csv', target_data.columns, fmt = '%s', delimiter=",")
     # save items
     items_df = get_items(data)
@@ -67,113 +79,106 @@ for data,directory in [(discovery_data, discovery_directory), (failed_data, fail
     assert np.max([len(name) for name in subjectsxitems.columns])<=8, \
         "Found column names longer than 8 characters in short version"
     # save Individual Measures
-    save_task_data(directory, discovery_data)
+    save_task_data(directory, data)
 
-readme_lines += ["demographics_survey.csv: demographic information from expfactory-surveys\n\n"]
-readme_lines += ["alcohol_drug_survey.csv: alcohol, smoking, marijuana and other drugs from expfactory-surveys\n\n"]
-readme_lines += ["ky_survey.csv: mental health and neurological/health conditions from expfactory-surveys\n\n"]
-readme_lines += ["items.csv.gz: gzipped csv of all item information across surveys\n\n"]
-readme_lines += ["subject_x_items.csv: reshaped items.csv such that rows are subjects and columns are individual items\n\n"]
-readme_lines += ["Individual Measures: directory containing gzip compressed files for each individual measures\n\n"]
+    readme_lines += ["demographics_survey.csv: demographic information from expfactory-surveys\n\n"]
+    readme_lines += ["alcohol_drug_survey.csv: alcohol, smoking, marijuana and other drugs from expfactory-surveys\n\n"]
+    readme_lines += ["ky_survey.csv: mental health and neurological/health conditions from expfactory-surveys\n\n"]
+    readme_lines += ["items.csv.gz: gzipped csv of all item information across surveys\n\n"]
+    readme_lines += ["subject_x_items.csv: reshaped items.csv such that rows are subjects and columns are individual items\n\n"]
+    readme_lines += ["Individual Measures: directory containing gzip compressed files for each individual measures\n\n"]
 
-
-
-
-# ************************************
-# ********* Save DV dataframes **
-# ************************************
-directory = discovery_directory
-
-# get DV df
-DV_df = pd.read_json(path.join(local_dir,'mturk_discovery_DV.json'))
-valence_df = pd.read_json(path.join(local_dir,'mturk_discovery_DV_valence.json'))
-# drop failed QC vars
-drop_failed_QC_vars(DV_df,discovery_data)
-
-#flip negative signed valence DVs
-valence_df = valence_df.replace(to_replace={np.nan: 'NA'})
-valence_list = [i.dropna().unique()[0] if len(i.dropna().unique()) > 0 else np.nan for col,i in valence_df.iteritems()]
-flip_df = np.floor(valence_df.replace(to_replace ={'Pos': 1, 'NA': 1, 'Neg': -1}).mean())
-for c in DV_df.columns:
-    try:
-        DV_df.loc[:,c] = DV_df.loc[:,c] * flip_df.loc[c]
-    except TypeError:
-        continue
-#save valence
-flip_df.to_csv(path.join(directory, 'DV_valence.csv'))
-readme_lines += ["DV_valence.csv: Subjective assessment of whether each variable's 'natural' direction implies 'better' self regulation\n\n"]
-
-#drop na columns
-DV_df.dropna(axis = 1, how = 'all', inplace = True)
-DV_df.to_csv(path.join(directory, 'variables_exhaustive.csv'))
-readme_lines += ["variables_exhaustive.csv: all variables calculated for each measure\n\n"]
-  
-# drop other columns of no interest
-subset = drop_vars(DV_df, saved_vars = ['simple_reaction_time.avg_rt', 'shift_task.acc'])
-# make subset without EZ variables
-noDDM_subset = drop_vars(DV_df, saved_vars = ["\.acc$", "\.avg_rt$"])
-noDDM_subset = drop_vars(noDDM_subset, drop_vars = ['EZ', 'hddm'])
-noDDM_subset.to_csv(path.join(directory, 'meaningful_variables_noDDM.csv'))
-readme_lines += ["meaningful_variables_noDDM.csv: subset of exhaustive data to only meaningful variables with DDM parameters removed\n\n"]
-# make subset without acc/rt vars and just EZ DDM
-EZ_subset = drop_vars(subset, drop_vars = ['_acc', '_rt', 'hddm'], saved_vars = ['simple_reaction_time.avg_rt', 'dospert_rt_survey'])
-EZ_subset.to_csv(path.join(directory, 'meaningful_variables_EZ.csv'))
-readme_lines += ["meaningful_variables_EZ.csv: subset of exhaustive data to only meaningful variables with rt/acc parameters removed (replaced by EZ DDM params)\n\n"]
-# make subset without acc/rt vars and just hddm DDM
-hddm_subset = drop_vars(subset, drop_vars = ['_acc', '_rt', 'EZ'], saved_vars = ['simple_reaction_time.avg_rt', 'dospert_rt_survey'])
-hddm_subset.to_csv(path.join(directory, 'meaningful_variables_hddm.csv'))
-readme_lines += ["meaningful_variables_hddm.csv: subset of exhaustive data to only meaningful variables with rt/acc parameters removed (replaced by hddm DDM params)\n\n"]
-
-# clean and save files that are selected for use
-selected_variables = hddm_subset
-selected_variables.to_csv(path.join(directory, 'meaningful_variables.csv'))
-readme_lines += ["meaningful_variables.csv: Same as meaningful_variables_hddm.csv\n\n"]
-selected_variables_clean = remove_outliers(selected_variables)
-selected_variables_clean.to_csv(path.join(directory, 'meaningful_variables_clean.csv'))
-readme_lines += ["meaningful_variables_clean.csv: same as meaningful_variables.csv with outliers defined as greater than 2.5 IQR from median removed from each column\n\n"]
-
-#save selected variables
-selected_variables_reference = pd.Series(data = valence_list, index = valence_df.columns)
-selected_variables_reference.loc[selected_variables.columns].to_csv('../references/selected_variables_reference.csv')
-# assert that selected variables match list in reference
-#selected_variables_reference = pd.Series.from_csv('../references/selected_variables_reference.csv')
-#assert set(selected_variables_reference.index[:-1]) == set(selected_variables.columns), \
-#"Mismatch between reference meaningful variables and currently calculated variables"
-
-# imputed data
-selected_variables_imputed, error = missForest(selected_variables_clean)
-selected_variables_imputed.to_csv(path.join(directory, 'meaningful_variables_imputed.csv'))
-readme_lines += ["meaningful_variables_imputed.csv: meaningful_variables_clean.csv after imputation with missForest\n\n"]
-
-#task data
-task_data = drop_vars(selected_variables, ['survey'], saved_vars = ['holt','cognitive_reflection'])
-task_data.to_csv(path.join(directory, 'taskdata.csv'))
-task_data_clean = drop_vars(selected_variables_clean, ['survey'], saved_vars = ['holt','cognitive_reflection'])
-task_data_clean.to_csv(path.join(directory, 'taskdata_clean.csv'))
-task_data_imputed = drop_vars(selected_variables_imputed, ['survey'], saved_vars = ['holt','cognitive_reflection'])
-task_data_imputed.to_csv(path.join(directory, 'taskdata_imputed.csv'))
-readme_lines += ["taskdata*.csv: taskdata are the same as meaningful_variables excluded surveys. Note that imputation is performed on the entire dataset including surveys\n\n"]
-
-# create task selection dataset
-task_selection_data = drop_vars(selected_variables_imputed, ['stop_signal.SSRT_low', '^stop_signal.proactive'])
-task_selection_data.to_csv(path.join(directory,'meaningful_variables_imputed_for_task_selection.csv'))
-task_selection_taskdata = drop_vars(task_data_imputed, ['stop_signal.SSRT_low', '^stop_signal.proactive'])
-task_selection_taskdata.to_csv(path.join(directory,'taskdata_imputed_for_task_selection.csv'))
-#save selected variables
-selected_variables_reference.loc[task_selection_data.columns].to_csv('../references/selected_variables_for_task_selection_reference.csv')
-
-from glob import glob
-files = glob(path.join(directory,'*csv'))
-files = [f for f in files if not any(i in f for i in ['demographic','health','alcohol_drug'])]
-for f in files:
-    name = f.split('/')[-1]
-    df = pd.DataFrame.from_csv(f)
-    convert_var_names(df)
-    df.to_csv(path.join(directory, 'short_' + name))
-    print('short_' + name)
-readme_lines += ["short*.csv: short versions are the same as long versions with variable names shortened using variable_name_lookup.csv\n\n"]
-
-# write README
-readme = open(path.join(directory, "README.txt"), "w")
-readme.writelines(readme_lines)
-readme.close()
+    # ************************************
+    # ********* Save DV dataframes **
+    # ************************************
+    if len(DV_df > 0):
+        # drop failed QC vars
+        drop_failed_QC_vars(DV_df,data)
+        
+        #flip negative signed valence DVs
+        valence_list = [i.dropna().unique()[0] if len(i.dropna().unique()) > 0 else 'NA' for col,i in valence_df.iteritems()]
+        valence_df = valence_df.replace(to_replace={np.nan: 'NA'})
+        flip_df = np.floor(valence_df.replace(to_replace ={'Pos': 1, 'NA': 1, 'Neg': -1}).mean())
+        for c in DV_df.columns:
+            try:
+                DV_df.loc[:,c] = DV_df.loc[:,c] * flip_df.loc[c]
+            except TypeError:
+                continue
+        #save valence
+        flip_df.to_csv(path.join(directory, 'DV_valence.csv'))
+        readme_lines += ["DV_valence.csv: Subjective assessment of whether each variable's 'natural' direction implies 'better' self regulation\n\n"]
+        
+        #drop na columns
+        DV_df.dropna(axis = 1, how = 'all', inplace = True)
+        DV_df.to_csv(path.join(directory, 'variables_exhaustive.csv'))
+        readme_lines += ["variables_exhaustive.csv: all variables calculated for each measure\n\n"]
+          
+        # drop other columns of no interest
+        subset = drop_vars(DV_df, saved_vars = ['simple_reaction_time.avg_rt', 'shift_task.acc'])
+        # make subset without EZ variables
+        noDDM_subset = drop_vars(DV_df, saved_vars = ["\.acc$", "\.avg_rt$"])
+        noDDM_subset = drop_vars(noDDM_subset, drop_vars = ['EZ', 'hddm'])
+        noDDM_subset.to_csv(path.join(directory, 'meaningful_variables_noDDM.csv'))
+        readme_lines += ["meaningful_variables_noDDM.csv: subset of exhaustive data to only meaningful variables with DDM parameters removed\n\n"]
+        # make subset without acc/rt vars and just EZ DDM
+        EZ_subset = drop_vars(subset, drop_vars = ['_acc', '_rt', 'hddm'], saved_vars = ['simple_reaction_time.avg_rt', 'dospert_rt_survey'])
+        EZ_subset.to_csv(path.join(directory, 'meaningful_variables_EZ.csv'))
+        readme_lines += ["meaningful_variables_EZ.csv: subset of exhaustive data to only meaningful variables with rt/acc parameters removed (replaced by EZ DDM params)\n\n"]
+        # make subset without acc/rt vars and just hddm DDM
+        hddm_subset = drop_vars(subset, drop_vars = ['_acc', '_rt', 'EZ'], saved_vars = ['simple_reaction_time.avg_rt', 'dospert_rt_survey'])
+        hddm_subset.to_csv(path.join(directory, 'meaningful_variables_hddm.csv'))
+        readme_lines += ["meaningful_variables_hddm.csv: subset of exhaustive data to only meaningful variables with rt/acc parameters removed (replaced by hddm DDM params)\n\n"]
+        
+        # clean and save files that are selected for use
+        selected_variables = hddm_subset
+        selected_variables.to_csv(path.join(directory, 'meaningful_variables.csv'))
+        readme_lines += ["meaningful_variables.csv: Same as meaningful_variables_hddm.csv\n\n"]
+        selected_variables_clean = remove_outliers(selected_variables)
+        selected_variables_clean.to_csv(path.join(directory, 'meaningful_variables_clean.csv'))
+        readme_lines += ["meaningful_variables_clean.csv: same as meaningful_variables.csv with outliers defined as greater than 2.5 IQR from median removed from each column\n\n"]
+        
+        #save selected variables
+        selected_variables_reference = pd.Series(data = valence_list, index = valence_df.columns)
+        selected_variables_reference.loc[selected_variables.columns].to_csv('../references/selected_variables_reference.csv')
+        # assert that selected variables match list in reference
+        #selected_variables_reference = pd.Series.from_csv('../references/selected_variables_reference.csv')
+        #assert set(selected_variables_reference.index[:-1]) == set(selected_variables.columns), \
+        #"Mismatch between reference meaningful variables and currently calculated variables"
+        
+        # imputed data
+        selected_variables_imputed, error = missForest(selected_variables_clean)
+        selected_variables_imputed.to_csv(path.join(directory, 'meaningful_variables_imputed.csv'))
+        readme_lines += ["meaningful_variables_imputed.csv: meaningful_variables_clean.csv after imputation with missForest\n\n"]
+        
+        #task data
+        task_data = drop_vars(selected_variables, ['survey'], saved_vars = ['holt','cognitive_reflection'])
+        task_data.to_csv(path.join(directory, 'taskdata.csv'))
+        task_data_clean = drop_vars(selected_variables_clean, ['survey'], saved_vars = ['holt','cognitive_reflection'])
+        task_data_clean.to_csv(path.join(directory, 'taskdata_clean.csv'))
+        task_data_imputed = drop_vars(selected_variables_imputed, ['survey'], saved_vars = ['holt','cognitive_reflection'])
+        task_data_imputed.to_csv(path.join(directory, 'taskdata_imputed.csv'))
+        readme_lines += ["taskdata*.csv: taskdata are the same as meaningful_variables excluded surveys. Note that imputation is performed on the entire dataset including surveys\n\n"]
+        
+        # create task selection dataset
+        task_selection_data = drop_vars(selected_variables_imputed, ['stop_signal.SSRT_low', '^stop_signal.proactive'])
+        task_selection_data.to_csv(path.join(directory,'meaningful_variables_imputed_for_task_selection.csv'))
+        task_selection_taskdata = drop_vars(task_data_imputed, ['stop_signal.SSRT_low', '^stop_signal.proactive'])
+        task_selection_taskdata.to_csv(path.join(directory,'taskdata_imputed_for_task_selection.csv'))
+        #save selected variables
+        selected_variables_reference.loc[task_selection_data.columns].to_csv('../references/selected_variables_for_task_selection_reference.csv')
+        
+        from glob import glob
+        files = glob(path.join(directory,'*csv'))
+        files = [f for f in files if not any(i in f for i in ['demographic','health','alcohol_drug'])]
+        for f in files:
+            name = f.split('/')[-1]
+            df = pd.DataFrame.from_csv(f)
+            convert_var_names(df)
+            df.to_csv(path.join(directory, 'short_' + name))
+            print('short_' + name)
+        readme_lines += ["short*.csv: short versions are the same as long versions with variable names shortened using variable_name_lookup.csv\n\n"]
+        
+        # write README
+        readme = open(path.join(directory, "README.txt"), "w")
+        readme.writelines(readme_lines)
+        readme.close()

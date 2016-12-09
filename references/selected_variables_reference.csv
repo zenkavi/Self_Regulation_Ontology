@@ -104,12 +104,12 @@ local_global_letter.hddm_non_decision,NA
 local_global_letter.hddm_thresh,Pos
 local_global_letter.switch_cost_hddm_drift,Pos
 mindful_attention_awareness_survey.mindfulness,Pos
-motor_selective_stop_signal.SSRT,NA
-motor_selective_stop_signal.hddm_drift,NA
+motor_selective_stop_signal.SSRT,Neg
+motor_selective_stop_signal.hddm_drift,Pos
 motor_selective_stop_signal.hddm_non_decision,NA
-motor_selective_stop_signal.hddm_thresh,NA
-motor_selective_stop_signal.reactive_control,NA
-motor_selective_stop_signal.selective_proactive_control,NA
+motor_selective_stop_signal.hddm_thresh,Pos
+motor_selective_stop_signal.reactive_control,Neg
+motor_selective_stop_signal.selective_proactive_control,Pos
 mpq_control_survey.control,Pos
 probabilistic_selection.positive_learning_bias,NA
 probabilistic_selection.value_sensitivity,Pos
@@ -141,6 +141,10 @@ simon.simon_hddm_drift,Pos
 simple_reaction_time.avg_rt,Pos
 spatial_span.forward_span,Pos
 spatial_span.reverse_span,Pos
+stim_selective_stop_signal.SSRT,Neg
+stim_selective_stop_signal.hddm_drift,Pos
+stim_selective_stop_signal.hddm_non_decision,NA
+stim_selective_stop_signal.hddm_thresh,Pos
 stop_signal.SSRT_high,Neg
 stop_signal.SSRT_low,Neg
 stop_signal.hddm_drift,Pos
@@ -173,8 +177,8 @@ tower_of_london.avg_move_time,NA
 tower_of_london.num_extra_moves,Neg
 tower_of_london.num_optimal_solutions,Pos
 tower_of_london.planning_time,NA
-two_stage_decision.model_based,NA
-two_stage_decision.model_free,NA
+two_stage_decision.model_based,Neg
+two_stage_decision.model_free,Pos
 upps_impulsivity_survey.lack_of_perseverance,Neg
 upps_impulsivity_survey.lack_of_premeditation,Neg
 upps_impulsivity_survey.negative_urgency,Neg
@@ -182,4 +186,3 @@ upps_impulsivity_survey.positive_urgency,Neg
 upps_impulsivity_survey.sensation_seeking,Neg
 writing_task.neutral_probability,NA
 writing_task.positive_probability,Pos
-DROPPED FOR TASK SELECTION,"stop_signal.SSRT_low, stop_signal.proactive_SSRT_speeding, stop_signal.proactive_slowing"
