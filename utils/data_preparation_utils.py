@@ -453,12 +453,13 @@ def remove_failed_subjects(data):
 def remove_outliers(data, quantile_range = 2.5):
     '''Removes outliers more than 1.5IQR below Q1 or above Q3
     '''
+    data = data.copy()
     quantiles = data.apply(lambda x: x.quantile([.25,.5,.75])).T
     lowlimit = np.array(quantiles.iloc[:,1] - quantile_range*(quantiles.iloc[:,2] - quantiles.iloc[:,0]))
     highlimit = np.array(quantiles.iloc[:,1] + quantile_range*(quantiles.iloc[:,2] - quantiles.iloc[:,0]))
-    data_mat = data.as_matrix()
+    data_mat = data.values
     data_mat[np.logical_or((data_mat<lowlimit), (data_mat>highlimit))] = np.nan
-    return pd.DataFrame(data_mat,index = data.index, columns = data.columns)
+    return data
     
     
 def save_task_data(data_loc, data):
