@@ -48,7 +48,8 @@ class GASearchParams:
         linreg_n_jobs=-1,
         taskdatafile= 'taskdata_imputed_for_task_selection.csv',
         behavdatafile= 'meaningful_variables_imputed_for_task_selection.csv',
-        drop_tasks=['writing_task','simple_reaction_time'],
+        drop_tasks=['writing_task','simple_reaction_time','bickel_titrator'],
+        drop_vars=[],
         demogvars=['BMI','RetirementAccount','ChildrenNumber','DivorceCount',
                                 'HouseholdIncome','SmokeEveryDay','CigsPerDay',
                                 'CreditCardDebt','TrafficTicketsLastYearCount',
@@ -106,6 +107,7 @@ class GASearchParams:
         self.data_dir=os.path.join(self.basedir,'Data/%s'%self.dataset)
         self.taskdatafile= taskdatafile
         self.drop_tasks=drop_tasks
+        self.drop_vars=drop_vars
         self.demogvars=demogvars
 
         self.start_time = None
@@ -148,6 +150,10 @@ class GASearch:
                                     full_dataset = self.params.use_full_dataset)
         # could use pandas filter
         for c in self.taskdata.columns:
+            if c in self.params.drop_vars:
+                #if self.params.verbose>0:
+                print('dropping',c)
+                del self.taskdata[c]
             taskname=c.split('.')[0]
             if taskname in self.params.drop_tasks:
                 if self.params.verbose>0:
