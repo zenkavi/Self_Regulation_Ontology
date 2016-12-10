@@ -74,7 +74,7 @@ def get_reconstruction_error(ct,taskdata,targetdata_orig,params):
     elif params.clf=='lassocv':
         linreg=MultiTaskLassoCV(alphas=[10**x for x in numpy.arange(-6,8)])
     elif params.clf=='lasso':
-        linreg=Lasso(alpha=params.lasso_alpha)
+        linreg=Lasso(alpha=params.lasso_alpha,normalize=True)
     elif params.clf=='rf':
         linreg=RandomForestRegressor()
     else:
