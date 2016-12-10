@@ -10,7 +10,7 @@ import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.model_selection import cross_val_score
 
-def compute_pca_cval(df,flag,n_components=None):
+def compute_pca_cval(df,flag,n_components=None,rpca=False):
     X=df.values
     if n_components is None:
         n_components=range(1,int(X.shape[1]/2))
