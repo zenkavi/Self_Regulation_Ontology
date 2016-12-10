@@ -20,11 +20,16 @@ from utils import get_info,get_behav_data,get_demographics
 __TEST_DECIMATE__=False
 # set up variables
 
-#TODO: allow separate optimization of reconstruction (both types) for survey/task,
-# and reconstruction for demographics
+#drop variables that are too badly skewed or strongly bimodal
 
+drop_vars=['adaptive_n_back.hddm_non_decision',
+            'discount_titrate.percent_patient',
+            'dot_pattern_expectancy.dprime',
+            'dot_pattern_expectancy.hddm_non_decision',
+            'information_sampling_task.Fixed_Win_P_correct',
+            'threebytwo.hddm_non_decision']
 gasearch=GASearch(objective_weights=[1,0],targets=['task'],
-                usepca=True)
+                usepca=True,drop_vars=drop_vars)
 gasearch.get_taskdata()
 if __TEST_DECIMATE__:
     tasks_to_keep=gasearch.decimate_task_data()
