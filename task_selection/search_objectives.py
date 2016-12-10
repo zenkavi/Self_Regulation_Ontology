@@ -20,9 +20,9 @@ def get_time_fitness(ct,params):
     for t in ct:
         totaltime+=params.tasktime[t]
     if totaltime>params.max_task_time:
-        return -1
+        return -1,totaltime
     else:
-        return 1
+        return 1,totaltime
 
 def get_subset_corr(ct,taskdata,targetdata):
     subcorr=numpy.corrcoef(scale(targetdata.values))[numpy.triu_indices(targetdata.shape[0],1)]

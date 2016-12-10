@@ -329,12 +329,16 @@ class GASearch:
 
     def get_population_fitness_tasks(self):
         # first remove any that are over the time limit
-        for ct in self.population:
-            time_penalty=get_time_fitness(ct,self.params)
+        popcopy=self.population.copy()
+        for ct in popcopy:
+            time_penalty,totaltime=get_time_fitness(ct,self.params)
             if time_penalty<0:
                 self.population.remove(ct)
+                print('overtime',totaltime,ct)
+            else:
+                print('keeping',totaltime,ct)
         if self.params.constrain_single_stop_task:
-            for ct in self.population:
+            for ct in popcopy:
                 if len(set(self.params.stoptasks).intersection(ct))>1:
                     self.population.remove(ct)
         if self.params.objective_weights[0]>0:
