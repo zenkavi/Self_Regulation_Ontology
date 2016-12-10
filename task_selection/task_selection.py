@@ -28,8 +28,15 @@ drop_vars=['adaptive_n_back.hddm_non_decision',
             'dot_pattern_expectancy.hddm_non_decision',
             'information_sampling_task.Fixed_Win_P_correct',
             'threebytwo.hddm_non_decision']
-gasearch=GASearch(objective_weights=[1,0],targets=['task'],
-                usepca=True,drop_vars=drop_vars)
+if len(sys.argv)>1:
+    reconweight=float(sys.argv[1])
+    objective_weights=[reconweight,1-reconweight]
+else:
+    objective_weights=[0.5,0.5]
+print('using objective weights:',objective_weights)
+gasearch=GASearch(objective_weights=objective_weights,targets=['task'],
+                usepca=True,drop_vars=drop_vars,
+                lasso_alpha=0.05)
 gasearch.get_taskdata()
 if __TEST_DECIMATE__:
     tasks_to_keep=gasearch.decimate_task_data()
