@@ -139,10 +139,6 @@ for data,directory, DV_df, valence_df in datasets:
         #save selected variables
         selected_variables_reference = pd.Series(data = valence_list, index = valence_df.columns)
         selected_variables_reference.loc[selected_variables.columns].to_csv('../references/selected_variables_reference.csv')
-        # assert that selected variables match list in reference
-        #selected_variables_reference = pd.Series.from_csv('../references/selected_variables_reference.csv')
-        #assert set(selected_variables_reference.index[:-1]) == set(selected_variables.columns), \
-        #"Mismatch between reference meaningful variables and currently calculated variables"
         
         # imputed data
         selected_variables_imputed, error = missForest(selected_variables_clean)
