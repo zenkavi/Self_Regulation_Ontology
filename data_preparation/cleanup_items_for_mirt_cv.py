@@ -18,32 +18,27 @@ import os,glob,sys
 import pandas
 import json
 
+try:
+    min_freq=int(sys.argv[1])
+    print('using minimum frequency=',min_freq)
+except:
+    min_freq = 20
+    print('using default minimum frequency=',min_freq)
+
 sys.path.append('../utils')
 
-from utils import get_info
+from utils import get_info,get_behav_data
 basedir=get_info('base_directory')
 dataset=get_info('dataset')
 print('using dataset:',dataset)
 datadir=os.path.join(basedir,'data/%s'%dataset)
-derived_dir=os.path.join(basedir,'data/Derived_Data/%s'%dataset)
 
+derived_dir=os.path.join(basedir,'data/Derived_Data/%s'%dataset.replace('Discovery','Combined').replace('Validation','Combined'))
+if not os.path.exists(derived_dir):
+    os.makedirs(derived_dir)
 
-try:
-    data=pandas.read_csv(os.path.join(derived_dir,'surveydata.csv'))
-except:
-    files=glob.glob(os.path.join(derived_dir,'surveydata/*'))
-    files.sort()
-    pass
+data=get_behav_data(file='subject_x_items.csv',full_dataset=True)
 
-    all_metadata={}
-    for f in files:
-
-        d=pandas.read_csv(f,sep='\t')
-        code=f.split('/')[-1].replace('.tsv','')
-        try:
-            data=data.merge(d,on='worker')
-        except:
-            data=d
 
 def truncate_dist(u,h,d,min_freq=4,verbose=False):
     """
@@ -98,7 +93,7 @@ def truncate_dist(u,h,d,min_freq=4,verbose=False):
         return d,True
 
 
-min_freq = 8
+
 
 fixdata=data.copy()
 dropped={}
