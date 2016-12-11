@@ -17,27 +17,31 @@ import scipy.stats
 import os,glob,sys
 import pandas
 import json
+if not len(sys.argv)>3:
+    print('usage: python cleanup_items_for_mirt_cv.py <dataset> <min items> <use all data 1/0>')
+dataset=sys.argv[1]
+min_freq=int(sys.argv[2])
+print('using minimum frequency=',min_freq)
 
-try:
-    min_freq=int(sys.argv[1])
-    print('using minimum frequency=',min_freq)
-except:
-    min_freq = 20
-    print('using default minimum frequency=',min_freq)
+usefull=bool(int(sys.argv[3]))
 
 sys.path.append('../utils')
 
 from utils import get_info,get_behav_data
 basedir=get_info('base_directory')
-dataset=get_info('dataset')
-print('using dataset:',dataset)
+#dataset=get_info('dataset')
+if usefull:
+    print('using full dataset')
+    derived_dir=os.path.join(basedir,'data/Derived_Data/%s'%dataset.replace('Discovery','Combined').replace('Validation','Combined'))
+else:
+    print('using dataset:',dataset)
+    derived_dir=os.path.join(basedir,'data/Derived_Data/%s'%dataset)
 datadir=os.path.join(basedir,'data/%s'%dataset)
 
-derived_dir=os.path.join(basedir,'data/Derived_Data/%s'%dataset.replace('Discovery','Combined').replace('Validation','Combined'))
 if not os.path.exists(derived_dir):
     os.makedirs(derived_dir)
 
-data=get_behav_data(file='subject_x_items.csv',full_dataset=True)
+data=get_behav_data(file='subject_x_items.csv',full_dataset=usefull)
 
 
 def truncate_dist(u,h,d,min_freq=4,verbose=False):
@@ -103,7 +107,7 @@ for c in data.columns:
     u=data[c].unique()
     u.sort()
     h=[numpy.sum(data[c]==i) for i in u]
-    f,dropflag=truncate_dist(u,h,fixdata[c],verbose=True,min_freq=min_freq)
+    f,dropflag=truncate_dist(u,h,fixdata[c],verbose=False,min_freq=min_freq)
     fixdata[c]=f
     if dropflag:
         del fixdata[c]
