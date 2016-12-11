@@ -46,17 +46,22 @@ if not os.path.exists(derived_dir):
 
 data=get_behav_data(file='subject_x_items.csv',full_dataset=usefull)
 
-
+maxnans=5
 
 fixdata=data.copy()
 dropped={}
 fixed={}
 for c in data.columns:
+
     if c=='worker':
         continue
+
     f,dropflag=cleanup_item_dist(c,fixdata,verbose=False,minresp=min_freq)
     fixdata[c]=f
     u,h=get_respdist(f)
+    if numpy.sum(numpy.isnan(data[c]),0)>maxnans:
+        print('dropping %s due to too many NaNs'%c)
+        dropflag=True
     if dropflag:
         del fixdata[c]
         dropped[c]=(u,h)
