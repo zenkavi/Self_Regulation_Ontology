@@ -10,10 +10,10 @@ ncomps=2
 }
 
 
-d=read.csv('../Data/Derived_Data/Combined_12-05-2016/surveydata_fixed_minfreq20.csv')
+d=read.csv('../Data/Derived_Data/Combined_12-05-2016/surveydata_fixed_minfreq40.csv')
 d$worker=NULL
 verbosearg=FALSE
 modeltype='graded'
-m=mirt(d,ncomps,SE=TRUE,TOL=0.01,technical=list(MHRM_SE_draws=5000,MAXQUAD=100000,NCYCLES=10000),verbose=verbosearg,method='MHRM',itemtype=modeltype)
+m=mirt(d,ncomps,SE=TRUE,technical=list(MHRM_SE_draws=5000,MAXQUAD=100000,NCYCLES=10000),verbose=verbosearg,method='MHRM',itemtype=modeltype)
 
 save(m,file=sprintf('mirt_%ddims_%s.Rdata',ncomps,modeltype))
