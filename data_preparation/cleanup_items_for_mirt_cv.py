@@ -17,13 +17,14 @@ import scipy.stats
 import os,glob,sys
 import pandas
 import json
-if not len(sys.argv)>3:
+try:
+    dataset=sys.argv[1]
+    min_freq=int(sys.argv[2])
+    print('using minimum frequency=',min_freq)
+    usefull=bool(int(sys.argv[3]))
+except:
     print('usage: python cleanup_items_for_mirt_cv.py <dataset> <min items> <use all data 1/0>')
-dataset=sys.argv[1]
-min_freq=int(sys.argv[2])
-print('using minimum frequency=',min_freq)
-
-usefull=bool(int(sys.argv[3]))
+    sys.exit()
 
 sys.path.append('../utils')
 
