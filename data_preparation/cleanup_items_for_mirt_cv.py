@@ -26,6 +26,8 @@ except:
     print('usage: python cleanup_items_for_mirt_cv.py <dataset> <min items> <use all data 1/0>')
     sys.exit()
 
+from cleanup_item_dist import cleanup_item_dist,get_respdist
+
 sys.path.append('../utils')
 
 from utils import get_info,get_behav_data
@@ -45,73 +47,20 @@ if not os.path.exists(derived_dir):
 data=get_behav_data(file='subject_x_items.csv',full_dataset=usefull)
 
 
-def truncate_dist(u,h,d,min_freq=4,verbose=False):
-    """
-    remove responses with less than min_freq occurences, replacing with
-    next less extreme response
-    heuristic is that we always move it towards the middle of the scale
-    - if they are in teh middle, of if more than two, then drop the column
-
-    returns amended data, and drop flag
-    """
-    u=numpy.array(u)
-    h=numpy.array(h)
-    dmode=scipy.stats.mode(d,nan_policy='omit')[0][0]
-    if numpy.sum(h<min_freq)==0:
-        return d,False
-    badvals=numpy.where(h<min_freq)[0]
-    if verbose:
-        print(c,'found %d bad vals'%len(badvals),'resp',u,u[badvals],'freq',h[badvals])
-    if len(badvals)==1:
-        if len(u)==2:
-            # if it's dichotomous, then drop it
-            print('dropping',c)
-            return d,True
-        # is it at an extreme?
-        if u[badvals[0]]==u[0]:
-            d.loc[d==u[badvals[0]]]=u[1]
-
-        elif u[badvals[0]]==u[-1]:
-            d.loc[d==u[badvals[0]]]=u[-2]
-        else:
-            if verbose:
-                    print('midval - replacing with NaN!')
-            d.loc[d==u[badvals[0]]]=dmode
-            #raise Exception("Can't deal with sole middle values!")
-        return d,False
-    elif len(badvals)==2:
-        #are they at the extreme?
-        if all(u[badvals]==u[:2]):
-            d.loc[d==u[badvals[0]]]=u[2]
-            d.loc[d==u[badvals[1]]]=u[2]
-        elif all(u[badvals]==u[-2:]):
-            d.loc[d==u[badvals[0]]]=u[-3]
-            d.loc[d==u[badvals[1]]]=u[-3]
-        else:
-            if verbose:
-                    print('midval - replacing with NaN!')
-            d.loc[d==u[badvals[0]]]=dmode
-            d.loc[d==u[badvals[1]]]=dmode
-        return d,False
-    else:
-        print('dropping',c)
-        return d,True
-
-
-
 
 fixdata=data.copy()
 dropped={}
+fixed={}
 for c in data.columns:
     if c=='worker':
         continue
-    u=data[c].unique()
-    u.sort()
-    h=[numpy.sum(data[c]==i) for i in u]
-    f,dropflag=truncate_dist(u,h,fixdata[c],verbose=False,min_freq=min_freq)
+    f,dropflag=cleanup_item_dist(c,fixdata,verbose=False,minresp=min_freq)
     fixdata[c]=f
+    u,h=get_respdist(f)
     if dropflag:
         del fixdata[c]
         dropped[c]=(u,h)
+    else:
+        fixed[c]=(u,h)
 
 fixdata.to_csv(os.path.join(derived_dir,'surveydata_fixed_minfreq%d.csv'%min_freq),index=False)
