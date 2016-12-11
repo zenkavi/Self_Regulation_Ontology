@@ -17,101 +17,55 @@ import scipy.stats
 import os,glob,sys
 import pandas
 import json
+try:
+    dataset=sys.argv[1]
+    min_freq=int(sys.argv[2])
+    print('using minimum frequency=',min_freq)
+    usefull=bool(int(sys.argv[3]))
+except:
+    print('usage: python cleanup_items_for_mirt_cv.py <dataset> <min items> <use all data 1/0>')
+    sys.exit()
+
+from cleanup_item_dist import cleanup_item_dist,get_respdist
 
 sys.path.append('../utils')
 
-from utils import get_info
+from utils import get_info,get_behav_data
 basedir=get_info('base_directory')
-dataset=get_info('dataset')
-print('using dataset:',dataset)
+#dataset=get_info('dataset')
+if usefull:
+    print('using full dataset')
+    derived_dir=os.path.join(basedir,'data/Derived_Data/%s'%dataset.replace('Discovery','Combined').replace('Validation','Combined'))
+else:
+    print('using dataset:',dataset)
+    derived_dir=os.path.join(basedir,'data/Derived_Data/%s'%dataset)
 datadir=os.path.join(basedir,'data/%s'%dataset)
-derived_dir=os.path.join(basedir,'data/Derived_Data/%s'%dataset)
 
+if not os.path.exists(derived_dir):
+    os.makedirs(derived_dir)
 
-try:
-    data=pandas.read_csv(os.path.join(derived_dir,'surveydata.csv'))
-except:
-    files=glob.glob(os.path.join(derived_dir,'surveydata/*'))
-    files.sort()
-    pass
+data=get_behav_data(file='subject_x_items.csv',full_dataset=usefull)
 
-    all_metadata={}
-    for f in files:
-
-        d=pandas.read_csv(f,sep='\t')
-        code=f.split('/')[-1].replace('.tsv','')
-        try:
-            data=data.merge(d,on='worker')
-        except:
-            data=d
-
-def truncate_dist(u,h,d,min_freq=4,verbose=False):
-    """
-    remove responses with less than min_freq occurences, replacing with
-    next less extreme response
-    heuristic is that we always move it towards the middle of the scale
-    - if they are in teh middle, of if more than two, then drop the column
-
-    returns amended data, and drop flag
-    """
-    u=numpy.array(u)
-    h=numpy.array(h)
-    dmode=scipy.stats.mode(d,nan_policy='omit')[0][0]
-    if numpy.sum(h<min_freq)==0:
-        return d,False
-    badvals=numpy.where(h<min_freq)[0]
-    if verbose:
-        print(c,'found %d bad vals'%len(badvals),'resp',u,u[badvals],'freq',h[badvals])
-    if len(badvals)==1:
-        if len(u)==2:
-            # if it's dichotomous, then drop it
-            print('dropping',c)
-            return d,True
-        # is it at an extreme?
-        if u[badvals[0]]==u[0]:
-            d.loc[d==u[badvals[0]]]=u[1]
-
-        elif u[badvals[0]]==u[-1]:
-            d.loc[d==u[badvals[0]]]=u[-2]
-        else:
-            if verbose:
-                    print('midval - replacing with NaN!')
-            d.loc[d==u[badvals[0]]]=dmode
-            #raise Exception("Can't deal with sole middle values!")
-        return d,False
-    elif len(badvals)==2:
-        #are they at the extreme?
-        if all(u[badvals]==u[:2]):
-            d.loc[d==u[badvals[0]]]=u[2]
-            d.loc[d==u[badvals[1]]]=u[2]
-        elif all(u[badvals]==u[-2:]):
-            d.loc[d==u[badvals[0]]]=u[-3]
-            d.loc[d==u[badvals[1]]]=u[-3]
-        else:
-            if verbose:
-                    print('midval - replacing with NaN!')
-            d.loc[d==u[badvals[0]]]=dmode
-            d.loc[d==u[badvals[1]]]=dmode
-        return d,False
-    else:
-        print('dropping',c)
-        return d,True
-
-
-min_freq = 8
+maxnans=5
 
 fixdata=data.copy()
 dropped={}
+fixed={}
 for c in data.columns:
+
     if c=='worker':
         continue
-    u=data[c].unique()
-    u.sort()
-    h=[numpy.sum(data[c]==i) for i in u]
-    f,dropflag=truncate_dist(u,h,fixdata[c],verbose=True,min_freq=min_freq)
+
+    f,dropflag=cleanup_item_dist(c,fixdata,verbose=False,minresp=min_freq)
     fixdata[c]=f
+    u,h=get_respdist(f)
+    if numpy.sum(numpy.isnan(data[c]),0)>maxnans:
+        print('dropping %s due to too many NaNs'%c)
+        dropflag=True
     if dropflag:
         del fixdata[c]
         dropped[c]=(u,h)
+    else:
+        fixed[c]=(u,h)
 
 fixdata.to_csv(os.path.join(derived_dir,'surveydata_fixed_minfreq%d.csv'%min_freq),index=False)
