@@ -16,4 +16,4 @@ verbosearg=FALSE
 modeltype='graded'
 m=mirt(d,ncomps,SE=TRUE,technical=list(MHRM_SE_draws=5000,MAXQUAD=100000,NCYCLES=10000),verbose=verbosearg,method='MHRM',itemtype=modeltype)
 
-save(m,file=sprintf('mirt_%ddims_%s.Rdata',ncomps,modeltype))
+save(m,file=sprintf('output/mirt_%ddims_%s.Rdata',ncomps,modeltype))
