@@ -314,7 +314,12 @@ class GASearch:
     def get_initial_population_tasks(self):
         idx=[i for i in range(self.params.ntasks)]
         for i in range(self.params.initpopsize):
-            numpy.random.shuffle(idx)
+            badlength=1
+            while badlength:
+                numpy.random.shuffle(idx)
+                time_penalty,totaltime=get_time_fitness(idx[:self.params.nvars],self.params)
+                if time_penalty>0:
+                    badlength=0
             self.population.append(idx[:self.params.nvars])
 
     def select_parents_tasks(self):
@@ -329,16 +334,12 @@ class GASearch:
 
     def get_population_fitness_tasks(self):
         # first remove any that are over the time limit
-        popcopy=self.population.copy()
-        for ct in popcopy:
+        cc_time=[]
+        for ct in self.population:
             time_penalty,totaltime=get_time_fitness(ct,self.params)
-            if time_penalty<0:
-                self.population.remove(ct)
-                print('overtime',totaltime,ct)
-            else:
-                print('keeping',totaltime,ct)
+            cc_time.append(time_penalty*2)
         if self.params.constrain_single_stop_task:
-            for ct in popcopy:
+            for ct in self.population:
                 if len(set(self.params.stoptasks).intersection(ct))>1:
                     self.population.remove(ct)
         if self.params.objective_weights[0]>0:
@@ -370,7 +371,7 @@ class GASearch:
         maxcc=[numpy.max(cc_recon),numpy.max(cc_subsim)]
         cc_recon=scale(cc_recon)
         cc_subsim=scale(cc_subsim)
-        self.cc=cc_recon*self.params.objective_weights[0] + cc_subsim*self.params.objective_weights[1]
+        self.cc=cc_recon*self.params.objective_weights[0] + cc_subsim*self.params.objective_weights[1]+cc_time
         return maxcc
 
 
@@ -421,7 +422,11 @@ class GASearch:
         immigrants=[]
         idx=[i for i in range(self.params.ntasks)]
         for i in range(self.params.nimmigrants):
-            numpy.random.shuffle(idx)
+            while badlength:
+                numpy.random.shuffle(idx)
+                time_penalty,totaltime=get_time_fitness(idx[:self.params.nvars],self.params)
+                if time_penalty>0:
+                    badlength=0
             immigrants.append(idx[:self.params.nvars])
         return self.population+immigrants
 
