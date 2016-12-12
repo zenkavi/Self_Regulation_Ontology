@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 from pprint import pprint
 import seaborn as sns
-from scipy import stats
 from scipy.spatial.distance import pdist, squareform
 from sklearn.metrics.cluster import normalized_mutual_info_score
 
@@ -158,7 +157,6 @@ def get_visual_style(G, layout_graph = None, layout = 'kk', vertex_size = None, 
         else:
             graph_layout = G.layout(layout)
             display_threshold = 0
-        
     # color by community and within-module-centrality
     # each community is a different color palette, darks colors are more central to the module
     if 'community' in G.vs.attribute_names():
@@ -178,14 +176,19 @@ def get_visual_style(G, layout_graph = None, layout = 'kk', vertex_size = None, 
             vertex_color = [palette[v['community']-1] for v in G.vs]
     else:
         vertex_color = 'red'
-    
+        
+    # set up visual style dictionary. Vertex label sizes are proportional to the total size
     visual_style = {'layout': graph_layout, 
                     'vertex_color': vertex_color, 
                     'vertex_label_size': size/130.0,
                     'bbox': (size,size),
                     'margin': size/20.0}
+    
     if 'weight' in G.es.attribute_names():
-        thresholded_weights = [w if abs(w) > display_threshold else 0 for w in G.es['weight']]
+        if min(layout_graph.es['weight'])>0:
+            thresholded_weights = [w if w > display_threshold else 0 for w in G.es['weight']]
+        else:
+            thresholded_weights = [w if abs(w) > display_threshold else 0 for w in G.es['weight']]
         visual_style['edge_width'] = [abs(w)**2.5*size/300.0 for w in thresholded_weights]
         if np.sum([e<0 for e in G.es['weight']]) > 0:
             visual_style['edge_color'] = [['#3399FF','#696969','#FF6666'][int(np.sign(w)+1)] for w in G.es['weight']]
@@ -372,7 +375,7 @@ def Graph_Analysis(data, weight = True, thresh_func = bct.threshold_proportional
     """
     
     #threshold and remove diagonal
-    graph_mat = thresh_func(data.as_matrix(), threshold)  
+    graph_mat = thresh_func(data.values, threshold)  
     
     # make a binary version if not weighted
     if not weight:
@@ -385,7 +388,7 @@ def Graph_Analysis(data, weight = True, thresh_func = bct.threshold_proportional
     # using louvain but also bct.modularity_und which is "Newman's spectral community detection"
     # bct.modularity_louvain_und_sign
     comm, mod = community_alg(graph_mat)
-    # if there is a reference, relbale communities based on their closest association    
+    # if there is a reference, relabel communities based on their closest association    
     if ref_community:
         comm = relabel_community(comm,ref_community)
     G.vs['community'] = comm
@@ -415,7 +418,7 @@ def Graph_Analysis(data, weight = True, thresh_func = bct.threshold_proportional
     # visualize
     layout_graph = None
     if plot_threshold:
-        layout_mat = thresh_func(data.as_matrix(), plot_threshold)  
+        layout_mat = thresh_func(data.values, plot_threshold)  
         layout_graph = igraph.Graph.Weighted_Adjacency(layout_mat.tolist(), mode = 'undirected')
     visual_style = {}
     visual_style = get_visual_style(G, layout_graph, layout = layout, vertex_size = 'eigen_centrality', labels = G.vs['id'],
