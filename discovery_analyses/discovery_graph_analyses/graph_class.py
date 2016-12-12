@@ -77,11 +77,11 @@ class Graph_Analysis(object):
         self.graph_mat = graph_mat
         self.G = G
             
-    def calculate_communities(self):
+    def calculate_communities(self, **kwargs):
         G = self.G
         graph_mat = self.graph_mat
-        # bct.modularity_louvain_und_sign
-        comm, mod = self.community_alg(graph_mat)
+        # calculate community structure
+        comm, mod = self.community_alg(graph_mat, **kwargs)
         # if there is a reference, relabel communities based on their closest association    
         if self.ref_community:
             comm = self._relabel_community(comm,self.ref_community)
@@ -134,7 +134,32 @@ class Graph_Analysis(object):
             labels = self.G.vs['id']
         self.visual_style = self._get_visual_style(layout = layout, layout_graph = layout_graph, vertex_size = 'eigen_centrality', labels = labels,
                                         size = 6000)
+
+    def _community_reorder(self, G):
+        assert set(['community']) <=  set(G.vs.attribute_names()), \
+            'Graph must have "community" and "id" as a vertex attributes'
+        community = G.vs['community']
+        reorder_index = np.argsort(community)
+        # hold graph attributes:
+        attribute_names = G.vs.attributes()
+        attribute_values = [G.vs[a] for a in attribute_names]
+        attribute_df = pd.DataFrame(attribute_values, index = attribute_names).T
+        sorted_df = attribute_df.reindex(reorder_index).reset_index()
+        
+        # rearrange connectivity matrix
+        graph_mat = self._graph_to_matrix(G)
+        graph_mat = graph_mat[:,reorder_index][reorder_index]
     
+        # make a binary version if not weighted
+        if 'weight' in G.es.attribute_names():
+            G = igraph.Graph.Weighted_Adjacency(graph_mat.tolist(), mode = 'undirected')
+        else:
+            G = igraph.Graph.Adjacency(graph_mat.tolist(), mode = 'undirected')
+        for name in attribute_names:
+            G.vs[name] = sorted_df[name]
+        
+        return G
+        
     def _get_visual_style(self, layout, layout_graph = None, vertex_size = None, size = 1000, labels = None):
         """
         Creates an appropriate visual style for a graph. 
@@ -229,7 +254,8 @@ class Graph_Analysis(object):
             visual_style['vertex_label'] = labels
         
         return visual_style
-        
+    
+  
     def _graph_to_matrix(self, G):
         if 'weight' in G.es.attribute_names():
             graph_mat = np.array(G.get_adjacency(attribute = 'weight').data)
