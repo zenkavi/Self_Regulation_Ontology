@@ -53,9 +53,6 @@ dropped={}
 fixed={}
 for c in data.columns:
 
-    if c=='worker':
-        continue
-
     f,dropflag=cleanup_item_dist(c,fixdata,verbose=False,minresp=min_freq)
     fixdata[c]=f
     u,h=get_respdist(f)
@@ -68,4 +65,4 @@ for c in data.columns:
     else:
         fixed[c]=(u,h)
 
-fixdata.to_csv(os.path.join(derived_dir,'surveydata_fixed_minfreq%d.csv'%min_freq),index=False)
+fixdata.to_csv(os.path.join(derived_dir,'surveydata_fixed_minfreq%d.csv'%min_freq))
