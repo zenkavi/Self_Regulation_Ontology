@@ -1,6 +1,6 @@
 #get utils
 import sys
-sys.path.append('../utils')
+sys.path.append('../../utils')
 from graph_utils import calc_connectivity_mat, community_reorder, get_subgraph, get_visual_style, Graph_Analysis
 from graph_utils import plot_graph, print_community_members, threshold_proportional_sign
 from plot_utils import dendroheatmap

@@ -50,12 +50,16 @@ def get_behav_data(dataset = None,file=None, full_dataset=False):
         data = pandas.concat([df,data])
     return data
 
-def get_info(item,infile='../Self_Regulation_Settings.txt'):
+def get_info(item,infile=None):
     """
     get info from settings file
     """
 
     infodict={}
+    if not infile:
+        s = 'Self_Regulation_Ontology'
+        path = os.path.abspath('.')
+        infile = os.path.join(path[:path.find(s)+len(s)], 'Self_Regulation_Settings.txt')
     try:
         assert os.path.exists(infile)
     except:
