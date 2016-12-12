@@ -16,12 +16,6 @@ import seaborn as sns
 # get dependent variables
 DV_df = get_behav_data(file = 'meaningful_variables_imputed.csv')
     
-# ************************************
-# ************ Imputation *******************
-# ************************************
-    
-print('Finished imputing data')
-task_data = drop_vars(DV_df, ['survey'], saved_vars = ['cognitive_reflection'])
 
 # ************************************
 # ************ Connectivity Matrix *******************
@@ -42,23 +36,21 @@ fig, column_order = dendroheatmap(spearman_connectivity, labels = True)
 # ********* Graphs *******************
 # ************************************
 
-def get_fully_connected_threshold(connectivity_matrix, initial_value = .1):
+def get_fully_connected_threshold(connectivity_matrix):
     '''Get a threshold above the initial value such that the graph is fully connected
     '''
-    if type(connectivity_matrix) == pd.DataFrame:
-        connectivity_matrix = connectivity_matrix.as_matrix()
-    threshold = initial_value
-    thresholded_mat = bct.threshold_proportional(connectivity_matrix,threshold)
-    while np.any(np.max(thresholded_mat, axis = 1)==0):
-        threshold += .01
-        thresholded_mat = bct.threshold_proportional(connectivity_matrix,threshold)
-    return threshold
+    threshold_mat = connectivity_matrix.values.copy()
+    np.fill_diagonal(threshold_mat,0)
+    abs_threshold = np.min(np.max(threshold_mat, axis = 1))
+    proportional_threshold = np.mean(threshold_mat>=(abs_threshold-.001))
+    return {'absolute': abs_threshold, 'proportional': proportional_threshold}
 
 
 
 # distance graph
 t = 1
-plot_t = get_fully_connected_threshold(distance_connectivity, .05)
+thresholds = get_fully_connected_threshold(distance_connectivity)
+plot_t = thresholds['proportional']
 t_f = bct.threshold_proportional
 c_a = lambda x: bct.community_louvain(x, gamma = 1)
 
@@ -67,6 +59,18 @@ G_distance, connectivity_adj, visual_style = Graph_Analysis(distance_connectivit
                                                      print_options = {'lookup': {}}, 
                                                     plot_options = {'inline': False})
 
+# signed graph
+t = 1
+thresholds = get_fully_connected_threshold(spearman_connectivity)
+plot_t = thresholds['proportional']
+t_f = bct.threshold_proportional
+c_a = bct.modularity_louvain_und                                           
+
+# circle layout                                                  
+G_spearman, connectivity_mat, visual_style = Graph_Analysis(spearman_connectivity, community_alg = c_a, thresh_func = t_f,
+                                                     reorder = False, threshold = t,  layout = 'kk', 
+                                                     plot_threshold = plot_t, print_options = {'lookup': {}}, 
+                                                    plot_options = {'inline': False})
 # signed graph
 t = 1
 t_f = threshold_proportional_sign
