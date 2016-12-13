@@ -1,11 +1,10 @@
 #get utils
 import sys
 sys.path.append('../../utils')
-from graph_utils import calc_connectivity_mat, community_reorder, get_subgraph, get_visual_style, Graph_Analysis
-from graph_utils import plot_graph, print_community_members, threshold_proportional_sign
+from graph_utils import calc_connectivity_mat, find_intersection, get_fully_connected_threshold
+from graph_utils import  Graph_Analysis, threshold_proportional_sign
 from plot_utils import dendroheatmap
 from utils import get_behav_data
-from data_preparation_utils import drop_vars
 
 import bct
 import igraph
@@ -14,13 +13,12 @@ import pandas as pd
 import seaborn as sns
 
 # get dependent variables
-DV_df = get_behav_data(file = 'meaningful_variables_imputed.csv')
+graph_data = get_behav_data(file = 'meaningful_variables_imputed.csv')
     
 
 # ************************************
 # ************ Connectivity Matrix *******************
 # ************************************
-graph_data = DV_df
 
 spearman_connectivity = calc_connectivity_mat(graph_data, edge_metric = 'spearman')
 distance_connectivity = calc_connectivity_mat(graph_data, edge_metric = 'distance')
@@ -35,29 +33,58 @@ fig, column_order = dendroheatmap(spearman_connectivity, labels = True)
 # ************************************
 # ********* Graphs *******************
 # ************************************
-
-def get_fully_connected_threshold(connectivity_matrix):
-    '''Get a threshold above the initial value such that the graph is fully connected
-    '''
-    threshold_mat = connectivity_matrix.values.copy()
-    np.fill_diagonal(threshold_mat,0)
-    abs_threshold = np.min(np.max(threshold_mat, axis = 1))
-    proportional_threshold = np.mean(threshold_mat>=(abs_threshold-.001))
-    return {'absolute': abs_threshold, 'proportional': proportional_threshold}
-
-
-
-# distance graph
-t = 1
-thresholds = get_fully_connected_threshold(distance_connectivity)
+# signed spearman graph
+thresholds = get_fully_connected_threshold(spearman_connectivity)
 plot_t = thresholds['proportional']
-t_f = bct.threshold_proportional
-c_a = lambda x: bct.community_louvain(x, gamma = 1)
 
-G_distance, connectivity_adj, visual_style = Graph_Analysis(distance_connectivity, community_alg = c_a, thresh_func = t_f,
-                                                      threshold = t, plot_threshold = plot_t,
-                                                     print_options = {'lookup': {}}, 
-                                                    plot_options = {'inline': False})
+GA = Graph_Analysis()
+GA.setup(data = spearman_connectivity,
+         thresh_func = threshold_proportional_sign,
+         community_alg = bct.modularity_louvain_und_sign)
+seed = 1337
+gamma = np.arange(0,3,.2)
+mod_scores = []
+layout = None
+reference=None
+intersections = []
+communities = []
+for g in gamma:
+    if layout==None:
+        layout='circle'
+    mod = GA.calculate_communities(gamma=g, seed=seed)
+    mod_scores.append(mod)
+    #GA.set_visual_style(layout=layout, plot_threshold = plot_t)
+    #GA.display()
+    if reference!=None:
+        intersections.append(find_intersection(GA.G.vs['community'], reference))
+    reference = GA.G.vs['community']
+    communities.append(reference)
+
+sns.plt.plot(gamma,mod_scores)
+sns.plt.plot(gamma, [np.max(c) for c in communities])
+
+subgraph_GA = GA.return_subgraph_analysis()
+subgraph_GA.calculate_communities()
+subgraph_GA.set_visual_style(layout='circle')
+subgraph_GA.display()
+
+
+
+
+    
+# distance graph
+thresholds = get_fully_connected_threshold(spearman_connectivity)
+plot_t = thresholds['proportional']
+
+GA = Graph_Analysis()
+GA.setup(data = spearman_connectivity,
+         thresh_func = threshold_proportional_sign,
+         community_alg = bct.modularity_louvain_und_sign)
+GA.calculate_communities()
+GA.set_visual_style(layout='circle', plot_threshold = plot_t)
+GA.display()
+
+
 
 # signed graph
 t = 1
