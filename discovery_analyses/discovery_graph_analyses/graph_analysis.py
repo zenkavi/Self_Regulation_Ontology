@@ -13,7 +13,7 @@ import pandas as pd
 import seaborn as sns
 
 # get dependent variables
-graph_data = get_behav_data(file = 'meaningful_variables_imputed.csv')
+graph_data = get_behav_data(file = 'taskdata_imputed.csv')
     
 
 # ************************************

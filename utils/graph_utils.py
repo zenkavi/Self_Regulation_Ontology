@@ -157,7 +157,6 @@ def construct_community_tree(intersections, proportional=False):
             for j in range(target_length):
                 G.add_edge(i+layer_start,j+origin_length+layer_start,weight=intersection[i,j],color = curr_color)
         layer_start+=intersection.shape[0]
-        
     igraph.plot(G, layout = 'rt', **{'inline': False, 'vertex_label': range(len(G.vs)), 'edge_width':[w for w in G.es['weight']], 'edge_color': G.es['color'], 'bbox': (1000,1000)})
     #G.write_dot('test.dot')
 
