@@ -1,0 +1,240 @@
+---
+title: "Task data analysis"
+author: "Russ Poldrack"
+date: "Dec 12, 2016"
+output: 
+ pdf_document:
+  fig_height: 8
+  fig_width: 10.5
+---
+
+This notebook outlines a set of analyses examining the full dataset task data for the UH2 project.
+
+```{r, include=FALSE}
+library(psych)
+library(knitr)
+library(gplots)
+library(GPArotation)
+
+source ('../utils/utils.R')
+
+dataset=get_info('dataset')
+basedir=get_info('base_directory')
+
+remove_weak_vars=TRUE
+```
+
+We load the cleaned-up data, and drop variables that meet one of several exclusion criteria:
+
+* maximum absolute correlation with any other variable is below 0.2
+* are part of a highly correlated pair due to structural aspects of the task (we remove one of the pair)
+* have absolute skewness > 1
+
+```{r, echo=FALSE}
+
+taskdata_v=get_task_data('Validation_12-05-2016')
+taskdata_d=get_task_data('Discovery_12-05-2016')
+taskdata=rbind(taskdata_d,taskdata_v)
+taskvars=names(taskdata)
+
+# get names of tasks
+tasknames=c()
+for (n in colnames(taskdata)){
+  tasknames=c(tasknames,unlist(strsplit(n, "[.]"))[1])
+}
+tasks=unique(tasknames)
+
+# remove weakly correlated variables
+if (remove_weak_vars){
+  c=cor(taskdata)
+  c[c==1]=0
+  m=apply(abs(c),1,max)
+  corthresh=0.2
+  taskdata_test=taskdata[,m>=corthresh]
+  cat(sprintf('dropping %d variables with max absolute correlation below %f',
+              sum(m<corthresh),corthresh))
+
+} else {
+  taskdata_test=taskdata
+}
+
+# drop variables with high correlations to other variables 
+# within same task
+corrvars=c('probabilistic_selection.value_sensitivity','angling_risk_task_always_sunny.release_score','angling_risk_task_always_sunny.keep_score')
+for (c in corrvars){
+  taskdata_test[c]=NULL
+}
+print(sprintf('dropping %d variables with high correlations',length(corrvars)))
+
+# drop variables with highly skewed distributions
+
+# compute skewness for each variable
+
+skw=array(dim=dim(taskdata_test)[2])
+skewvars=c()
+for (i in 1:dim(taskdata_test)[2]){
+  n=names(taskdata_test)[i]
+  skw[i]=skewness(as.matrix(taskdata[n]))
+  if (abs(skw[i])  > 1){
+    print(sprintf('%f:%s',skw[i],n))
+    skewvars=c(skewvars,n)
+  }
+}
+
+for (c in skewvars){
+  taskdata_test[c]=NULL
+}
+print(sprintf('dropping %d variables with excessive skew',length(skewvars)))
+
+vars=colnames(taskdata_test)
+nvars=length(taskvars)
+
+```
+
+### Clustering
+
+Visualize the data using hierarchical clustering.  Sorry about the small text - you should be able to see the names if you zoom in.
+
+```{r, echo=FALSE}
+hc=hclust(dist(t(scale(taskdata))),method='ward.D')
+par(cex=0.4,mai=c(0.1,0.1,0.1,3)) 
+plot(as.dendrogram(hc),horiz=T)
+
+```
+
+### Factor analysis
+Run factor analysis on the task data at a range of dimensionalities.
+```{r, echo=FALSE}
+bic=array(dim=12)
+for (ndims in 1:12) {
+  cat('\n')
+  cat(sprintf('FA: %d dimensions\n',ndims))
+  fa.result=fa(taskdata_test,ndims,fm='minres') #'ml')
+  bic[ndims]=fa.result$BIC
+  save(fa.result,file=sprintf('taskdata_fa_models/fa_model_%ddims.Rdata',ndims))
+  write.table(fa.result$loadings,sprintf('taskdata_fa_loadings/fa_loadings_%02ddims.csv',ndims),quote=FALSE)
+  write.table(fa.result$scores,sprintf('taskdata_fa_scores/fa_scores_%02ddims.csv',ndims),quote=FALSE)
+  print(sprintf('RMSEA = %f',fa.result$RMSEA[1]))
+  print(sprintf('BIC = %f',fa.result$BIC))
+}
+
+```
+
+
+```{r, echo=FALSE}
+bestbic=which(bic==min(bic))
+plot(bic,type='l',xlab='dimensions',ylab='BIC')
+print(sprintf('Minimum BIC at %d factors',bestbic))
+```
+
+### Print three highest positive/negative loading items on each factor
+```{r, echo=FALSE}
+fa.result=fa(taskdata_test,bestbic,fm='ml')
+for (i in 1:bestbic){
+  cat(sprintf('dimension %d\n',i))
+  o=order(fa.result$loadings[,i],decreasing=TRUE)
+  for (j in 1:3){
+    cat(sprintf('%s: %f\n',vars[o[j]],fa.result$loadings[o[j],i]))
+  }
+  o=order(fa.result$loadings[,i])
+  for (j in 3:1){
+    cat(sprintf('%s: %f\n',vars[o[j]],fa.result$loadings[o[j],i]))
+  }
+  
+  cat('\n')
+}
+
+```
+
+### Compare task and survey data
+
+Now we will compare the task data to the survey data.  For each task variable we compute its correlation with all survey subscale variables, and print out those that are significant after FDR correction.  First we have to load and clean up the data.
+
+```{r, echo=FALSE}
+survey_scale_v=read.table('../Data/Validation_12-05-2016/meaningful_variables_imputed_for_task_selection.csv',
+                          sep=',',header=TRUE)
+survey_scale_d=read.table('../Data/Discovery_12-05-2016/meaningful_variables_imputed_for_task_selection.csv',
+                          sep=',',header=TRUE)
+surveydata=rbind(survey_scale_d,survey_scale_v)
+
+surveynames=c()
+for (n in names(surveydata)) {
+  if (grepl('.survey',n)){
+    surveynames=c(surveynames,n)
+  }
+}
+
+surveydata=subset(surveydata,select=surveynames)
+surveydata=subset(surveydata,select=c(-cognitive_reflection_survey.correct_proportion,-cognitive_reflection_survey.intuitive_proportion))
+
+#tasknames=c()
+#for (n in names(taskdata_test)) {
+#  if (!grepl('.survey',n)){
+#    tasknames=c(tasknames,n)
+#  }
+#}
+#taskdata_nosurv=subset(taskdata_test,select=tasknames)
+taskdata_nosurv=taskdata_test
+```
+
+Now we compute the correlations, threshold using FDR (q<0.001), and display them in order of decreasing absolute r. 
+
+```{r, echo=FALSE}
+cc_vars_task_survey=matrix(NA,nrow=dim(taskdata_nosurv)[2],
+               ncol=dim(surveydata)[2])
+pval_task_survey=matrix(NA,nrow=dim(taskdata_nosurv)[2],
+               ncol=dim(surveydata)[2])
+for (i in 1:dim(taskdata_nosurv)[2]){
+  for (j in 1:dim(surveydata)[2]) {
+    pval_task_survey[i,j]=cor.test(taskdata_nosurv[,i],surveydata[,j])$p.value
+    cc_vars_task_survey[i,j]=cor(taskdata_nosurv[,i],surveydata[,j])
+  }
+}
+p_array=as.array(pval_task_survey)
+q=p.adjust(p_array,method='BH')
+cutoff=max(p_array[q<0.001])
+
+rdata=c()
+strsize=35
+for (i in 1:dim(taskdata_nosurv)[2]){
+  for (j in 1:dim(surveydata)[2]) {
+      rdata=cbind(rdata,c(cc_vars_task_survey[i,j],
+                              pval_task_survey[i,j],
+                strtrim(names(surveydata)[j],strsize),
+                strtrim(names(taskdata_nosurv)[i],strsize)))
+  }
+}
+rdata_df=data.frame(r=as.numeric(rdata[1,]),p=as.numeric(rdata[2,]),taskvar=rdata[4,],surveyvar=rdata[3,])
+rdata_df$q=p.adjust(rdata_df$p,method='BH')
+sigdata_df=rdata_df[rdata_df$q<0.001,]
+idx=order(abs(sigdata_df$r),decreasing=TRUE)
+sigdata_df$p=NULL
+kable(sigdata_df[idx,],digits=4,align='l',row.names=FALSE,format.args = list('nsmall'=4))
+```
+
+### Data checking
+
+Here we present pair plots for each task, including the variables that were excluded from the analyses above.
+
+```{r, echo=FALSE}
+for (t in tasks){
+  matchvars=c()
+  for (v in unique(names(taskdata))){
+      if (grepl(t,v)){
+        matchvars=c(matchvars,v)
+      }
+  }
+  if (length(matchvars)>7) {
+    matchdata=subset(taskdata,select=matchvars)
+    nd=dim(matchdata)[2]
+    pairs.panels(as.matrix(matchdata)[,1:(nd/2)],main=t)
+    pairs.panels(as.matrix(matchdata)[,(nd/2):nd],main=t)
+  }
+  else if (length(matchvars)>1) {
+    matchdata=subset(taskdata,select=matchvars)
+    pairs.panels(as.matrix(matchdata),main=t)
+  }
+
+}
+```
+
