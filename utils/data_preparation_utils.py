@@ -486,6 +486,7 @@ def save_task_data(data_loc, data):
         extract_experiment(data,exp_id).to_csv(os.path.join(path, exp_id + '.csv.gz'), compression = 'gzip')
     
 def transform_remove_skew(data, threshold=1):
+    data = data.copy()
     skewed_variables = data.columns[abs(data.skew())>threshold]
     skew_subset = data.loc[:,skewed_variables]
     positive_subset = skew_subset.loc[:,skew_subset.skew()>0]
@@ -505,6 +506,7 @@ def transform_remove_skew(data, threshold=1):
     data.drop(successful_transforms, axis=1, inplace = True)
     successful_transforms.columns = [i + '.ReflogTr' for i in successful_transforms]
     data = pd.concat([data, successful_transforms])
+    return data
     
     
     
