@@ -39,21 +39,29 @@ get_behav_data <- function(dataset, use_EZ=TRUE){
   return(d)
 }
 
+# get the cleaned up task data
+get_task_data <- function(dataset){
+  basedir <- get_info('base_directory')
+  datafile <- paste0(basedir, 'Data/', dataset, '/taskdata_clean_cutoff3.00IQR.csv')
+  d <- read.csv(datafile, row.names=1,sep=',',header=TRUE)
+  return(d)
+}
+
 #Usage: get_info('base_directory')
 #Relative path assumes you are in your /Data directory
 #item can be any field in Self_Regulation_Settings.txt file
 get_info <- function(item,infile='../Self_Regulation_Settings.txt'){
-  
+
   if(file.exists(infile)){
     infodict <- suppressWarnings(read.table(infile, sep = ":"))
     infodict$V2 <- gsub(" ", "", infodict$V2)
     if(item %in% infodict$V1){
-      return(as.character(infodict[infodict$V1 == item, "V2"])) 
+      return(as.character(infodict[infodict$V1 == item, "V2"]))
     }
     else {
       print('infodict does not include requested item')
     }
-    
+
   }
   else{
     print('You must first create a Self_Regulation_Settings.txt file')
@@ -79,10 +87,14 @@ get_single_dataset <- function(dataset, survey){
 #survey_data[[1]] for surveydata.csv (response file)
 #survey_data[[2]] for surveyitem_key.txt
 get_survey_data <- function(dataset){
-  
   basedir<- get_info('base_directory')
-  infile<-paste0(basedir, "data/Derived_Data/", dataset, "/surveydata.csv")
-  surveydata<- read.csv(infile, row.names=1)
+  d=get_behav_data(dataset)
+  surveydata=d
+  for (n in colnames(surveydata)) {
+    if (length(grep('survey',n))<1){
+      surveydata[n]=NULL
+    }
+  }
   keyfile <- paste0(basedir, "data/Derived_Data/", dataset, "/surveyitem_key.txt")
   surveykey <- read.table(keyfile, sep='\t')
   return (list(surveydata,surveykey))
