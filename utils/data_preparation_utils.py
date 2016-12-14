@@ -450,6 +450,21 @@ def remove_failed_subjects(data):
     data.drop(failed_data.index, inplace = True)
     return failed_data
 
+def remove_correlated_task_variables(data, threshold=.85):
+    tasks = np.unique([i.split('.')[0] for i in data.columns])
+    columns_to_remove = []
+    for task in tasks:
+        task_data = data.filter(regex = '^%s' % task)
+        corr_mat = np.tril(task_data.corr().values,-1)
+        remove_indices = np.unique(np.where(abs(corr_mat)>threshold)[0])
+        columns_to_remove += list(task_data.columns[remove_indices])
+    print( '*' * 50)
+    print('Dropping %s variables with correlations above %s' % (len(columns_to_remove), threshold))
+    print( '*' * 50)
+    print('\n'.join(columns_to_remove))
+    data = drop_vars(data,columns_to_remove)
+    return data
+    
 def remove_outliers(data, quantile_range = 2.5):
     '''Removes outliers more than 1.5IQR below Q1 or above Q3
     '''
@@ -469,6 +484,27 @@ def save_task_data(data_loc, data):
     for exp_id in np.sort(data.experiment_exp_id.unique()):
         print('Saving %s...' % exp_id)
         extract_experiment(data,exp_id).to_csv(os.path.join(path, exp_id + '.csv.gz'), compression = 'gzip')
+    
+def transform_remove_skew(data, threshold=1):
+    skewed_variables = data.columns[abs(data.skew())>threshold]
+    skew_subset = data.loc[:,skewed_variables]
+    positive_subset = skew_subset.loc[:,skew_subset.skew()>0]
+    negative_subset = skew_subset.loc[:,skew_subset.skew()<0]
+    # transform variables
+    # log transform for positive skew
+    positive_subset = np.log(positive_subset)
+    successful_transforms = positive_subset.loc[:,abs(positive_subset.skew())<threshold]
+    # replace transformed variables
+    data.drop(successful_transforms, axis=1, inplace = True)
+    successful_transforms.columns = [i + '.logTr' for i in successful_transforms]
+    data = pd.concat([data, successful_transforms])
+    # reflected log transform for negative skew
+    negative_subset = np.log(negative_subset.max()+1-negative_subset)
+    successful_transforms = negative_subset.loc[:,abs(negative_subset.skew())<threshold]
+    # replace transformed variables
+    data.drop(successful_transforms, axis=1, inplace = True)
+    successful_transforms.columns = [i + '.ReflogTr' for i in successful_transforms]
+    data = pd.concat([data, successful_transforms])
     
     
     

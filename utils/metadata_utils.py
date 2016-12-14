@@ -1,11 +1,21 @@
 """
 utilities for fixing metadata
 """
-import os,json
+import os,json,sys
+sys.path.append('../utils')
 
 from utils import get_info
 
-outdir=os.path.join(get_info('base_directory'),'discovery_survey_analyses/metadata')
+#warnings.filterwarnings("ignore") # only turn this on in production mode
+                                  # to keep log files from overflowing
+
+nruns=10
+dataset='Discovery_9-26-16'
+basedir=get_info('base_directory')
+derived_dir=os.path.join(basedir,'Data/Derived_Data/%s'%dataset)
+
+
+outdir=os.path.join(derived_dir,'metadata')
 
 def write_metadata(metadata,fname,
     outdir=outdir):
