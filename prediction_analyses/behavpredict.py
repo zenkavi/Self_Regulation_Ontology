@@ -25,9 +25,10 @@ import pickle
 import numpy
 
 from sklearn.ensemble import ExtraTreesClassifier
-from sklearn.model_selection import cross_val_score,StratifiedKFold
+from sklearn.model_selection import cross_val_score,StratifiedKFold,GridSearchCV
 from sklearn.metrics import roc_auc_score
 from sklearn.linear_model import LassoCV
+from sklearn.svm import SVC
 
 import fancyimpute
 from imblearn.combine import SMOTETomek
@@ -107,10 +108,23 @@ class BehavPredict:
                 if self.verbose:
                     print('dropping categorical variable:',v)
 
-    def load_behav_data(self):
+    def load_behav_data(self,datasubset='all'):
         self.behavdata=get_behav_data(self.dataset,
                                 'meaningful_variables_clean.csv',
                                 full_dataset=self.use_full_dataset)
+        if datasubset=='survey':
+            for v in self.behavdata.columns:
+                if not v.find('survey')>-1:
+                    del self.behavdata[v]
+                    if self.verbose>1:
+                        print('dropping non-survey var:',v)
+        if datasubset=='task':
+            for v in self.behavdata.columns:
+                if v.find('survey')>-1:
+                    del self.behavdata[v]
+                    if self.verbose>1:
+                        print('dropping non-survey var:',v)
+
         if self.drop_na_thresh>0:
             na_count=numpy.sum(numpy.isnan(self.behavdata),0)
 
@@ -188,6 +202,7 @@ class BehavPredict:
                 Xtrain,Ytrain=smt.fit_sample(Xtrain.copy(),Ydata[train])
             clf.fit(Xtrain,Ytrain)
             pred=clf.predict(Xtest)
+
             if numpy.var(pred)>0:
                rocscores.append(roc_auc_score(Ydata[test],pred))
             else:
@@ -211,21 +226,34 @@ if __name__=='__main__':
     # variables to be binarized for classification - dictionary
     # with threshold for each variable
 
+    # parameters to set
     report_features=True
     shuffle=False
     output_dir='prediction_outputs'
-    if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
-    clfname='lasso'
+    clfname='rbfsvm'
+    datasubset='task'
 
+
+    assert datasubset in ['survey','task','all']
+
+    # set up classifier
     if clfname=='lasso':
         clf=LassoCV()
-    elif clfname='forest':
+    elif clfname=='forest':
         clf=ExtraTreesClassifier(n_estimators=250,n_jobs=self.n_jobs,
                                         class_weight='balanced')
-    bp=BehavPredict(verbose=1)
+    elif clfname=='rbfsvm':
+        tuned_parameters={'gamma': 10.**numpy.arange(-5,5),
+                     'C': 10.**numpy.arange(-2,3)}
+        clf = GridSearchCV(SVC(), tuned_parameters, cv=4,
+                       scoring='roc_auc')
+
+    else:
+        raise Exception('clfname %s is not defined'%clfname)
+
+    bp=BehavPredict(verbose=2)
     bp.load_demog_data(binarize=True)
-    bp.load_behav_data()
+    bp.load_behav_data(datasubset)
     bp.get_joint_datasets()
     bp.binarize_demog_vars()
     for v in bp.demogdata.columns:
@@ -242,5 +270,7 @@ if __name__=='__main__':
 
     h='%08x'%random.getrandbits(32)
     shuffle_flag='shuffle_' if shuffle else ''
-    outfile='prediction_%s_%s%s.pkl'%(clfname,shuffle_flag,h)
+    outfile='prediction_%s_%s_%s%s.pkl'%(datasubset,clfname,shuffle_flag,h)
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
     pickle.dump((bp.rocscores,bp.importances),open(os.path.join(output_dir,outfile),'wb'))
