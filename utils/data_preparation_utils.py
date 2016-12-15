@@ -474,8 +474,8 @@ def remove_outliers(data, quantile_range = 2.5):
     highlimit = np.array(quantiles.iloc[:,1] + quantile_range*(quantiles.iloc[:,2] - quantiles.iloc[:,0]))
     data_mat = data.values
     data_mat[np.logical_or((data_mat<lowlimit), (data_mat>highlimit))] = np.nan
+    data = pd.DataFrame(data = data_mat, columns = data.columns, index = data.index)
     return data
-    
     
 def save_task_data(data_loc, data):
     path = os.path.join(data_loc,'Individual_Measures')
@@ -496,17 +496,25 @@ def transform_remove_skew(data, threshold=1):
     positive_subset = np.log(positive_subset)
     successful_transforms = positive_subset.loc[:,abs(positive_subset.skew())<threshold]
     # replace transformed variables
-    data.drop(successful_transforms, axis=1, inplace = True)
+    data.drop(positive_subset, axis=1, inplace = True)
     successful_transforms.columns = [i + '.logTr' for i in successful_transforms]
-    data = pd.concat([data, successful_transforms])
+    data = pd.concat([data, successful_transforms], axis = 1)
+    print('*'*40)
+    print('Dropping positively skewed data that could not be transformed successfully:')
+    print('\n'.join(set(positive_subset)-set(successful_transforms)))
+    print('*'*40)
     # reflected log transform for negative skew
     negative_subset = np.log(negative_subset.max()+1-negative_subset)
     successful_transforms = negative_subset.loc[:,abs(negative_subset.skew())<threshold]
     # replace transformed variables
-    data.drop(successful_transforms, axis=1, inplace = True)
+    data.drop(negative_subset, axis=1, inplace = True)
     successful_transforms.columns = [i + '.ReflogTr' for i in successful_transforms]
-    data = pd.concat([data, successful_transforms])
-    return data
+    data = pd.concat([data, successful_transforms], axis = 1)
+    print('*'*40)
+    print('Dropping negatively skewed data that could not be transformed successfully:')
+    print('\n'.join(set(negative_subset)-set(successful_transforms)))
+    print('*'*40)
+    return data.sort_index(axis = 1)
     
     
     
