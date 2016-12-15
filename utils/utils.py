@@ -32,7 +32,7 @@ def get_behav_data(dataset=None, file=None, full_dataset=False, flip_valence=Fal
         datadir = files[-1]
     else:
         datadir = os.path.join(basedir,'Data',dataset)
-    if full_dataset == True and 'Complete' not in dataset:
+    if full_dataset == True and 'Complete' not in datadir:
         second_datadir = pattern.sub(lambda x: d[x.group()], datadir)
         datadirs = [datadir, second_datadir]
     else:
@@ -66,7 +66,7 @@ def get_behav_data(dataset=None, file=None, full_dataset=False, flip_valence=Fal
         print('Flipping variables based on valence')
         flip_df = os.path.join(datadirs[0], 'DV_valence.csv')
         valence_flip(data, flip_df)
-    return data
+    return data.sort_index()
 
 def get_info(item,infile=None):
     """
