@@ -474,6 +474,7 @@ def remove_outliers(data, quantile_range = 2.5):
     highlimit = np.array(quantiles.iloc[:,1] + quantile_range*(quantiles.iloc[:,2] - quantiles.iloc[:,0]))
     data_mat = data.values
     data_mat[np.logical_or((data_mat<lowlimit), (data_mat>highlimit))] = np.nan
+    data = pd.DataFrame(data=data_mat, index=data.index, columns=data.columns)
     return data
     
     
@@ -505,7 +506,7 @@ def transform_remove_skew(data, threshold=1):
     # replace transformed variables
     data.drop(successful_transforms, axis=1, inplace = True)
     successful_transforms.columns = [i + '.ReflogTr' for i in successful_transforms]
-    data = pd.concat([data, successful_transforms])
+    data = pd.concat([data, successful_transforms], axis=1)
     return data
     
     
