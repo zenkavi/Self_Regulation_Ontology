@@ -12,7 +12,7 @@ from data_preparation_utils import convert_var_names, drop_failed_QC_vars, drop_
 from data_preparation_utils import remove_correlated_task_variables, remove_outliers, save_task_data
 from data_preparation_utils import transform_remove_skew
 from utils import get_info
-#from r_to_py_utils import missForest
+from r_to_py_utils import missForest
 
 #******************************
 #*** Save Data *********
@@ -155,8 +155,8 @@ for data,directory, DV_df, valence_df in datasets:
         selected_variables_reference.loc[selected_variables.columns].to_csv(path.join(reference_dir, 'selected_variables_reference.csv'))
         
         # imputed data
-        #selected_variables_imputed, error = missForest(selected_variables_clean)
-        #selected_variables_imputed.to_csv(path.join(directory, 'meaningful_variables_imputed.csv'))
+        selected_variables_imputed, error = missForest(selected_variables_clean)
+        selected_variables_imputed.to_csv(path.join(directory, 'meaningful_variables_imputed.csv'))
         readme_lines += ["meaningful_variables_imputed.csv: meaningful_variables_clean.csv after imputation with missForest\n\n"]
         
         # save task data subset
@@ -164,17 +164,17 @@ for data,directory, DV_df, valence_df in datasets:
         task_data.to_csv(path.join(directory, 'taskdata.csv'))
         task_data_clean = drop_vars(selected_variables_clean, ['survey'], saved_vars = ['holt','cognitive_reflection'])
         task_data_clean.to_csv(path.join(directory, 'taskdata_clean.csv'))
-        #task_data_imputed = drop_vars(selected_variables_imputed, ['survey'], saved_vars = ['holt','cognitive_reflection'])
-        #task_data_imputed.to_csv(path.join(directory, 'taskdata_imputed.csv'))
+        task_data_imputed = drop_vars(selected_variables_imputed, ['survey'], saved_vars = ['holt','cognitive_reflection'])
+        task_data_imputed.to_csv(path.join(directory, 'taskdata_imputed.csv'))
         readme_lines += ["taskdata*.csv: taskdata are the same as meaningful_variables excluded surveys. Note that imputation is performed on the entire dataset including surveys\n\n"]
         
         # create task selection dataset
-        # task_selection_data = drop_vars(selected_variables_imputed, ['stop_signal.SSRT_low', '^stop_signal.proactive'])
-        # task_selection_data.to_csv(path.join(directory,'meaningful_variables_imputed_for_task_selection.csv'))
-        # task_selection_taskdata = drop_vars(task_data_imputed, ['stop_signal.SSRT_low', '^stop_signal.proactive'])
-        # task_selection_taskdata.to_csv(path.join(directory,'taskdata_imputed_for_task_selection.csv'))
+        task_selection_data = drop_vars(selected_variables_imputed, ['stop_signal.SSRT_low', '^stop_signal.proactive'])
+        task_selection_data.to_csv(path.join(directory,'meaningful_variables_imputed_for_task_selection.csv'))
+        task_selection_taskdata = drop_vars(task_data_imputed, ['stop_signal.SSRT_low', '^stop_signal.proactive'])
+        task_selection_taskdata.to_csv(path.join(directory,'taskdata_imputed_for_task_selection.csv'))
         #save selected variables
-        # selected_variables_reference.loc[task_selection_data.columns].to_csv(path.join(reference_dir, 'selected_variables_for_task_selection_reference.csv'))
+        selected_variables_reference.loc[task_selection_data.columns].to_csv(path.join(reference_dir, 'selected_variables_for_task_selection_reference.csv'))
         
         from glob import glob
         files = glob(path.join(directory,'*csv'))
