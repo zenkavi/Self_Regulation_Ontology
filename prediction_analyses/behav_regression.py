@@ -24,7 +24,7 @@ if __name__=='__main__':
     # with threshold for each variable
 
     # parameters to set
-    report_features=True
+    report_features=False
     if len(sys.argv)>1:
         shuffle=int(sys.argv[1])
     else:
@@ -42,7 +42,7 @@ if __name__=='__main__':
 
     assert datasubset in ['survey','task','all']
 
-    bp=behavpredict.BehavPredict(verbose=2,use_smote=False)
+    bp=behavpredict.BehavPredict(verbose=False,use_smote=False)
 
     # set up classifier
     if clfname=='lasso':
@@ -55,14 +55,19 @@ if __name__=='__main__':
 
     bp.load_demog_data(binarize=False)
     bp.load_behav_data(datasubset)
+    if shuffle:
+        tmp=bp.demogdata.values.copy()
+        numpy.random.shuffle(tmp)
+        bp.demogdata.iloc[:,:]=tmp
+        print('WARNING: shuffling target data')
     bp.get_joint_datasets()
     #bp.binarize_demog_vars()
     for v in bp.demogdata.columns:
-        print('')
         bp.rocscores[v],bp.importances[v]=bp.run_crossvalidation(v,clf=clf,
-                                    shuffle=shuffle,scoring='r2',
+                                    scoring='r2',
                                     outer_cv=BalancedKFold(bp.n_outer_splits))
         if report_features and numpy.mean(bp.rocscores[v])>0.2:
+            print('')
             meanimp=numpy.mean(bp.importances[v],0)
             meanimp_sortidx=numpy.argsort(meanimp)
             for i in meanimp_sortidx[-1:-4:-1]:

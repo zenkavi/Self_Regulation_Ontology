@@ -24,7 +24,7 @@ if __name__=='__main__':
     # with threshold for each variable
 
     # parameters to set
-    report_features=True
+    report_features=False
     if len(sys.argv)>1:
         shuffle=int(sys.argv[1])
     else:
@@ -60,16 +60,21 @@ if __name__=='__main__':
     else:
         raise Exception('clfname %s is not defined'%clfname)
 
-    bp=behavpredict.BehavPredict(verbose=2,n_jobs=23)
+    bp=behavpredict.BehavPredict(verbose=False,n_jobs=23)
     bp.load_demog_data(binarize=True)
     bp.load_behav_data(datasubset)
+    if shuffle:
+        tmp=bp.demogdata.values.copy()
+        numpy.random.shuffle(tmp)
+        bp.demogdata.iloc[:,:]=tmp
+        print('WARNING: shuffling target data')
     bp.get_joint_datasets()
     bp.binarize_demog_vars()
+
     for v in bp.demogdata.columns:
-        print('')
-        bp.rocscores[v],bp.importances[v]=bp.run_crossvalidation(v,clf=clf,
-                                    shuffle=shuffle)
+        bp.rocscores[v],bp.importances[v]=bp.run_crossvalidation(v,clf=clf)
         if report_features and numpy.mean(bp.rocscores[v])>0.65:
+            print('')
             meanimp=numpy.mean(bp.importances[v],0)
             meanimp_sortidx=numpy.argsort(meanimp)
             for i in meanimp_sortidx[-1:-4:-1]:
