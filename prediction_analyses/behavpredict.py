@@ -25,8 +25,8 @@ import pickle
 import numpy
 
 from sklearn.ensemble import ExtraTreesClassifier
-from sklearn.model_selection import cross_val_score,StratifiedKFold,GridSearchCV
-from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import cross_val_score,StratifiedKFold,ShuffleSplit,GridSearchCV
+from sklearn.metrics import roc_auc_score,r2_score
 from sklearn.linear_model import LassoCV
 from sklearn.svm import SVC
 
@@ -128,7 +128,7 @@ class BehavPredict:
         if self.drop_na_thresh>0:
             na_count=numpy.sum(numpy.isnan(self.behavdata),0)
 
-            self.dropped_na_columns=bp.behavdata.columns[na_count>self.drop_na_thresh]
+            self.dropped_na_columns=self.behavdata.columns[na_count>self.drop_na_thresh]
             for c in self.dropped_na_columns:
                 if self.verbose>1:
                     print('dropping',c,numpy.sum(numpy.isnan(self.behavdata[c])))
@@ -150,15 +150,15 @@ class BehavPredict:
 
     def binarize_demog_vars(self):
         print('binarizing demographic data...')
-        for v in bp.demogdata.columns:
+        for v in self.demogdata.columns:
             # first check to see if it's a binary variable already:
             if len(self.demogdata[v].unique())==2:
                 if self.verbose>1:
                     print('already binary:',v)
             else:
                 c=numpy.percentile(self.demogdata[v].dropna(),50)
-                self.binary_cutoffs[v]=[c,numpy.sum(bp.demogdata[v]<=c),
-                        numpy.sum(bp.demogdata[v]>c)]
+                self.binary_cutoffs[v]=[c,numpy.sum(self.demogdata[v]<=c),
+                        numpy.sum(self.demogdata[v]>c)]
                 if self.binary_cutoffs[v][2]/(self.binary_cutoffs[v][1]+self.binary_cutoffs[v][2])<self.binary_min_proportion:
                     if self.verbose:
                         print('dropping binary var due to low frequency:',v,
@@ -169,7 +169,7 @@ class BehavPredict:
 
     def run_crossvalidation(self,v,clf=None,outer_cv=None,
                             imputer=fancyimpute.SimpleFill,
-                            shuffle=False):
+                            shuffle=False,scoring='roc_auc'):
         """
         v is the variable on which to run crosvalidation
         """
@@ -189,7 +189,7 @@ class BehavPredict:
                 print('shuffling Y variable')
                 numpy.random.shuffle(Ydata)
         Xdata=Xdata.values
-        rocscores=[]
+        scores=[]
         importances=[]
         for train,test in outer_cv.split(Xdata,Ydata):
             Xtrain=imputer().complete(Xdata[train,:])
@@ -203,74 +203,23 @@ class BehavPredict:
             clf.fit(Xtrain,Ytrain)
             pred=clf.predict(Xtest)
 
-            if numpy.var(pred)>0:
-               rocscores.append(roc_auc_score(Ydata[test],pred))
-            else:
-               if self.verbose:
-                   print(v,'zero variance in predictions')
-               rocscores.append(numpy.nan)
-            if hasattr(clf,'feature_importances_'):  # for random forest
-                importances.append(clf.feature_importances_)
-            elif hasattr(clf,'coef_'):  # for lasso
-                importances.append(clf.coef_)
+        if numpy.var(pred)>0:
+            if scoring=='r2':
+                scores=r2_score(Ydata[test],pred)
+            elif scoring=='roc_auc':
+                scores=roc_auc_score(Ydata[test],pred)
+        else:
+           if self.verbose:
+               print(v,'zero variance in predictions')
+           scores=numpy.nan
+        if hasattr(clf,'feature_importances_'):  # for random forest
+            importances.append(clf.feature_importances_)
+        elif hasattr(clf,'coef_'):  # for lasso
+            importances.append(clf.coef_)
         if self.verbose:
-            print('mean accuracy = %0.3f'%numpy.mean(rocscores))
+            print('mean accuracy = %0.3f'%scores)
         try:
             imp=numpy.vstack(importances)
         except:
             imp=None
-        return rocscores,imp
-
-
-if __name__=='__main__':
-    # variables to be binarized for classification - dictionary
-    # with threshold for each variable
-
-    # parameters to set
-    report_features=True
-    shuffle=False
-    output_dir='prediction_outputs'
-    clfname='rbfsvm'
-    datasubset='task'
-
-
-    assert datasubset in ['survey','task','all']
-
-    # set up classifier
-    if clfname=='lasso':
-        clf=LassoCV()
-    elif clfname=='forest':
-        clf=ExtraTreesClassifier(n_estimators=250,n_jobs=self.n_jobs,
-                                        class_weight='balanced')
-    elif clfname=='rbfsvm':
-        tuned_parameters={'gamma': 10.**numpy.arange(-5,5),
-                     'C': 10.**numpy.arange(-2,3)}
-        clf = GridSearchCV(SVC(), tuned_parameters, cv=4,
-                       scoring='roc_auc')
-
-    else:
-        raise Exception('clfname %s is not defined'%clfname)
-
-    bp=BehavPredict(verbose=2)
-    bp.load_demog_data(binarize=True)
-    bp.load_behav_data(datasubset)
-    bp.get_joint_datasets()
-    bp.binarize_demog_vars()
-    for v in bp.demogdata.columns:
-        print('')
-        bp.rocscores[v],bp.importances[v]=bp.run_crossvalidation(v,clf=clf,
-                                    shuffle=shuffle)
-        if report_features and numpy.mean(bp.rocscores[v])>0.65:
-            meanimp=numpy.mean(bp.importances[v],0)
-            meanimp_sortidx=numpy.argsort(meanimp)
-            for i in meanimp_sortidx[-1:-4:-1]:
-                print(bp.behavdata.columns[i],meanimp[i])
-            for i in meanimp_sortidx[:3][::-1]:
-                print(bp.behavdata.columns[i],meanimp[i])
-
-    h='%08x'%random.getrandbits(32)
-    shuffle_flag='shuffle_' if shuffle else ''
-    outfile='prediction_%s_%s_%s%s.pkl'%(datasubset,clfname,shuffle_flag,h)
-    if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
-    pickle.dump((bp.rocscores,bp.importances),open(os.path.join(output_dir,outfile),'wb'))
+        return scores,imp
