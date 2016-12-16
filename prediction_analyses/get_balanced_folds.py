@@ -17,7 +17,7 @@ class BalancedKFold:
         self.pthresh=pthresh
         self.verbose=verbose
 
-    def split(self,X,Y):
+    def split(self,X,Y,max_splits=1000):
         """
         - we don't actually need X but we take it for consistency
         """
@@ -25,7 +25,7 @@ class BalancedKFold:
         nsubs=len(Y)
 
         # cycle through until we find a split that is good enough
-        cv=KFold(n_splits=self.nfolds,shuffle=True,max_splits=1000)
+        cv=KFold(n_splits=self.nfolds,shuffle=True)
 
         ctr=0
         best_pval=0
