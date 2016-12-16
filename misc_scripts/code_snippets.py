@@ -8,7 +8,7 @@ Created on Mon Dec 12 23:03:06 2016
 import numpy as np
 import pandas as pd
 import sys
-sys.path.append('../../utils')
+sys.path.append('../utils')
 from utils import get_behav_data
 from sklearn.decomposition import FactorAnalysis
 from sklearn.model_selection import cross_val_score

@@ -8,7 +8,9 @@ from process_demographics import process_demographics
 from process_health import process_health
 import sys
 sys.path.append('../utils')
-from data_preparation_utils import convert_var_names, drop_failed_QC_vars, drop_vars, get_items, remove_outliers, save_task_data
+from data_preparation_utils import convert_var_names, drop_failed_QC_vars, drop_vars, get_items
+from data_preparation_utils import remove_correlated_task_variables, remove_outliers, save_task_data
+from data_preparation_utils import transform_remove_skew
 from utils import get_info
 from r_to_py_utils import missForest
 
@@ -44,13 +46,24 @@ for label in data_labels:
         DVs = []
         DVs_valence = []
     datasets.append((data,directory, DVs, DVs_valence))
+    
+# create complete dataset
+if len(datasets)>1:
+    directory = path.join(data_dir,'Complete_' + date)
+    data = pd.concat([dataset[0] for dataset in datasets])
+    DVs = pd.concat([dataset[2] for dataset in datasets])
+    DVs_valence = pd.concat([dataset[3] for dataset in datasets])
+    datasets.append((data, directory, DVs, DVs_valence))
 
 # calculate DVs
 for data,directory, DV_df, valence_df in datasets:
     readme_lines = []
     meta_dir = path.join(directory,'metadata')
+    reference_dir = path.join(directory,'references')
     if not path.exists(meta_dir):
         makedirs(meta_dir)
+    if not path.exists(reference_dir):
+        makedirs(reference_dir)
     # save target datasets
     print('Saving to %s...' % directory)
     print('Saving target measures...')
@@ -65,7 +78,7 @@ for data,directory, DV_df, valence_df in datasets:
     target_data.to_csv(path.join(directory,'demographic_health.csv'))
     # save demographic targets reference
     if 'Discovery' in directory:
-        np.savetxt('../references/demographic_health_reference.csv', target_data.columns, fmt = '%s', delimiter=",")
+        np.savetxt(path.join(reference_dir,'demographic_health_reference.csv'), target_data.columns, fmt = '%s', delimiter=",")
     # save items
     items_df = get_items(data)
     print('Saving items...')
@@ -90,20 +103,19 @@ for data,directory, DV_df, valence_df in datasets:
     # ************************************
     # ********* Save DV dataframes **
     # ************************************
+    def get_flip_list(valence_df):
+        #flip negative signed valence DVs
+        valence_df = valence_df.replace(to_replace={np.nan: 'NA'})
+        flip_df = np.floor(valence_df.replace(to_replace ={'Pos': 1, 'NA': 1, 'Neg': -1}).mean())
+        valence_df = pd.Series(data = [col.unique()[0] for i,col in valence_df.iteritems()], index = valence_df.columns)
+        return flip_df, valence_df
+
     if len(DV_df > 0):
         # drop failed QC vars
         drop_failed_QC_vars(DV_df,data)
         
-        #flip negative signed valence DVs
-        valence_list = [i.dropna().unique()[0] if len(i.dropna().unique()) > 0 else 'NA' for col,i in valence_df.iteritems()]
-        valence_df = valence_df.replace(to_replace={np.nan: 'NA'})
-        flip_df = np.floor(valence_df.replace(to_replace ={'Pos': 1, 'NA': 1, 'Neg': -1}).mean())
-        for c in DV_df.columns:
-            try:
-                DV_df.loc[:,c] = DV_df.loc[:,c] * flip_df.loc[c]
-            except TypeError:
-                continue
         #save valence
+        flip_df, valence_df = get_flip_list(valence_df)
         flip_df.to_csv(path.join(directory, 'DV_valence.csv'))
         readme_lines += ["DV_valence.csv: Subjective assessment of whether each variable's 'natural' direction implies 'better' self regulation\n\n"]
         
@@ -128,24 +140,27 @@ for data,directory, DV_df, valence_df in datasets:
         hddm_subset.to_csv(path.join(directory, 'meaningful_variables_hddm.csv'))
         readme_lines += ["meaningful_variables_hddm.csv: subset of exhaustive data to only meaningful variables with rt/acc parameters removed (replaced by hddm DDM params)\n\n"]
         
-        # clean and save files that are selected for use
+        # save files that are selected for use
         selected_variables = hddm_subset
         selected_variables.to_csv(path.join(directory, 'meaningful_variables.csv'))
         readme_lines += ["meaningful_variables.csv: Same as meaningful_variables_hddm.csv\n\n"]
+        # clean data
         selected_variables_clean = remove_outliers(selected_variables)
+        selected_variables_clean = remove_correlated_task_variables(selected_variables_clean)
+        selected_variables_clean = transform_remove_skew(selected_variables_clean)
         selected_variables_clean.to_csv(path.join(directory, 'meaningful_variables_clean.csv'))
         readme_lines += ["meaningful_variables_clean.csv: same as meaningful_variables.csv with outliers defined as greater than 2.5 IQR from median removed from each column\n\n"]
         
         #save selected variables
-        selected_variables_reference = pd.Series(data = valence_list, index = valence_df.columns)
-        selected_variables_reference.loc[selected_variables.columns].to_csv('../references/selected_variables_reference.csv')
+        selected_variables_reference = valence_df
+        selected_variables_reference.loc[selected_variables.columns].to_csv(path.join(reference_dir, 'selected_variables_reference.csv'))
         
         # imputed data
         selected_variables_imputed, error = missForest(selected_variables_clean)
         selected_variables_imputed.to_csv(path.join(directory, 'meaningful_variables_imputed.csv'))
         readme_lines += ["meaningful_variables_imputed.csv: meaningful_variables_clean.csv after imputation with missForest\n\n"]
         
-        #task data
+        # save task data subset
         task_data = drop_vars(selected_variables, ['survey'], saved_vars = ['holt','cognitive_reflection'])
         task_data.to_csv(path.join(directory, 'taskdata.csv'))
         task_data_clean = drop_vars(selected_variables_clean, ['survey'], saved_vars = ['holt','cognitive_reflection'])
@@ -160,7 +175,7 @@ for data,directory, DV_df, valence_df in datasets:
         task_selection_taskdata = drop_vars(task_data_imputed, ['stop_signal.SSRT_low', '^stop_signal.proactive'])
         task_selection_taskdata.to_csv(path.join(directory,'taskdata_imputed_for_task_selection.csv'))
         #save selected variables
-        selected_variables_reference.loc[task_selection_data.columns].to_csv('../references/selected_variables_for_task_selection_reference.csv')
+        selected_variables_reference.loc[task_selection_data.columns].to_csv(path.join(reference_dir, 'selected_variables_for_task_selection_reference.csv'))
         
         from glob import glob
         files = glob(path.join(directory,'*csv'))

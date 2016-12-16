@@ -16,7 +16,14 @@ def print_confusion_matrix(y_true,y_pred,labels=[0,1]):
     print('Actual\t0\t%d\t%d'%(cm[0,0],cm[0,1]))
     print('\t1\t%d\t%d'%(cm[1,0],cm[1,1]))
 
-def get_behav_data(dataset = None,file=None, full_dataset=False):
+def get_behav_data(dataset=None, file=None, full_dataset=False, flip_valence=False):
+    '''Retrieves a file from a data release. By default extracts meaningful_variables from
+    the most recent Discovery dataset.
+    :param dataset: optional, string indicating discovery, validation, or complete dataset of interest
+    :param file: optional, string indicating the file of interest
+    :full_dataset: bool, default false. If True and either a discovery or validation dataset is specified, retrieve the other as well
+    :flip_valence: bool, default false. If true use DV_valence.csv to flip variables based on their subjective valence
+    '''
     d = {'Discovery': 'Validation', 'Validation': 'Discovery'}
     basedir=get_info('base_directory')
     pattern = re.compile('|'.join(d.keys()))
@@ -25,7 +32,7 @@ def get_behav_data(dataset = None,file=None, full_dataset=False):
         datadir = files[-1]
     else:
         datadir = os.path.join(basedir,'Data',dataset)
-    if full_dataset == True:
+    if full_dataset == True and 'Complete' not in datadir:
         second_datadir = pattern.sub(lambda x: d[x.group()], datadir)
         datadirs = [datadir, second_datadir]
     else:
@@ -48,7 +55,18 @@ def get_behav_data(dataset = None,file=None, full_dataset=False):
                     df = pandas.DataFrame()
                     continue
         data = pandas.concat([df,data])
-    return data
+    
+    def valence_flip(data, flip_list):
+        for c in data.columns:
+            try:
+                data.loc[:,c] = data.loc[:,c] * flip_list.loc[c]
+            except TypeError:
+                continue
+    if flip_valence==True:
+        print('Flipping variables based on valence')
+        flip_df = os.path.join(datadirs[0], 'DV_valence.csv')
+        valence_flip(data, flip_df)
+    return data.sort_index()
 
 def get_info(item,infile=None):
     """
@@ -110,21 +128,6 @@ def load_metadata(variable,basedir):
             metadata=json.load(outfile)
     return metadata
 
-
-def get_single_dataset(dataset,survey):
-    basedir=get_info('base_directory')
-    infile=os.path.join(basedir,'data/Derived_Data/%s/surveydata/%s.tsv'%(dataset,survey))
-    print(infile)
-    assert os.path.exists(infile)
-    if survey.find('ordinal')>-1:
-        survey=survey.replace('_ordinal','')
-    mdfile=os.path.join(basedir,'data/Derived_Data/%s/metadata/%s.json'%(dataset,survey))
-    print(mdfile)
-    assert os.path.exists(mdfile)
-    data=pandas.read_csv(infile,index_col=0,sep='\t')
-    metadata=load_metadata(survey,os.path.join(basedir,
-        'data/Derived_Data/%s/metadata'%dataset))
-    return data,metadata
 
 def get_demographics(dataset,var_subset=None,full_dataset=False):
     """
