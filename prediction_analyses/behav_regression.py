@@ -25,10 +25,19 @@ if __name__=='__main__':
 
     # parameters to set
     report_features=True
-    shuffle=False
+    if len(sys.argv)>1:
+        shuffle=int(sys.argv[1])
+    else:
+        shuffle=False
     output_dir='regression_outputs'
-    clfname='forest'
-    datasubset='all'
+    if len(sys.argv)>2:
+        clfname=sys.argv[2]
+    else:
+        clfname='lasso'
+    if len(sys.argv)>3:
+        datasubset=sys.argv[3]
+    else:
+        datasubset='all'
 
 
     assert datasubset in ['survey','task','all']
@@ -45,6 +54,7 @@ if __name__=='__main__':
         raise Exception('clfname %s is not defined'%clfname)
 
     bp.load_demog_data(binarize=False)
+    del bp.demogdata['RetirementPercentStocks']
     bp.load_behav_data(datasubset)
     bp.get_joint_datasets()
     #bp.binarize_demog_vars()

@@ -50,7 +50,7 @@ if __name__=='__main__':
     else:
         raise Exception('clfname %s is not defined'%clfname)
 
-    bp=behavpredict.BehavPredict(verbose=2)
+    bp=behavpredict.BehavPredict(verbose=2,n_jobs=23)
     bp.load_demog_data(binarize=True)
     bp.load_behav_data(datasubset)
     bp.get_joint_datasets()
