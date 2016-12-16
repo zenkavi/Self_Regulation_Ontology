@@ -59,7 +59,7 @@ def get_behav_data(dataset=None, file=None, full_dataset=False, flip_valence=Fal
     def valence_flip(data, flip_list):
         for c in data.columns:
             try:
-                data.loc[:,c] = data.loc[:,c] * flip_list.loc[c][0]
+                data.loc[:,c] = data.loc[:,c] * flip_list.loc[c]
             except TypeError:
                 continue
     if flip_valence==True:
@@ -128,21 +128,6 @@ def load_metadata(variable,basedir):
             metadata=json.load(outfile)
     return metadata
 
-
-def get_single_dataset(dataset,survey):
-    basedir=get_info('base_directory')
-    infile=os.path.join(basedir,'data/Derived_Data/%s/surveydata/%s.tsv'%(dataset,survey))
-    print(infile)
-    assert os.path.exists(infile)
-    if survey.find('ordinal')>-1:
-        survey=survey.replace('_ordinal','')
-    mdfile=os.path.join(basedir,'data/Derived_Data/%s/metadata/%s.json'%(dataset,survey))
-    print(mdfile)
-    assert os.path.exists(mdfile)
-    data=pandas.read_csv(infile,index_col=0,sep='\t')
-    metadata=load_metadata(survey,os.path.join(basedir,
-        'data/Derived_Data/%s/metadata'%dataset))
-    return data,metadata
 
 def get_demographics(dataset,var_subset=None,full_dataset=False):
     """
