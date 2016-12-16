@@ -25,24 +25,33 @@ class BalancedKFold:
         nsubs=len(Y)
 
         # cycle through until we find a split that is good enough
-        cv=KFold(n_splits=self.nfolds,shuffle=True)
+        cv=KFold(n_splits=self.nfolds,shuffle=True,max_splits=1000)
 
-        good_split=0
-        while good_split==0:
-            ctr=0
+        ctr=0
+        best_pval=0
+        while 0:
+            ctr+=1
+
             idx=N.zeros((nsubs,self.nfolds)) # this is the design matrix
             folds=[]
             for train,test in cv.split(Y):
                 idx[test,ctr]=1
-                ctr+=1
                 folds.append([train,test])
 
             lm_y=OLS(Y-N.mean(Y),idx).fit()
+
+            if lm_y.f_pvalue>best_pval:
+                best_pval=lm_y.f_pvalue
+                best_folds=folds
 
             if lm_y.f_pvalue>self.pthresh:
                 if self.verbose:
                     print(lm_y.summary())
                 return folds
+
+            if ctr>max_splits:
+                print('no sufficient split found, returning best (p=%f)'%best_pval)
+                return best_folds
 
 if __name__=="__main__":
     Y=N.random.randn(100,1)

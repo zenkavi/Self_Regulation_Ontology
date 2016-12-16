@@ -54,7 +54,6 @@ if __name__=='__main__':
         raise Exception('clfname %s is not defined'%clfname)
 
     bp.load_demog_data(binarize=False)
-    del bp.demogdata['RetirementPercentStocks']
     bp.load_behav_data(datasubset)
     bp.get_joint_datasets()
     #bp.binarize_demog_vars()
