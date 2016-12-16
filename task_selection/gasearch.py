@@ -48,7 +48,7 @@ class GASearchParams:
         linreg_n_jobs=-1,
         taskdatafile= 'taskdata_imputed_for_task_selection.csv',
         behavdatafile= 'meaningful_variables_imputed_for_task_selection.csv',
-        drop_tasks=['writing_task','simple_reaction_time','bickel_titrator'],
+        drop_tasks=['writing_task','simple_reaction_time'],
         drop_vars=[],
         demogvars=['BMI','RetirementAccount','ChildrenNumber','DivorceCount',
                                 'HouseholdIncome','SmokeEveryDay','CigsPerDay',
@@ -333,11 +333,6 @@ class GASearch:
         return maxcc
 
     def get_population_fitness_tasks(self):
-        # first remove any that are over the time limit
-        cc_time=[]
-        for ct in self.population:
-            time_penalty,totaltime=get_time_fitness(ct,self.params)
-            cc_time.append(time_penalty*2)
         if self.params.constrain_single_stop_task:
             for ct in self.population:
                 if len(set(self.params.stoptasks).intersection(ct))>1:
@@ -368,6 +363,12 @@ class GASearch:
                 print('corr recon-subsim:',numpy.corrcoef(cc_recon,cc_subsim)[0,1])
             except:
                 pass
+
+        # penalize any that are over the time limit
+        cc_time=[]
+        for ct in self.population:
+            time_penalty,totaltime=get_time_fitness(ct,self.params)
+            cc_time.append(time_penalty*2)
         maxcc=[numpy.max(cc_recon),numpy.max(cc_subsim)]
         cc_recon=scale(cc_recon)
         cc_subsim=scale(cc_subsim)
@@ -422,6 +423,7 @@ class GASearch:
         immigrants=[]
         idx=[i for i in range(self.params.ntasks)]
         for i in range(self.params.nimmigrants):
+            badlength=True
             while badlength:
                 numpy.random.shuffle(idx)
                 time_penalty,totaltime=get_time_fitness(idx[:self.params.nvars],self.params)
