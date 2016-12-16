@@ -25,10 +25,20 @@ if __name__=='__main__':
 
     # parameters to set
     report_features=True
-    shuffle=False
+    if len(sys.argv)>1:
+        shuffle=int(sys.argv[1])
+    else:
+        shuffle=False
+    if len(sys.argv)>2:
+        clfname=sys.argv[2]
+    else:
+        clfname='lasso'
+    if len(sys.argv)>3:
+        datasubset=sys.argv[3]
+    else:
+        datasubset='all'
+
     output_dir='prediction_outputs'
-    clfname='lasso'
-    datasubset='task'
 
 
     assert datasubset in ['survey','task','all']
