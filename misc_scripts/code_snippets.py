@@ -22,6 +22,7 @@ def SoftImpute_df(data):
     
 # find best number of components
 data = get_behav_data(file = 'taskdata_clean.csv', full_dataset = True)
+
 n_components = range(1,12)
 best_score = -np.Inf
 best_c = 0
@@ -42,7 +43,6 @@ for c in n_components:
         best_score = score
         best_c = c
 print(best_c)
-
 
 imputed_data = get_behav_data(dataset = 'Complete_12-15-2016', file = 'taskdata_imputed.csv')
 fa=FactorAnalysis(best_c)
