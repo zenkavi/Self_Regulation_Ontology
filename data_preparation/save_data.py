@@ -48,11 +48,12 @@ for label in data_labels:
     datasets.append((data,directory, DVs, DVs_valence))
     
 # create complete dataset
-directory = path.join(data_dir,'Complete_' + date)
-data = pd.concat([dataset[0] for dataset in datasets])
-DVs = pd.concat([dataset[2] for dataset in datasets])
-DVs_valence = pd.concat([dataset[3] for dataset in datasets])
-datasets.append((data, directory, DVs, DVs_valence))
+if len(datasets)>1:
+    directory = path.join(data_dir,'Complete_' + date)
+    data = pd.concat([dataset[0] for dataset in datasets])
+    DVs = pd.concat([dataset[2] for dataset in datasets])
+    DVs_valence = pd.concat([dataset[3] for dataset in datasets])
+    datasets.append((data, directory, DVs, DVs_valence))
 
 # calculate DVs
 for data,directory, DV_df, valence_df in datasets:
