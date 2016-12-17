@@ -32,7 +32,7 @@ discovery_n = 200
 subjects = ['s' + str(i).zfill(3) for i in range(1,n+1)]
 subject_order = set_discovery_sample(n, discovery_n, seed)
 subject_assignment_df = pd.DataFrame({'dataset': subject_order}, index = subjects)
-subject_assignment_df.to_csv('../subject_assignment.csv')
+subject_assignment_df.to_csv('samples/subject_assignment.csv')
 
 # ************************************
 # set test-retest sample
@@ -56,9 +56,9 @@ def get_testretest_order(n = 200, seed = seed):
     order = np.random.permutation(range(0,n))
     return order
 
-def get_retest_workers(data):
+def get_retest_workers(data, n = 200):
     retest_order = get_testretest_order()
-    retest_workers_anonym = np.sort(data.worker_id.unique())[retest_order[:150]]
+    retest_workers_anonym = np.sort(data.worker_id.unique())[retest_order[0:n]]
     retest_workers = [worker_lookup[w] for w in retest_workers_anonym]
     return pd.Series(retest_workers)
     
