@@ -1,14 +1,16 @@
-import os,glob
+import os,glob,sys
 import pickle
 import numpy
 import scipy.stats
 from statsmodels.sandbox.stats.multicomp import multipletests
-analysis='prediction'
+analysis=sys.argv[1]
+assert analysis in ['prediction','regression']
+
 
 datadir='%s_outputs'%analysis
 pvals={}
 pvals_fdr={}
-
+outfile=open("%s_results.txt"%analysis,'w')
 for clf in ['lasso','forest']:
     if not clf in pvals:
         pvals[clf]={}
@@ -54,8 +56,9 @@ for clf in ['lasso','forest']:
         _,pvals_fdr[clf][ds],_,_=multipletests(pvals[clf][ds],method='fdr_bh')
         for i in range(permuted_data.shape[0]):
             if pvals_fdr[clf][ds][i]<0.05:
-                print(clf,ds,keys[i],truedata[0][keys[i]],pvals_fdr[clf][ds][i])
+                outfile.write(' '.join([clf,ds,keys[i],'%f'%truedata[0][keys[i]],'%f'%pvals_fdr[clf][ds][i]])+'\n')
         # FWE max cutoff
         perm_max=numpy.nanmax(permuted_data,1)
         cutoff=scipy.stats.scoreatpercentile(perm_max,95)
         print(analysis,clf,ds,'cutoff=%0.3f'%cutoff)
+outfile.close()
