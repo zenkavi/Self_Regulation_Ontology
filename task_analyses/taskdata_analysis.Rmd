@@ -21,7 +21,7 @@ source ('../utils/utils.R')
 dataset=get_info('dataset')
 basedir=get_info('base_directory')
 
-remove_weak_vars=TRUE
+remove_weak_vars=FALSE
 ```
 
 We load the cleaned-up data, and drop variables that meet one of several exclusion criteria:
@@ -32,9 +32,10 @@ We load the cleaned-up data, and drop variables that meet one of several exclusi
 
 ```{r, echo=FALSE}
 
-taskdata_v=get_task_data('Validation_12-05-2016')
-taskdata_d=get_task_data('Discovery_12-05-2016')
-taskdata=rbind(taskdata_d,taskdata_v)
+#taskdata_v=get_task_data('Validation_12-05-2016')
+#taskdata_d=get_task_data('Discovery_12-05-2016')
+#taskdata=rbind(taskdata_d,taskdata_v)
+taskdata=get_task_data('Complete_12-15-2016')
 taskvars=names(taskdata)
 
 # get names of tasks
@@ -58,33 +59,7 @@ if (remove_weak_vars){
   taskdata_test=taskdata
 }
 
-# drop variables with high correlations to other variables 
-# within same task
-corrvars=c('probabilistic_selection.value_sensitivity','angling_risk_task_always_sunny.release_score','angling_risk_task_always_sunny.keep_score')
-for (c in corrvars){
-  taskdata_test[c]=NULL
-}
-print(sprintf('dropping %d variables with high correlations',length(corrvars)))
 
-# drop variables with highly skewed distributions
-
-# compute skewness for each variable
-
-skw=array(dim=dim(taskdata_test)[2])
-skewvars=c()
-for (i in 1:dim(taskdata_test)[2]){
-  n=names(taskdata_test)[i]
-  skw[i]=skewness(as.matrix(taskdata[n]))
-  if (abs(skw[i])  > 1){
-    print(sprintf('%f:%s',skw[i],n))
-    skewvars=c(skewvars,n)
-  }
-}
-
-for (c in skewvars){
-  taskdata_test[c]=NULL
-}
-print(sprintf('dropping %d variables with excessive skew',length(skewvars)))
 
 vars=colnames(taskdata_test)
 nvars=length(taskvars)
