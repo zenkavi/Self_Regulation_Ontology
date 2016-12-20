@@ -20,7 +20,8 @@ rand_zinb=function(X,b1=2,b2=6){
   return(round(pcount))
 }
 
-nruns=100
+shuffle=FALSE
+nruns=2500
 nobs=500
 nvars=20
 zinbcor=array(NA,dim=nruns)
@@ -32,6 +33,7 @@ for (r in 1:nruns) {
   X<-matrix(runif(nobs*nvars), ncol=nvars) 
   
   pcount=rand_zinb(X)
+  if (shuffle) {pcount=pcount[sample(length(pcount))]}
   
   nfolds=4
   nsets=ceiling(dim(X)[1]/nfolds)
@@ -54,10 +56,10 @@ for (r in 1:nruns) {
   zinbcor[r]=cor(pred_count,pcount)
   bincor[r]=cor(pred_bin,as.integer(pcount>0))
   bincor_count[r]=cor(pred_resp,pcount)
-  print(sprintf('%f %f %f',zinbcor[r],bincor[r],bincor_count[r]))
+  print(sprintf('%d %f %f %f',r,zinbcor[r],bincor[r],bincor_count[r]))
 }
 if (shuffle) {
-  save(zbincor,bincor,bincor_count,file='shuf.Rdata')
+  save(zinbcor,bincor,bincor_count,file='shuf.Rdata')
 } else {
-  save(zbincor,bincor,bincor_count,file='noshuf.Rdata')
+  save(zinbcor,bincor,bincor_count,file='noshuf.Rdata')
 }
