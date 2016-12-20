@@ -7,15 +7,17 @@ library("pscl")
 library(glmnet)
 
 rand_zinb=function(X,b1=2,b2=6,sd1=1,sd2=1){
-  
-  beta1=array(0,dim=dim(X)[2])
-  beta2=array(0,dim=dim(X)[2])
-  beta1[1:2]=b1
-  beta2[3:4]=b2
-  a1 =X%*%beta1+rnorm(dim(X)[2])*sd1
-  a2 =X%*%beta2+rnorm(dim(X)[2])*sd2
-  pzero = exp(a2)/(1+exp(a2))
-  pcount = exp(a1)*(1-pzero)
+  pcount=0
+  while (sum(round(pcount))==0){
+    beta1=array(0,dim=dim(X)[2])
+    beta2=array(0,dim=dim(X)[2])
+    beta1[1:2]=b1
+    beta2[3:4]=b2
+    a1 =X%*%beta1+rnorm(dim(X)[2])*sd1
+    a2 =X%*%beta2+rnorm(dim(X)[2])*sd2
+    pzero = exp(a2)/(1+exp(a2))
+    pcount = exp(a1)*(1-pzero)
+  }
   return(round(pcount))
 }
 
