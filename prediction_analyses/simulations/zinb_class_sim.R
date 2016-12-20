@@ -6,22 +6,29 @@ library("zic")
 library("pscl")
 library(glmnet)
 
-rand_zinb=function(X,b1=2,b2=6,sd1=1,sd2=1){
+args <- commandArgs(trailingOnly = TRUE)
+
+rand_zinb=function(X,b1=2,b2=4,nb_size=0.25,nb_prob=0.25){
   pcount=0
-  while (sum(round(pcount))==0){
+  # ensure at least 2.5% nonzero responses
+  #print('making data...')
+  while (sum(round(pcount))<(dim(X)[1]*0.025)){
+    #print('trying...')
     beta1=array(0,dim=dim(X)[2])
     beta2=array(0,dim=dim(X)[2])
     beta1[1:2]=b1
     beta2[3:4]=b2
-    a1 =X%*%beta1+rnorm(dim(X)[2])*sd1
-    a2 =X%*%beta2+rnorm(dim(X)[2])*sd2
+    a1 =X%*%beta1
+    a2 =X%*%beta2
     pzero = exp(a2)/(1+exp(a2))
-    pcount = exp(a1)*(1-pzero)
+    pcount = exp(a1)*(1-pzero) + rnbinom(dim(X)[1],nb_size,nb_prob)
   }
+  #print(sprintf("mean nonzero: %f",mean(round(pcount)>0)))
   return(round(pcount))
 }
 
-shuffle=FALSE
+b1=as.numeric(args[1])
+shuffle=as.numeric(args[2])
 nruns=2500
 nobs=500
 nvars=20
@@ -33,13 +40,25 @@ for (r in 1:nruns) {
   print(sprintf('run %d',r))
   X<-matrix(runif(nobs*nvars), ncol=nvars) 
   
-  pcount=rand_zinb(X)
+  pcount=rand_zinb(X,b1=b1)
   if (shuffle) {pcount=pcount[sample(length(pcount))]}
   
   nfolds=4
   nsets=ceiling(dim(X)[1]/nfolds)
+  # ensure cross validation folds have positive examples
+
   fold=kronecker(rep(1,nsets),seq(1,nfolds))[1:dim(X)[1]]
-  fold=sample(fold)
+  goodfolds=0
+  while (!goodfolds){
+    goodfolds=1
+    fold=sample(fold)
+    for (f in 1:nfolds){
+      if (sum(pcount[fold==f])<1){
+        goodfolds=0
+        print("bad fold")
+      }
+    }
+  }
   pred_count=array(NA,dim=dim(X)[1])
   pred_bin=array(NA,dim=dim(X)[1])
   pred_resp=array(NA,dim=dim(X)[1])
