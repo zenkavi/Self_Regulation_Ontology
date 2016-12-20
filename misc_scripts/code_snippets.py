@@ -44,19 +44,68 @@ for c in n_components:
         best_c = c
 print(best_c)
 
+
+# helper functions for plotting dimensionality relations
+# compute FA with different dimensionalities and quantify similarity
+def dimensional_similarity(factors, reference):
+    ''' This function returns an N x M correlation matrix where N is the number
+    of reference (lower dimension) factors and M is the number of higher dimension
+    factors
+    '''
+    relation = np.corrcoef(reference.T, factors.T)
+    # each row is a reference factor, each column a new factor
+    relation=relation[:reference.shape[1], reference.shape[1]:]
+    return relation
+
+def construct_relational_tree(similarities):
+    ''' Takes a list of similarities and constructs a tree graph, then plots
+    '''
+    G = igraph.Graph()
+    layer_start = 0
+    colors = ['red','blue','green','violet']*4
+    for similarity in similarities:
+        curr_color = colors.pop()
+        origin_length = similarity.shape[0]
+        target_length = similarity.shape[1]
+        if len(G.vs)==0:
+            G.add_vertices(origin_length)
+        G.add_vertices(target_length)
+        for i in range(origin_length):
+            for j in range(target_length):
+                G.add_edge(i+layer_start,j+origin_length+layer_start,weight=abs(similarity[i,j]*5),color = curr_color)
+        layer_start+=similarity.shape[0]
+    igraph.plot(G, layout = 'rt', **{'inline': False, 'vertex_label': range(len(G.vs)), 'edge_width':[w for w in G.es['weight']], 'edge_color': G.es['color'], 'bbox': (1000,1000)})
+    #G.write_dot('test.dot')
+    return G
+
 imputed_data = get_behav_data(dataset = 'Complete_12-15-2016', file = 'taskdata_imputed.csv')
+similarities = []
+components = range(1,10)
+reference = None
+for c in components:
+    fa=FactorAnalysis(c)
+    result = pd.DataFrame(fa.fit_transform(imputed_data.corr().values), imputed_data.columns)
+    if c>1:
+        result = GPArotation(result, method='oblimin')
+    if reference is not None:
+        similarity = dimensional_similarity(result,reference)
+        similarities.append(similarity)
+    reference = result
+
+similarity_tree = construct_relational_tree(similarities)
+
+# *****************************************************************************
+# print top factors for optimal dimensionality
+# *****************************************************************************
+# computed FA with best number of components
 fa=FactorAnalysis(best_c)
 result = pd.DataFrame(fa.fit_transform(imputed_data.corr().values), imputed_data.columns)
 result = GPArotation(result, method='oblimin')
 
-# *****************************************************************************
-# print top factors
-# *****************************************************************************
-
 n = 6 # number of variables to display
 for i,column in result.iteritems():
     sort_index = np.argsort(abs(column))[::-1]
-    top_vars = data.columns[sort_index][0:n]
+    top_vars = imputed_data.columns[sort_index][0:n]
     loadings = list(column[sort_index][0:n])
     print('\nFACTOR %s' % i)
     print(pd.DataFrame({'var':top_vars,'loading':loadings}, columns = ['var','loading']))

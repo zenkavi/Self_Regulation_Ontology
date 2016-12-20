@@ -15,7 +15,7 @@ def missForest(data):
 
 def GPArotation(data, method='varimax', normalize=True):
     GPArotation = importr('GPArotation')
-    rotated_data = GPArotation.GPForth(data, method = method, normalize=normalize)[0]
+    rotated_data = GPArotation.GPForth(data.values, method = method, normalize=normalize)[0]
     rotated_data = pd.DataFrame(data = np.matrix(rotated_data), index=data.index, columns=data.columns)
     return rotated_data
     
