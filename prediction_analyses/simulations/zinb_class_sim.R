@@ -29,12 +29,15 @@ rand_zinb=function(X,b1=2,b2=4,nb_size=0.25,nb_prob=0.25){
 
 b1=as.numeric(args[1])
 shuffle=as.numeric(args[2])
-nruns=2500
+#b1=3.0
+#shuffle=FALSE
+nruns=1000
 nobs=500
 nvars=20
 zinbcor=array(NA,dim=nruns)
 bincor=array(NA,dim=nruns)
 bincor_count=array(NA,dim=nruns)
+regcor_count=array(NA,dim=nruns)
 
 for (r in 1:nruns) {
   #print(sprintf('run %d',r))
@@ -59,27 +62,42 @@ for (r in 1:nruns) {
       }
     }
   }
-  pred_count=array(NA,dim=dim(X)[1])
+  pred_count_zinb=array(NA,dim=dim(X)[1])
   pred_bin=array(NA,dim=dim(X)[1])
-  pred_resp=array(NA,dim=dim(X)[1])
+  pred_resp_lassobin=array(NA,dim=dim(X)[1])
+  pred_resp_lassoreg=array(NA,dim=dim(X)[1])
+  
   for (f in 1:nfolds) {
     d=as.data.frame(X[fold!=f,])
     d$y=pcount[fold!=f]
     
-    z=zipath(y~.|.,d,family='negbin',nlambda=10)
-    bestaic=which(z$aic==min(z$aic))
-    pred_count[fold==f]=predict(z,as.data.frame(X[fold==f,]),type='response',which=bestaic)
+    # z-inflated negative binomial model on count data
+    count_cv=cv.zipath(y~.|.,d,family='negbin',nlambda=10)
+    z=zipath(y~.|.,d,family='negbin',
+              lambda.count = count_cv$lambda.optim$count,
+             lambda.zero = count_cv$lambda.optim$zero)
+    pred_count_zinb[fold==f]=predict(z,as.data.frame(X[fold==f,]),type='response')
+    
+    # lasso logistic regression fit to dichotomized data
     l=cv.glmnet(X[fold!=f,],as.integer(pcount[fold!=f]>0),type.measure="auc",family='binomial')
     pred_bin[fold==f]=as.integer(predict(l,newx=X[fold==f,], s="lambda.min",type='class'))
-    pred_resp[fold==f]=predict(l,newx=X[fold==f,], s="lambda.min",type='response')
+    # use weights from model on binary data to predict counts
+    pred_resp_lassobin[fold==f]=predict(l,newx=X[fold==f,], s="lambda.min",type='response')
+    
+    # lasso logistic regression fit to count data (i.e. misspecified model)
+    l=cv.glmnet(X[fold!=f,],pcount[fold!=f],family='gaussian')
+    # use weights from model on binary data to predict counts
+    pred_resp_lassoreg[fold==f]=predict(l,newx=X[fold==f,], s="lambda.min",type='response')
+    
   }
-  zinbcor[r]=cor(pred_count,pcount)
+  zinbcor[r]=cor(pred_count_zinb,pcount)
   bincor[r]=cor(pred_bin,as.integer(pcount>0))
-  bincor_count[r]=cor(pred_resp,pcount)
-  print(sprintf('%d %f %d %f %f %f',shuffle,b1,r,zinbcor[r],bincor[r],bincor_count[r]))
+  bincor_count[r]=cor(pred_resp_lassobin,pcount)
+  regcor_count[r]=cor(pred_resp_lassoreg,pcount)
+  print(sprintf('%d %f %d %f %f %f %f',shuffle,b1,r,zinbcor[r],bincor[r],bincor_count[r],regcor_count[r]))
 }
 if (shuffle) {
-  save(zinbcor,bincor,bincor_count,file=sprintf('shuf_%f.Rdata',b1))
+  save(zinbcor,bincor,bincor_count,regcor_count,file=sprintf('shuf_%f.Rdata',b1))
 } else {
-  save(zinbcor,bincor,bincor_count,file=sprintf('noshuf_%f.Rdata',b1))
+  save(zinbcor,bincor,bincor_count,regcor_count,file=sprintf('noshuf_%f.Rdata',b1))
 }
