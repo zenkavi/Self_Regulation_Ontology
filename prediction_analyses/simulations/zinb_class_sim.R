@@ -8,14 +8,14 @@ library(glmnet)
 
 args <- commandArgs(trailingOnly = TRUE)
 require(doMC)
-ncores=19
+ncores=4
 registerDoMC(cores=ncores)
 
-rand_zinb=function(X,b1=2,b2=4,nb_size=0.25,nb_prob=0.25){
+rand_zinb=function(X,b1=2,b2=4,nb_size=4,nb_prob=0.03){
   pcount=0
   # ensure at least 2.5% nonzero responses
   #print('making data...')
-  while (sum(round(pcount))<(dim(X)[1]*0.025)){
+  while (sum(pcount)<(dim(X)[1]*0.025)){
     #print('trying...')
     beta1=array(0,dim=dim(X)[2])
     beta2=array(0,dim=dim(X)[2])
@@ -24,10 +24,11 @@ rand_zinb=function(X,b1=2,b2=4,nb_size=0.25,nb_prob=0.25){
     a1 =X%*%beta1
     a2 =X%*%beta2
     pzero = exp(a2)/(1+exp(a2))
-    pcount = exp(a1)*(1-pzero) + rnbinom(dim(X)[1],nb_size,nb_prob)
+    pcount = round(exp(a1)*(1-pzero)) + rnbinom(dim(X)[1],nb_size,nb_prob)
+    pcount[pcount<0]=0
   }
   #print(sprintf("mean nonzero: %f",mean(round(pcount)>0)))
-  return(round(pcount))
+  return(pcount)
 }
 
 b1=as.numeric(args[1])
@@ -41,6 +42,7 @@ zinbcor=array(NA,dim=nruns)
 bincor=array(NA,dim=nruns)
 bincor_count=array(NA,dim=nruns)
 regcor_count=array(NA,dim=nruns)
+pcount_nonzero_sum=array(NA,dim=nruns)
 
 for (r in 1:nruns) {
   #print(sprintf('run %d',r))
@@ -75,7 +77,7 @@ for (r in 1:nruns) {
     d$y=pcount[fold!=f]
     
     # z-inflated negative binomial model on count data
-    count_cv=cv.zipath(y~.|.,d,family='negbin',plot.it=FALSE,n.cores=ncores)
+    count_cv=cv.zipath(y~.|.,d,family='negbin',nlambda=20,n.cores=1,,plot.it=FALSE)
     z=zipath(y~.|.,d,family='negbin',
               lambda.count = count_cv$lambda.optim$count,
              lambda.zero = count_cv$lambda.optim$zero)
@@ -97,7 +99,8 @@ for (r in 1:nruns) {
   bincor[r]=cor(pred_bin,as.integer(pcount>0))
   bincor_count[r]=cor(pred_resp_lassobin,pcount)
   regcor_count[r]=cor(pred_resp_lassoreg,pcount)
-  print(sprintf('%d %f %d %f %f %f %f',shuffle,b1,r,zinbcor[r],bincor[r],bincor_count[r],regcor_count[r]))
+  pcount_nonzero_sum[r]=sum(pcount>0)
+  print(sprintf('%d %f %d %d %f %f %f %f',shuffle,b1,r,pcount_nonzero_sum[r],zinbcor[r],bincor[r],bincor_count[r],regcor_count[r]))
 }
 if (shuffle) {
   save(zinbcor,bincor,bincor_count,regcor_count,file=sprintf('shuf_%f.Rdata',b1))
