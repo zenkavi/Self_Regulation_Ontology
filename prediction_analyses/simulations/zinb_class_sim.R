@@ -37,7 +37,7 @@ bincor=array(NA,dim=nruns)
 bincor_count=array(NA,dim=nruns)
 
 for (r in 1:nruns) {
-  print(sprintf('run %d',r))
+  #print(sprintf('run %d',r))
   X<-matrix(runif(nobs*nvars), ncol=nvars) 
   
   pcount=rand_zinb(X,b1=b1)
@@ -76,10 +76,10 @@ for (r in 1:nruns) {
   zinbcor[r]=cor(pred_count,pcount)
   bincor[r]=cor(pred_bin,as.integer(pcount>0))
   bincor_count[r]=cor(pred_resp,pcount)
-  print(sprintf('%d %f %f %f',r,zinbcor[r],bincor[r],bincor_count[r]))
+  print(sprintf('%d %f %d %f %f %f',shuffle,b1,r,zinbcor[r],bincor[r],bincor_count[r]))
 }
 if (shuffle) {
-  save(zinbcor,bincor,bincor_count,file='shuf.Rdata')
+  save(zinbcor,bincor,bincor_count,file=sprintf('shuf_%f.Rdata',b1))
 } else {
-  save(zinbcor,bincor,bincor_count,file='noshuf.Rdata')
+  save(zinbcor,bincor,bincor_count,file=sprintf('noshuf_%f.Rdata',b1))
 }
