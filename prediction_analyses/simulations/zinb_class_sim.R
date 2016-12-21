@@ -7,6 +7,9 @@ library("pscl")
 library(glmnet)
 
 args <- commandArgs(trailingOnly = TRUE)
+require(doMC)
+ncores=19
+registerDoMC(cores=ncores)
 
 rand_zinb=function(X,b1=2,b2=4,nb_size=0.25,nb_prob=0.25){
   pcount=0
@@ -72,20 +75,20 @@ for (r in 1:nruns) {
     d$y=pcount[fold!=f]
     
     # z-inflated negative binomial model on count data
-    count_cv=cv.zipath(y~.|.,d,family='negbin',nlambda=10)
+    count_cv=cv.zipath(y~.|.,d,family='negbin',plot.it=FALSE,n.cores=ncores)
     z=zipath(y~.|.,d,family='negbin',
               lambda.count = count_cv$lambda.optim$count,
              lambda.zero = count_cv$lambda.optim$zero)
     pred_count_zinb[fold==f]=predict(z,as.data.frame(X[fold==f,]),type='response')
     
     # lasso logistic regression fit to dichotomized data
-    l=cv.glmnet(X[fold!=f,],as.integer(pcount[fold!=f]>0),type.measure="auc",family='binomial')
+    l=cv.glmnet(X[fold!=f,],as.integer(pcount[fold!=f]>0),parallel=TRUE,type.measure="auc",family='binomial')
     pred_bin[fold==f]=as.integer(predict(l,newx=X[fold==f,], s="lambda.min",type='class'))
     # use weights from model on binary data to predict counts
     pred_resp_lassobin[fold==f]=predict(l,newx=X[fold==f,], s="lambda.min",type='response')
     
     # lasso logistic regression fit to count data (i.e. misspecified model)
-    l=cv.glmnet(X[fold!=f,],pcount[fold!=f],family='gaussian')
+    l=cv.glmnet(X[fold!=f,],pcount[fold!=f],family='gaussian',parallel=TRUE)
     # use weights from model on binary data to predict counts
     pred_resp_lassoreg[fold==f]=predict(l,newx=X[fold==f,], s="lambda.min",type='response')
     
