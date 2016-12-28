@@ -35,14 +35,15 @@ basedir=get_info('base_directory')
 #dataset=get_info('dataset')
 if usefull:
     print('using full dataset')
-    derived_dir=os.path.join(basedir,'data/Derived_Data/%s'%dataset.replace('Discovery','Combined').replace('Validation','Combined'))
+    derived_dir=os.path.join(basedir,'Data/Derived_Data/%s'%dataset.replace('Discovery','Combined').replace('Validation','Combined'))
 else:
     print('using dataset:',dataset)
-    derived_dir=os.path.join(basedir,'data/Derived_Data/%s'%dataset)
+    derived_dir=os.path.join(basedir,'Data/Derived_Data/%s'%dataset)
 datadir=os.path.join(basedir,'data/%s'%dataset)
 
 if not os.path.exists(derived_dir):
     os.makedirs(derived_dir)
+print('saving to',derived_dir)
 
 data=get_behav_data(file='subject_x_items.csv',full_dataset=usefull)
 
