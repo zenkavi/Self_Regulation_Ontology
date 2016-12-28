@@ -62,7 +62,12 @@ for c in data.columns:
     if dropflag:
         del fixdata[c]
         dropped[c]=(u,h)
+        print('dropping',c)
     else:
         fixed[c]=(u,h)
+        diff_resps=numpy.sum(fixdata[c]!=data[c])
+        if diff_resps>0:
+            print(diff_resps,c)
+
 
 fixdata.to_csv(os.path.join(derived_dir,'surveydata_fixed_minfreq%d.csv'%min_freq))
