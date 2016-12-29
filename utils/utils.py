@@ -46,14 +46,8 @@ def get_behav_data(dataset=None, file=None, full_dataset=False, flip_valence=Fal
         if os.path.exists(datafile):
             df=pandas.read_csv(datafile,index_col=0)
         else:
-            with zipfile.ZipFile('../Data/previous_releases.zip') as z:
-                try:
-                    with z.open(os.path.join(os.path.basename(datadir), file)) as f:
-                        df = pandas.DataFrame.from_csv(f)
-                except KeyError:
-                    print('Error: %s not found in %s' % (file, datadir))
-                    df = pandas.DataFrame()
-                    continue
+            df = pandas.DataFrame()
+            print('Error: %s not found in %s' % (file, datadir))
         data = pandas.concat([df,data])
     
     def valence_flip(data, flip_list):
