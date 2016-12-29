@@ -452,16 +452,32 @@ def remove_failed_subjects(data):
     data.drop(failed_data.index, inplace = True)
     return failed_data
 
+def remove_correlated_task_variables(data, threshold=.85):
+    tasks = np.unique([i.split('.')[0] for i in data.columns])
+    columns_to_remove = []
+    for task in tasks:
+        task_data = data.filter(regex = '^%s' % task)
+        corr_mat = np.tril(task_data.corr().values,-1)
+        remove_indices = np.unique(np.where(abs(corr_mat)>threshold)[0])
+        columns_to_remove += list(task_data.columns[remove_indices])
+    print( '*' * 50)
+    print('Dropping %s variables with correlations above %s' % (len(columns_to_remove), threshold))
+    print( '*' * 50)
+    print('\n'.join(columns_to_remove))
+    data = drop_vars(data,columns_to_remove)
+    return data
+    
 def remove_outliers(data, quantile_range = 2.5):
     '''Removes outliers more than 1.5IQR below Q1 or above Q3
     '''
-    quantiles = data.apply(lambda x: x.quantile([.25,.5,.75])).T
+    data = data.copy()
+    quantiles = data.apply(lambda x: x.dropna().quantile([.25,.5,.75])).T
     lowlimit = np.array(quantiles.iloc[:,1] - quantile_range*(quantiles.iloc[:,2] - quantiles.iloc[:,0]))
     highlimit = np.array(quantiles.iloc[:,1] + quantile_range*(quantiles.iloc[:,2] - quantiles.iloc[:,0]))
-    data_mat = data.as_matrix()
+    data_mat = data.values
     data_mat[np.logical_or((data_mat<lowlimit), (data_mat>highlimit))] = np.nan
-    return pd.DataFrame(data_mat,index = data.index, columns = data.columns)
-    
+    data = pd.DataFrame(data=data_mat, index=data.index, columns=data.columns)
+    return data
     
 def save_task_data(data_loc, data):
     path = os.path.join(data_loc,'Individual_Measures')
@@ -470,6 +486,39 @@ def save_task_data(data_loc, data):
     for exp_id in np.sort(data.experiment_exp_id.unique()):
         print('Saving %s...' % exp_id)
         extract_experiment(data,exp_id).to_csv(os.path.join(path, exp_id + '.csv.gz'), compression = 'gzip')
+    
+def transform_remove_skew(data, threshold=1):
+    data = data.copy()
+    skewed_variables = data.columns[abs(data.skew())>threshold]
+    skew_subset = data.loc[:,skewed_variables]
+    positive_subset = skew_subset.loc[:,skew_subset.skew()>0]
+    negative_subset = skew_subset.loc[:,skew_subset.skew()<0]
+    # transform variables
+    # log transform for positive skew
+    positive_subset = np.log(positive_subset)
+    successful_transforms = positive_subset.loc[:,abs(positive_subset.skew())<threshold]
+    dropped_vars = set(negative_subset)-set(successful_transforms)
+    # replace transformed variables
+    data.drop(positive_subset, axis=1, inplace = True)
+    successful_transforms.columns = [i + '.logTr' for i in successful_transforms]
+    print('*'*40)
+    print('Dropping %s positively skewed data that could not be transformed successfully:' % len(dropped_vars))
+    print('\n'.join(dropped_vars))
+    print('*'*40)
+    data = pd.concat([data, successful_transforms], axis = 1)
+    # reflected log transform for negative skew
+    negative_subset = np.log(negative_subset.max()+1-negative_subset)
+    successful_transforms = negative_subset.loc[:,abs(negative_subset.skew())<threshold]
+    dropped_vars = set(negative_subset)-set(successful_transforms)
+    # replace transformed variables
+    data.drop(negative_subset, axis=1, inplace = True)
+    successful_transforms.columns = [i + '.ReflogTr' for i in successful_transforms]
+    print('*'*40)
+    print('Dropping %s negatively skewed data that could not be transformed successfully:' % len(dropped_vars))
+    print('\n'.join(dropped_vars))
+    print('*'*40)
+    data = pd.concat([data, successful_transforms], axis=1)
+    return data.sort_index(axis = 1)
     
     
     

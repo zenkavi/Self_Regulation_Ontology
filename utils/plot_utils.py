@@ -130,7 +130,7 @@ def dendroheatmap_left(df, labels = True):
     ax.set_xticklabels(df_rowclust.columns, rotation=-90, rotation_mode = "anchor", ha = 'left')
     ax1 = fig.add_axes([.01,.3,.15,.62])
     plt.axis('off')
-    row_dendr = dendrogram(row_clusters, orientation='right',  
+    row_dendr = dendrogram(row_clusters, orientation='left',  
                            count_sort='descending', ax = ax1) 
     return fig, row_dendr['leaves']
     
