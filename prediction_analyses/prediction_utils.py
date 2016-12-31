@@ -66,7 +66,7 @@ class RModel:
                 family='poisson'
             # this is a kludge because I couldn't get it to work using the
             # standard interface to cv_zipath
-            robjects.r('fit=cv.zipath(y~.|.,df,family="%s",plot.it=FALSE)'%family)
+            robjects.r('fit=cv.zipath(y~.|.,df,family="%s",plot.it=FALSE,n.cores=%d)'%(family,self.ncores))
             self.model=robjects.r('fit')
             fit=self.model[self.model.names.index('fit')]
             self.lambda_which=numpy.array(self.model[self.model.names.index('lambda.which')])[0]
