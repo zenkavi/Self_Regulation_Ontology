@@ -1,4 +1,6 @@
 library(pscl)
+demogdata=read.table('../Data/Derived_Data/Complete_12-15-2016/demogdata_for_prediction.csv',
+                     sep=',',header=TRUE)
 
 models=c('gaussian','poisson','NB','ZIpoisson','ZINB')
 demogdata$X=NULL
@@ -11,6 +13,8 @@ for (varname in varnames){
   if (length(unique(ydata))==2) {
     print(varname)
     print('binary')
+    varinfo=rbind(varinfo,c(varname,'binary'))
+    
     next
   }
   pois=tryCatch({
