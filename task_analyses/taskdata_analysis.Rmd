@@ -32,9 +32,6 @@ We load the cleaned-up data, and drop variables that meet one of several exclusi
 
 ```{r, echo=FALSE}
 
-#taskdata_v=get_task_data('Validation_12-05-2016')
-#taskdata_d=get_task_data('Discovery_12-05-2016')
-#taskdata=rbind(taskdata_d,taskdata_v)
 taskdata=get_task_data('Complete_12-15-2016')
 taskvars=names(taskdata)
 
@@ -64,6 +61,10 @@ if (remove_weak_vars){
 vars=colnames(taskdata_test)
 nvars=length(taskvars)
 
+```
+
+```{r}
+dim(taskdata_test)
 ```
 
 ### Clustering
