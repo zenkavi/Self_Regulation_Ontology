@@ -48,7 +48,8 @@ if __name__=='__main__':
     # set up classifier
     clf=LassoCV()
 
-    bp=behavpredict.BehavPredict(verbose=2,n_jobs=23)
+    bp=behavpredict.BehavPredict(verbose=2,
+         drop_na_thresh=100,n_jobs=60)
     bp.load_demog_data()
     bp.get_demogdata_vartypes()
     bp.load_behav_data(datasubset)
