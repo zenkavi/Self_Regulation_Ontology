@@ -15,12 +15,13 @@ mpath=importr('mpath')
 # create a class that implements prediction using functions from R
 
 class RModel:
-    def __init__(self,modeltype,verbose=True):
+    def __init__(self,modeltype,verbose=True,ncores=2):
         self.modeltype=modeltype
         assert self.modeltype in ['NB', 'ZINB', 'ZIpoisson', 'poisson']
         self.verbose=verbose
         self.model=None
         self.coef_=None
+        self.ncores=ncores
 
     def fit(self,X,Y):
         self._fit_glmreg(X,Y)
@@ -48,7 +49,8 @@ class RModel:
         elif self.modeltype=='NB':
             data['y']=Y.copy()
             robjects.globalenv['df']=com.convert_to_r_dataframe(data)
-            self.model=mpath.cv_glmregNB('y~.',base.as_symbol('df'))
+            self.model=mpath.cv_glmregNB('y~.',base.as_symbol('df'),
+                                n_cores=self.ncores,plot_it=False)
             fit=self.model[self.model.names.index('fit')]
             self.lambda_which=numpy.array(self.model[self.model.names.index('lambda.which')])[0]
             self.coef_=numpy.array(fit[fit.names.index('beta')])[:,self.lambda_which-1]
