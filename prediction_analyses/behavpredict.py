@@ -139,7 +139,7 @@ class BehavPredict:
                 if v.find('survey')>-1:
                     del self.behavdata[v]
                     if self.verbose>1:
-                        print('dropping non-survey var:',v)
+                        print('dropping non-task var:',v)
         if datasubset=='baseline':
             self.behavdata=self.demogdata[self.baseline_vars].copy()
         else:
