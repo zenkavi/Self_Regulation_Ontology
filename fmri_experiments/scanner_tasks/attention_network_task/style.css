@@ -37,9 +37,11 @@
   -webkit-transform: translateY(-40%);
 }
 
+/*
 .responded {
   visibility: hidden;
 }
+*/
 
 .ANT_img {
   max-width: 16%;
