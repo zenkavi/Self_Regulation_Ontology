@@ -38,7 +38,7 @@ def multi_worker_decorate(func):
             try:
                 group_dvs[worker], description = func(df)
             except:
-                print 'DV calculated failed for worker: %s' % worker
+                print('DV calculated failed for worker: %s' % worker)
         return group_dvs, description
     return multi_worker_wrap
 
@@ -164,7 +164,7 @@ def dietary_decision_post(df):
     df['stim_rating'] = df['stim_rating'].apply(lambda x: json.loads(x) if x==x else numpy.nan)
     df['reference_rating'] = df['reference_rating'].apply(lambda x: json.loads(x) if x==x else numpy.nan)
     # subset list to only decision trials where the item was rated on both health and taste
-    group_subset = df[df['stim_rating'].apply(lambda lst: all(isinstance(x, int) for x in lst.values()) if lst == lst else False)]
+    group_subset = df[df['stim_rating'].apply(lambda lst: all(isinstance(x, int) for x in list(lst.values())) if lst == lst else False)]
     for finishtime in group_subset['finishtime']:
         subset = group_subset[group_subset['finishtime'] == finishtime]
         reference = numpy.unique(subset['reference_rating'])
@@ -285,7 +285,7 @@ def IST_post(df):
         probs=numpy.vectorize(get_prob)(df['clicks_before_choice'],df['chosen_boxes_clicked'])
         df.insert(0,'P_correct_at_choice', probs)
     except IndexError:
-        print('Workers: %s did not open any boxes ' % df.worker_id.unique())
+        print(('Workers: %s did not open any boxes ' % df.worker_id.unique()))
     return df
         
 def keep_track_post(df):
@@ -301,7 +301,7 @@ def keep_track_post(df):
         df.loc[:,'score'] = numpy.nan
         subset = df[[isinstance(i,dict) for i in df['correct_responses']]]
         for i,row in subset.iterrows():
-            targets = row['correct_responses'].values()
+            targets = list(row['correct_responses'].values())
             response = row['responses']
             score = sum([word in targets for word in response])
             df.set_value(i, 'score', score)
@@ -352,7 +352,7 @@ def probabilistic_selection_post(df):
     #learning check - ensure during test that worker performed above chance on easiest training pair
     passed_workers = df.query('exp_stage == "test" and condition_collapsed == "20_80"').groupby('worker_id')['correct'].agg(lambda x: (numpy.mean(x)>.5) and (len(x) == 6)).astype('bool')
     if numpy.sum(passed_workers) < len(passed_workers):
-        print "Probabilistic Selection: %s failed the manipulation check" % list(passed_workers[passed_workers == False].index)    
+        print("Probabilistic Selection: %s failed the manipulation check" % list(passed_workers[passed_workers == False].index))    
     passed_workers = list(passed_workers[passed_workers].index) 
     df.loc[:,"passed_check"] = df['worker_id'].map(lambda x: x in passed_workers)
     return df
@@ -367,7 +367,7 @@ def PRP_post(df):
     df.loc[:,'choice2_stim'] = df['choice2_stim'].map(lambda x: choice2_stims.index(x) if x==x else numpy.nan)
     # separate choice and rt for the two choices
     df.loc[:,'key_presses'] = df['key_presses'].map(lambda x: json.loads(x) if x==x else x)
-    df.loc[:,'rt'] = df['rt'].map(lambda x: json.loads(x) if isinstance(x,(str,unicode)) else x)
+    df.loc[:,'rt'] = df['rt'].map(lambda x: json.loads(x) if isinstance(x,str) else x)
     subset = df[(df['trial_id'] == "stim") & (~pandas.isnull(df['stim_durations']))]
     # separate rt
     df.insert(0, 'choice1_rt', pandas.Series(index = subset.index, data = [x[0] for x in subset['rt']]))
@@ -416,7 +416,7 @@ def shift_post(df):
     if 'FB' in df.columns:
         df.loc[:,'feedback'] = df['FB']
         df = df.drop('FB', axis = 1)
-    df.loc[:,'choice_stim'] = [json.loads(i) if isinstance(i,(str,unicode)) else numpy.nan for i in df['choice_stim']]
+    df.loc[:,'choice_stim'] = [json.loads(i) if isinstance(i,str) else numpy.nan for i in df['choice_stim']]
     
     if not 'correct' in df.columns:
         # Get correct choices
@@ -471,7 +471,7 @@ def threebytwo_post(df):
     return df
         
 def TOL_post(df):
-    labels = ['practice'] + range(12)
+    labels = ['practice'] + list(range(12))
     if 'problem_id' not in df.columns:
         df_index = df.query('(target == target and rt != -1) or trial_id == "feedback"').index
         problem_time = 0
@@ -551,10 +551,10 @@ def two_stage_decision_post(df):
                 worker_df.loc[:,'passed_check'] = True
             else:
                 worker_df.loc[:,'passed_check'] = False
-                print 'Two Stage Decision: Worker %s failed manipulation check. Win stay = %s' % (worker, win_stay_proportion)
+                print('Two Stage Decision: Worker %s failed manipulation check. Win stay = %s' % (worker, win_stay_proportion))
             group_df = pandas.concat([group_df,worker_df])
         except:
-            print('Could not process two_stage_decision dataframe with worker: %s' % worker)
+            print(('Could not process two_stage_decision dataframe with worker: %s' % worker))
     if (len(group_df)>0):
         group_df.insert(0, 'switch', group_df['stim_selected_first'].diff()!=0)
         group_df.insert(0, 'stage_transition_last', group_df['stage_transition'].shift(1))
@@ -1095,7 +1095,7 @@ def calc_stop_signal_DV(df):
     missed_percent = (df.query('exp_stage != "practice" and SS_trial_type == "go"')['rt']==-1).mean()
     df = df.query('exp_stage != "practice" and ((SS_trial_type == "stop") or (SS_trial_type == "go" and rt != -1))').reset_index()
     dvs = calc_common_stats(df.query('SS_trial_type == "go"'))
-    dvs = {'go_' + key: dvs[key] for key in dvs.keys()}
+    dvs = {'go_' + key: dvs[key] for key in list(dvs.keys())}
     dvs['SSRT'] = df.query('SS_trial_type == "go"')['rt'].median()-df['SS_delay'].median()
     dvs['stop_success'] = df.query('SS_trial_type == "stop"')['stopped'].mean()
     dvs['stop_avg_rt'] = df.query('SS_trial_type == "stop" and rt > 0')['rt'].median()
