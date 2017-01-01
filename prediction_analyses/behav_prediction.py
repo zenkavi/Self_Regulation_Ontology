@@ -36,9 +36,9 @@ if __name__=='__main__':
     else:
         shuffle=False
     if len(sys.argv)>2:
-        datasubset=sys.argv[3]
+        datasubset=sys.argv[2]
     else:
-        datasubset='task'
+        datasubset='baseline'
 
     output_dir='prediction_outputs'
 
@@ -49,7 +49,7 @@ if __name__=='__main__':
     clf=LassoCV()
 
     bp=behavpredict.BehavPredict(verbose=2,
-         drop_na_thresh=100,n_jobs=60)
+         drop_na_thresh=100,n_jobs=2)
     bp.load_demog_data()
     bp.get_demogdata_vartypes()
     bp.load_behav_data(datasubset)
@@ -63,15 +63,22 @@ if __name__=='__main__':
     vars_to_test=bp.demogdata.columns
     #vars_to_test=['BMI']
     for v in vars_to_test:
-        bp.scores[v],bp.importances[v]=bp.run_crossvalidation(v)
-        if report_features and numpy.mean(bp.scores[v])>0.65:
-            print('')
-            meanimp=numpy.mean(bp.importances[v],0)
-            meanimp_sortidx=numpy.argsort(meanimp)
-            for i in meanimp_sortidx[-1:-4:-1]:
-                print(bp.behavdata.columns[i],meanimp[i])
-            for i in meanimp_sortidx[:3][::-1]:
-                print(bp.behavdata.columns[i],meanimp[i])
+        if numpy.mean(bp.demogdata[v]>0)<0.04:
+            print('skipping due to low freq:',v,numpy.mean(bp.demogdata[v]>0))
+            continue
+        try:
+            bp.scores[v],bp.importances[v]=bp.run_crossvalidation(v)
+            if report_features and numpy.mean(bp.scores[v])>0.65:
+                print('')
+                meanimp=numpy.mean(bp.importances[v],0)
+                meanimp_sortidx=numpy.argsort(meanimp)
+                for i in meanimp_sortidx[-1:-4:-1]:
+                    print(bp.behavdata.columns[i],meanimp[i])
+                for i in meanimp_sortidx[:3][::-1]:
+                    print(bp.behavdata.columns[i],meanimp[i])
+        except:
+            e = sys.exc_info()[0]
+            print('error on',v,':',e)
 
     h='%08x'%random.getrandbits(32)
     shuffle_flag='shuffle_' if shuffle else ''
