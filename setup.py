@@ -6,7 +6,7 @@
 
 descr = """Self_Regulation_Ontology: analysis code for UH2 self-regulation project"""
 
-import os
+import os,sys
 from setuptools import setup,find_packages
 
 DISTNAME="selfregulation"
@@ -18,57 +18,32 @@ URL='http://poldracklab.org'
 DOWNLOAD_URL='https://github.com/poldrack/Self_Regulation_Ontology/'
 VERSION='0.1.0.dev'
 
-def check_dependencies():
 
-    # Just make sure dependencies exist, I haven't rigorously
-    # tested what the minimal versions that will work are
-    needed_deps = ["IPython", "numpy", "scipy", "matplotlib",
-                   "sklearn", "statsmodels", "networkx",
-                   "pandas"]
-    missing_deps = []
-    for dep in needed_deps:
-        try:
-            __import__(dep)
-        except ImportError:
-            missing_deps.append(dep)
-
-    if missing_deps:
-        missing = (", ".join(missing_deps)
-                   .replace("sklearn", "scikit-learn"))
-        raise ImportError("Missing dependencies: %s" % missing)
-
-if __name__ == "__main__":
-
-    if os.path.exists('MANIFEST'):
-        os.remove('MANIFEST')
-
-    import sys
-    if not (len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or
-            sys.argv[1] in ('--help-commands',
-                            '--version',
-                            'egg_info',
-                            'clean'))):
-        check_dependencies()
-
-    setup(name=DISTNAME,
-        maintainer=MAINTAINER,
-        maintainer_email=MAINTAINER_EMAIL,
-        description=DESCRIPTION,
-        license=LICENSE,
-        version=VERSION,
-        url=URL,
-        download_url=DOWNLOAD_URL,
-        include_package_data=True,
-        use_2to3=True,
-        packages=find_packages(exclude=('pilot*','pilot_expanalysis_scripts*',)),
-#        scripts=['scripts/run_fmri.py', 'scripts/run_group.py',
-#                 'scripts/run_warp.py', 'scripts/setup_project.py',
-#                 'scripts/make_masks.py', 'scripts/anatomy_snapshots.py',
-#                 'scripts/surface_snapshots.py'],
-        classifiers=['Intended Audience :: Science/Research',
-                     'Programming Language :: Python :: 3.4',
-                     'License :: OSI Approved :: BSD License',
-                     'Operating System :: POSIX',
-                     'Operating System :: Unix',
-                     'Operating System :: MacOS'],
-    )
+setup(
+    name=DISTNAME,
+    maintainer=MAINTAINER,
+    maintainer_email=MAINTAINER_EMAIL,
+    description=DESCRIPTION,
+    license=LICENSE,
+    version=VERSION,
+    url=URL,
+    download_url=DOWNLOAD_URL,
+    packages=find_packages(),#['selfregulation','selfregulation.utils'],
+    #scripts=['bin/stowe-towels.py','bin/wash-towels.py'],
+    long_description=open('README.md').read(),
+    install_requires=[
+        "IPython >= 5.1.0",
+        "numpy >= 1.11.2",
+        "scipy >= 0.18.1",
+        "matplotlib >= 1.5.3",
+        "scikit-learn >= 0.18.1",
+        "statsmodels >= 0.6.1",
+        "networkx >= 1.9.1",
+        "pandas >= 0.19.1"],
+    classifiers=['Intended Audience :: Science/Research',
+                 'Programming Language :: Python :: 3.4',
+                 'License :: OSI Approved :: BSD License',
+                 'Operating System :: POSIX',
+                 'Operating System :: Unix',
+                 'Operating System :: MacOS'],
+)
