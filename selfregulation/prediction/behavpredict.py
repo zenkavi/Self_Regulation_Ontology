@@ -35,11 +35,10 @@ from sklearn.preprocessing import StandardScaler
 import fancyimpute
 from imblearn.combine import SMOTETomek
 
-sys.path.append('../utils')
-from utils import get_info,get_behav_data,get_demographics
+from selfregulation.utils.utils import get_info,get_behav_data,get_demographics
 
-from get_balanced_folds import BalancedKFold
-import prediction_utils
+from selfregulation.utils.get_balanced_folds import BalancedKFold
+import selfregulation.prediction.prediction_utils as prediction_utils
 importlib.reload(prediction_utils)
 
 class BehavPredict:
