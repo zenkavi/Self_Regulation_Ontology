@@ -140,7 +140,7 @@ def find_intersection(community, reference):
     intersection = [[len(set(ref).intersection(comm)) for ref in ref_lists] for comm in comm_lists]
     return np.array(intersection).T
 
-def construct_community_tree(intersections, proportional=False):
+def construct_relational_tree(intersections, proportional=False):
     G = igraph.Graph()
     layer_start = 0
     colors = ['red','blue','green','violet']*4

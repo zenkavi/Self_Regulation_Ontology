@@ -1,5 +1,6 @@
 import datetime
 from expanalysis.experiments.processing import  extract_experiment
+from glob import glob
 from os import makedirs, path
 import numpy as np
 import pandas as pd
@@ -177,7 +178,6 @@ for data,directory, DV_df, valence_df in datasets:
         #save selected variables
         selected_variables_reference.loc[task_selection_data.columns].to_csv(path.join(reference_dir, 'selected_variables_for_task_selection_reference.csv'))
         
-        from glob import glob
         files = glob(path.join(directory,'*csv'))
         files = [f for f in files if not any(i in f for i in ['demographic','health','alcohol_drug'])]
         for f in files:
