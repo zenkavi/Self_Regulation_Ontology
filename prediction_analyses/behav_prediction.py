@@ -23,9 +23,9 @@ from sklearn.linear_model import LassoCV
 from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV
 
-import behavpredict
+from selfregulation.utils.utils import get_info
+import selfregulation.prediction.behavpredict as behavpredict
 importlib.reload(behavpredict)
-
 
 if __name__=='__main__':
 
@@ -40,7 +40,13 @@ if __name__=='__main__':
     else:
         datasubset='baseline'
 
-    output_dir='prediction_outputs'
+    try:
+        output_base=get_info('results_directory')
+    except:
+        output_base='.'
+    output_dir=os.path.join(output_base,'prediction_outputs')
+    if not os.path.exists(output_dir):
+        ok.mkdir(output_dir)
 
 
     assert datasubset in ['survey','mirt','task','all','baseline']
