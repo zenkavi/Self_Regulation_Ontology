@@ -39,7 +39,7 @@ if __name__=='__main__':
         datasubset=sys.argv[2]
     else:
         datasubset='baseline'
-    if len(sys.argv)>2:
+    if len(sys.argv)>3:
         vars=[sys.argv[3]]
     else:
         vars=None
