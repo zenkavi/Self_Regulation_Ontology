@@ -1,6 +1,6 @@
 library(mirt)
 library(parallel)
-mirtCluster(23)
+mirtCluster(19)
 args <- commandArgs(TRUE)
 
 if (length(args)<1) {
@@ -10,7 +10,7 @@ ncomps=2
 }
 
 
-d=read.csv('../Data/Derived_Data/Combined_12-05-2016/surveydata_fixed_minfreq40.csv')
+d=read.csv('../Data/Derived_Data/Combined_12-15-2016/surveydata_fixed_minfreq40.csv')
 d$worker=NULL
 verbosearg=FALSE
 modeltype='graded'
