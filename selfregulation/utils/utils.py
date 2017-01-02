@@ -7,6 +7,7 @@ import pandas,numpy
 import re
 from sklearn.metrics import confusion_matrix
 import zipfile
+import pkg_resources
 
 def print_confusion_matrix(y_true,y_pred,labels=[0,1]):
     cm=confusion_matrix(y_true,y_pred)
@@ -49,7 +50,7 @@ def get_behav_data(dataset=None, file=None, full_dataset=False, flip_valence=Fal
             df = pandas.DataFrame()
             print('Error: %s not found in %s' % (file, datadir))
         data = pandas.concat([df,data])
-    
+
     def valence_flip(data, flip_list):
         for c in data.columns:
             try:
@@ -66,22 +67,16 @@ def get_info(item,infile=None):
     """
     get info from settings file
     """
-
+    config=pkg_resources.resource_string('selfregulation',
+                        'data/Self_Regulation_Settings.txt')
+    config=str(config,'utf-8').strip()
     infodict={}
-    if not infile:
-        s = 'Self_Regulation_Ontology'
-        path = os.path.abspath('.')
-        infile = os.path.join(path[:path.find(s)+len(s)], 'Self_Regulation_Settings.txt')
-    try:
-        assert os.path.exists(infile)
-    except:
-        raise Exception('You must first create a Self_Regulation_Settings.txt file')
 
-    with open(infile) as f:
-        lines=[i for i in f.readlines() if not i.find('#')==0]
-        for l in lines:
-            l_s=l.rstrip('\n').split(':')
-            if len(l_s)>1:
+    for l in config.split('\n'):
+        if l.find('#')==0:
+            continue
+        l_s=l.rstrip('\n').split(':')
+        if len(l_s)>1:
                 infodict[l_s[0]]=l_s[1]
     try:
         assert item in infodict

@@ -118,7 +118,8 @@ class BehavPredict:
 
     def get_demogdata_vartypes(self,zinf_cutoff=0.5):
         # for each variable, get info on how it is distributed
-        with open('demographic_model_type.txt') as f:
+        basedir=get_info('base_directory')
+        with open(os.path.join(basedir,'prediction_analyses/demographic_model_type.txt')) as f:
             lines=[i.strip().split() for i in f.readlines()]
             for l in lines:
                 self.data_models[l[0]]=l[1]

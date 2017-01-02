@@ -46,7 +46,7 @@ if __name__=='__main__':
         output_base='.'
     output_dir=os.path.join(output_base,'prediction_outputs')
     if not os.path.exists(output_dir):
-        ok.mkdir(output_dir)
+        os.makedirs(output_dir)
 
 
     assert datasubset in ['survey','mirt','task','all','baseline']
