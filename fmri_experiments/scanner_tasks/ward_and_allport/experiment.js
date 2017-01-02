@@ -23,7 +23,7 @@ var get_ITI = function() {
   } else {
     gap = Math.round(gap/1000)*1000
   }
-  return 2000 + gap //2000 (feedback time) + 1000 (minimum ITI)
+  return 2000 + gap //1000 (feedback time) + 1000 (minimum ITI)
  }
 
 var getStim = function() {
@@ -146,55 +146,119 @@ var arraysEqual = function(arr1, arr2) {
   return true;
 }
 
+var reset_problem = function() {
+    colors = jsPsych.randomization.shuffle(['Green', 'Red', 'Blue'])
+    held_ball = 0
+    time_elapsed = 0
+    num_moves = 0;
+    if (problem_i < problems.length) {
+      curr_placement = jQuery.extend(true, [], problems[problem_i].start_state)
+    }
+}
+
 /* ************************************ */
 /* Define experimental variables */
 /* ************************************ */
-// generic task variables
-var sumInstructTime = 0 //ms
-var instructTimeThresh = 0 ///in seconds
-var credit_var = true
-
 // task specific variables
 var correct = false
-var exp_stage = 'practice'
 var colors = ['Green', 'Red', 'Blue']
 var problem_i = 0
-var time_per_trial = 20000 //time per trial in seconds
+var time_per_trial = 15000 //time per trial in seconds
 var time_elapsed = 0 //tracks time for a problem
 var num_moves = 0 //tracks number of moves for a problem
 var held_ball = 0
+var ref_board = ''
 
-/*keeps track of peg board (where balls are). Lowest ball is the first value for each peg.
-So the initial_placement has the 1st ball and 2nd ball on the first peg and the third ball on the 2nd peg.
-*/
-// make Your board
-var curr_placement = [
-  [1, 0, 0],
-  [2, 3, 0],
-  [0, 0, 0]
+
+var problems = []
+var test_problems = []
+var practice_problems = []
+// Problems can be either partially ambiguous or unambiguous (goal hierarchy)
+// and either with and intermediate step or without (search depth)
+// In this implementation all practice problems are unambiguous (UA) and
+// all test are partially ambiguous (PA)
+// set up practice problems
+practice_problems = [
+  {'start_state': [
+      [1, 0, 0],
+      [2, 3, 0],
+      [0, 0, 0]
+  ], 
+  'goal_state': {
+    'condition': 'UA_with_intermeidate',
+    'problem': [
+      [1, 2, 3],
+      [0, 0, 0],
+      [0, 0, 0]
+    ]
+  }},
+  {'start_state': [
+      [1, 2, 0],
+      [3, 0, 0],
+      [0, 0, 0]
+  ], 
+  'goal_state': {
+    'condition': 'UA_with_intermeidate',
+    'problem': [
+      [1, 3, 2],
+      [0, 0, 0],
+      [0, 0, 0]
+    ]
+  }},
+  {'start_state': [
+      [0, 0, 0],
+      [1, 2, 0],
+      [3, 0, 0]
+  ], 
+  'goal_state': {
+    'condition': 'UA_without_intermeidate',
+    'problem': [
+      [3, 2, 1],
+      [0, 0, 0],
+      [0, 0, 0]
+    ]
+  }},
+  {'start_state': [
+      [0, 0, 0],
+      [1, 2, 0],
+      [3, 0, 0]
+  ], 
+  'goal_state': {
+    'condition': 'UA_without_intermeidate',
+    'problem': [
+      [2, 3, 1],
+      [0, 0, 0],
+      [0, 0, 0]
+    ]
+  }},
 ]
 
-var ref_board = makeBoard('your_board', curr_placement)
+// set up test_problems
+var base_start_state = [
+    [1, 2, 3],
+    [0, 0, 0],
+    [0, 0, 0]
+  ]
 var base_goal_states = [
-  {'condition': 'with_intermediate',
+  {'condition': 'PA_with_intermediate',
   'problem': [
     [1, 0, 0],
     [2, 3, 0],
     [0, 0, 0]
   ]},
-  {'condition': 'with_intermediate',
+  {'condition': 'PA_with_intermediate',
   'problem': [
     [1, 3, 0],
     [2, 0, 0],
     [0, 0, 0]
   ]},
-  {'condition': 'without_intermediate',
+  {'condition': 'PA_without_intermediate',
   'problem': [
     [0, 0, 0],
     [3, 2, 0],
     [1, 0, 0]
   ]},
-  {'condition': 'without_intermediate',
+  {'condition': 'PA_without_intermediate',
   'problem': [
     [0, 0, 0],
     [3, 1, 0],
@@ -202,14 +266,7 @@ var base_goal_states = [
   ]},
 ]
 
-var base_start_state = [
-    [1, 2, 3],
-    [0, 0, 0],
-    [0, 0, 0]
-  ]
-
 //permute start and goal states
-var problems = []
 var start_permutations = [[0,1,2],[1,0,2],[1,2,0]]
 //second permutations used for flipping the non-tower peg
 var goal_permutations = [[0,2,1],[2,0,1],[2,1,0]]
@@ -227,7 +284,7 @@ for (s=0; s<start_permutations.length; s++) {
     for (peg=0; peg<start_permutations.length; peg++){
       goal_state.push(base_goal_states[gs]['problem'][start_permute[peg]])
     }
-    problems.push(
+    test_problems.push(
       {'start_state': start_state, 
       'goal_state': {'problem': goal_state, 'condition': base_goal_states[gs]['condition']}}
       )
@@ -236,18 +293,20 @@ for (s=0; s<start_permutations.length; s++) {
     for (peg=0; peg<start_permutations.length; peg++){
       goal_state.push(base_goal_states[gs]['problem'][goal_permute[peg]])
     }
-    problems.push(
+    test_problems.push(
       {'start_state': start_state, 
       'goal_state': {'problem': goal_state, 'condition': base_goal_states[gs]['condition']}}
       )
   }
 }
+test_problems = jsPsych.randomization.shuffle(test_problems).concat(jsPsych.randomization.shuffle(test_problems))
 
-problems = jsPsych.randomization.repeat(problems, 2)
-
+// set up practice
+exp_stage = 'practice'
+problems = practice_problems
 // setup blocks
 num_blocks = 3
-block_length = problems.length/num_blocks
+block_length = test_problems.length/num_blocks
 
 /* ************************************ */
 /* Set up jsPsych blocks */
@@ -278,34 +337,46 @@ block_length = problems.length/num_blocks
   timing_post_trial: 0
 };
 
-var start_test_block = {
+var instructions_block = {
   type: 'poldrack-text',
   data: {
     trial_id: "instruction"
   },
-  timing_response: 180000,
-  text: '<div class = centerbox><p class = block-text>We will now start Problem 1. There will be ' +
-    problems.length + ' problems to complete. Press <strong>enter</strong> to begin.</p></div>',
-  cont_key: [13],
+  text: "<div class = center-text>Solve the Tower Tasks!<br>Plan ahead first and work swiftly!<br>We'll start with some practice.</div>",
+  cont_key: [32],
   timing_post_trial: 1000,
   on_finish: function() {
-    colors = jsPsych.randomization.shuffle(['Green', 'Red', 'Blue'])
-    exp_stage = 'test'
-    held_ball = 0
-    time_elapsed = 0
-    num_moves = 0;
-    curr_placement = jQuery.extend(true, [], problems[problem_i].start_state)
+    reset_problem()
   }
 };
 
-var test_tohand = {
+var start_test_block = {
+  type: 'poldrack-single-stim',
+  stimulus: '<div class = centerbox><div class = center-text>Get ready!</p></div>',
+  is_html: true,
+  choices: 'none',
+  timing_stim: 1500, 
+  timing_response: 1500,
+  data: {
+    trial_id: "test_start_block"
+  },
+  timing_post_trial: 500,
+  on_finish: function() {
+    exp_stage = 'test'
+    problem_i = 0
+    problems = test_problems
+    reset_problem()
+  }
+};
+
+var tohand_block = {
   type: 'single-stim-button',
   stimulus: getStim,
   button_class: 'special',
   is_html: true,
   data: {
     trial_id: "to_hand",
-    exp_stage: 'test'
+    exp_stage: exp_stage
   },
   timing_stim: getTime,
   timing_response: getTime,
@@ -328,14 +399,14 @@ var test_tohand = {
   }
 }
 
-var test_toboard = {
+var toboard_block = {
   type: 'single-stim-button',
   stimulus: getStim,
   button_class: 'special',
   is_html: true,
   data: {
     trial_id: "to_board",
-    exp_stage: 'test'
+    exp_stage: exp_stage
   },
   timing_stim: getTime,
   timing_response: getTime,
@@ -366,9 +437,9 @@ var feedback_block = {
   data: {
     trial_id: 'feedback'
   },
-  timing_stim: 2000,
+  timing_stim: 1000,
   timing_response: get_ITI,
-  timing_post_trial: 500,
+  timing_post_trial: 0,
   on_finish: function() {
     jsPsych.data.addDataToLastTrial({
       'exp_stage': exp_stage,
@@ -378,16 +449,13 @@ var feedback_block = {
       'correct': correct
     })
     //advance round
-    held_ball = 0
-    time_elapsed = 0
-    problem_i += 1;
-    num_moves = 0;
-    curr_placement = jQuery.extend(true, [], problems[problem_i].start_state)
+    problem_i += 1
+    reset_problem()
   },
 }
 
 var problem_node = {
-  timeline: [test_tohand, test_toboard],
+  timeline: [tohand_block, toboard_block],
   loop_function: function(data) {
     if (time_elapsed >= time_per_trial) {
       return false
@@ -408,6 +476,11 @@ var problem_node = {
 
 /* create experiment definition array */
 var ward_and_allport_experiment = [];
+ward_and_allport_experiment.push(instructions_block);
+for (var i = 0; i < practice_problems.length; i++) {
+  ward_and_allport_experiment.push(problem_node);
+  ward_and_allport_experiment.push(feedback_block);
+}
 ward_and_allport_experiment.push(start_test_block);
 for (var b = 0; b < num_blocks; b++) {
   for (var i = 0; i < block_length; i++) {
