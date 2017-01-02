@@ -48,7 +48,6 @@ if __name__=='__main__':
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-
     assert datasubset in ['survey','mirt','task','all','baseline']
 
     # set up classifier
