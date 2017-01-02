@@ -1,39 +1,10 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
-function assessPerformance() {
-  /* Function to calculate the "credit_var", which is a boolean used to
-  credit individual experiments in expfactory.
-   */
-  var experiment_data = jsPsych.data.getTrialsOfType('single-stim-button');
-  var missed_count = 0;
-  var trial_count = 0;
-  var rt_array = [];
-  var rt = 0;
-  var avg_rt = -1;
-  //record choices participants made
-  for (var i = 0; i < experiment_data.length; i++) {
-    trial_count += 1
-    rt = experiment_data[i].rt
-    if (rt == -1) {
-      missed_count += 1
-    } else {
-      rt_array.push(rt)
-    }
-  }
-  //calculate average rt
-  if (rt_array.length !== 0) {
-    avg_rt = math.median(rt_array)
-  } else {
-    avg_rt = -1
-  }
-  credit_var = (avg_rt > 100)
-  jsPsych.data.addDataToLastTrial({"credit_var": credit_var})
-}
 
 var getStim = function() {
   var ref_board = makeBoard('your_board', curr_placement, 'ref')
-  var target_board = makeBoard('peg_board', goals[problem_i])
+  var target_board = makeBoard('peg_board', problems[problem_i].goal_state.problem)
   var canvas = '<div class = tol_canvas><div class="tol_vertical_line"></div></div>'
   var hold_box;
   if (held_ball !== 0) {
@@ -156,11 +127,6 @@ var arraysEqual = function(arr1, arr2) {
   return true;
 }
 
-var getInstructFeedback = function() {
-  return '<div class = centerbox><p class = center-block-text>' + feedback_instruct_text +
-    '</p></div>'
-}
-
 /* ************************************ */
 /* Define experimental variables */
 /* ************************************ */
@@ -222,8 +188,7 @@ var base_start_state = [
   ]
 
 //permute start and goal states
-var goal_states = []
-var start_states = []
+var problems = []
 var start_permutations = [[0,1,2],[1,0,2],[1,2,0]]
 //second permutations used for flipping the non-tower peg
 var goal_permutations = [[0,2,1],[2,0,1],[2,1,0]]
@@ -241,20 +206,24 @@ for (s=0; s<start_permutations.length; s++) {
     for (peg=0; peg<start_permutations.length; peg++){
       goal_state.push(base_goal_states[gs]['problem'][start_permute[peg]])
     }
-    start_states.push(start_state)
-    goal_states.push({'problem': goal_state, 'condition': base_goal_states[gs]['condition']})
+    problems.push(
+      {'start_state': start_state, 
+      'goal_state': {'problem': goal_state, 'condition': base_goal_states[gs]['condition']}}
+      )
     // flip pegs that don't start with a tower
     var goal_state = []
     for (peg=0; peg<start_permutations.length; peg++){
-      goal_state.push(base_goal_states[gs][goal_permute[peg]])
+      goal_state.push(base_goal_states[gs]['problem'][goal_permute[peg]])
     }
-    start_states.push(start_state)
-    goal_states.push({'problem': goal_state, 'condition': base_goal_states[gs]['condition']})
+    problems.push(
+      {'start_state': start_state, 
+      'goal_state': {'problem': goal_state, 'condition': base_goal_states[gs]['condition']}}
+      )
   }
 }
 
+problems = jsPsych.randomization.repeat(problems, 2)
 
-  
 
 var held_ball = 0
 
@@ -283,8 +252,7 @@ var end_block = {
   timing_response: 180000,
   text: '<div class = centerbox><p class = center-block-text>Thanks for completing this task!</p><p class = center-block-text>Press <strong>enter</strong> to continue.</p></div>',
   cont_key: [13],
-  timing_post_trial: 0,
-  on_finish: assessPerformance
+  timing_post_trial: 0
 };
 
 var start_test_block = {
@@ -294,7 +262,7 @@ var start_test_block = {
   },
   timing_response: 180000,
   text: '<div class = centerbox><p class = block-text>We will now start Problem 1. There will be ' +
-    goals.length + ' goals to complete. Press <strong>enter</strong> to begin.</p></div>',
+    problems.length + ' problems to complete. Press <strong>enter</strong> to begin.</p></div>',
   cont_key: [13],
   timing_post_trial: 1000,
   on_finish: function() {
@@ -325,7 +293,7 @@ var advance_problem_block = {
     time_elapsed = 0
     problem_i += 1;
     num_moves = 0;
-    curr_placement = start_state[problem_i]
+    curr_placement = problems[problem_i].start_state
   }
 }
 
@@ -350,8 +318,8 @@ var test_tohand = {
     jsPsych.data.addDataToLastTrial({
       'current_position': jQuery.extend(true, [], curr_placement),
       'num_moves_made': num_moves,
-      'target': goals[problem_i],
-      'min_moves': answers[problem_i],
+      'target': problems[problem_i].goal_state.problem,
+      'condition': problems[problem_i].goal_state.condition,
       'problem_id': problem_i
     })
   }
@@ -378,8 +346,7 @@ var test_toboard = {
     jsPsych.data.addDataToLastTrial({
       'current_position': jQuery.extend(true, [], curr_placement),
       'num_moves_made': num_moves,
-      'target': goals[problem_i],
-      'min_moves': answers[problem_i],
+      'target': problems[problem_i].goal_state.problem,
       'problem_id': problem_i
     })
   }
@@ -429,10 +396,10 @@ var problem_node = {
 /* create experiment definition array */
 var tower_of_london_experiment = [];
 tower_of_london_experiment.push(start_test_block);
-for (var i = 0; i < goals.length; i++) {
+for (var i = 0; i < problems.length; i++) {
   tower_of_london_experiment.push(problem_node);
   tower_of_london_experiment.push(feedback_block)
-  if (i != goals.length-1) {
+  if (i != problems.length-1) {
     tower_of_london_experiment.push(advance_problem_block)
   }
 }
