@@ -79,8 +79,7 @@ var getTime = function() {
   
 }
 
-var pegClick = function(peg_id) {
-  var choice = Number(peg_id.slice(-1)) - 1
+var pegClick = function(choice) {
   var peg = curr_placement[choice]
   var ball_location = 0
   if (held_ball === 0) {
@@ -160,6 +159,7 @@ var reset_problem = function() {
 /* Define experimental variables */
 /* ************************************ */
 // task specific variables
+var choices = [71,77,66]
 var correct = false
 var colors = ['Green', 'Red', 'Blue']
 var problem_i = 0
@@ -370,9 +370,9 @@ var start_test_block = {
 };
 
 var tohand_block = {
-  type: 'single-stim-button',
+  type: 'poldrack-single-stim',
   stimulus: getStim,
-  button_class: 'special',
+  choices: choices,
   is_html: true,
   data: {
     trial_id: "to_hand",
@@ -380,9 +380,11 @@ var tohand_block = {
   },
   timing_stim: getTime,
   timing_response: getTime,
+  response_ends_trial: true,
   timing_post_trial: 0,
   on_finish: function(data) {
-    if (data.mouse_click != -1) {
+    if (data.key_press != -1) {
+      pegClick(choices.indexOf(data.key_press))
       time_elapsed += data.rt
     } else {
       time_elapsed += getTime()
@@ -400,9 +402,9 @@ var tohand_block = {
 }
 
 var toboard_block = {
-  type: 'single-stim-button',
+  type: 'poldrack-single-stim',
   stimulus: getStim,
-  button_class: 'special',
+  choices: choices,
   is_html: true,
   data: {
     trial_id: "to_board",
@@ -410,9 +412,11 @@ var toboard_block = {
   },
   timing_stim: getTime,
   timing_response: getTime,
+  response_ends_trial: true,
   timing_post_trial: 0,
   on_finish: function(data) {
-    if (data.mouse_click != -1) {
+    if (data.key_press != -1) {
+      pegClick(choices.indexOf(data.key_press))
       time_elapsed += data.rt
     } else {
       time_elapsed += getTime()
