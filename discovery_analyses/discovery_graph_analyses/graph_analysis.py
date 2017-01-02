@@ -1,10 +1,8 @@
 #get utils
-import sys
-sys.path.append('../../utils')
-from graph_utils import calc_connectivity_mat, find_intersection, get_fully_connected_threshold
-from graph_utils import  Graph_Analysis, threshold_proportional_sign
-from plot_utils import dendroheatmap
-from utils import get_behav_data
+from selfregulation.utils.graph_utils import calc_connectivity_mat, find_intersection, get_fully_connected_threshold
+from selfregulation.utils.graph_utils import  Graph_Analysis, threshold_proportional_sign
+from selfregulation.utils.plot_utils import dendroheatmap
+from selfregulation.utils.utils import get_behav_data
 
 import bct
 import igraph
