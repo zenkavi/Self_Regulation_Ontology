@@ -57,8 +57,10 @@ if __name__=='__main__':
     # set up classifier
     clf=LassoCV()
 
+    # skip RetirementPercentStocks because it crashes the estimation tool
     bp=behavpredict.BehavPredict(verbose=2,
-         drop_na_thresh=100,n_jobs=2)
+         drop_na_thresh=100,n_jobs=2,
+         skip_vars=['RetirementPercentStocks'])
     bp.load_demog_data()
     bp.get_demogdata_vartypes()
     bp.load_behav_data(datasubset)
@@ -74,6 +76,9 @@ if __name__=='__main__':
     else:
         vars_to_test=vars
     for v in vars_to_test:
+        if v in bp.skip_vars:
+            print('skipping',v)
+            continue
         if numpy.mean(bp.demogdata[v]>0)<0.04:
             print('skipping due to low freq:',v,numpy.mean(bp.demogdata[v]>0))
             continue

@@ -49,13 +49,15 @@ class BehavPredict:
                     categorical_vars=None,
                     n_outer_splits=4,
                     use_smote=True,smote_cutoff=0.1,
-                    baseline_vars=['Age','Sex']):
+                    baseline_vars=['Age','Sex'],
+                    skip_vars=[]):
         # set up arguments
         self.verbose=verbose
         if not dataset:
             self.dataset=get_info('dataset')
         else:
             self.dataset=dataset
+        self.skip_vars=skip_vars
         self.use_full_dataset=use_full_dataset
         self.drop_na_thresh=drop_na_thresh
         if not categorical_vars is None:
