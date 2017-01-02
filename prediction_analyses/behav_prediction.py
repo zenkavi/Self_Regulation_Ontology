@@ -39,6 +39,10 @@ if __name__=='__main__':
         datasubset=sys.argv[2]
     else:
         datasubset='baseline'
+    if len(sys.argv)>2:
+        vars=[sys.argv[3]]
+    else:
+        vars=None
 
     try:
         output_base=get_info('results_directory')
@@ -65,8 +69,10 @@ if __name__=='__main__':
         print('WARNING: shuffling target data')
     bp.get_joint_datasets()
 
-    vars_to_test=bp.demogdata.columns
-    #vars_to_test=['BMI']
+    if not vars:
+        vars_to_test=bp.demogdata.columns
+    else:
+        vars_to_test=vars
     for v in vars_to_test:
         if numpy.mean(bp.demogdata[v]>0)<0.04:
             print('skipping due to low freq:',v,numpy.mean(bp.demogdata[v]>0))
