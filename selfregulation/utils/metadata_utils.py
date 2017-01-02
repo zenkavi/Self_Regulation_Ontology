@@ -2,9 +2,8 @@
 utilities for fixing metadata
 """
 import os,json,sys
-sys.path.append('../utils')
 
-from utils import get_info
+from selfregulation.utils.utils import get_info
 
 #warnings.filterwarnings("ignore") # only turn this on in production mode
                                   # to keep log files from overflowing
