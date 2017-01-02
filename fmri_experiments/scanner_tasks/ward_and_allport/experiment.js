@@ -1,31 +1,55 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
+var get_ITI = function() {
+  // ref: https://gist.github.com/nicolashery/5885280
+  function randomExponential(rate, randomUniform) {
+    // http://en.wikipedia.org/wiki/Exponential_distribution#Generating_exponential_variates
+    rate = rate || 1;
+
+    // Allow to pass a random uniform value or function
+    // Default to Math.random()
+    var U = randomUniform;
+    if (typeof randomUniform === 'function') U = randomUniform();
+    if (!U) U = Math.random();
+
+    return -Math.log(U) / rate;
+  }
+  gap = randomExponential(1/2)*900
+  if (gap > 10000) {
+    gap = 10000
+  } else if (gap < 0) {
+    gap = 0
+  } else {
+    gap = Math.round(gap/1000)*1000
+  }
+  return 2000 + gap //2000 (feedback time) + 1000 (minimum ITI)
+ }
 
 var getStim = function() {
   var ref_board = makeBoard('your_board', curr_placement, 'ref')
-  var target_board = makeBoard('peg_board', problems[problem_i].goal_state.problem)
-  var canvas = '<div class = tol_canvas><div class="tol_vertical_line"></div></div>'
+  var goal_state_board = makeBoard('peg_board', problems[problem_i].goal_state.problem)
+  var canvas = '<div class = watt_canvas><div class="watt_vertical_line"></div></div>'
   var hold_box;
   if (held_ball !== 0) {
     ball = colors[held_ball - 1]
-    hold_box = '<div class = tol_hand_box><div class = "tol_hand_ball tol_' + ball +
-      '"><div class = tol_ball_label>' + ball[0] +
-      '</div></div></div><div class = tol_hand_label><strong>Ball in Hand</strong></div>'
+    hold_box = '<div class = watt_hand_box><div class = "watt_hand_ball watt_' + ball +
+      '"><div class = watt_ball_label>' + ball[0] +
+      '</div></div></div><div class = watt_hand_label><strong>Ball in Hand</strong></div>'
   } else {
     hold_box =
-      '<div class = tol_hand_box></div><div class = tol_hand_label><strong>Ball in Hand</strong></div>'
+      '<div class = watt_hand_box></div><div class = watt_hand_label><strong>Ball in Hand</strong></div>'
   }
-  return canvas + ref_board + target_board + hold_box
+  return canvas + ref_board + goal_state_board + hold_box
 }
 
 var getFB = function() {
   var data = jsPsych.data.getLastTrialData()
-  var target = data.target
+  var goal_state = data.goal_state
   var isequal = true
   correct = false
-  for (var i = 0; i < target.length; i++) {
-    isequal = arraysEqual(target[i], data.current_position[i])
+  for (var i = 0; i < goal_state.length; i++) {
+    isequal = arraysEqual(goal_state[i], data.current_position[i])
     if (isequal === false) {
       break;
     }
@@ -38,11 +62,11 @@ var getFB = function() {
     feedback = "Didn't get that one."
   }
   var ref_board = makeBoard('your_board', curr_placement)
-  var target_board = makeBoard('peg_board', target)
-  var canvas = '<div class = tol_canvas><div class="tol_vertical_line"></div></div>'
-  var feedback_box = '<div class = tol_feedbackbox><p class = center-text>' + feedback +
+  var goal_state_board = makeBoard('peg_board', goal_state)
+  var canvas = '<div class = watt_canvas><div class="watt_vertical_line"></div></div>'
+  var feedback_box = '<div class = watt_feedbackbox><p class = center-text>' + feedback +
     '</p></div>'
-  return canvas + ref_board + target_board + feedback_box
+  return canvas + ref_board + goal_state_board + feedback_box
 }
 
 
@@ -53,11 +77,6 @@ var getTime = function() {
     return 1
   }
   
-}
-
-var getText = function() {
-  return '<div class = centerbox><p class = center-block-text>About to start problem ' + (problem_i + 2) +
-    '. Press <strong>enter</strong> to begin.</p></div>'
 }
 
 var pegClick = function(peg_id) {
@@ -83,31 +102,31 @@ var pegClick = function(peg_id) {
 }
 
 var makeBoard = function(container, ball_placement, board_type) {
-  var board = '<div class = tol_' + container + '><div class = tol_base></div>'
+  var board = '<div class = watt_' + container + '><div class = watt_base></div>'
   if (container == 'your_board') {
-    board += '<div class = tol_board_label><strong>Your Board</strong></div>'
+    board += '<div class = watt_board_label><strong>Your Board</strong></div>'
   } else {
-    board += '<div class = tol_board_label><strong>Target Board</strong></div>'
+    board += '<div class = watt_board_label><strong>Target Board</strong></div>'
   }
   for (var p = 0; p < 3; p++) {
-    board += '<div id = tol_peg_' + (p + 1) + '><div class = tol_peg></div></div>' //place peg
+    board += '<div id = watt_peg_' + (p + 1) + '><div class = watt_peg></div></div>' //place peg
       //place balls
     if (board_type == 'ref') {
       if (ball_placement[p][0] === 0 & held_ball === 0) {
-        board += '<div id = tol_peg_' + (p + 1) + ' onclick = "pegClick(this.id)">'
+        board += '<div id = watt_peg_' + (p + 1) + ' onclick = "pegClick(this.id)">'
       } else if (ball_placement[p].slice(-1)[0] !== 0 & held_ball !== 0) {
-        board += '<div id = tol_peg_' + (p + 1) + ' onclick = "pegClick(this.id)">'
+        board += '<div id = watt_peg_' + (p + 1) + ' onclick = "pegClick(this.id)">'
       } else {
-        board += '<div class = special id = tol_peg_' + (p + 1) + ' onclick = "pegClick(this.id)">'
+        board += '<div class = special id = watt_peg_' + (p + 1) + ' onclick = "pegClick(this.id)">'
       }
     } else {
-      board += '<div id = tol_peg_' + (p + 1) + ' >'
+      board += '<div id = watt_peg_' + (p + 1) + ' >'
     }
     var peg = ball_placement[p]
     for (var b = 0; b < peg.length; b++) {
       if (peg[b] !== 0) {
         ball = colors[peg[b] - 1]
-        board += '<div class = "tol_ball tol_' + ball + '"><div class = tol_ball_label>' + ball[0] +
+        board += '<div class = "watt_ball watt_' + ball + '"><div class = watt_ball_label>' + ball[0] +
           '</div></div>'
       }
     }
@@ -143,10 +162,12 @@ var problem_i = 0
 var time_per_trial = 20000 //time per trial in seconds
 var time_elapsed = 0 //tracks time for a problem
 var num_moves = 0 //tracks number of moves for a problem
-  /*keeps track of peg board (where balls are). Lowest ball is the first value for each peg.
-  So the initial_placement has the 1st ball and 2nd ball on the first peg and the third ball on the 2nd peg.
-  */
-  // make Your board
+var held_ball = 0
+
+/*keeps track of peg board (where balls are). Lowest ball is the first value for each peg.
+So the initial_placement has the 1st ball and 2nd ball on the first peg and the third ball on the 2nd peg.
+*/
+// make Your board
 var curr_placement = [
   [1, 0, 0],
   [2, 3, 0],
@@ -224,34 +245,36 @@ for (s=0; s<start_permutations.length; s++) {
 
 problems = jsPsych.randomization.repeat(problems, 2)
 
-
-var held_ball = 0
+// setup blocks
+num_blocks = 3
+block_length = problems.length/num_blocks
 
 /* ************************************ */
 /* Set up jsPsych blocks */
 /* ************************************ */
-//Set up post task questionnaire
-var post_task_block = {
-   type: 'survey-text',
-   data: {
-       trial_id: "post task questions"
-   },
-   questions: ['<p class = center-block-text style = "font-size: 20px">Please summarize what you were asked to do in this task.</p>',
-              '<p class = center-block-text style = "font-size: 20px">Do you have any comments about this task?</p>'],
-   rows: [15, 15],
-   columns: [60,60]
-};
-
 /* define static blocks */
-var end_block = {
-  type: 'poldrack-text',
+ var end_block = {
+  type: 'poldrack-single-stim',
+  stimulus: '<div class = centerbox><div class = center-text><i>Fin</i></div></div>',
+  is_html: true,
+  choices: [32],
+  timing_response: -1,
+  response_ends_trial: true,
   data: {
     trial_id: "end",
-    exp_id: 'tower_of_london'
+    exp_id: 'ward_and_allport'
   },
-  timing_response: 180000,
-  text: '<div class = centerbox><p class = center-block-text>Thanks for completing this task!</p><p class = center-block-text>Press <strong>enter</strong> to continue.</p></div>',
-  cont_key: [13],
+  timing_post_trial: 0
+};
+
+ var reminder_block = {
+  type: 'poldrack-single-stim',
+  stimulus: '<div class = centerbox><div class = center-text>Plan ahead first!<br></br><br></br>Work carefully but swiftly!</div></div>',
+  is_html: true,
+  choices: 'none',
+  timing_response: 5000,
+  response_ends_trial: true,
+  data: {trial_id: "reminder"},
   timing_post_trial: 0
 };
 
@@ -271,31 +294,9 @@ var start_test_block = {
     held_ball = 0
     time_elapsed = 0
     num_moves = 0;
-    curr_placement = [
-      [1, 2, 3],
-      [0, 0, 0],
-      [0, 0, 0]
-    ]
+    curr_placement = jQuery.extend(true, [], problems[problem_i].start_state)
   }
 };
-
-var advance_problem_block = {
-  type: 'poldrack-text',
-  data: {
-    trial_id: "advance",
-    exp_stage: 'test'
-  },
-  timing_response: 180000,
-  text: getText,
-  cont_key: [13],
-  on_finish: function() {
-    held_ball = 0
-    time_elapsed = 0
-    problem_i += 1;
-    num_moves = 0;
-    curr_placement = problems[problem_i].start_state
-  }
-}
 
 var test_tohand = {
   type: 'single-stim-button',
@@ -318,7 +319,9 @@ var test_tohand = {
     jsPsych.data.addDataToLastTrial({
       'current_position': jQuery.extend(true, [], curr_placement),
       'num_moves_made': num_moves,
-      'target': problems[problem_i].goal_state.problem,
+      'min_moves': 3,
+      'start_state': problems[problem_i].start_state,
+      'goal_state': problems[problem_i].goal_state.problem,
       'condition': problems[problem_i].goal_state.condition,
       'problem_id': problem_i
     })
@@ -346,7 +349,10 @@ var test_toboard = {
     jsPsych.data.addDataToLastTrial({
       'current_position': jQuery.extend(true, [], curr_placement),
       'num_moves_made': num_moves,
-      'target': problems[problem_i].goal_state.problem,
+      'min_moves': 3,
+      'start_state': problems[problem_i].start_state,
+      'goal_state': problems[problem_i].goal_state.problem,
+      'condition': problems[problem_i].goal_state.condition,
       'problem_id': problem_i
     })
   }
@@ -361,17 +367,24 @@ var feedback_block = {
     trial_id: 'feedback'
   },
   timing_stim: 2000,
-  timing_response: 2000,
+  timing_response: get_ITI,
   timing_post_trial: 500,
   on_finish: function() {
     jsPsych.data.addDataToLastTrial({
       'exp_stage': exp_stage,
       'problem_time': time_elapsed,
+      'num_moves_made': num_moves,
+      'min_moves': 3,
       'correct': correct
     })
+    //advance round
+    held_ball = 0
+    time_elapsed = 0
+    problem_i += 1;
+    num_moves = 0;
+    curr_placement = jQuery.extend(true, [], problems[problem_i].start_state)
   },
 }
-
 
 var problem_node = {
   timeline: [test_tohand, test_toboard],
@@ -380,10 +393,10 @@ var problem_node = {
       return false
     }
     data = data[1]
-    var target = data.target
+    var goal_state = data.goal_state
     var isequal = true
-    for (var i = 0; i < target.length; i++) {
-      isequal = arraysEqual(target[i], data.current_position[i])
+    for (var i = 0; i < goal_state.length; i++) {
+      isequal = arraysEqual(goal_state[i], data.current_position[i])
       if (isequal === false) {
         break;
       }
@@ -394,14 +407,13 @@ var problem_node = {
 }
 
 /* create experiment definition array */
-var tower_of_london_experiment = [];
-tower_of_london_experiment.push(start_test_block);
-for (var i = 0; i < problems.length; i++) {
-  tower_of_london_experiment.push(problem_node);
-  tower_of_london_experiment.push(feedback_block)
-  if (i != problems.length-1) {
-    tower_of_london_experiment.push(advance_problem_block)
+var ward_and_allport_experiment = [];
+ward_and_allport_experiment.push(start_test_block);
+for (var b = 0; b < num_blocks; b++) {
+  for (var i = 0; i < block_length; i++) {
+    ward_and_allport_experiment.push(problem_node);
+    ward_and_allport_experiment.push(feedback_block)
   }
+  ward_and_allport_experiment.push(reminder_block);
 }
-tower_of_london_experiment.push(post_task_block)
-tower_of_london_experiment.push(end_block);
+ward_and_allport_experiment.push(end_block);

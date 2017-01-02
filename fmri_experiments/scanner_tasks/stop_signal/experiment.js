@@ -231,15 +231,17 @@ var start_test_block = {
   timing_post_trial: 500
 };
 
-var end_block = {
-	type: 'poldrack-text',
+ var end_block = {
+	type: 'poldrack-single-stim',
+	stimulus: '<div class = centerbox><div class = center-text><i>Fin</i></div></div>',
+	is_html: true,
+	choices: [32],
+	timing_response: -1,
+	response_ends_trial: true,
 	data: {
 		trial_id: "end",
-    	exp_id: 'stop_signal'
+		exp_id: 'stop_signal'
 	},
-	timing_response: 180000,
-	text: '<div class = centerbox><p class = center-block-text>Thanks for completing this task!</p><p class = center-block-text>Press <strong>enter</strong> to continue.</p></div>',
-	cont_key: [13],
 	timing_post_trial: 0
 };
 
