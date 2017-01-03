@@ -282,10 +282,12 @@ class BehavPredict:
         """
         if self.verbose:
             print('%s regression on'%self.data_models[v],v,numpy.mean(self.demogdata[v]>0))
-            clf=LassoCV()
         if not self.data_models[v]=='gaussian':
             print('using R to fit model...')
             clf=prediction_utils.RModel(self.data_models[v],self.n_jobs)
+        else:
+            clf=LassoCV()
+
         # set up crossvalidation
         if not outer_cv:
             outer_cv=BalancedKFold()
