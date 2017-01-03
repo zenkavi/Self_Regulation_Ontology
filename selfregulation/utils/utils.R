@@ -42,7 +42,7 @@ get_behav_data <- function(dataset, use_EZ=TRUE){
 # get the cleaned up task data
 get_task_data <- function(dataset){
   basedir <- get_info('base_directory')
-  datafile <- paste0(basedir, 'Data/', dataset, '/taskdata_clean_cutoff3.00IQR.csv')
+  datafile <- paste0(basedir, 'Data/', dataset, '/taskdata_imputed_for_task_selection.csv')
   d <- read.csv(datafile, row.names=1,sep=',',header=TRUE)
   return(d)
 }
