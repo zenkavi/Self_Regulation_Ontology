@@ -33,7 +33,7 @@ if __name__=='__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-v',"--verbose", help="increase output verbosity",
-                        type=int,default=0)
+                        default=0, action='count')
     parser.add_argument("--report_features", help="print features",
                         action='store_true')
     parser.add_argument("--print_report", help="print report at the end",
