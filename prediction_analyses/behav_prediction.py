@@ -32,7 +32,7 @@ import argparse
 if __name__=='__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--verbose", help="increase output verbosity",
+    parser.add_argument('-v',"--verbose", help="increase output verbosity",
                         type=int,default=0)
     parser.add_argument("--report_features", help="print features",
                         action='store_true')
