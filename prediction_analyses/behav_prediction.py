@@ -46,7 +46,6 @@ if __name__=='__main__':
                             default=2)
     parser.add_argument('-w',"--workdir", help="working directory")
     parser.add_argument('-r',"--resultsdir", help="results directory")
-    parser.add_argument('--nargs', nargs='+')
     parser.add_argument("--singlevar", nargs='*',help="run with single variables")
 
     args=parser.parse_args()
