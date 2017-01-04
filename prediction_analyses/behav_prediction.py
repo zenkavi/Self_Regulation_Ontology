@@ -112,13 +112,13 @@ if __name__=='__main__':
             e = sys.exc_info()[0]
             print('error on',v,':',e)
 
-    h='%08x'%random.getrandbits(32)
-    shuffle_flag='shuffle_' if args.shuffle else ''
-    varflag='_'.join(args.singlevar)+'_' if args.singlevar else ''
-    outfile='prediction_%s_%s%s%s.pkl'%(args.dataset,shuffle_flag,varflag,h)
-    if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
-    pickle.dump((bp.scores,bp.importances),open(os.path.join(output_dir,outfile),'wb'))
+        h='%08x'%random.getrandbits(32)
+        shuffle_flag='shuffle_' if args.shuffle else ''
+        varflag='%s_'%v
+        outfile='prediction_%s_%s%s%s.pkl'%(args.dataset,shuffle_flag,varflag,h)
+        if not os.path.exists(output_dir):
+            os.mkdir(output_dir)
+        pickle.dump((bp.scores[v],bp.importances[v]),open(os.path.join(output_dir,outfile),'wb'))
 
     # print a report
     if args.print_report:
