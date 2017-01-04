@@ -6,8 +6,9 @@ import seaborn as sns
 import sys
 
 sys.path.append('../utils')
-from utils import get_info
+from utils import get_behav_data, get_info
 
+from expanalysis.experiments.processing import calc_exp_DVs
 #work around for spyder bug in python 3
 import warnings
 warnings.simplefilter(action = "ignore", category = RuntimeWarning)

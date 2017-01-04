@@ -35,14 +35,15 @@ basedir=get_info('base_directory')
 #dataset=get_info('dataset')
 if usefull:
     print('using full dataset')
-    derived_dir=os.path.join(basedir,'data/Derived_Data/%s'%dataset.replace('Discovery','Combined').replace('Validation','Combined'))
+    derived_dir=os.path.join(basedir,'Data/Derived_Data/%s'%dataset.replace('Discovery','Combined').replace('Validation','Combined'))
 else:
     print('using dataset:',dataset)
-    derived_dir=os.path.join(basedir,'data/Derived_Data/%s'%dataset)
+    derived_dir=os.path.join(basedir,'Data/Derived_Data/%s'%dataset)
 datadir=os.path.join(basedir,'data/%s'%dataset)
 
 if not os.path.exists(derived_dir):
     os.makedirs(derived_dir)
+print('saving to',derived_dir)
 
 data=get_behav_data(file='subject_x_items.csv',full_dataset=usefull)
 
@@ -53,9 +54,6 @@ dropped={}
 fixed={}
 for c in data.columns:
 
-    if c=='worker':
-        continue
-
     f,dropflag=cleanup_item_dist(c,fixdata,verbose=False,minresp=min_freq)
     fixdata[c]=f
     u,h=get_respdist(f)
@@ -65,7 +63,12 @@ for c in data.columns:
     if dropflag:
         del fixdata[c]
         dropped[c]=(u,h)
+        print('dropping',c)
     else:
         fixed[c]=(u,h)
+        diff_resps=numpy.sum(fixdata[c]!=data[c])
+        if diff_resps>0:
+            print(diff_resps,c)
 
-fixdata.to_csv(os.path.join(derived_dir,'surveydata_fixed_minfreq%d.csv'%min_freq),index=False)
+
+fixdata.to_csv(os.path.join(derived_dir,'surveydata_fixed_minfreq%d.csv'%min_freq))

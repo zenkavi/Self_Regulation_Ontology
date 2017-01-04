@@ -6,15 +6,17 @@ collapsing any categories that do not have sufficient responses
 import numpy,sys
 
 def get_respdist(f):
+    f=f.dropna()
     u=f.unique()
     u.sort()
     h=[numpy.sum(f==i) for i in u]
     return u,h
 
-def cleanup_item_dist(c,data,minresp=4,verbose=False):
+def cleanup_item_dist(c,data,minresp=4,verbose=False,
+                        drop_bad_middle=False):
+
     d=data[c].copy()
-    # drop subjects with nan values
-    d=d[~numpy.isnan(d)]
+
     u,h=get_respdist(d)
     if verbose:
         print(u)
@@ -68,8 +70,10 @@ def cleanup_item_dist(c,data,minresp=4,verbose=False):
     unew,hnew=get_respdist(d)
 
     if len(numpy.where(numpy.array(hnew)<minresp)[0])>0:
+        # bad middle category
         if verbose:
-            print('dropping variable with bad middle category:',c)
-        return d,True
-    else:
-        return d,False
+            print('dropping responses in bad middle category:',c)
+        if drop_bad_middle:
+            return d,True
+
+    return d,False

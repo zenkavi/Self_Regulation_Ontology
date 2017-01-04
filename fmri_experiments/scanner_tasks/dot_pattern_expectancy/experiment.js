@@ -15,14 +15,17 @@ var get_ITI = function() {
 
     return -Math.log(U) / rate;
   }
-  gap = randomExponential(1/2)*1000
-  if (gap > 5000) {
-    gap = 5000
-  } else if (gap < 500) {
-    gap = 500
+  gap = randomExponential(1/2)*400
+  if (gap > 10000) {
+    gap = 10000
+  } else if (gap < 0) {
+    gap = 0
+  } else {
+    gap = Math.round(gap/1000)*1000
   }
-  return gap
-}
+  return 1500 + gap //500 (stim time) + 1000 (minimum ITI)
+ }
+
 
 var randomDraw = function(lst) {
   var index = Math.floor(Math.random() * (lst.length))
@@ -35,29 +38,6 @@ var getInvalidCue = function() {
 
 var getInvalidProbe = function() {
   return prefix + path + randomDraw(probes) + postfix
-}
-
-var getFeedback = function() {
-  var curr_trial = jsPsych.progress().current_trial_global
-  var curr_data = jsPsych.data.getData()[curr_trial - 1]
-  var condition = curr_data.condition
-  var response = curr_data.key_press
-  var feedback_text = ''
-  var correct = false
-  var correct_response = choices[1]
-  if (condition == "AX") {
-    correct_response = choices[0]
-  }
-  if (response == correct_response) {
-    correct = true
-    feedback_text =  '<div class = centerbox><div style="color:green"; class = center-text>Correct!</div></div>'
-  } else if (response == -1) {
-    feedback_text =  '<div class = centerbox><div class = center-text>Respond Faster!</p></div>'
-  } else {
-    feedback_text = '<div class = centerbox><div style="color:red"; class = center-text>Incorrect</div></div>'
-  }
-  jsPsych.data.addDataToLastTrial({'correct': correct, 'correct_response': correct_response})
-  return feedback_text
 }
 
 /* ************************************ */
@@ -81,24 +61,28 @@ var cues = jsPsych.randomization.shuffle(['cue1.png', 'cue2.png', 'cue3.png', 'c
 var probes = jsPsych.randomization.shuffle(['probe1.png', 'probe2.png', 'probe3.png', 'probe4.png',
   'probe5.png', 'probe6.png'
 ])
+var valid_cue = cues.pop()
+var valid_probe = probes.pop()
+
+//preload images
 var images = []
 for (var i = 0; i < cues.length; i++) {
   images.push(path + cues[i])
   images.push(path + probes[i])
 }
-//preload images
 jsPsych.pluginAPI.preloadImages(images)
 
-var valid_cue = cues.pop()
-var valid_probe = probes.pop()
+// set up blocks
+var num_blocks = 4
+var block_length = 40
 
 var trial_proportions = ["AX", "AX", "AX", "AX", "AX", "AX", "AX", "AX", "AX", "AX", "AX", "BX",
-  "BX", "AY", "AY", "BY"
-]
-var block1_list = jsPsych.randomization.repeat(trial_proportions, 2)
-var block2_list = jsPsych.randomization.repeat(trial_proportions, 2)
-var block3_list = jsPsych.randomization.repeat(trial_proportions, 2)
-var blocks = [block1_list, block2_list, block3_list]
+  "BX", "BX", "AY", "AY", "AY", "BY", "BY", "BY"]
+var blocks = []
+for (b = 0; b < num_blocks; b++) {
+  blocks.push(jsPsych.randomization.repeat(trial_proportions, block_length/trial_proportions.length))
+}
+
 
 /* ************************************ */
 /* Set up jsPsych blocks */
@@ -131,7 +115,7 @@ var start_test_block = {
   timing_post_trial: 0
 };
 
-/// This ensures that the subject does not read through the instructions too quickly.  If they do it too quickly, then we will go over the loop again.
+
 var instructions_block = {
   type: 'poldrack-text',
   data: {
@@ -156,32 +140,6 @@ var rest_block = {
   },
   timing_post_trial: 1000
 };
-
-var feedback_block = {
-  type: 'poldrack-single-stim',
-  stimulus: getFeedback,
-  is_html: true,
-  choices: 'none',
-  data: {
-    trial_id: "feedback",
-  },
-  timing_post_trial: get_ITI,
-  timing_stim: 1000,
-  timing_response: 1000,
-  on_finish: function(data) {
-    console.log('Trial Num: ', current_trial)
-    var correct = false
-    if (data.stimulus.indexOf('Correct!') != -1) {
-      correct = true
-    }
-    console.log('Correct Response? ', correct)
-    jsPsych.data.addDataToLastTrial({
-    	exp_stage: exp_stage,
-    	trial_num: current_trial
-    })
-    current_trial += 1
-  }
-}
 
 var fixation_block = {
   type: 'poldrack-single-stim',
@@ -250,13 +208,25 @@ var X_probe = {
     exp_stage: "test"
   },
   timing_stim: 500,
-  timing_response: 1500,
+  timing_response: get_ITI,
   timing_post_trial: 0,
-  on_finish: function() {
+  on_finish: function(data) {
+    var correct_response = choices[1]
+    if (data.condition == "AX") {
+      correct_response = choices[0]
+    }
+    var correct = false
+    if (data.key_press == correct_response) {
+      correct = true
+    }
     jsPsych.data.addDataToLastTrial({
+      correct_response: correct_response,
+      correct: correct,
     	exp_stage: exp_stage,
     	trial_num: current_trial
-	})
+	   })
+     console.log('Trial Num: ', current_trial)
+     console.log('Correct Response? ', correct)
   }
 };
 
@@ -270,13 +240,25 @@ var other_probe = {
     exp_stage: "test"
   },
   timing_stim: 500,
-  timing_response: 1500,
+  timing_response: get_ITI,
   timing_post_trial: 0,
-  on_finish: function() {
+  on_finish: function(data) {
+    var correct_response = choices[1]
+    if (data.condition == "AX") {
+      correct_response = choices[0]
+    }
+    var correct = false
+    if (data.key_press == correct_response) {
+      correct = true
+    }
     jsPsych.data.addDataToLastTrial({
-    	exp_stage: exp_stage,
-    	trial_num: current_trial
-    })
+      correct_response: correct_response,
+      correct: correct,
+      exp_stage: exp_stage,
+      trial_num: current_trial
+     })
+     console.log('Trial Num: ', current_trial)
+     console.log('Correct Response? ', correct)
   }
 };
 
@@ -289,9 +271,9 @@ dot_pattern_expectancy_experiment.push(instructions_block);
 setup_fmri_intro(dot_pattern_expectancy_experiment, choices)
 
 dot_pattern_expectancy_experiment.push(start_test_block);
-for (b = 0; b < blocks.length; b++) {
+for (b = 0; b < num_blocks; b++) {
   var block = blocks[b]
-  for (i = 0; i < block.length; i++) {
+  for (i = 0; i < block_length; i++) {
     switch (block[i]) {
       case "AX":
         cue = jQuery.extend(true, {}, A_cue)
@@ -321,7 +303,6 @@ for (b = 0; b < blocks.length; b++) {
     dot_pattern_expectancy_experiment.push(cue)
     dot_pattern_expectancy_experiment.push(fixation_block)
     dot_pattern_expectancy_experiment.push(probe)
-    dot_pattern_expectancy_experiment.push(feedback_block)
   }
   dot_pattern_expectancy_experiment.push(rest_block)
 }

@@ -7,13 +7,11 @@ import pandas as pd
 from process_alcohol_drug import process_alcohol_drug
 from process_demographics import process_demographics
 from process_health import process_health
-import sys
-sys.path.append('../utils')
-from data_preparation_utils import convert_var_names, drop_failed_QC_vars, drop_vars, get_items
-from data_preparation_utils import remove_correlated_task_variables, remove_outliers, save_task_data
-from data_preparation_utils import transform_remove_skew
-from utils import get_info
-from r_to_py_utils import missForest
+from selfregulation.utils.data_preparation_utils import convert_var_names, drop_failed_QC_vars, drop_vars, get_items
+from selfregulation.utils.data_preparation_utils import remove_correlated_task_variables, remove_outliers, save_task_data
+from selfregulation.utils.data_preparation_utils import transform_remove_skew
+from selfregulation.utils.utils import get_info
+from selfregulation.utils.r_to_py_utils import missForest
 
 #******************************
 #*** Save Data *********

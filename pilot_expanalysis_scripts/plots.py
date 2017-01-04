@@ -28,7 +28,7 @@ def plot_groups(df, groupby):
     elif len(groupby) > 2:
         p = sns.factorplot(x = groupby[0], y = 'value', hue = groupby[1], data = df, kind = 'bar', col = 'variable', row = groupby[2], sharey = False)  
         if len(groupby) > 3:
-             print 'Only grouping by %s, %s and %s' % (groupby[0], groupby[1], groupby[2])
+             print('Only grouping by %s, %s and %s' % (groupby[0], groupby[1], groupby[2]))
     plt.show()
     return p
     

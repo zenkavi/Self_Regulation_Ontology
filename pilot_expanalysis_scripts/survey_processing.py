@@ -30,7 +30,7 @@ def multi_worker_decorate(func):
             try:
                 group_dvs[worker], description = func(df)
             except:
-                print 'DV calculated failed for worker: %s' % worker
+                print('DV calculated failed for worker: %s' % worker)
         return group_dvs, description
     return multi_worker_wrap
 
@@ -51,7 +51,7 @@ def calc_bis11_DV(df):
     }
     DVs = {}
     firstorder = {}
-    for score,subset in scores.items():
+    for score,subset in list(scores.items()):
          firstorder[score] = df.query('question_num in %s' % subset).numeric_response.sum()
     DVs['Attentional'] = firstorder['attention'] + firstorder['cognitive_stability']
     DVs['Motor'] = firstorder ['motor'] + firstorder['perseverance']
@@ -75,7 +75,7 @@ def calc_bis_bas_DV(df):
 
     }
     DVs = {}
-    for score,subset in scores.items():
+    for score,subset in list(scores.items()):
          DVs[score] = df.query('question_num in %s' % subset).numeric_response.sum()
     description = """
         Score for bias/bas. Higher values mean
@@ -101,7 +101,7 @@ def calc_dickman_DV(df):
 
     }
     DVs = {}
-    for score,subset in scores.items():
+    for score,subset in list(scores.items()):
          DVs[score] = df.query('question_num in %s' % subset).numeric_response.sum()
     description = """
         Score for all dickman impulsivity survey. Higher values mean
@@ -121,7 +121,7 @@ def calc_dospert_DV(df):
 
     }
     DVs = {}
-    for score,subset in scores.items():
+    for score,subset in list(scores.items()):
          DVs[score] = df.query('question_num in %s' % subset).numeric_response.sum()
     description = """
         Score for all dospert scales. Higher values mean
@@ -138,7 +138,7 @@ def calc_eating_DV(df):
         'emotional_eating': [4,7,11]
     }
     DVs = {}
-    for score,subset in scores.items():
+    for score,subset in list(scores.items()):
          raw_score = df.query('question_num in %s' % subset).numeric_response.sum()
          normalized_score = (raw_score-len(subset))/(len(subset)*3)*100
          DVs[score] = normalized_score
@@ -156,7 +156,7 @@ def calc_erq_DV(df):
         'suppression': [3,5,7,10]
     }
     DVs = {}
-    for score,subset in scores.items():
+    for score,subset in list(scores.items()):
         DVs[score] = df.query('question_num in %s' % subset).numeric_response.mean()
     description = """
         Score for different emotion regulation strategies. Higher values mean
@@ -175,7 +175,7 @@ def calc_five_facet_mindfulness_DV(df):
         'nonreact': [5,10,20,22,25,30,34]
     }
     DVs = {}
-    for score,subset in scores.items():
+    for score,subset in list(scores.items()):
          DVs[score] = df.query('question_num in %s' % subset).numeric_response.sum()
     description = """
         Score for five factors mindfulness. Higher values mean
@@ -208,7 +208,7 @@ def calc_i7_DV(df):
         'venturesomeness': [2,3,4,5,9,10,12,14,19,20,23,25,27,28,32]
     }
     DVs = {}
-    for score,subset in scores.items():
+    for score,subset in list(scores.items()):
          DVs[score] = df.query('question_num in %s' % subset).numeric_response.sum()
     description = """
         Score for i7. Higher values mean
@@ -253,7 +253,7 @@ def calc_SOC_DV(df):
         'compensation': list(range(38,50))
     }
     DVs = {}
-    for score,subset in scores.items():
+    for score,subset in list(scores.items()):
         DVs[score] = df.query('question_num in %s' % subset).numeric_response.mean()
     description = """
         Score for five different personality measures. Higher values mean
@@ -279,7 +279,7 @@ def calc_SSS_DV(df):
         'thrill_adventure_seeking': [4,12,17,18,21,22,24,29,39,41]
     }
     DVs = {}
-    for score,subset in scores.items():
+    for score,subset in list(scores.items()):
         DVs[score] = df.query('question_num in %s' % subset).numeric_response.mean()
     description = """
         Score for SSS-V. Higher values mean
@@ -298,7 +298,7 @@ def calc_ten_item_personality_DV(df):
         'openness': [7,12]
     }
     DVs = {}
-    for score,subset in scores.items():
+    for score,subset in list(scores.items()):
         DVs[score] = df.query('question_num in %s' % subset).numeric_response.mean()
     description = """
         Score for five different personality measures. Higher values mean
@@ -327,7 +327,7 @@ def calc_time_perspective_DV(df):
 
     }
     DVs = {}
-    for score,subset in scores.items():
+    for score,subset in list(scores.items()):
         DVs[score] = df.query('question_num in %s' % subset).numeric_response.mean()
     description = """
         Score for five different time perspective factors. High values indicate 
@@ -346,7 +346,7 @@ def calc_upps_DV(df):
         'positive_urgency': [6,11,16,21,26,31,36,41,46,50,53,55,58,60]
     }
     DVs = {}
-    for score,subset in scores.items():
+    for score,subset in list(scores.items()):
         DVs[score] = df.query('question_num in %s' % subset).numeric_response.sum()
     description = """
         Score for five different upps+p measures. Higher values mean

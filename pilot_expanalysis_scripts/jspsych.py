@@ -15,7 +15,7 @@ def calc_time_taken(data):
         if row['experiment_template'] == 'jspsych':
             exp_data = get_data(row)
             #ensure there is a time elapsed variable
-            assert 'time_elapsed' in exp_data[-1].keys(), \
+            assert 'time_elapsed' in list(exp_data[-1].keys()), \
                 '"time_elapsed" not found for at least one dataset in these results'
             #sum time taken on instruction trials
             instruction_length = numpy.sum([trial['time_elapsed'] for trial in exp_data if lookup_val(trial.get('trial_id')) == 'instruction'])        
@@ -41,7 +41,7 @@ def get_average_variable(results, var):
         try:
             average = data[var].mean()
         except TypeError:
-            print "Cannot average %s" % (var)
+            print("Cannot average %s" % (var))
         averages[exp] = average
     return averages
     
@@ -52,7 +52,7 @@ def get_post_task_responses(data):
         row_data = get_data(row)
         if row['experiment_template'] == 'jspsych':
             if row_data[-2].get('trial_id') =='post task questions' and \
-                'responses' in row_data[-2].keys():
+                'responses' in list(row_data[-2].keys()):
                 question_responses[i]= (row_data[-2]['responses'])
     data.loc[:,'post_task_responses'] = question_responses
 

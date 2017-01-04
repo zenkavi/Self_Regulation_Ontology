@@ -20,14 +20,6 @@ from utils import get_info,get_behav_data,get_demographics
 __TEST_DECIMATE__=False
 # set up variables
 
-#drop variables that are too badly skewed or strongly bimodal
-
-drop_vars=['adaptive_n_back.hddm_non_decision',
-            'discount_titrate.percent_patient',
-            'dot_pattern_expectancy.dprime',
-            'dot_pattern_expectancy.hddm_non_decision',
-            'information_sampling_task.Fixed_Win_P_correct',
-            'threebytwo.hddm_non_decision']
 if len(sys.argv)>1:
     reconweight=float(sys.argv[1])
     objective_weights=[reconweight,1-reconweight]
@@ -35,7 +27,7 @@ else:
     objective_weights=[0.5,0.5]
 print('using objective weights:',objective_weights)
 gasearch=GASearch(objective_weights=objective_weights,targets=['task'],
-                usepca=True,drop_vars=drop_vars,
+                usepca=True,
                 lasso_alpha=0.05)
 gasearch.get_taskdata()
 if __TEST_DECIMATE__:
