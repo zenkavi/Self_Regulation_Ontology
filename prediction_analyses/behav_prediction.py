@@ -115,7 +115,7 @@ if __name__=='__main__':
 
     h='%08x'%random.getrandbits(32)
     shuffle_flag='shuffle_' if args.shuffle else ''
-    varflag='_'.join(args.singlevar) if args.singlevar else ''
+    varflag='_'.join(args.singlevar)+'_' if args.singlevar else ''
     outfile='prediction_%s_%s%s%s.pkl'%(args.dataset,shuffle_flag,varflag,h)
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
