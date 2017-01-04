@@ -86,7 +86,6 @@ if __name__=='__main__':
 
     if not args.singlevar:
         vars_to_test=bp.demogdata.columns
-        vars_to_test=['RelationshipNumber']
     else:
         vars_to_test=args.singlevar
 
