@@ -3,10 +3,8 @@ import numpy as np
 from os import makedirs, path
 import pandas as pd
 import seaborn as sns
-import sys
 
-sys.path.append('../utils')
-from utils import get_behav_data, get_info
+from selfregulation.utils.utils import get_behav_data, get_info
 
 from expanalysis.experiments.processing import calc_exp_DVs
 #work around for spyder bug in python 3
