@@ -2,10 +2,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from scipy.stats import ttest_1samp
-import sys
+from selfregulation.utils.utils import get_behav_data
 
-sys.path.append('../utils')
-from utils import get_behav_data
 
 # get dependent variables
 DV_df = get_behav_data('Discovery_10-14-2016', use_EZ = True)

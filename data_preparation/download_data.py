@@ -5,11 +5,8 @@ import json
 import numpy as np
 from os import path
 import pandas as pd
-import sys
-
-sys.path.append('../utils')
-from data_preparation_utils import anonymize_data, calc_trial_order, convert_date, download_data, get_bonuses, get_pay,  remove_failed_subjects
-from utils import get_info
+from selfregulation.utils.data_preparation_utils import anonymize_data, calc_trial_order, convert_date, download_data, get_bonuses, get_pay,  remove_failed_subjects
+from selfregulation.utils.utils import get_info
 
 # Fix Python 2.x.
 try: input = raw_input

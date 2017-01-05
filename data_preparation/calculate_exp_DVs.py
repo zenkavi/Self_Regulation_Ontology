@@ -2,9 +2,7 @@ from expanalysis.experiments.processing import get_exp_DVs
 from os import path
 import pandas as pd
 import sys
-
-sys.path.append('../utils')
-from utils import get_info
+from selfregulation.utils.utils import get_info
 
 
 #load Data
