@@ -1,8 +1,7 @@
 import numpy,pandas
-import os,sys
+import os
 
-sys.path.append('../utils')
-from metadata_utils import write_metadata,metadata_reverse_scale
+from selfregulation.utils.metadata_utils import write_metadata,metadata_reverse_scale
 
 def get_health_items(data):
     health_items={}
