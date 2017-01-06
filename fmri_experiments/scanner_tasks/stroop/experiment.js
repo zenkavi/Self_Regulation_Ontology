@@ -136,13 +136,15 @@ var current_trial = 1
 /* ************************************ */
 /* Set up jsPsych blocks */
 /* ************************************ */
+var instructions_prompt = '<div class=prompt_box><span style = "color:red;padding-right:40px">Up</span><span style = "color:green;">Left</span><span style = "color:blue;padding-left:40px">Right</span></div>'
+
 /* define static blocks */
 var instructions_block = {
 	type: 'poldrack-text',
 	data: {
 		trial_id: "instruction"
 	},
-	text: '<div class = center-text>Respond to the <strong>ink color</strong> of the word!<br><br><span style = "color:red;padding-left:40px">WORD</span>: Up<br><span style = "color:green;padding-left:60px">WORD</span>: Left<br><span style = "color:blue;padding-left:95px">WORD</span>: Right</div>',
+	text: '<div class = center-text>Respond to the <strong>ink color</strong> of the word!<br><br><span style = "color:red;padding-left:40px">WORD</span>: Up<br><span style = "color:green;padding-left:60px">WORD</span>: Left<br><span style = "color:blue;padding-left:95px">WORD</span>: Right<br><br>We will start with practice</div>',
 	cont_key: [32],
 	timing_post_trial: 1000
 };
@@ -192,35 +194,55 @@ var fixation_block = {
 	timing_response: 500
 }
 
-var practice_block = {
-	timeline: practice_stims,
-	type: 'poldrack-categorize',
+var practice_fixation_block = {
+	type: 'poldrack-single-stim',
+	stimulus: '<div class = centerbox><div class = fixation>+</div></div>',
 	is_html: true,
-	choices: choices,
-	timing_response: 1500,
-	timing_stim: 1500,
-	timing_post_trial: 250,
-	prompt: '<div class = centerbox><div class = fixation>+</div></div>',
-	timing_feedback_duration: 500,
-	show_stim_with_feedback: true,
-	correct_text: '<div class = fb_box><div class = center-text><font size = 20>Correct!</font></div></div>',
-	incorrect_text: '<div class = fb_box><div class = center-text><font size = 20>Incorrect</font></div></div>',
-	timeout_message: '<div class = fb_box><div class = center-text><font size = 20>Respond Faster!</font></div></div>',
-	on_finish: function(data) {
-		var correct = false
-		if (data.correct_response == data.key_press) {
-			correct = true
+	choices: 'none',
+	data: {
+		trial_id: "fixation"
+	},
+	timing_post_trial: 0,
+	timing_stim: -1,
+	timing_response: 250,
+	prompt: instructions_prompt
+}
+
+practice = []
+for (var i=0; i<practice_stims.length; i++) {
+	var practice_block = {
+		timeline: [practice_stims[i]],
+		type: 'poldrack-categorize',
+		is_html: true,
+		choices: choices,
+		timing_response: 1500,
+		timing_stim: 1500,
+		timing_post_trial: 0,
+		prompt: '<div class = centerbox><div class = fixation>+</div></div>',
+		timing_feedback_duration: 500,
+		show_stim_with_feedback: true,
+		correct_text: '<div class = fb_box><div class = center-text><font size = 20>Correct!</font></div></div>',
+		incorrect_text: '<div class = fb_box><div class = center-text><font size = 20>Incorrect</font></div></div>',
+		timeout_message: '<div class = fb_box><div class = center-text><font size = 20>Respond Faster!</font></div></div>',
+		prompt: instructions_prompt,
+		on_finish: function(data) {
+			var correct = false
+			if (data.correct_response == data.key_press) {
+				correct = true
+			}
+			console.log('Trial Num: ', current_trial)
+			console.log('Correct? ', correct)
+			jsPsych.data.addDataToLastTrial({
+				correct: correct,
+				trial_id: 'stim',
+				trial_num: current_trial,
+				exp_stage: exp_stage
+			})
+			current_trial += 1
 		}
-		console.log('Trial Num: ', current_trial)
-		console.log('Correct? ', correct)
-		jsPsych.data.addDataToLastTrial({
-			correct: correct,
-			trial_id: 'stim',
-			trial_num: current_trial,
-			exp_stage: exp_stage
-		})
-		current_trial += 1
 	}
+	practice.push(practice_block)
+	practice.push(practice_fixation_block)
 }
 
 var test_block = {
@@ -231,7 +253,7 @@ var test_block = {
 	timing_response: get_ITI,
 	timing_stim: 1500,
 	timing_post_trial: 0,
-	prompt: '<div class = centerbox><div class = fixation>+</div></div>',
+	prompt: '<div class = centerbox><div class = fixation>+</div></div>' + instructions_prompt,
 	on_finish: function(data) {
 		var correct = false
 		if (data.correct_response == data.key_press) {
@@ -252,7 +274,7 @@ var test_block = {
 /* create experiment definition array */
 stroop_experiment = []
 stroop_experiment.push(instructions_block)
-stroop_experiment.push(practice_block)
+stroop_experiment = stroop_experiment.concat(practice)
 setup_fmri_intro(stroop_experiment, choices)
 stroop_experiment.push(start_test_block)
 stroop_experiment.push(fixation_block)
