@@ -155,7 +155,7 @@ var response_keys = jsPsych.randomization.repeat([{
 }], 1, true)
 var choices = response_keys.key
 var num_blocks = 3
-var block_length = 96
+var block_length = 80
 var test_length = num_blocks * test_length
 
 //set up block stim. correct_responses indexed by [block][stim][type]
