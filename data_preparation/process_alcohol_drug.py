@@ -1,11 +1,9 @@
 import numpy,pandas
-import os,sys
+import os
 
-sys.path.append('../utils')
-
-from metadata_utils import metadata_subtract_one,metadata_replace_zero_with_nan
-from metadata_utils import metadata_change_two_to_zero_for_no,metadata_reverse_scale
-from metadata_utils import write_metadata
+from selfregulation.utils.metadata_utils import metadata_subtract_one,metadata_replace_zero_with_nan
+from selfregulation.utils.metadata_utils import metadata_change_two_to_zero_for_no
+from selfregulation.utils.metadata_utils import write_metadata
 
 def get_alcohol_drug_items(data):
     alcohol_drug_items={}

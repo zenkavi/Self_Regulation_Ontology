@@ -481,6 +481,7 @@ var problem_node = {
 /* create experiment definition array */
 var ward_and_allport_experiment = [];
 ward_and_allport_experiment.push(instructions_block);
+setup_fmri_intro(ward_and_allport_experiment, choices)
 for (var i = 0; i < practice_problems.length; i++) {
   ward_and_allport_experiment.push(problem_node);
   ward_and_allport_experiment.push(feedback_block);

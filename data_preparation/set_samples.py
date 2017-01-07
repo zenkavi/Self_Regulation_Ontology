@@ -2,10 +2,7 @@ import json
 import numpy as np
 import pandas as pd
 from os import path
-import sys
-
-sys.path.append('../utils')
-from utils import get_info
+from selfregulation.utils.utils import get_info
 
 # ************************************
 # set discovery sample

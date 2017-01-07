@@ -3,10 +3,8 @@ import fancyimpute
 import numpy as np
 import pandas as pd
 from random import randint
-import sys
 
-sys.path.append('../utils')
-from utils import get_behav_data
+from selfregulation.utils.utils import get_behav_data
 
 def get_rand_index(M, n):
     subset = [(randint(0,M.shape[0]-1), randint(0,M.shape[1]-1)) for _ in range(n)]

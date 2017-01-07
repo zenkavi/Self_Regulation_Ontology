@@ -5,11 +5,8 @@ import json
 import numpy as np
 from os import path
 import pandas as pd
-import sys
-
-sys.path.append('../utils')
-from data_preparation_utils import anonymize_data, calc_trial_order, convert_date, download_data, get_bonuses, get_pay,  remove_failed_subjects
-from utils import get_info
+from selfregulation.utils.data_preparation_utils import anonymize_data, calc_trial_order, convert_date, download_data, get_bonuses, get_pay,  remove_failed_subjects
+from selfregulation.utils.utils import get_info
 
 # Fix Python 2.x.
 try: input = raw_input
@@ -81,11 +78,7 @@ if job in ['extras', 'all']:
 if job in ['post', 'all']:
     #Process Data
     if job == "post":
-        #load Data
-        try:
-            data = pd.read_json(path.join(data_dir, 'mturk_data_extras.json'))
-        except ValueError:
-            data = pd.read_json(path.join(data_dir,  + 'mturk_data.json'))
+        data = pd.read_json(path.join(data_dir, 'mturk_data_extras.json'))
         data.reset_index(drop = True, inplace = True)
         print('Finished loading raw data')
     
@@ -123,6 +116,10 @@ if job in ['post', 'all']:
             extra_workers = np.sort(extra_data.worker_id.unique())
         discovery_data.to_json(path.join(data_dir,'mturk_discovery_data_post.json'))
         print('Finished saving post-processed discovery data')
+        # save raw data
+        discovery_raw = data.query('worker_id in %s' % list(discovery_data.worker_id.unique())).reset_index(drop = True)
+        discovery_raw.to_json(path.join(data_dir,'mturk_discovery_data_raw.json'))
+        print('Finished saving raw discovery data')
         
     if 'validation' in sample:
         # only get validation data
@@ -134,6 +131,10 @@ if job in ['post', 'all']:
         validation_data = pd.concat([validation_data, extra_data]).reset_index(drop = True)
         validation_data.to_json(path.join(data_dir,'mturk_validation_data_post.json'))
         print('Finished saving post-processed validation data')
+        # save raw data
+        validation_raw = data.query('worker_id in %s' % list(validation_data.worker_id.unique())).reset_index(drop = True)
+        validation_raw.to_json(path.join(data_dir,'mturk_validation_data_raw.json'))
+        print('Finished saving raw validation data')
         
     if 'incomplete' in sample:
         # only get incomplete data
