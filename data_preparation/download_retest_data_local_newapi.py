@@ -8,14 +8,13 @@ import numpy as np
 from os import path
 import pandas as pd
 
-sys.path.append('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/utils')
-from data_preparation_utils import anonymize_data, calc_trial_order, convert_date, download_data, get_bonuses, get_pay,  remove_failed_subjects
-from utils import get_info
+from selfregulation.utils.data_preparation_utils import anonymize_data, calc_trial_order, convert_date, download_data, get_bonuses, get_pay,  remove_failed_subjects
+from selfregulation.utils.utils import get_info
 
 #load Data
 token = get_info('expfactory_token', infile='/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Self_Regulation_Retest_Settings_Local_NewApi.txt')
 try:
-    data_dir=get_info('data_directory', infile='/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Self_Regulation_Retest_Settings_Local_NewApi.txt')
+    data_dir=get_info('retest_data_directory', infile='/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Self_Regulation_Retest_Settings_Local_NewApi.txt')
 except Exception:
     data_dir=path.join(get_info('base_directory', infile='/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Self_Regulation_Retest_Settings_Local_NewApi.txt'),'Data')
 
@@ -37,9 +36,33 @@ for col in drop_columns:
 #load Data
 f = open(token)
 access_token = f.read().strip()
-#mturk_data_file_name = 'mturk_data_'+job_num+'.json'
 data = download_data(data_dir, access_token, filters = filters,  battery = 'Self Regulation Retest Battery' , url = 'http://www.expfactory.org/new_api/results/62/', file_name = 'mturk_data_newapi.json')
+#data = download_data(data_dir, access_token, filters = filters, url = 'http://www.expfactory.org/new_api/results/62/', file_name = 'mturk_data_newapi.json')
 data.reset_index(drop = True, inplace = True)    
 
+#Reload in case this is what is breaking the date conversion
+data = pd.read_json(path.join(data_dir, 'mturk_data_newapi.json'))
+data.reset_index(drop = True, inplace = True)
+print('Finished re-loading raw data')    
     
-    
+#anonymize data
+worker_lookup = anonymize_data(data)
+json.dump(worker_lookup, open(path.join(data_dir, 'worker_lookup.json'),'w'))
+
+# record subject completion statistics
+(data.groupby('worker_id').count().finishtime).to_json(path.join(data_dir, 'worker_counts.json'))
+
+# add a few extras
+convert_date(data)
+bonuses = get_bonuses(data)
+calc_time_taken(data)
+get_post_task_responses(data)   
+calc_trial_order(data)
+
+# save data
+data.to_json(path.join(data_dir, 'mturk_data_extras.json'))
+
+# calculate pay
+pay = get_pay(data)
+pay.to_json(path.join(data_dir, 'worker_pay.json'))
+print('Finished saving worker pay')
