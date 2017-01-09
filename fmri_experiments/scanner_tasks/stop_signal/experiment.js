@@ -129,8 +129,8 @@ var stop_signal =
 
 /* Instruction Prompt */
 var possible_responses = [
-	["left button", 71],
-	["right button", 66]
+	["left button", 89],
+	["right button", 71]
 ]
 var choices = [possible_responses[0][1], possible_responses[1][1]]
 var correct_responses = jsPsych.randomization.shuffle([possible_responses[0], possible_responses[0],
@@ -235,9 +235,9 @@ var start_test_block = {
 	type: 'poldrack-single-stim',
 	stimulus: '<div class = centerbox><div class = center-text><i>Fin</i></div></div>',
 	is_html: true,
-	choices: [32],
-	timing_response: -1,
-	response_ends_trial: true,
+	choices: 'none',
+	timing_stim: 3000, 
+	timing_response: 3000,
 	data: {
 		trial_id: "end",
 		exp_id: 'stop_signal'
@@ -245,15 +245,18 @@ var start_test_block = {
 	timing_post_trial: 0
 };
 
-var instructions_block = {
-	type: 'poldrack-text',
-	data: {
-		trial_id: "instruction"
-	},
-	text: '<div class = centerbox><p class = block-text>Only one key is correct for each shape. The correct keys are as follows:' + prompt_text +
+ var instructions_block = {
+  type: 'poldrack-single-stim',
+  stimulus: '<div class = centerbox><p class = block-text>Only one key is correct for each shape. The correct keys are as follows:' + prompt_text +
 		'</p><p class = block-text>Do not respond if you see the black star!</p></div>',
-	cont_key: [32],
-	timing_post_trial: 1000
+  is_html: true,
+  choices: 'none',
+  timing_stim: 20000, 
+  timing_response: 20000,
+  data: {
+    trial_id: "instructions",
+  },
+  timing_post_trial: 0
 };
 
 
@@ -271,36 +274,23 @@ var fixation_block = {
 }
 
 
-/* Initialize 'feedback text' and set up feedback blocks */
-var test_feedback_block = {
-	type: 'poldrack-text',
-	data: {
-		trial_id: "feedback",
-		exp_stage: "test"
-	},
-	timing_response: 180000,
-	cont_key: [13],
-	text: getTestFeedback,
-	on_finish: function() {
-		test_block_data = []
-	}
-};
-
+/* set up feedback blocks */
 var test_feedback_block = {
   type: 'poldrack-single-stim',
   stimulus: getTestFeedback,
   is_html: true,
   choices: 'none',
-  timing_stim: 10000, 
-  timing_response: 10000,
+  timing_stim: 12500, 
+  timing_response: 12500,
   data: {
     trial_id: "test_feedback"
   },
-  timing_post_trial: 500,
+  timing_post_trial: 1000,
   on_finish: function() {
   	test_block_data = []
   }
 };
+
 
 /* ************************************ */
 /* Set up experiment */
@@ -341,12 +331,14 @@ for (b = 0; b < num_blocks; b++) {
 			})
 			current_trial += 1
 			test_block_data.push(data)
-			console.log('Trial Num: ', current_trial)
-			console.log('Correct Key? ', correct)
+			console.log('Trial: ' + current_trial +
+              '\nCorrect Response? ' + correct + '\n')
 		}
 	}
 	stop_signal_experiment.push(stop_signal_block)
-	stop_signal_experiment.push(test_feedback_block)
+	if ((b+1)<num_blocks) {
+		stop_signal_experiment.push(test_feedback_block)
+	}
 }
 
 stop_signal_experiment.push(end_block)

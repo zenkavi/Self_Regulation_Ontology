@@ -127,13 +127,16 @@ for (var si=0; si<survey_items.length; si++) {
 /* ************************************ */
 /* define static blocks */
 var instructions_block = {
-	type: 'poldrack-text',
-	data: {
-		trial_id: "instruction"
-	},
-	text: '<div class = center-text>Response to the questions!</div>',
-	cont_key: [32],
-	timing_post_trial: 1000
+  type: 'poldrack-single-stim',
+  stimulus: '<div class = center-text>Response to the questions!</div>',
+  is_html: true,
+  choices: 'none',
+  timing_stim: 5000, 
+  timing_response: 5000,
+  data: {
+    trial_id: "instructions",
+  },
+  timing_post_trial: 0
 };
 
 var start_test_block = {
@@ -157,9 +160,9 @@ var start_test_block = {
 	type: 'poldrack-single-stim',
 	stimulus: '<div class = centerbox><div class = center-text><i>Fin</i></div></div>',
 	is_html: true,
-	choices: [32],
-	timing_response: 10000,
-	response_ends_trial: true,
+	choices: 'none',
+	timing_stim: 3000, 
+	timing_response: 3000,
 	data: {
 		trial_id: "end",
 		exp_id: 'survey_medley'

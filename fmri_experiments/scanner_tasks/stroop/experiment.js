@@ -30,7 +30,7 @@ var get_ITI = function() {
 /* Define experimental variables */
 /* ************************************ */
 // task specific variables
-var choices = [82,66,71]
+var choices = [89, 71, 82]
 var congruent_stim = [{
 	stimulus: '<div class = stroopbox><div class = stroop-stim style = "color:red">RED</div></div>',
 	data: {
@@ -136,17 +136,20 @@ var current_trial = 1
 /* ************************************ */
 /* Set up jsPsych blocks */
 /* ************************************ */
-var instructions_prompt = '<div class=prompt_box><span style = "color:red;padding-right:40px">Up</span><span style = "color:green;">Left</span><span style = "color:blue;padding-left:40px">Right</span></div>'
+var instructions_prompt = '<div class=prompt_box><span style = "color:red;padding-right:40px">Index</span><span style = "color:green;">Middle</span><span style = "color:blue;padding-left:40px">Ring</span></div>'
 
 /* define static blocks */
 var instructions_block = {
-	type: 'poldrack-text',
-	data: {
-		trial_id: "instruction"
-	},
-	text: '<div class = center-text>Respond to the <strong>ink color</strong> of the word!<br><br><span style = "color:red;padding-left:40px">WORD</span>: Up<br><span style = "color:green;padding-left:60px">WORD</span>: Left<br><span style = "color:blue;padding-left:95px">WORD</span>: Right<br><br>We will start with practice</div>',
-	cont_key: [32],
-	timing_post_trial: 1000
+  type: 'poldrack-single-stim',
+  stimulus: '<div class = centerbox><div class = center-text>Respond to the <strong>ink color</strong> of the word!<br><br><span style = "color:red;padding-left:40px">WORD</span>: Up<br><span style = "color:green;padding-left:60px">WORD</span>: Left<br><span style = "color:blue;padding-left:95px">WORD</span>: Right<br><br>We will start with practice</div></div>',
+  is_html: true,
+  choices: 'none',
+  timing_stim: 10000, 
+  timing_response: 10000,
+  data: {
+    trial_id: "instructions",
+  },
+  timing_post_trial: 500
 };
 
 var start_test_block = {
@@ -170,9 +173,9 @@ var start_test_block = {
 	type: 'poldrack-single-stim',
 	stimulus: '<div class = centerbox><div class = center-text><i>Fin</i></div></div>',
 	is_html: true,
-	choices: [32],
-	timing_response: -1,
-	response_ends_trial: true,
+	choices: 'none',
+	timing_stim: 3000, 
+	timing_response: 3000,
 	data: {
 		trial_id: "end",
 		exp_id: 'stroop'
@@ -230,8 +233,8 @@ for (var i=0; i<practice_stims.length; i++) {
 			if (data.correct_response == data.key_press) {
 				correct = true
 			}
-			console.log('Trial Num: ', current_trial)
-			console.log('Correct? ', correct)
+			console.log('Trial: ' + current_trial +
+              '\nCorrect Response? ' + correct + '\n')
 			jsPsych.data.addDataToLastTrial({
 				correct: correct,
 				trial_id: 'stim',
@@ -259,8 +262,8 @@ var test_block = {
 		if (data.correct_response == data.key_press) {
 			correct = true
 		}
-		console.log('Trial Num: ', current_trial)
-		console.log('Correct? ', correct)
+		console.log('Trial: ' + current_trial +
+              '\nCorrect Response? ' + correct + '\n')
 		jsPsych.data.addDataToLastTrial({
 			correct: correct,
 			trial_id: 'stim',

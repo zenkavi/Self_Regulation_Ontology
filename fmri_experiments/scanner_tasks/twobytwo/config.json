@@ -1,6 +1,6 @@
 [
     {
-        "name": "The three by two task",
+        "name": "The two by two task",
         "template":"jspsych",
         "run": [
                  "static/js/math.min.js",
@@ -20,7 +20,7 @@
                  "static/css/default_style.css",
                  "style.css"
                ],
-        "exp_id": "threebytwo",
+        "exp_id": "twobytwo",
         "cognitive_atlas_task_id": "trm_566745bbf272a",
         "contributors": [
                          "Ian Eisenberg",
@@ -32,16 +32,10 @@
         "time":24,
         "reference": "http://www.ncbi.nlm.nih.gov/pubmed/21299334",
         "publish":"True",
-        "experiment_variables": [{
-                                 "name":"credit_var",
-                                 "type":"credit",
-                                 "datatype": "boolean",
-                                 "description":"True if avg_rt > 200"
-                                  }],
         "deployment_variables":{"jspsych_init":
                                         {"fullscreen": true,
                                         "display_element": "getDisplayElement",
-                                        "on_trial_finish": "addID('threebytwo')"}
+                                        "on_trial_finish": "addID('twobytwo')"}
                        }
     
    }

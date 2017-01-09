@@ -159,7 +159,7 @@ var reset_problem = function() {
 /* Define experimental variables */
 /* ************************************ */
 // task specific variables
-var choices = [71,77,66]
+var choices = [89, 71, 82]
 var correct = false
 var colors = ['Green', 'Red', 'Blue']
 var problem_i = 0
@@ -338,16 +338,16 @@ block_length = test_problems.length/num_blocks
 };
 
 var instructions_block = {
-  type: 'poldrack-text',
+  type: 'poldrack-single-stim',
+  stimulus: "<div class = center-text>Solve the Tower Tasks!<br>Plan ahead first and work swiftly!<br>We'll start with some practice.</div>",
+  is_html: true,
+  choices: 'none',
+  timing_stim: 10000, 
+  timing_response: 10000,
   data: {
-    trial_id: "instruction"
+    trial_id: "instructions",
   },
-  text: "<div class = center-text>Solve the Tower Tasks!<br>Plan ahead first and work swiftly!<br>We'll start with some practice.</div>",
-  cont_key: [32],
-  timing_post_trial: 1000,
-  on_finish: function() {
-    reset_problem()
-  }
+  timing_post_trial: 0
 };
 
 var start_test_block = {

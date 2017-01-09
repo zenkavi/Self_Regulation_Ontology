@@ -37,7 +37,7 @@ var block_length = 96
 var current_trial = 0
 var exp_stage = 'test'
 var test_stimuli = []
-var choices = [71, 66]
+var choices = [89, 71]
 var path = '/static/experiments/attention_network_task/images/'
 var images = [path + 'right_arrow.png', path + 'left_arrow.png', path + 'no_arrow.png']
 //preload
@@ -111,7 +111,7 @@ var rest_block = {
 	stimulus: '<div class = centerbox><div class = center-text>Take a break!<br>Next run will start in a moment</div></div>',
 	is_html: true,
 	choices: 'none',
-	timing_response: 10000,
+	timing_response: 7500,
 	data: {
 		trial_id: "rest_block"
 	},
@@ -122,9 +122,9 @@ var rest_block = {
 	type: 'poldrack-single-stim',
 	stimulus: '<div class = centerbox><div class = center-text><i>Fin</i></div></div>',
 	is_html: true,
-	choices: [32],
-	timing_response: -1,
-	response_ends_trial: true,
+	choices: 'none',
+	timing_stim: 3000, 
+	timing_response: 3000,
 	data: {
 		trial_id: "end",
 		exp_id: 'attention_network_task'
@@ -132,17 +132,18 @@ var rest_block = {
 	timing_post_trial: 0
 };
 
-
-var instructions_block = {
-	type: 'poldrack-text',
-	text: '<div class = centerbox><div class = center-text>Indicate which direction the center arrow is pointing using the left and right keys.</div>',
+ var instructions_block = {
+	type: 'poldrack-single-stim',
+	stimulus: '<div class = centerbox><div class = center-text>Indicate which direction the center arrow is pointing using the left and right keys.</div>',
+	is_html: true,
+	choices: 'none',
+	timing_stim: 10000, 
+	timing_response: 10000,
 	data: {
-		trial_id: 'instruction'
+		trial_id: "instructions",
 	},
-	cont_key: [32],
-	timing_post_trial: 1000
+	timing_post_trial: 0
 };
-
 
 var fixation = {
 	type: 'poldrack-single-stim',
@@ -251,8 +252,8 @@ for (b = 0; b < blocks.length; b++) {
 			prompt: '<div class = centerbox><div class = ANT_text>+</div></div>',
 			on_finish: function(data) {
 				correct = data.key_press === data.correct_response
-				console.log('Trial: ', data.trial_num)
-				console.log('Correct Response? ', correct)
+				console.log('Trial: ' + data.trial_num +
+							'\nCorrect Response? ' + correct + '\n')
 				jsPsych.data.addDataToLastTrial({ 
 					correct: correct,
 					exp_stage: exp_stage

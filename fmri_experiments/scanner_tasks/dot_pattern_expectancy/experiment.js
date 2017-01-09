@@ -46,10 +46,10 @@ var getInvalidProbe = function() {
 
 // task specific variables
 var current_trial = 0
-var choices = [71, 66]
+var choices = [89, 71]
 var correct_responses = [
-  ["left button", 71],
-  ["right button", 66]
+  ["left button", 89],
+  ["right button",71]
 ]
 var exp_stage = 'tests'
 var path = '/static/experiments/dot_pattern_expectancy/images/'
@@ -105,28 +105,31 @@ var start_test_block = {
   type: 'poldrack-single-stim',
   stimulus: '<div class = centerbox><div class = center-text><i>Fin</i></div></div>',
   is_html: true,
-  choices: [32],
-  timing_response: -1,
-  response_ends_trial: true,
+  choices: 'none',
+  timing_stim: 3000, 
+  timing_response: 3000,
   data: {
     trial_id: "end",
-    exp_id: 'stroop'
+    exp_id: 'dot_pattern_expectancy'
   },
   timing_post_trial: 0
 };
 
 
-var instructions_block = {
-  type: 'poldrack-text',
-  data: {
-    trial_id: "instruction"
-  },
-  text: '<div class = centerbox><p style = "font-size:40px" class = center-block-text>Target Pair (press left):</p><p class = center-block-text><img src = "/static/experiments/dot_pattern_expectancy/images/' +
+ var instructions_block = {
+  type: 'poldrack-single-stim',
+  stimulus: '<div class = centerbox><p style = "font-size:40px" class = center-block-text>Target Pair (press left):</p><p class = center-block-text><img src = "/static/experiments/dot_pattern_expectancy/images/' +
     valid_cue +
     '" ></img>&nbsp&nbsp&nbsp...followed by...&nbsp&nbsp&nbsp<img src = "/static/experiments/dot_pattern_expectancy/images/' +
     valid_probe + '" ></img><br></br></p><p style = "font-size:40px" class = center-block-text>Otherwise press right</div>',
-  cont_key: [32],
-  timing_post_trial: 1000
+  is_html: true,
+  choices: 'none',
+  timing_stim: 20000, 
+  timing_response: 20000,
+  data: {
+    trial_id: "instructions",
+  },
+  timing_post_trial: 0
 };
 
 var rest_block = {
@@ -134,7 +137,7 @@ var rest_block = {
   stimulus: '<div class = centerbox><div class = center-text>Take a break!<br>Next run will start in a moment</div></div>',
   is_html: true,
   choices: 'none',
-  timing_response: 10000,
+  timing_response: 7500,
   data: {
     trial_id: "rest_block"
   },
@@ -225,8 +228,8 @@ var X_probe = {
     	exp_stage: exp_stage,
     	trial_num: current_trial
 	   })
-     console.log('Trial Num: ', current_trial)
-     console.log('Correct Response? ', correct)
+     console.log('Trial: ' + current_trial +
+              '\nCorrect Response? ' + correct + '\n')
   }
 };
 
@@ -257,8 +260,8 @@ var other_probe = {
       exp_stage: exp_stage,
       trial_num: current_trial
      })
-     console.log('Trial Num: ', current_trial)
-     console.log('Correct Response? ', correct)
+     console.log('Trial: ' + current_trial +
+              '\nCorrect Response? ' + correct + '\n')
   }
 };
 
@@ -270,8 +273,8 @@ var dot_pattern_expectancy_experiment = []
 dot_pattern_expectancy_experiment.push(instructions_block);
 setup_fmri_intro(dot_pattern_expectancy_experiment, choices)
 
-dot_pattern_expectancy_experiment.push(start_test_block);
 for (b = 0; b < num_blocks; b++) {
+  dot_pattern_expectancy_experiment.push(start_test_block);
   var block = blocks[b]
   for (i = 0; i < block_length; i++) {
     switch (block[i]) {
@@ -304,6 +307,8 @@ for (b = 0; b < num_blocks; b++) {
     dot_pattern_expectancy_experiment.push(fixation_block)
     dot_pattern_expectancy_experiment.push(probe)
   }
-  dot_pattern_expectancy_experiment.push(rest_block)
+  if ((b+1)<num_blocks) {
+    dot_pattern_expectancy_experiment.push(rest_block)
+  }
 }
 dot_pattern_expectancy_experiment.push(end_block)

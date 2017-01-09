@@ -88,8 +88,7 @@ var setStims = function() {
   }
   curr_cue = tasks[curr_task].cues[cue_i]
   curr_stim = stims[current_trial]
-  current_trial = current_trial + 1
-  CTI = task_switches[current_trials].CTI
+  CTI = task_switches[current_trial].CTI
 }
 
 var getCue = function() {
@@ -129,7 +128,7 @@ var getResponse = function() {
 
 /* Append gap and current trial to data and then recalculate for next trial*/
 var appendData = function() {
-  var trial_num = current_trial - 1 //current_trial has already been updated with setStims, so subtract one to record data
+  var trial_num = current_trial //current_trial has already been updated with setStims, so subtract one to record data
   var task_switch = task_switches[trial_num]
   jsPsych.data.addDataToLastTrial({
     cue: curr_cue,
@@ -212,27 +211,30 @@ var prompt_task_list = '<strong>Color</strong> or <strong>Orange-Blue</strong>: 
   ' if >5 and ' + response_keys.key_name[1] + ' if <5.'
 
 var instructions_block = {
-  type: 'poldrack-text',
-	data: {
-		trial_id: "instruction"
-	},
-	text: '<div class = centerbox><div class = center-text style="font-size:40px">' + prompt_task_list + '</div></div>',
-    cont_key: [32],
-	timing_post_trial: 1000
+  type: 'poldrack-single-stim',
+  stimulus: '<div class = centerbox><div class = center-text style="font-size:40px">' + prompt_task_list + '</div></div>',
+  is_html: true,
+  choices: 'none',
+  timing_stim: 20000, 
+  timing_response: 20000,
+  data: {
+    trial_id: "instructions",
+  },
+  timing_post_trial: 0
 };
 
-var end_block = {
-	type: 'poldrack-single-stim',
-	stimulus: '<div class = centerbox><div class = center-text><i>Fin</i></div></div>',
-	is_html: true,
-	choices: [32],
-	timing_response: -1,
-	response_ends_trial: true,
-	data: {
-		trial_id: "end",
-		exp_id: 'stroop'
-	},
-	timing_post_trial: 0
+ var end_block = {
+  type: 'poldrack-single-stim',
+  stimulus: '<div class = centerbox><div class = center-text><i>Fin</i></div></div>',
+  is_html: true,
+  choices: 'none',
+  timing_stim: 3000, 
+  timing_response: 3000,
+  data: {
+    trial_id: "end",
+    exp_id: 'twobytwo'
+  },
+  timing_post_trial: 0
 };
 
 
@@ -335,6 +337,9 @@ var test_block = {
       'correct_response': correct_response,
       'correct': correct
     })
+    console.log('Trial: ' + current_trial +
+              '\nCorrect Response? ' + correct + '\n')
+    current_trial += 1
   }
 }
 
@@ -351,7 +356,8 @@ for (var b = 0; b < num_blocks; b++) {
 	  threebytwo_experiment.push(cue_block);
 	  threebytwo_experiment.push(test_block);
 	}
-	threebytwo_experiment.push(rest_block)
-	setup_fmri_run(threebytwo_experiment)
+	if ((b+1)<num_blocks) {
+		threebytwo_experiment.push(rest_block)
+	}
 }
 threebytwo_experiment.push(end_block)
