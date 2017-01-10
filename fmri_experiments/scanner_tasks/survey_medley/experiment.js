@@ -160,9 +160,9 @@ var start_test_block = {
 	type: 'poldrack-single-stim',
 	stimulus: '<div class = centerbox><div class = center-text><i>Fin</i></div></div>',
 	is_html: true,
-	choices: 'none',
-	timing_stim: 3000, 
-	timing_response: 3000,
+	choices: [32],
+  timing_response: -1,
+  response_ends_trial: true,
 	data: {
 		trial_id: "end",
 		exp_id: 'survey_medley'

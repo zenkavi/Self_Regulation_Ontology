@@ -56,7 +56,7 @@ var getFB = function() {
   }
   var feedback;
   if (isequal === true) {
-    feedback = "You got it!"
+    feedback = "Complete"
     correct = true
   } else {
     feedback = "Didn't get that one."
@@ -67,16 +67,6 @@ var getFB = function() {
   var feedback_box = '<div class = watt_feedbackbox><p class = center-text>' + feedback +
     '</p></div>'
   return canvas + ref_board + goal_state_board + feedback_box
-}
-
-
-var getTime = function() {
-  if ((time_per_trial - time_elapsed) > 0) {
-    return time_per_trial - time_elapsed
-  } else {
-    return 1
-  }
-  
 }
 
 var pegClick = function(choice) {
@@ -148,11 +138,33 @@ var arraysEqual = function(arr1, arr2) {
 var reset_problem = function() {
     colors = jsPsych.randomization.shuffle(['Green', 'Red', 'Blue'])
     held_ball = 0
-    time_elapsed = 0
+    problem_start_time = new Date()
     num_moves = 0;
     if (problem_i < problems.length) {
       curr_placement = jQuery.extend(true, [], problems[problem_i].start_state)
     }
+}
+
+var get_hand_choices = function() {
+  var trial_choices = []
+  var sum = 0
+  for (var i=0; i<choices.length; i++) {
+    sum = curr_placement[i].reduce(function(a,b) {return a+b;}, 0)
+    if (sum > 0) {
+      trial_choices.push(choices[i])
+    }
+  }
+  return trial_choices
+}
+
+var get_board_choices = function() {
+  var trial_choices = []
+  for (var i=0; i<choices.length; i++) {
+    if (curr_placement[i].indexOf(0) != -1) {
+      trial_choices.push(choices[i])
+    }
+  }
+  return trial_choices
 }
 
 /* ************************************ */
@@ -163,12 +175,13 @@ var choices = [89, 71, 82]
 var correct = false
 var colors = ['Green', 'Red', 'Blue']
 var problem_i = 0
-var time_per_trial = 15000 //time per trial in seconds
-var time_elapsed = 0 //tracks time for a problem
 var num_moves = 0 //tracks number of moves for a problem
 var held_ball = 0
 var ref_board = ''
-
+// timing variables
+var problem_start_time = 0
+var start_time = new Date()
+var task_limit = 600000
 
 var problems = []
 var test_problems = []
@@ -299,14 +312,15 @@ for (s=0; s<start_permutations.length; s++) {
       )
   }
 }
-test_problems = jsPsych.randomization.shuffle(test_problems).concat(jsPsych.randomization.shuffle(test_problems))
+var test_problems = jsPsych.randomization.shuffle(test_problems).concat(jsPsych.randomization.shuffle(test_problems))
 
 // set up practice
-exp_stage = 'practice'
-problems = practice_problems
+var exp_stage = 'practice'
+var problems = practice_problems
 // setup blocks
-num_blocks = 3
-block_length = test_problems.length/num_blocks
+var num_blocks = 3
+var block_length = test_problems.length/num_blocks
+var curr_placement = jQuery.extend(true, [], problems[problem_i].start_state)
 
 /* ************************************ */
 /* Set up jsPsych blocks */
@@ -337,13 +351,26 @@ block_length = test_problems.length/num_blocks
   timing_post_trial: 0
 };
 
+var reminder_node = {
+    timeline: [reminder_block],
+    conditional_function: function(){
+        var data = jsPsych.data.getLastTrialData();
+        if(problem_i%15 == 0 && problem_i > 0){
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
+
 var instructions_block = {
   type: 'poldrack-single-stim',
-  stimulus: "<div class = center-text>Solve the Tower Tasks!<br>Plan ahead first and work swiftly!<br>We'll start with some practice.</div>",
+  stimulus: "<div class = centerbox><div class = center-text>Solve the Tower Tasks!<br>Plan ahead first and work swiftly!<br>We'll start with some practice.</div></div>",
   is_html: true,
   choices: 'none',
-  timing_stim: 10000, 
-  timing_response: 10000,
+  timing_stim: 5000, 
+  timing_response: 5000,
   data: {
     trial_id: "instructions",
   },
@@ -369,26 +396,37 @@ var start_test_block = {
   }
 };
 
+var start_practice_block = {
+  type: 'poldrack-single-stim',
+  stimulus: '<div class = centerbox><div class = center-text>About to start practice</p></div>',
+  is_html: true,
+  choices: 'none',
+  timing_stim: 1500, 
+  timing_response: 1500,
+  data: {
+    trial_id: "practice_start_block"
+  },
+  timing_post_trial: 500,
+  on_finish: function() {
+    reset_problem()
+  }
+};
+
 var tohand_block = {
   type: 'poldrack-single-stim',
   stimulus: getStim,
-  choices: choices,
+  choices: get_hand_choices,
   is_html: true,
   data: {
     trial_id: "to_hand",
     exp_stage: exp_stage
   },
-  timing_stim: getTime,
-  timing_response: getTime,
+  timing_stim: -1,
+  timing_response: -1,
   response_ends_trial: true,
   timing_post_trial: 0,
   on_finish: function(data) {
-    if (data.key_press != -1) {
-      pegClick(choices.indexOf(data.key_press))
-      time_elapsed += data.rt
-    } else {
-      time_elapsed += getTime()
-    }
+    pegClick(choices.indexOf(data.key_press))
     jsPsych.data.addDataToLastTrial({
       'current_position': jQuery.extend(true, [], curr_placement),
       'num_moves_made': num_moves,
@@ -404,23 +442,18 @@ var tohand_block = {
 var toboard_block = {
   type: 'poldrack-single-stim',
   stimulus: getStim,
-  choices: choices,
+  choices: get_board_choices,
   is_html: true,
   data: {
     trial_id: "to_board",
     exp_stage: exp_stage
   },
-  timing_stim: getTime,
-  timing_response: getTime,
+  timing_stim: -1,
+  timing_response: -1,
   response_ends_trial: true,
   timing_post_trial: 0,
   on_finish: function(data) {
-    if (data.key_press != -1) {
-      pegClick(choices.indexOf(data.key_press))
-      time_elapsed += data.rt
-    } else {
-      time_elapsed += getTime()
-    }
+    pegClick(choices.indexOf(data.key_press))
     jsPsych.data.addDataToLastTrial({
       'current_position': jQuery.extend(true, [], curr_placement),
       'num_moves_made': num_moves,
@@ -445,6 +478,7 @@ var feedback_block = {
   timing_response: get_ITI,
   timing_post_trial: 0,
   on_finish: function() {
+    var time_elapsed = new Date() - problem_start_time
     jsPsych.data.addDataToLastTrial({
       'exp_stage': exp_stage,
       'problem_time': time_elapsed,
@@ -461,9 +495,6 @@ var feedback_block = {
 var problem_node = {
   timeline: [tohand_block, toboard_block],
   loop_function: function(data) {
-    if (time_elapsed >= time_per_trial) {
-      return false
-    }
     data = data[1]
     var goal_state = data.goal_state
     var isequal = true
@@ -474,24 +505,30 @@ var problem_node = {
       }
     }
     return !isequal
+  }
+}
+
+var task_node = {
+  timeline: [problem_node, feedback_block, reminder_node],
+  loop_function: function(data) {
+    var time_elapsed = new Date() - start_time
+    if (time_elapsed < task_limit && problem_i < problems.length) {
+      return true
+    } else {
+      return false
+    }
   },
   timing_post_trial: 1000
 }
 
+
 /* create experiment definition array */
 var ward_and_allport_experiment = [];
+
 ward_and_allport_experiment.push(instructions_block);
 setup_fmri_intro(ward_and_allport_experiment, choices)
-for (var i = 0; i < practice_problems.length; i++) {
-  ward_and_allport_experiment.push(problem_node);
-  ward_and_allport_experiment.push(feedback_block);
-}
+ward_and_allport_experiment.push(start_practice_block);
+ward_and_allport_experiment.push(task_node)
 ward_and_allport_experiment.push(start_test_block);
-for (var b = 0; b < num_blocks; b++) {
-  for (var i = 0; i < block_length; i++) {
-    ward_and_allport_experiment.push(problem_node);
-    ward_and_allport_experiment.push(feedback_block)
-  }
-  ward_and_allport_experiment.push(reminder_block);
-}
+ward_and_allport_experiment.push(task_node)
 ward_and_allport_experiment.push(end_block);

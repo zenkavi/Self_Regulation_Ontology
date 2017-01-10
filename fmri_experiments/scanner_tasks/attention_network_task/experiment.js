@@ -26,20 +26,78 @@ var get_ITI = function() {
   return 2100 + gap //1700 (stim time) + 400 (minimum ITI)
  }
 
+var getPracticeTrials = function() {
+	var practice_stim = jsPsych.randomization.repeat($.extend(true, [], test_stimuli), 1, true)
+	var practice_trials = []
+	for (i=0; i<practice_length; i++) {
+		practice_trials.push(no_cue)
+		if (practice_stim.data[i].cue == 'nocue') {
+			
+		} else if (practice_stim.data[i].cue == 'center') {
+			practice_trials.push(center_cue)
+		} else {
+			var spatial_cue = {
+				type: 'poldrack-single-stim',
+				stimulus: '<div class = centerbox><div class = ANT_' + practice_stim.data[i].flanker_location +
+					'><div class = ANT_text>*</p></div></div>',
+				is_html: true,
+				choices: 'none',
+				data: {
+
+					trial_id: "spatialcue",
+					exp_stage: exp_stage
+				},
+				timing_post_trial: 0,
+				timing_stim: 100,
+				timing_response: 100
+			}
+			practice_trials.push(spatial_cue)
+		}
+		practice_trials.push(fixation)
+
+		var practice_ANT_trial = {
+			type: 'poldrack-categorize',
+			stimulus: practice_stim.stimulus[i],
+			is_html: true,
+			key_answer: practice_stim.data[i].correct_response,
+			correct_text: '<div class = centerbox><div style="color:#4FE829"; class = center-text>Correct!</div></div>',
+			incorrect_text: '<div class = centerbox><div style="color:red"; class = center-text>Incorrect</div></div>',
+			timeout_message: '<div class = centerbox><div class = center-text>Respond faster!</div></div>',
+			choices: choices,
+			data: practice_stim.data[i],
+			timing_response: 1700,
+			timing_stim: 1700,
+			response_ends_trial: false,
+			timing_feedback_duration: 1000,
+			show_stim_with_feedback: false,
+			timing_post_trial: 500,
+			on_finish: function() {
+				jsPsych.data.addDataToLastTrial({
+					exp_stage: exp_stage
+				})
+			}
+		}
+		practice_trials.push(practice_ANT_trial)
+	}
+	return practice_trials
+}
+
 
 /* ************************************ */
 /* Define experimental variables */
 /* ************************************ */
+var practice_repeats = 0
 // task specific variables
+var practice_length = 12
 var num_blocks = 2
 var block_length = 96
 
 var current_trial = 0
-var exp_stage = 'test'
+var exp_stage = 'practice'
 var test_stimuli = []
 var choices = [89, 71]
 var path = '/static/experiments/attention_network_task/images/'
-var images = [path + 'right_arrow.png', path + 'left_arrow.png', path + 'no_arrow.png']
+var images = [path + 'left_arrow.png', path + 'right_arrow.png', path + 'no_arrow.png']
 //preload
 jsPsych.pluginAPI.preloadImages(images)
 
@@ -81,6 +139,7 @@ for (l = 0; l < locations.length; l++) {
 	}
 }
 
+
 /* set up repeats for test blocks */
 var blocks = []
 for (b = 0; b < num_blocks; b++) {
@@ -103,7 +162,10 @@ for (b = 0; b < num_blocks; b++) {
 	data: {
 		trial_id: "test_start_block"
 	},
-	timing_post_trial: 500
+	timing_post_trial: 500,
+	on_finish: function() {
+		exp_stage = 'test'
+	}
 };
 
 var rest_block = {
@@ -122,9 +184,9 @@ var rest_block = {
 	type: 'poldrack-single-stim',
 	stimulus: '<div class = centerbox><div class = center-text><i>Fin</i></div></div>',
 	is_html: true,
-	choices: 'none',
-	timing_stim: 3000, 
-	timing_response: 3000,
+	choices: [32],
+	timing_response: -1,
+	response_ends_trial: true,
 	data: {
 		trial_id: "end",
 		exp_id: 'attention_network_task'
@@ -134,15 +196,15 @@ var rest_block = {
 
  var instructions_block = {
 	type: 'poldrack-single-stim',
-	stimulus: '<div class = centerbox><div class = center-text>Indicate which direction the center arrow is pointing using the left and right keys.</div>',
+	stimulus: '<div class = centerbox><div class = center-text>Indicate which direction the center arrow is pointing using the left (index) and right (middle) keys.</div>',
 	is_html: true,
 	choices: 'none',
-	timing_stim: 10000, 
-	timing_response: 10000,
+	timing_stim: 9500, 
+	timing_response: 9500,
 	data: {
 		trial_id: "instructions",
 	},
-	timing_post_trial: 0
+	timing_post_trial: 500
 };
 
 var fixation = {
@@ -200,13 +262,39 @@ var center_cue = {
 
 }
 
+/* Set up practice trials */
+var practice_trials = getPracticeTrials()
+var practice_loop = {
+	timeline: practice_trials,
+	loop_function: function(data) {
+		practice_repeats+=1
+		total_trials = 0
+		correct_trials = 0
+		for (var i = 0; i < data.length; i++) {
+			if (data[i].trial_id == 'stim') {
+				total_trials+=1
+				if (data[i].correct == true) {
+					correct_trials+=1
+				}
+			}
+		}
+		console.log('Practice Block Accuracy: ', correct_trials/total_trials)
+		if (correct_trials/total_trials > .75 || practice_repeats == 3) {
+			return false
+		} else {
+			practice_trials = getPracticeTrials()
+			return true
+		}
+	}
+};
 
 /* set up ANT experiment */
 var attention_network_task_experiment = [];
 attention_network_task_experiment.push(instructions_block);
+attention_network_task_experiment.push(practice_loop)
 setup_fmri_intro(attention_network_task_experiment, choices)
 
-/* Set up ANT main task */
+/* Set up test trials */
 var trial_num = 0
 for (b = 0; b < blocks.length; b++) {
 	attention_network_task_experiment.push(test_intro_block);

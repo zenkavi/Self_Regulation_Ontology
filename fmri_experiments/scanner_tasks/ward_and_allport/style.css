@@ -6,9 +6,7 @@
   left:50%;
   margin-right:-50%;
   transform: translate(-50%,-50%);
-  background-color: #C8C8C8;
-  border-radius: 25px;
-  border: 2px solid #606060;
+  background-color: black;
 }
 
 

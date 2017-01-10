@@ -112,14 +112,49 @@ var getTestFeedback = function() {
 	return '<div class = centerbox><p class = block-text>' + test_feedback_text + '</p></div>'
 }
 
+var getPracticeTrials = function() {
+	var practice = []
+	var trials = jsPsych.randomization.repeat(stims, practice_len/4)
+	for (i=0; i<trials.length; i++) {
+		trials[i]['key_answer'] = trials[i].data.correct_response
+	}
+	practice.push(fixation_block)
+	var practice_block = {
+		type: 'poldrack-categorize',
+		timeline: trials, 
+		is_html: true,
+		choices: choices,
+		timing_stim: 850,
+		timing_response: 1850,
+		correct_text: '<div class = feedbackbox><div style="color:#4FE829"; class = center-text>Correct!</p></div>',
+		incorrect_text: '<div class = feedbackbox><div style="color:red"; class = center-text>Incorrect</p></div>',
+		timeout_message: '<div class = feedbackbox><div class = center-text>Too Slow</div></div>',
+		show_stim_with_feedback: false,
+		timing_feedback_duration: 500,
+		timing_post_trial: 250,
+		on_finish: function(data) {
+			jsPsych.data.addDataToLastTrial({
+				exp_stage: 'practice',
+				trial_num: current_trial,
+			})
+			current_trial += 1
+			console.log('Trial: ' + current_trial +
+              '\nCorrect Response? ' + data.correct + ', RT: ' + data.rt)
+		}
+	}
+	practice.push(practice_block)
+	return practice
+}
+
 /* ************************************ */
 /* Define experimental variables */
 /* ************************************ */
+var practice_repeats = 0
 // task specific variables
 // Define and load images
 var prefix = '/static/experiments/stop_signal/images/'
-var images = [prefix + 'pentagon.png', prefix + 'hourglass.png', prefix + 'tear.png', prefix +
-	'square.png'
+var images = [prefix + 'moon.png', prefix + 'oval.png', prefix + 'rectangle.png', prefix +
+	'trapezoid.png'
 ]
 jsPsych.pluginAPI.preloadImages(images);
 /* Stop signal delay in ms */
@@ -129,8 +164,8 @@ var stop_signal =
 
 /* Instruction Prompt */
 var possible_responses = [
-	["left button", 89],
-	["right button", 71]
+	["index finger", 89],
+	["middle finger", 71]
 ]
 var choices = [possible_responses[0][1], possible_responses[1][1]]
 var correct_responses = jsPsych.randomization.shuffle([possible_responses[0], possible_responses[0],
@@ -155,6 +190,7 @@ var rt_diff_thresh = 75
 var missed_response_thresh = 0.1
 var accuracy_thresh = 0.8
 var stop_thresh = 0.2	
+var practice_len = 12
 var exp_len = 125
 var num_blocks = 3
 var block_len = exp_len/num_blocks
@@ -190,7 +226,7 @@ var stims = [{
 
 
 //setup test sequence
-trials = jsPsych.randomization.repeat(stims, exp_len/4).slice(0,exp_len).slice(0,125)
+trials = jsPsych.randomization.repeat(stims, exp_len/4).slice(0,exp_len)
 var stop_trials = jsPsych.randomization.repeat(['stop', 'stop', 'go', 'go', 'go'], exp_len /5)
 for (i=0; i<trials.length; i++) {
 	trials[i]['SS_trial_type'] = stop_trials[i]
@@ -228,16 +264,19 @@ var start_test_block = {
   data: {
     trial_id: "test_start_block"
   },
-  timing_post_trial: 500
+  timing_post_trial: 500,
+  on_finish: function() {
+  	current_trial = 0
+  }
 };
 
  var end_block = {
 	type: 'poldrack-single-stim',
 	stimulus: '<div class = centerbox><div class = center-text><i>Fin</i></div></div>',
 	is_html: true,
-	choices: 'none',
-	timing_stim: 3000, 
-	timing_response: 3000,
+	choices: [32],
+	timing_response: -1,
+	response_ends_trial: true,
 	data: {
 		trial_id: "end",
 		exp_id: 'stop_signal'
@@ -248,11 +287,11 @@ var start_test_block = {
  var instructions_block = {
   type: 'poldrack-single-stim',
   stimulus: '<div class = centerbox><p class = block-text>Only one key is correct for each shape. The correct keys are as follows:' + prompt_text +
-		'</p><p class = block-text>Do not respond if you see the black star!</p></div>',
+		'</p><p class = block-text>Do not respond if you see the red star!</p><br><p class = block-text>We will start with practice</p></div>',
   is_html: true,
   choices: 'none',
-  timing_stim: 20000, 
-  timing_response: 20000,
+  timing_stim: 15000, 
+  timing_response: 15000,
   data: {
     trial_id: "instructions",
   },
@@ -291,6 +330,31 @@ var test_feedback_block = {
   }
 };
 
+// set up practice trials
+var practice_trials = getPracticeTrials()
+var practice_loop = {
+  timeline: practice_trials,
+  loop_function: function(data) {
+    practice_repeats+=1
+    total_trials = 0
+    correct_trials = 0
+    for (var i = 0; i < data.length; i++) {
+      if (data[i].trial_id == 'stim') {
+        total_trials+=1
+        if (data[i].correct == true) {
+          correct_trials+=1
+        }
+      }
+    }
+    console.log('Practice Block Accuracy: ', correct_trials/total_trials)
+    if (correct_trials/total_trials > .75 || practice_repeats == 3) {
+      return false
+    } else {
+      practice_trials = getPracticeTrials()
+      return true
+    }
+  }
+};
 
 /* ************************************ */
 /* Set up experiment */
@@ -299,6 +363,7 @@ var test_feedback_block = {
 var stop_signal_experiment = []
 stop_signal_experiment.push(task_setup_block);
 stop_signal_experiment.push(instructions_block);
+stop_signal_experiment.push(practice_loop);
 setup_fmri_intro(stop_signal_experiment, choices)
 
 /* Test blocks */
@@ -332,7 +397,7 @@ for (b = 0; b < num_blocks; b++) {
 			current_trial += 1
 			test_block_data.push(data)
 			console.log('Trial: ' + current_trial +
-              '\nCorrect Response? ' + correct + '\n')
+              '\nCorrect Response? ' + correct + ', RT: ' + data.rt + ', SSD: ' + data.SS_delay)
 		}
 	}
 	stop_signal_experiment.push(stop_signal_block)

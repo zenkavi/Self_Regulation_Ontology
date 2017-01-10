@@ -24,7 +24,7 @@ var genStims = function(n) {
   stims = []
   for (var i = 0; i < n; i++) {
     var number = randomDraw('12346789')
-    var color = randomDraw(['orange', 'blue'])
+    var color = randomDraw(['orange', '#1F45FC'])
     var stim = {
       number: parseInt(number),
       color: color
@@ -99,7 +99,7 @@ var getCue = function() {
 
 var getStim = function() {
   var stim_html = '<div class = upperbox><div class = "center-text" >' + curr_cue +
-    '</div></div><div class = lowerbox><div class = "center-text" style=color:' + curr_stim.color +
+    '</div></div><div class = lowerbox><div class = "stim-text" style=color:' + curr_stim.color +
     ';>' + curr_stim.number + '</div>'
   return stim_html
 }
@@ -141,9 +141,23 @@ var appendData = function() {
   })
 }
 
+var getPracticeTrials = function() {
+  var practice = []
+  var task_switches = jsPsych.randomization.repeat(task_switches, practice_length)
+  for (var i = 0; i < practice_length; i++) {
+    practice.push(setStims_block)
+    practice.push(prompt_fixation_block)
+    practice.push(prompt_cue_block);
+    practice.push(practice_block);
+    practice.push(gap_block);
+  }
+  return practice
+}
+
 /* ************************************ */
 /* Define experimental variables */
 /* ************************************ */
+var practice_repeats = 0
 // task specific variables
 var response_keys = jsPsych.randomization.repeat([{
   key: 89,
@@ -153,9 +167,10 @@ var response_keys = jsPsych.randomization.repeat([{
   key_name: 'Middle finger'
 }], 1, true)
 var choices = response_keys.key
+var practice_length = 16
 var num_blocks = 3
 var block_length = 80
-var test_length = num_blocks * test_length
+var test_length = num_blocks * block_length
 
 //set up block stim. correct_responses indexed by [block][stim][type]
 var tasks = {
@@ -193,7 +208,8 @@ var curr_cue = tasks[curr_task].cues[cue_i] //object that holds the current cue,
 var curr_stim = 'na' //object that holds the current stim, set by setStims()
 var current_trial = 0
 var CTI = 0 //cue-target-interval
-var exp_stage = 'test' // defines the exp_stage, switched by start_test_block
+var exp_stage = 'practice' // defines the exp_stage, switched by start_test_block
+
 
 
 
@@ -205,8 +221,6 @@ var exp_stage = 'test' // defines the exp_stage, switched by start_test_block
 /* ************************************ */
 var prompt_task_list = '<strong>Color</strong> or <strong>Orange-Blue</strong>: ' +
   response_keys.key_name[0] + ' if orange and ' + response_keys.key_name[1] + ' if blue.' +
-  '<br><br><strong>Parity</strong> or <strong>Odd-Even</strong>: ' + response_keys.key_name[0] +
-  ' if even and ' + response_keys.key_name[1] + ' if odd.' +
   '<br><br><strong>Magnitude</strong> or <strong>High-Low</strong>: ' + response_keys.key_name[0] +
   ' if >5 and ' + response_keys.key_name[1] + ' if <5.'
 
@@ -227,9 +241,9 @@ var instructions_block = {
   type: 'poldrack-single-stim',
   stimulus: '<div class = centerbox><div class = center-text><i>Fin</i></div></div>',
   is_html: true,
-  choices: 'none',
-  timing_stim: 3000, 
-  timing_response: 3000,
+  choices: [32],
+  timing_response: -1,
+  response_ends_trial: true,
   data: {
     trial_id: "end",
     exp_id: 'twobytwo'
@@ -248,7 +262,14 @@ var start_test_block = {
   data: {
     trial_id: "test_start_block"
   },
-  timing_post_trial: 500
+  timing_post_trial: 500,
+  on_finish: function() {
+    exp_stage = 'test'
+    task_switches = jsPsych.randomization.repeat(task_switches, test_length / 8)
+    curr_task = randomDraw(getKeys(tasks))
+    curr_stim = 'na' //object that holds the current stim, set by setStims()
+    curr_cue = tasks[curr_task].cues[cue_i] //object that holds the current cue, set by setStims()
+  }
 };
 
 var rest_block = {
@@ -283,7 +304,6 @@ var fixation_block = {
   },
   timing_post_trial: 0,
   timing_response: 500,
-  prompt: '<div class = promptbox>' + prompt_task_list + '</div>',
   on_finish: function() {
     jsPsych.data.addDataToLastTrial({
       exp_stage: exp_stage
@@ -302,7 +322,6 @@ var cue_block = {
   timing_response: getCTI,
   timing_stim: getCTI,
   timing_post_trial: 0,
-  prompt: '<div class = promptbox>' + prompt_task_list + '</div>',
   on_finish: function() {
     jsPsych.data.addDataToLastTrial({
       exp_stage: exp_stage
@@ -310,6 +329,7 @@ var cue_block = {
     appendData()
   }
 };
+
 
 var test_block = {
   type: 'poldrack-single-stim',
@@ -324,8 +344,6 @@ var test_block = {
   timing_post_trial: 0,
   timing_response: get_ITI,
   timing_stim: 1000,
-  prompt: '<div class = upperbox><div class = fixation>+</div></div><div class = lowerbox><div class = fixation>+</div></div>',
-  prompt: '<div class = promptbox>' + prompt_task_list + '</div>',
   on_finish: function(data) {
     appendData()
     correct_response = getResponse()
@@ -338,26 +356,124 @@ var test_block = {
       'correct': correct
     })
     console.log('Trial: ' + current_trial +
-              '\nCorrect Response? ' + correct + '\n')
+              '\nCorrect Response? ' + correct + ', RT: ' + data.rt)
     current_trial += 1
   }
 }
 
+/* Set up practice trials */
+var prompt_fixation_block = {
+  type: 'poldrack-single-stim',
+  stimulus: '<div class = upperbox><div class = fixation>+</div></div><div class = lowerbox><div class = fixation>+</div></div>',
+  is_html: true,
+  choices: 'none',
+  data: {
+    trial_id: "fixation",
+    exp_stage: "practice"
+  },
+  timing_post_trial: 0,
+  timing_response: 500,
+  prompt: '<div class = promptbox>' + prompt_task_list + '</div>'
+}
+
+var gap_block = {
+  type: 'poldrack-single-stim',
+  stimulus: ' ',
+  is_html: true,
+  choices: 'none',
+  data: {
+    trial_id: 'gap',
+    exp_stage: 'practice'
+  },
+  timing_response: 500,
+  timing_stim: 0,
+  timing_post_trial: 0,
+  prompt: '<div class = promptbox>' + prompt_task_list + '</div>'
+};
+
+var prompt_cue_block = {
+  type: 'poldrack-single-stim',
+  stimulus: getCue,
+  is_html: true,
+  choices: 'none',
+  data: {
+    trial_id: 'cue',
+    exp_stage: 'practice'
+  },
+  timing_response: getCTI,
+  timing_stim: getCTI,
+  timing_post_trial: 0,
+  prompt: '<div class = promptbox>' + prompt_task_list + '</div>',
+  on_finish: function() {
+    appendData()
+  }
+};
+
+var practice_block = {
+  type: 'poldrack-categorize',
+  stimulus: getStim,
+  is_html: true,
+  key_answer: getResponse,
+  correct_text: '<div class = centerbox><div style="color:#4FE829"; class = center-text>Correct!</p></div><div class = promptbox>' +
+    prompt_task_list + '</div>',
+  incorrect_text: '<div class = centerbox><div style="color:red"; class = center-text>Incorrect</p></div><div class = promptbox>' +
+    prompt_task_list + '</div>',
+  timeout_message: '<div class = centerbox><div class = center-text>Too Slow</div></div><div class = promptbox>' +
+    prompt_task_list + '</div>',
+  choices: choices,
+  data: {
+    trial_id: 'stim',
+    exp_stage: "practice"
+  },
+  timing_feedback_duration: 500,
+  show_stim_with_feedback: false,
+  timing_response: 1500,
+  timing_stim: 1000,
+  timing_post_trial: 0,
+  prompt: '<div class = promptbox>' + prompt_task_list + '</div>',
+  on_finish: appendData
+}
+
+var practice_trials = getPracticeTrials()
+var practice_loop = {
+  timeline: practice_trials,
+  loop_function: function(data) {
+    practice_repeats+=1
+    total_trials = 0
+    correct_trials = 0
+    for (var i = 0; i < data.length; i++) {
+      if (data[i].trial_id == 'stim') {
+        total_trials+=1
+        if (data[i].correct == true) {
+          correct_trials+=1
+        }
+      }
+    }
+    console.log('Practice Block Accuracy: ', correct_trials/total_trials)
+    if (correct_trials/total_trials > .75 || practice_repeats == 3) {
+      return false
+    } else {
+      practice_trials = getPracticeTrials()
+      return true
+    }
+  }
+};
 
 /* create experiment definition array */
-var threebytwo_experiment = [];
-threebytwo_experiment.push(instructions_block);
-setup_fmri_intro(threebytwo_experiment, choices)
+var twobytwo_experiment = [];
+twobytwo_experiment.push(instructions_block);
+twobytwo_experiment.push(practice_loop);
+setup_fmri_intro(twobytwo_experiment, choices)
 for (var b = 0; b < num_blocks; b++) {
-	threebytwo_experiment.push(start_test_block)
-  threebytwo_experiment.push(fixation_block)
+	twobytwo_experiment.push(start_test_block)
+  twobytwo_experiment.push(fixation_block)
 	for (var i = 0; i < block_length; i++) {
-	  threebytwo_experiment.push(setStims_block)
-	  threebytwo_experiment.push(cue_block);
-	  threebytwo_experiment.push(test_block);
+	  twobytwo_experiment.push(setStims_block)
+	  twobytwo_experiment.push(cue_block);
+	  twobytwo_experiment.push(test_block);
 	}
 	if ((b+1)<num_blocks) {
-		threebytwo_experiment.push(rest_block)
+		twobytwo_experiment.push(rest_block)
 	}
 }
-threebytwo_experiment.push(end_block)
+twobytwo_experiment.push(end_block)

@@ -26,9 +26,51 @@ var get_ITI = function() {
   return 2000 + gap //1500 (stim time) + 500 (minimum ITI)
  }
 
+var getPracticeTrials = function() {
+	var practice = []
+	var practice_stims  = jsPsych.randomization.repeat(stims, practice_len / 12)
+	for (var i=0; i<practice_stims.length; i++) {
+		var practice_block = {
+			timeline: [practice_stims[i]],
+			type: 'poldrack-categorize',
+			is_html: true,
+			choices: choices,
+			timing_response: 1500,
+			timing_stim: 1500,
+			timing_post_trial: 0,
+			prompt: '<div class = centerbox><div class = fixation>+</div></div>',
+			timing_feedback_duration: 500,
+			show_stim_with_feedback: true,
+			correct_text: '<div class = fb_box><div class = center-text><font size = 20>Correct!</font></div></div>',
+			incorrect_text: '<div class = fb_box><div class = center-text><font size = 20>Incorrect</font></div></div>',
+			timeout_message: '<div class = fb_box><div class = center-text><font size = 20>Respond Faster!</font></div></div>' + instructions_prompt,
+			prompt: instructions_prompt,
+			on_finish: function(data) {
+				var correct = false
+				if (data.correct_response == data.key_press) {
+					correct = true
+				}
+				console.log('Trial: ' + current_trial +
+              '\nCorrect Response? ' + correct + ', RT: ' + data.rt)
+				jsPsych.data.addDataToLastTrial({
+					correct: correct,
+					trial_id: 'stim',
+					trial_num: current_trial,
+					exp_stage: exp_stage
+				})
+				current_trial += 1
+			}
+		}
+		practice.push(practice_block)
+		practice.push(practice_fixation_block)
+	}
+	return practice
+}
+
 /* ************************************ */
 /* Define experimental variables */
 /* ************************************ */
+var practice_repeats = 0
 // task specific variables
 var choices = [89, 71, 82]
 var congruent_stim = [{
@@ -42,7 +84,7 @@ var congruent_stim = [{
 	},
 	key_answer: choices[0]
 }, {
-	stimulus: '<div class = stroopbox><div class = stroop-stim style = "color:blue">BLUE</div></div>',
+	stimulus: '<div class = stroopbox><div class = stroop-stim style = "color:#1F45FC">BLUE</div></div>',
 	data: {
 		trial_id: 'stim',
 		condition: 'congruent',
@@ -52,7 +94,7 @@ var congruent_stim = [{
 	},
 	key_answer: choices[1]
 }, {
-	stimulus: '<div class = stroopbox><div class = stroop-stim style = "color:green">GREEN</div></div>',
+	stimulus: '<div class = stroopbox><div class = stroop-stim style = "color:#4FE829">GREEN</div></div>',
 	data: {
 		trial_id: 'stim',
 		condition: 'congruent',
@@ -84,7 +126,7 @@ var incongruent_stim = [{
 	},
 	key_answer: choices[0]
 }, {
-	stimulus: '<div class = stroopbox><div class = stroop-stim style = "color:blue">RED</div></div>',
+	stimulus: '<div class = stroopbox><div class = stroop-stim style = "color:#1F45FC">RED</div></div>',
 	data: {
 		trial_id: 'stim',
 		condition: 'incongruent',
@@ -94,7 +136,7 @@ var incongruent_stim = [{
 	},
 	key_answer: choices[1]
 }, {
-	stimulus: '<div class = stroopbox><div class = stroop-stim style = "color:blue">GREEN</div></div>',
+	stimulus: '<div class = stroopbox><div class = stroop-stim style = "color:#1F45FC">GREEN</div></div>',
 	data: {
 		trial_id: 'stim',
 		condition: 'incongruent',
@@ -104,7 +146,7 @@ var incongruent_stim = [{
 	},
 	key_answer: choices[1]
 }, {
-	stimulus: '<div class = stroopbox><div class = stroop-stim style = "color:green">RED</div></div>',
+	stimulus: '<div class = stroopbox><div class = stroop-stim style = "color:#4FE829">RED</div></div>',
 	data: {
 		trial_id: 'stim',
 		condition: 'incongruent',
@@ -114,7 +156,7 @@ var incongruent_stim = [{
 	},
 	key_answer: choices[2]
 }, {
-	stimulus: '<div class = stroopbox><div class = stroop-stim style = "color:green">BLUE</div></div>',
+	stimulus: '<div class = stroopbox><div class = stroop-stim style = "color:#4FE829">BLUE</div></div>',
 	data: {
 		trial_id: 'stim',
 		condition: 'incongruent',
@@ -128,7 +170,6 @@ var incongruent_stim = [{
 var stims = [].concat(congruent_stim, congruent_stim, incongruent_stim)
 var exp_len = 96
 var practice_len = 12
-var practice_stims  = jsPsych.randomization.repeat(stims, practice_len / 12)
 var test_stims = jsPsych.randomization.repeat(stims, exp_len / 12)
 var exp_stage = 'practice'
 var current_trial = 1
@@ -136,16 +177,16 @@ var current_trial = 1
 /* ************************************ */
 /* Set up jsPsych blocks */
 /* ************************************ */
-var instructions_prompt = '<div class=prompt_box><span style = "color:red;padding-right:40px">Index</span><span style = "color:green;">Middle</span><span style = "color:blue;padding-left:40px">Ring</span></div>'
+var instructions_prompt = '<div class=prompt_box><span style = "color:red;padding-right:40px">Index</span><span style = "color:#1F45FC;">Middle</span><span style = "color:#4FE829;padding-left:40px">Ring</span></div>'
 
 /* define static blocks */
 var instructions_block = {
   type: 'poldrack-single-stim',
-  stimulus: '<div class = centerbox><div class = center-text>Respond to the <strong>ink color</strong> of the word!<br><br><span style = "color:red;padding-left:40px">WORD</span>: Up<br><span style = "color:green;padding-left:60px">WORD</span>: Left<br><span style = "color:blue;padding-left:95px">WORD</span>: Right<br><br>We will start with practice</div></div>',
+  stimulus: '<div class = centerbox><div class = center-text>Respond to the <strong>ink color</strong> of the word!<br><br><span style = "color:red;padding-left:30px">WORD</span>: Index<br><span style = "color:#1F45FC;padding-left:65px">WORD</span>: Middle<br><span style = "color:#4FE829;">WORD</span>: Ring<br><br>We will start with practice</div></div>',
   is_html: true,
   choices: 'none',
-  timing_stim: 10000, 
-  timing_response: 10000,
+  timing_stim: 9500, 
+  timing_response: 9500,
   data: {
     trial_id: "instructions",
   },
@@ -173,9 +214,9 @@ var start_test_block = {
 	type: 'poldrack-single-stim',
 	stimulus: '<div class = centerbox><div class = center-text><i>Fin</i></div></div>',
 	is_html: true,
-	choices: 'none',
-	timing_stim: 3000, 
-	timing_response: 3000,
+	choices: [32],
+	timing_response: -1,
+	response_ends_trial: true,
 	data: {
 		trial_id: "end",
 		exp_id: 'stroop'
@@ -211,42 +252,31 @@ var practice_fixation_block = {
 	prompt: instructions_prompt
 }
 
-practice = []
-for (var i=0; i<practice_stims.length; i++) {
-	var practice_block = {
-		timeline: [practice_stims[i]],
-		type: 'poldrack-categorize',
-		is_html: true,
-		choices: choices,
-		timing_response: 1500,
-		timing_stim: 1500,
-		timing_post_trial: 0,
-		prompt: '<div class = centerbox><div class = fixation>+</div></div>',
-		timing_feedback_duration: 500,
-		show_stim_with_feedback: true,
-		correct_text: '<div class = fb_box><div class = center-text><font size = 20>Correct!</font></div></div>',
-		incorrect_text: '<div class = fb_box><div class = center-text><font size = 20>Incorrect</font></div></div>',
-		timeout_message: '<div class = fb_box><div class = center-text><font size = 20>Respond Faster!</font></div></div>',
-		prompt: instructions_prompt,
-		on_finish: function(data) {
-			var correct = false
-			if (data.correct_response == data.key_press) {
-				correct = true
+/* Set up practice trials */
+var practice_trials = getPracticeTrials()
+var practice_loop = {
+	timeline: practice_trials,
+	loop_function: function(data) {
+		practice_repeats+=1
+		total_trials = 0
+		correct_trials = 0
+		for (var i = 0; i < data.length; i++) {
+			if (data[i].trial_id == 'stim') {
+				total_trials+=1
+				if (data[i].correct == true) {
+					correct_trials+=1
+				}
 			}
-			console.log('Trial: ' + current_trial +
-              '\nCorrect Response? ' + correct + '\n')
-			jsPsych.data.addDataToLastTrial({
-				correct: correct,
-				trial_id: 'stim',
-				trial_num: current_trial,
-				exp_stage: exp_stage
-			})
-			current_trial += 1
+		}
+		console.log('Practice Block Accuracy: ', correct_trials/total_trials)
+		if (correct_trials/total_trials > .75 || practice_repeats == 3) {
+			return false
+		} else {
+			practice_trials = getPracticeTrials()
+			return true
 		}
 	}
-	practice.push(practice_block)
-	practice.push(practice_fixation_block)
-}
+};
 
 var test_block = {
 	timeline: test_stims,
@@ -256,14 +286,14 @@ var test_block = {
 	timing_response: get_ITI,
 	timing_stim: 1500,
 	timing_post_trial: 0,
-	prompt: '<div class = centerbox><div class = fixation>+</div></div>' + instructions_prompt,
+	prompt: '<div class = centerbox><div class = fixation>+</div></div>',
 	on_finish: function(data) {
 		var correct = false
 		if (data.correct_response == data.key_press) {
 			correct = true
 		}
 		console.log('Trial: ' + current_trial +
-              '\nCorrect Response? ' + correct + '\n')
+              '\nCorrect Response? ' + correct + ', RT: ' + data.rt)
 		jsPsych.data.addDataToLastTrial({
 			correct: correct,
 			trial_id: 'stim',
@@ -277,7 +307,7 @@ var test_block = {
 /* create experiment definition array */
 stroop_experiment = []
 stroop_experiment.push(instructions_block)
-stroop_experiment = stroop_experiment.concat(practice)
+stroop_experiment.push(practice_loop)
 setup_fmri_intro(stroop_experiment, choices)
 stroop_experiment.push(start_test_block)
 stroop_experiment.push(fixation_block)
