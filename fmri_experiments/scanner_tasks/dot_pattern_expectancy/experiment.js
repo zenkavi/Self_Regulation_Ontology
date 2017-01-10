@@ -316,7 +316,7 @@ var X_probe = {
     	trial_num: current_trial
 	   })
      console.log('Trial: ' + current_trial +
-              '\nCorrect Response? ' + correct + '\n')
+              '\nCorrect Response? ' + correct + ', RT: ' + data.rt)
      current_trial += 1
   }
 };

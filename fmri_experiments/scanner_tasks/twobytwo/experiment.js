@@ -264,6 +264,7 @@ var start_test_block = {
   },
   timing_post_trial: 500,
   on_finish: function() {
+    current_trial = 0
     exp_stage = 'test'
     task_switches = jsPsych.randomization.repeat(task_switches, test_length / 8)
     curr_task = randomDraw(getKeys(tasks))
@@ -431,7 +432,12 @@ var practice_block = {
   timing_stim: 1000,
   timing_post_trial: 0,
   prompt: '<div class = promptbox>' + prompt_task_list + '</div>',
-  on_finish: appendData
+  on_finish: function(data) {
+    appendData()
+    console.log('Trial: ' + current_trial +
+                  '\nCorrect Response? ' + data.correct + ', RT: ' + data.rt)
+    current_trial += 1
+  }
 }
 
 var practice_trials = getPracticeTrials()

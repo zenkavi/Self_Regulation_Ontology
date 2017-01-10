@@ -71,10 +71,12 @@ var getPracticeTrials = function() {
 			timing_feedback_duration: 1000,
 			show_stim_with_feedback: false,
 			timing_post_trial: 500,
-			on_finish: function() {
+			on_finish: function(data) {
 				jsPsych.data.addDataToLastTrial({
 					exp_stage: exp_stage
 				})
+				console.log('Trial: ' + current_trial +
+              		'\nCorrect Response? ' + data.correct + ', RT: ' + data.rt)
 			}
 		}
 		practice_trials.push(practice_ANT_trial)
@@ -340,8 +342,8 @@ for (b = 0; b < blocks.length; b++) {
 			prompt: '<div class = centerbox><div class = ANT_text>+</div></div>',
 			on_finish: function(data) {
 				correct = data.key_press === data.correct_response
-				console.log('Trial: ' + data.trial_num +
-							'\nCorrect Response? ' + correct + '\n')
+				console.log('Trial: ' + current_trial +
+              '\nCorrect Response? ' + correct + ', RT: ' + data.rt)
 				jsPsych.data.addDataToLastTrial({ 
 					correct: correct,
 					exp_stage: exp_stage
