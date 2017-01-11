@@ -11,13 +11,11 @@ import pandas as pd
 from selfregulation.utils.data_preparation_utils import anonymize_data, calc_trial_order, convert_date, download_data, get_bonuses, get_pay,  remove_failed_subjects
 from selfregulation.utils.utils import get_info
 
-#load Data
+#set token and data directory
 token = get_info('expfactory_token', infile='/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Self_Regulation_Retest_Settings_Local_NewApi.txt')
 data_dir=get_info('retest_data_directory', infile='/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Self_Regulation_Retest_Settings_Local_NewApi.txt')
 
-#***************************************************
-# ********* Load Data **********************
-#**************************************************        
+# Setup options
 pd.set_option('display.width', 200)
 figsize = [16,12]
 #set up filters
@@ -30,10 +28,13 @@ for col in drop_columns:
 #***************************************************
 # ********* Download Data**********************
 #**************************************************  
+
 #load Data
 f = open(token)
 access_token = f.read().strip()
-data = download_data(data_dir, access_token, filters = filters,  battery = 'Self Regulation Retest Battery' , url = 'http://www.expfactory.org/new_api/results/62/', file_name = 'mturk_data_newapi.json')
+#Haven't gotten the battery selection part work on py3 so avoiding it since using the new api it only downloads the relevant battery
+#data = download_data(data_dir, access_token, filters = filters,  battery = 'Self Regulation Retest Battery' , url = 'http://www.expfactory.org/new_api/results/62/', file_name = 'mturk_data_newapi.json')
+data = download_data(data_dir, access_token, filters = filters, url = 'http://www.expfactory.org/new_api/results/62/', file_name = 'mturk_data_newapi.json')
 data.reset_index(drop = True, inplace = True)    
 
 #Reload in case this is what is breaking the date conversion
