@@ -13,10 +13,7 @@ from selfregulation.utils.utils import get_info
 
 #load Data
 token = get_info('expfactory_token', infile='/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Self_Regulation_Retest_Settings_Local_NewApi.txt')
-try:
-    data_dir=get_info('retest_data_directory', infile='/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Self_Regulation_Retest_Settings_Local_NewApi.txt')
-except Exception:
-    data_dir=path.join(get_info('base_directory', infile='/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Self_Regulation_Retest_Settings_Local_NewApi.txt'),'Data')
+data_dir=get_info('retest_data_directory', infile='/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Self_Regulation_Retest_Settings_Local_NewApi.txt')
 
 #***************************************************
 # ********* Load Data **********************
@@ -37,7 +34,6 @@ for col in drop_columns:
 f = open(token)
 access_token = f.read().strip()
 data = download_data(data_dir, access_token, filters = filters,  battery = 'Self Regulation Retest Battery' , url = 'http://www.expfactory.org/new_api/results/62/', file_name = 'mturk_data_newapi.json')
-#data = download_data(data_dir, access_token, filters = filters, url = 'http://www.expfactory.org/new_api/results/62/', file_name = 'mturk_data_newapi.json')
 data.reset_index(drop = True, inplace = True)    
 
 #Reload in case this is what is breaking the date conversion
