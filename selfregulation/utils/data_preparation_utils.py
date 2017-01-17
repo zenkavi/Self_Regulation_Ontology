@@ -38,9 +38,13 @@ def calc_bonuses(data):
                          'columbia_card_task_hot', 'columbia_card_task_cold', 'hierarchical_rule',
                          'kirby','discount_titrate','bickel_titrator']
     bonuses = []
-    for i,row in data.iterrows():
-        if row['experiment_exp_id'] in bonus_experiments:
-            df = extract_row(row, clean = False)
+    for row in data.iterrows():
+        if row[1]['experiment_exp_id'] in bonus_experiments:
+            try:
+                df = extract_row(row[1], clean = False)
+            except TypeError:
+                bonuses.append(np.nan)
+                continue
             bonus = df.iloc[-1].get('performance_var','error')
             if pd.isnull(bonus):
                 bonus = df.iloc[-5].get('performance_var','error')

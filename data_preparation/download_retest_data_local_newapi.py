@@ -33,14 +33,14 @@ for col in drop_columns:
 f = open(token)
 access_token = f.read().strip()
 #Haven't gotten the battery selection part work on py3 so avoiding it since using the new api it only downloads the relevant battery
-#data = download_data(data_dir, access_token, filters = filters,  battery = 'Self Regulation Retest Battery' , url = 'http://www.expfactory.org/new_api/results/62/', file_name = 'mturk_data_newapi.json')
-data = download_data(data_dir, access_token, filters = filters, url = 'http://www.expfactory.org/new_api/results/62/', file_name = 'mturk_data_newapi.json')
+data = download_data(data_dir, access_token, filters = filters,  battery = 'Self Regulation Retest Battery' , url = 'http://www.expfactory.org/new_api/results/62/', file_name = 'mturk_data_newapi.json')
+#data = download_data(data_dir, access_token, filters = filters, url = 'http://www.expfactory.org/new_api/results/62/', file_name = 'mturk_data_newapi.json')
 data.reset_index(drop = True, inplace = True)    
 
 #Reload in case this is what is breaking the date conversion
-data = pd.read_json(path.join(data_dir, 'mturk_data_newapi.json'))
-data.reset_index(drop = True, inplace = True)
-print('Finished re-loading raw data')    
+#data = pd.read_json(path.join(data_dir, 'mturk_data_newapi.json'))
+#data.reset_index(drop = True, inplace = True)
+#print('Finished re-loading raw data')    
     
 #anonymize data
 worker_lookup = anonymize_data(data)
