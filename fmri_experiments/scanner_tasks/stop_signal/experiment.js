@@ -319,8 +319,8 @@ var test_feedback_block = {
   stimulus: getTestFeedback,
   is_html: true,
   choices: 'none',
-  timing_stim: 12500, 
-  timing_response: 12500,
+  timing_stim: 13500, 
+  timing_response: 13500,
   data: {
     trial_id: "test_feedback"
   },

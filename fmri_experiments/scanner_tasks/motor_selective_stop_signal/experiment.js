@@ -339,8 +339,8 @@ var test_feedback_block = {
   stimulus: getTestFeedback,
   is_html: true,
   choices: 'none',
-  timing_stim: 12500, 
-  timing_response: 12500,
+  timing_stim: 13500, 
+  timing_response: 13500,
   data: {
     trial_id: "test_feedback"
   },
@@ -382,9 +382,9 @@ var practice_loop = {
 
 var motor_selective_stop_signal_experiment = []
 motor_selective_stop_signal_experiment.push(task_setup_block);
-//motor_selective_stop_signal_experiment.push(instructions_block);
-//motor_selective_stop_signal_experiment.push(practice_loop);
-//setup_fmri_intro(motor_selective_stop_signal_experiment, choices)
+motor_selective_stop_signal_experiment.push(instructions_block);
+motor_selective_stop_signal_experiment.push(practice_loop);
+setup_fmri_intro(motor_selective_stop_signal_experiment, choices)
 
 /* Test blocks */
 // Loop through the multiple blocks within each condition
