@@ -25,11 +25,17 @@ def get_behav_data(dataset=None, file=None, full_dataset=False, flip_valence=Fal
     :full_dataset: bool, default false. If True and either a discovery or validation dataset is specified, retrieve the other as well
     :flip_valence: bool, default false. If true use DV_valence.csv to flip variables based on their subjective valence
     '''
+    def sorting(L):
+        date = L.split('_')[-1]
+        month,day,year = date.split('-')
+        return year, month, day
+
     d = {'Discovery': 'Validation', 'Validation': 'Discovery'}
     basedir=get_info('base_directory')
     pattern = re.compile('|'.join(d.keys()))
     if dataset == None:
         files = glob(os.path.join(basedir,'Data/Discovery*'))
+        files.sort(key=sorting)
         datadir = files[-1]
     else:
         datadir = os.path.join(basedir,'Data',dataset)
