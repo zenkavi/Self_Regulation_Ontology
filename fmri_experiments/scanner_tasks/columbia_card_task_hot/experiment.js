@@ -276,7 +276,7 @@ var prize3 = 0
 /* define static blocks */
 var instructions_block = {
   type: 'poldrack-single-stim',
-  stimulus: '<div class = centerbox><div class = center-text>Try to get as many points as possible</div></div>',
+  stimulus: '<div class = centerbox><div class = center-text>Try to get as many points as possible<br><br>Index Finger: Take Another Card<br><br>Middle Finger: End The Round</div></div>',
   is_html: true,
   choices: 'none',
   timing_stim: 9500, 
@@ -402,8 +402,8 @@ var payoutTrial = {
 
 /* create experiment definition array */
 var columbia_card_task_hot_experiment = [];
-//columbia_card_task_hot_experiment.push(instructions_block)
-//setup_fmri_intro(columbia_card_task_hot_experiment, choices)
+columbia_card_task_hot_experiment.push(instructions_block)
+setup_fmri_intro(columbia_card_task_hot_experiment, choices)
 columbia_card_task_hot_experiment.push(start_test_block);
 for (i = 0; i < ParamsArray.length; i++) {
 	columbia_card_task_hot_experiment.push(test_node);

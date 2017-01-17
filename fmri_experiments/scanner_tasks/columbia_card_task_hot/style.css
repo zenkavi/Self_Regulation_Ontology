@@ -21,12 +21,12 @@
 
 .cardbox {
  width:50vw;
- height: 35vw;
+ height: 20vw;
  position:absolute;
  top:20%;
  left:50%;
  margin-right:50%;
- transform: translate(-47%,30%);
+ transform: translate(-47%,45%);
  background-color: black;
 }
 
@@ -67,7 +67,7 @@
    width: 14%;
    padding-bottom : %; /* = width for a 1:1 aspect ratio */
    margin:1%;
-   margin-bottom: 10%;
+   margin-bottom: 3%;
    overflow:hidden;
    color: #fff;
 }
