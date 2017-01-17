@@ -1,6 +1,6 @@
 [
     {
-        "name": "Stroop",
+        "name": "Survey_Medley",
         "template":"jspsych",
         "run": [
                 "static/js/math.min.js",
@@ -18,7 +18,7 @@
                 "static/css/default_style.css",
                 "style.css"
                ],
-        "exp_id": "stroop",
+        "exp_id": "survey_medley",
         "cognitive_atlas_task_id": "tsk_4a57abb949e27",
         "contributors": [
                          "Ian Eisenberg",
@@ -28,19 +28,13 @@
                          "Russell Poldrack"
                         ], 
         "time":7,
-        "reference": "http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0057410",
+        "reference": "",
         "notes": "Conditions refers to congruency on each trial",
         "publish":"True",
-        "experiment_variables": [{
-                                 "name":"credit_var",
-                                 "type":"credit",
-                                 "datatype": "boolean",
-                                 "description":"True if avg_rt > 200"
-                                  }],
         "deployment_variables":{"jspsych_init":
                                         {"fullscreen": true,
                                         "display_element": "getDisplayElement",
-                                        "on_trial_finish": "addID('stroop')"}
+                                        "on_trial_finish": "addID('survey_medley')"}
                        }
     
    }
