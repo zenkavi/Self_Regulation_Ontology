@@ -177,7 +177,7 @@ params = {'alpha1':.7,
           'W':.51,
           'p':.17} 
 
-n_subjects = 30
+n_subjects = 100
 subject_params = []
 for sub in range(n_subjects):
     model = Two_Stage_Model(**params)
