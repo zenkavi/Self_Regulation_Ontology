@@ -34,7 +34,7 @@ POP = geneticalgorithm.population(
     convergence = 1000, 
     seed = 3281, 
     outdes = 20, 
-    folder = '../fmri_experiments/design_files/') 
+    folder = '../fmri_experiments/design_files/stroop/stroop_designs') 
 
 
 POP.naturalselection()

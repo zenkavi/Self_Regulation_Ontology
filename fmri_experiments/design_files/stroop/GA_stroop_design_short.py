@@ -29,12 +29,12 @@ POP = geneticalgorithm.population(
     q = 0.01, 
     weights = [0.0, 0.1, 0.4, 0.5], 
     I = 4, 
-    preruncycles = 10000, 
-    cycles = 10000, 
-    convergence = 1000, 
+    preruncycles = 1000, 
+    cycles = 2000, 
+    convergence = 500, 
     seed = 3281, 
-    outdes = 20, 
-    folder = './') 
+    outdes = 5, 
+    folder = '../fmri_experiments/design_files/stroop/stroop_designs_short') 
 
 
 POP.naturalselection()
