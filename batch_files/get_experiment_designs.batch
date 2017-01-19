@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH --job-name=calculate_discovery_DV_{EXP_ID}
-#SBATCH --output=.out/calculate_discovery_DV_{EXP_ID}.job.out
-#SBATCH --error=.err/calculate_discovery_DV_{EXP_ID}.job.err
-#SBATCH --time=80:00:00
+#SBATCH --job-name=get_experiment_designs_{EXP_ID}
+#SBATCH --output=.out/get_experiment_designs_{EXP_ID}.job.out
+#SBATCH --error=.err/get_experiment_designs_{EXP_ID}.job.err
+#SBATCH --time=40:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=4
