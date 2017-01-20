@@ -11,6 +11,8 @@ from math import exp
 import pandas as pd
 from selfregulation.utils.utils import get_behav_data
 import seaborn as sns
+import statsmodels.formula.api as smf
+import statsmodels.api as sm
 
 class Two_Stage_Model(object):
     def __init__(self,alpha1,alpha2,lam,B1,B2,W,p):
@@ -166,7 +168,15 @@ def fit_decision_model(df):
     out = lmfit.minimize(get_likelihood, fit_params, method = 'lbfgsb', kws={'df': df})
     lmfit.report_fit(out)
     return out.params.valuesdict()
-        
+
+def logistic_analysis(df):
+    df.loc[:,'stage_transition'] = 'infrequent'
+    df.loc[abs(2-(df.stim_selected_first + df.stage_second))==0, 'stage_transition'] = 'frequent'
+    df.insert(0, 'stay', (df['stim_selected_first'].diff()==0).astype(int))
+    df.insert(0, 'stage_transition_last', df['stage_transition'].shift(1))
+    df.insert(0, 'feedback_last', df['feedback'].shift(1))
+    rs = smf.glm(formula = 'stay ~ feedback_last * C(stage_transition_last, Treatment(reference = "infrequent"))', data = df, family = sm.families.Binomial()).fit()
+    return {'model_free': rs.params[2], 'model_based': rs.params[3]}
 
 df = get_behav_data(file = 'Individual_Measures/two_stage_decision.csv.gz')     
 params = {'alpha1':.7,
@@ -177,19 +187,29 @@ params = {'alpha1':.7,
           'W':.51,
           'p':.17} 
 
-n_subjects = 100
+n_subjects = 40
+W_space = [.51] #numpy.linspace(0,1,10)
 subject_params = []
-for sub in range(n_subjects):
-    model = Two_Stage_Model(**params)
-    trials = model.simulate(200)
-    simulate_df = pd.DataFrame(trials)
-    #get_likelihood(params,simulate_df)
-    recovered_params = fit_decision_model(simulate_df)
-    subject_params.append(recovered_params)
+logistic_vals = []
+for W in W_space:
+    params['W'] = W
+    for sub in range(n_subjects):
+        model = Two_Stage_Model(**params)
+        trials = model.simulate(200)
+        simulate_df = pd.DataFrame(trials)
+        #get_likelihood(params,simulate_df)
+        recovered_params = fit_decision_model(simulate_df)
+        subject_params.append(recovered_params)
+        logistic_output = logistic_analysis(simulate_df)
+        logistic_output['W'] = W
+        logistic_vals.append(logistic_output)
+    
     
 subject_params = pd.DataFrame(subject_params)
 subject_params.loc[:,['W','p']].hist()
 
+logistic_vals = pd.DataFrame(logistic_vals)
+logistic_vals.hist(column = 'model_based',by = 'W')
 
 
         
