@@ -12,6 +12,7 @@ import seaborn
 import sys
 
 task = sys.argv[1]
+design_dir = os.path.join(task,task+'_designs_short')
 
 def get_blocks(order):
     blocks = []
@@ -27,7 +28,8 @@ def get_blocks(order):
     return blocks
 
 block_counts = []
-for directory in glob(os.path.join(task,'design*')):
+stim_orders = []
+for directory in glob(os.path.join(design_dir,'design*')):
     stim_onsets = []
     stims = []
     stim_i = 0
@@ -38,6 +40,7 @@ for directory in glob(os.path.join(task,'design*')):
         stim_i+=1
     sort_index = np.argsort(stim_onsets)
     stim_order = [stims[i] for i in sort_index]
+    stim_orders.append(stim_order)
     np.savetxt(os.path.join(directory,'stim_order.txt'),stim_order)
     blocks = get_blocks(stim_order)
     block_counts.append(blocks)
@@ -46,7 +49,7 @@ for directory in glob(os.path.join(task,'design*')):
 
 f = seaborn.plt.figure()
 for i,block in enumerate(block_counts):
-    seaborn.plt.subplot(2,2,i+1)
+    seaborn.plt.subplot(3,2,i+1)
     seaborn.plt.hist(block)
 f.suptitle(task + ' Block Histogram', fontsize = 16)
-f.savefig(os.path.join(task,'task_block_histogram.pdf'))
+f.savefig(os.path.join(design_dir,'task_block_histogram.pdf'))

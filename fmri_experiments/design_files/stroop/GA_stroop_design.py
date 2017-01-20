@@ -1,4 +1,8 @@
 from neurodesign import geneticalgorithm, generate, msequence 
+import sys
+
+design_i = sys.argv[1]
+
 EXP = geneticalgorithm.experiment( 
     TR = 0.68, 
     P = [0.5, 0.5], 
@@ -29,12 +33,12 @@ POP = geneticalgorithm.population(
     q = 0.01, 
     weights = [0.0, 0.1, 0.4, 0.5], 
     I = 4, 
-    preruncycles = 10000, 
-    cycles = 10000, 
+    preruncycles = 1000, 
+    cycles = 2000, 
     convergence = 1000, 
     seed = 3281, 
-    outdes = 20, 
-    folder = '../fmri_experiments/design_files/stroop/stroop_designs') 
+    outdes = 2, 
+    folder = '../fmri_experiments/design_files/stroop/stroop_designs_'+design_i) 
 
 
 POP.naturalselection()
