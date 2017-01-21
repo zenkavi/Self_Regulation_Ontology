@@ -187,29 +187,46 @@ params = {'alpha1':.7,
           'W':.51,
           'p':.17} 
 
-n_subjects = 40
-W_space = [.51] #numpy.linspace(0,1,10)
+n_subjects = 50
+W_space = numpy.linspace(0,1,5)
+p_space = numpy.linspace(0,1,5)
+# generate data
+data = pd.DataFrame()
+sub_id = 1
+for p in p_space:
+    for W in W_space:
+        params['W'] = W
+        for sub in range(n_subjects):
+            model = Two_Stage_Model(**params)
+            trials = model.simulate(200)
+            simulate_df = pd.DataFrame(trials)
+            simulate_df.loc[:,'id'] = sub_id
+            simulate_df.loc[:,'W'], simulate_df.loc[:,'p'] = [W,p]
+            data = pd.concat([data, simulate_df])
+            sub_id += 1
+
 subject_params = []
-logistic_vals = []
-for W in W_space:
-    params['W'] = W
-    for sub in range(n_subjects):
-        model = Two_Stage_Model(**params)
-        trials = model.simulate(200)
-        simulate_df = pd.DataFrame(trials)
-        #get_likelihood(params,simulate_df)
-        recovered_params = fit_decision_model(simulate_df)
-        subject_params.append(recovered_params)
-        logistic_output = logistic_analysis(simulate_df)
-        logistic_output['W'] = W
-        logistic_vals.append(logistic_output)
-    
+for name, subj_data in data.groupby('id'):
+    recovered_params = fit_decision_model(subj_data)
+    recovered_params['actual_W'] = W
+    subject_params.append(recovered_params)
+
+
+
+#get_likelihood(params,simulate_df)
+recovered_params = fit_decision_model(simulate_df)
+recovered_params['actual_W'] = W
+subject_params.append(recovered_params)
+logistic_output = logistic_analysis(simulate_df)
+logistic_output['actual_W'] = W
+logistic_vals.append(logistic_output)
+
     
 subject_params = pd.DataFrame(subject_params)
 subject_params.loc[:,['W','p']].hist()
 
 logistic_vals = pd.DataFrame(logistic_vals)
-logistic_vals.hist(column = 'model_based',by = 'W')
+logistic_vals.hist()
 
 
         
