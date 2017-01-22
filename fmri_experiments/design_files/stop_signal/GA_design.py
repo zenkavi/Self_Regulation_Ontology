@@ -5,7 +5,7 @@ design_i = sys.argv[1]
 
 EXP = geneticalgorithm.experiment( 
     TR = 0.68, 
-    P = [6,4], 
+    P = [.6,.4], 
     C = [[0.5, -0.5]], 
     rho = 0.3, 
     n_stimuli = 2, 
