@@ -1,5 +1,5 @@
 set -e
-for exp_id in stroop
+for exp_id in attention_network_task dot_pattern_expectancy motor_selective_stop_signal stop_signal stroop twobytwo ward_and_allport
 do
 for index in 1 2 3 4
 do

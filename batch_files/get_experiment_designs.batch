@@ -9,4 +9,4 @@
 #SBATCH --mem=16000
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ieisenbe@stanford.edu
-python ../fmri_experiments/design_files/{EXP_ID}/GA_{EXP_ID}_design.py {INDEX}
+python ../fmri_experiments/design_files/{EXP_ID}/GA_design.py {INDEX}

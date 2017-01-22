@@ -38,7 +38,7 @@ POP = geneticalgorithm.population(
     cycles = 10, 
     convergence = 10, 
     outdes = 2, 
-    folder = '../fmri_experiments/design_files/attention_network_task/attention_network_task_'+design_i) 
+    folder = '../fmri_experiments/design_files/attention_network_task/attention_network_task_designs_'+design_i) 
 
 
 POP.naturalselection()
