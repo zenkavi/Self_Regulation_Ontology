@@ -33,10 +33,9 @@ POP = geneticalgorithm.population(
     q = 0.01, 
     weights = [0.0, 0.1, 0.4, 0.5], 
     I = 4, 
-    preruncycles = 1000, 
-    cycles = 2000, 
+    preruncycles = 2000, 
+    cycles = 5000, 
     convergence = 1000, 
-    seed = 3281, 
     outdes = 2, 
     folder = '../fmri_experiments/design_files/stroop/stroop_designs_'+design_i) 
 

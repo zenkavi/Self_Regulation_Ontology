@@ -28,7 +28,7 @@ var get_ITI = function() {
   } else {
   	gap = Math.round(gap/1000)*1000
   }
-  return 2250 + gap //1850 (response time) + 500 (minimum ITI)
+  return 2250 + gap //1850 (response time) + 400 (minimum ITI)
  }
 
 

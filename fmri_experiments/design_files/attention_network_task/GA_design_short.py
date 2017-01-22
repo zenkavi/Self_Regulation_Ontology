@@ -5,22 +5,23 @@ design_i = sys.argv[1]
 
 EXP = geneticalgorithm.experiment( 
     TR = 0.68, 
-    P = [0.5, 0.5], 
-    C = [[0.5, -0.5]], 
+    P = [1,1,1,1,1,1], 
+    C = [[0.25,0.25,-0.25,-0.25,0,0],[-0.25,-0.25,0,0,0.25,0.25],
+        [1.0/6,-1.0/6,1.0/6,-1.0/6,1.0/6,-1.0/6]],
     rho = 0.3, 
-    n_stimuli = 2, 
-    n_trials = 96, 
-    duration = 211.2, 
+    n_stimuli = 6, 
+    n_trials = 192, 
+    duration = 549.12, 
     resolution = 0.1, 
-    stim_duration = 1.5, 
+    stim_duration = 2.2, 
     t_pre = 0.0, 
-    t_post = 0.5, 
+    t_post = .4, 
     maxrep = 6, 
     hardprob = False, 
     confoundorder = 3, 
     ITImodel = 'exponential', 
     ITImin = 0.0, 
-    ITImean = 0.2, 
+    ITImean = 0.26, 
     ITImax = 10.0, 
     restnum = 0, 
     restdur = 0.0) 
@@ -33,12 +34,11 @@ POP = geneticalgorithm.population(
     q = 0.01, 
     weights = [0.0, 0.1, 0.4, 0.5], 
     I = 4, 
-    preruncycles = 1000, 
-    cycles = 2000, 
-    convergence = 1000, 
-    seed = 3281, 
+    preruncycles = 10, 
+    cycles = 10, 
+    convergence = 10, 
     outdes = 2, 
-    folder = '../fmri_experiments/design_files/stroop/stroop_designs_'+design_i) 
+    folder = '../fmri_experiments/design_files/attention_network_task/attention_network_task_'+design_i) 
 
 
 POP.naturalselection()
