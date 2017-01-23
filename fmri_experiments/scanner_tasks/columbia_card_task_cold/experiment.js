@@ -1,6 +1,31 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
+var get_ITI = function() {
+  // ref: https://gist.github.com/nicolashery/5885280
+  function randomExponential(rate, randomUniform) {
+    // http://en.wikipedia.org/wiki/Exponential_distribution#Generating_exponential_variates
+    rate = rate || 1;
+
+    // Allow to pass a random uniform value or function
+    // Default to Math.random()
+    var U = randomUniform;
+    if (typeof randomUniform === 'function') U = randomUniform();
+    if (!U) U = Math.random();
+
+    return -Math.log(U) / rate;
+  }
+  gap = randomExponential(1/2)*500
+  if (gap > 10000) {
+    gap = 10000
+  } else if (gap < 0) {
+  	gap = 0
+  } else {
+  	gap = Math.round(gap/1000)*1000
+  }
+  return 2500 + gap //1500 (stim time) + 500 (minimum ITI)
+ }
+ 
 var appendTestData = function() {
 	jsPsych.data.addDataToLastTrial({
 		num_cards_chosen: currID,
@@ -12,32 +37,42 @@ var appendTestData = function() {
 	})
 }
 
-var getButtons = function(buttonType) {
+var randomDraw = function(lst) {
+  var index = Math.floor(Math.random() * (lst.length))
+  return lst[index]
+}
+
+var i,j,temparray,chunk = 10;
+chunks = []
+for (i=0,j=array.length; i<j; i+=chunk) {
+    chunks.push(array.slice(i,i+chunk));
+}
+
+var getButtons = function(nCards) {
+	var chunk_size = Math.Floor(nCards/choices.length)
+	chunks = []
+	for (i=0,j=array.length; i<j; i+=chunk) {
+	    chunks.push(array.slice(i,i+chunk));
+	}
 	var buttons = ""
 	buttons = "<div class = allbuttons>"
-	for (i = 0; i < 33; i++) {
+	for (i = 0; i < choices.length; i++) {
 		buttons += "<button type = 'button' class = 'CCT-btn chooseButton' id = " + i +
 			" onclick = chooseButton(this.id)>" + i + "</button>"
 	}
 	return buttons
 }
 
-var getBoard = function(board_type) {
-	var board = ''
-	if (board_type == 2) {
-		board = "<div class = cardbox>"
-		for (i = 1; i < 33; i++) {
-		board += "<div class = square><input type='image' class = card_image id = c" + i +
-			" src='/static/experiments/columbia_card_task_cold/images/beforeChosen.png'></div>"
-		}
-		
-	} else {
-		board = "<div class = cardbox2>"
-		for (i = 1; i < 33; i++) {
-		board += "<div class = square><input class = card_image type='image' id = c" + i +
-			" src='/static/experiments/columbia_card_task_cold/images/beforeChosen.png'></div>"
-		}
+var getBoard = function(nCards) {
+	var board = "<div class = cct-box>"+
+	"<div class = titleBigBox>   <div class = titleboxLeft><div class = game-text id = game_round>Game Round: </div></div>   <div class = titleboxLeft1><div class = game-text id = loss_amount>Loss Amount: </div></div>    <div class = titleboxMiddle1><div class = game-text id = gain_amount>Gain Amount: </div></div>    <div class = titlebox><div class = game-text>How many cards do you want to take? </div></div>     <div class = titleboxRight1><div class = game-text id = num_loss_cards>Number of Loss Cards: </div></div>   <div class = titleboxRight><div class = game-text id = current_round>Current Round Points: 0</div></div>" +
+	getButtons(5)+
+	"</div><div class = cardbox>"
+	for (i = 1; i < nCards+1; i++) {
+		board += "<div class = square><input type='image' id = " + i +
+			" class = 'card_image' src='/static/experiments/columbia_card_task_cold/images/beforeChosen.png'></div>"
 	}
+
 	board += "</div>"
 	return board
 }
@@ -111,7 +146,30 @@ function appendTextAfter(input, search_term, new_text) {
 	return input.slice(0, index) + new_text + input.slice(index)
 }
 
+var getCardArray = function(nCards){
+	var cardArray = []
+	for (var i = 0; i<nCards; i++) {
+		cardArray.push(i+1)
+	}
+	return cardArray
+}
 
+var setNextRound = function() {
+	roundParams = ParamsArray.shift()
+	numCards = roundParams[0]
+	numLossCards = roundParams[1]
+	lossAmt = roundParams[2]
+	gainAmt = roundParams[3]
+	cardArray = getCardArray(numCards)
+	unclickedCards = cardArray
+	clickedGainCards = [] //num
+	clickedLossCards = [] //num
+	roundOver = 0
+	roundPoints = 0
+	whichClickInRound = 0
+	whichRound = whichRound + 1
+	lossClicked = false
+}
 
 // this function sets up the round params (loss amount, gain amount, which ones are loss cards, initializes the array for cards to be clicked, )
 var getRound = function() {
@@ -130,7 +188,7 @@ var getRound = function() {
 	for (i = 0; i < numLossCards; i++) {
 		whichLossCards.push(shuffledCardArray.pop())
 	}
-	gameState = gameSetup
+	var gameState = getBoard(numCards)
 	gameState = appendTextAfter(gameState, 'Game Round: ', whichRound)
 	gameState = appendTextAfter(gameState, 'Loss Amount: ', lossAmt)
 	gameState = appendTextAfter(gameState, 'Number of Loss Cards: ', numLossCards)
@@ -145,7 +203,7 @@ var getRound = function() {
 /* Define experimental variables */
 /* ************************************ */
 // task specific variables
-var choices = [82]
+var choices = [66,89,71,82,77]
 var currID = 0
 var numLossCards = 1
 var gainAmt = ""
@@ -161,7 +219,7 @@ var roundPointsArray = []
 var prize1 = 0
 var prize2 = 0
 var prize3 = 0
-
+var numCards = 6
 
 	
 // this params array is organized such that the 0 index = the number of loss cards in round, the 1 index = the gain amount of each happy card, and the 2nd index = the loss amount when you turn over a sad face
@@ -183,15 +241,6 @@ var cardArray = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 
 var shuffledCardArray = jsPsych.randomization.repeat(cardArray, 1)
 var shuffledParamsArray = jsPsych.randomization.repeat(paramsArray, numRounds/8)
 
-
-var gameSetup = 
-	"<div class = practiceText><div class = block-text2 id = feedback></div></div>" +
-	"<div class = cct-box2>"+
-	"<div class = titleBigBox>   <div class = titleboxLeft><div class = game-text id = game_round>Game Round: </div></div>   <div class = titleboxLeft1><div class = game-text id = loss_amount>Loss Amount: </div></div>    <div class = titleboxMiddle1><div class = game-text id = gain_amount>Gain Amount: </div></div>    <div class = titlebox><div class = game-text>How many cards do you want to take? </div></div>     <div class = titleboxRight1><div class = game-text id = num_loss_cards>Number of Loss Cards: </div></div>" +
-	"<div class = buttonbox><button type='button' id = nextButton class = 'CCT-btn select-button' onclick = clearTimers() disabled>Next Round</button></div>"+
-	getButtons()+
-	"</div>"+
-	getBoard()
 
 
 
@@ -245,15 +294,18 @@ var start_test_block = {
 
 
 var test_block = {
-	type: 'single-stim-button',
+	type: 'poldrack-single-stim',
 	button_class: 'select-button',
 	stimulus: getRound,
 	data: {
 		trial_id: 'stim',
 		exp_stage: 'test'
 	},
-	timing_post_trial: 0,
-	on_finish: appendTestData,
+	timing_post_trial: get_ITI,
+	on_finish: function() {
+		appendTestData()
+		setNextRound()
+	}
 	response_ends_trial: true,
 };
 
@@ -287,8 +339,8 @@ var payoutTrial = {
 
 /* create experiment definition array */
 var columbia_card_task_cold_experiment = [];
-columbia_card_task_cold_experiment.push(instructions_block);
-setup_fmri_intro(columbia_card_task_cold_experiment, choices)
+//columbia_card_task_cold_experiment.push(instructions_block);
+//setup_fmri_intro(columbia_card_task_cold_experiment, choices)
 columbia_card_task_cold_experiment.push(start_test_block);
 for (b = 0; b < numRounds; b++) {
 	columbia_card_task_cold_experiment.push(test_block);
