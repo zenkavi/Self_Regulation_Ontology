@@ -1,6 +1,11 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
+
+//random ITIs for practice
+var practice_ITIs = [0.5,0.1,0.2,0.0]
+//optimized ITIs for test
+var test_ITIs = [0.4,1.7,0.2,0.2,0.8,0.2,1.4,0.8,1.3,1.6,1.0,0.2,0.0,0.5,0.7,0.9,0.2,1.7,0.2,0.6,1.6,0.5,0.3,0.4,2.4,0.8,0.3,0.5,0.8,0.9,2.3,0.8,0.0,0.7,2.1,0.2,0.3,0.6,3.3,0.5,0.5,1.6,0.8,0.1,1.9,0.1,0.1,0.3]
 var get_ITI = function() {
   return 2000 + ITIs.shift()
  }
@@ -298,9 +303,8 @@ for (var c=0; c<2; c++) {
 
 var with_problems = jsPsych.randomization.shuffle(test_problems.slice(0,12).concat(test_problems.slice(0,12)))
 var without_problems = jsPsych.randomization.shuffle(test_problems.slice(12).concat(test_problems.slice(12)))
-
-var stim_index = []
-
+// set up stim order based on optimized trial sequence
+var stim_index = [1,0,1,0,1,1,0,0,0,0,1,0,1,1,1,1,0,1,1,0,1,0,0,1,0,0,1,0,0,1,1,1,0,0,0,0,1,1,1,1,0,0,1,0,0,0,1,1]
 var test_problems = []
 for (var i=0; i<test_length; i++) {
   if (stim_index[i] == 0) {
@@ -313,6 +317,7 @@ for (var i=0; i<test_length; i++) {
 // set up practice
 var exp_stage = 'practice'
 var problems = practice_problems
+var ITIs = practice_ITIs
 // setup blocks
 var num_blocks = 3
 var block_length = test_problems.length/num_blocks
@@ -386,6 +391,7 @@ var start_test_block = {
   timing_post_trial: 500,
   on_finish: function() {
     exp_stage = 'test'
+    ITIs = test_ITIs
     problem_i = 0
     problems = test_problems
     reset_problem()

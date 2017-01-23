@@ -1,6 +1,12 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
+
+var ITIs = [0.0,0.0,0.0,0.1,0.4,0.1,0.1,0.3,0.1,0.1,0.9,0.6,0.0,0.0,0.0,0.2,0.0,0.5,0.2,0.0,0.7,0.1,0.0,0.1,0.1,0.5,0.9,0.3,0.2,0.0,0.1,0.0,0.2,0.1,0.1,0.3,0.0,0.2,0.0,0.1,0.3,0.1,0.0,0.0,0.2,0.1,0.1,0.0,0.4,0.2,0.0,0.4,0.2,0.6,0.0,0.2,0.3,0.5,0.1,0.0,0.1,0.0,0.5,0.2,0.0,0.0,0.3,0.0,0.0,0.0,0.1,0.0,0.1,0.5,0.6,0.1,0.0,0.1,0.5,0.3,0.7,0.1,0.0,0.3,0.0,0.4,0.0,0.2,0.0,0.0,0.2,0.1,0.0,0.0,0.0,0.1,0.4,0.3,0.0,0.0,0.4,0.2,0.2,0.1,0.3,0.1,0.5,0.0,0.2,0.2,0.8,0.3,0.1,0.4,0.0,0.4,0.5,0.0,0.2,0.0,0.1,0.2,0.3,0.0,1.1,0.2,0.0,0.1,0.0,0.0,0.3,0.0,0.8,0.1,0.3,0.1,1.3,0.1,0.0,0.3,0.2,0.1,0.4,0.0,0.0,0.5,0.4,0.1,0.7,0.6,0.3,0.9,0.1,0.4,0.2,0.1,0.4,0.1,0.0,0.0]
+var get_ITI = function() {
+  return 2000 + ITIs.shift()
+}
+
 var randomDraw = function(lst) {
   var index = Math.floor(Math.random() * (lst.length))
   return lst[index]
@@ -37,12 +43,6 @@ var genStims = function(n) {
 var getCTI = function() {
   return CTI
 }
-
-var get_ITI = function() {
-  return 2000 + ITIs.shift()
- }
-
-
 
 /* Index into task_switches using the global var current_trial. Using the task_switch and cue_switch
 change the task. If "stay", keep the same task but change the cue based on "cue switch". 
@@ -184,7 +184,7 @@ var cue_stay_trials = jsPsych.randomization.repeat(task_switches.slice(0,2), tes
 var cue_switch_trials = jsPsych.randomization.repeat(task_switches.slice(2,4), test_length / 4)
 
 // set up stim order based on optimized trial sequence
-var stim_index = []
+var stim_index = [1,2,0,1,1,1,1,0,2,0,0,0,0,2,1,2,0,0,2,2,0,2,0,1,1,1,1,0,0,1,2,1,0,0,1,0,2,1,0,0,0,1,2,0,0,0,0,2,0,2,1,1,2,2,0,2,0,0,1,0,2,1,2,0,1,0,0,0,0,0,2,2,2,2,1,0,1,1,0,0,2,0,0,2,0,0,0,1,1,0,1,1,2,0,2,2,2,0,0,0,0,1,0,0,2,2,1,2,2,0,2,0,1,2,0,0,2,0,0,0,0,2,0,1,1,0,1,0,2,0,0,2,2,1,0,1,0,1,0,0,0,0,1,0,0,0,1,2,0,0,0,0,0,2,0,0,2,1,0,1]
 var test_task_switches = []
 for (var i=0; i<test_length; i++) {
   if (stim_index[i] == 0) {

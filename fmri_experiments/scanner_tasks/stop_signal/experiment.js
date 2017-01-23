@@ -6,6 +6,7 @@ var randomDraw = function(lst) {
 	return lst[index]
 }
 
+var ITIs = [0.0,0.2,0.0,0.0,0.0,0.1,0.3,0.0,0.6,0.0,0.3,0.2,0.3,0.0,0.0,0.0,0.1,0.3,0.4,0.0,0.4,0.0,0.0,0.1,0.3,0.1,0.2,0.3,0.5,0.1,0.1,0.0,0.0,0.1,0.0,0.3,0.0,0.0,0.2,0.0,0.0,0.1,0.8,0.2,0.1,0.0,0.4,0.1,0.4,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.6,0.2,0.1,0.2,0.2,0.3,0.5,0.3,0.0,0.9,0.0,0.2,0.1,0.1,0.0,0.0,0.4,0.0,0.0,0.0,0.4,0.2,0.0,0.9,0.1,0.5,0.1,0.0,0.8,0.3,0.1,0.1,0.0,0.8,0.3,0.1,0.2,0.1,0.0,0.3,0.0,0.2,0.7,0.1,0.2,0.2,0.0,0.5,0.1,0.2,1.0,0.0,0.1,0.4,0.0,0.2,0.2,0.0,0.0,0.1,0.0,0.1,0.1,0.0,0.0,0.1,0.0,0.0,0.0]
 var get_ITI = function() {
   return 2250 + ITIs.shift()
  }
@@ -202,17 +203,26 @@ var stims = [{
 	}
 }]
 
-
-
-//setup test sequence
-trials = jsPsych.randomization.repeat(stims, exp_len/4).slice(0,exp_len)
-var stop_trials = jsPsych.randomization.repeat(['stop', 'stop', 'go', 'go', 'go'], exp_len /5)
-for (i=0; i<trials.length; i++) {
-	trials[i]['SS_trial_type'] = stop_trials[i]
+// set up stim order based on optimized trial sequence
+var stim_index = [0,0,0,1,0,0,1,0,0,0,1,0,0,0,0,0,1,1,1,1,0,0,0,1,1,0,0,0,0,1,0,1,1,1,1,0,0,1,0,0,0,1,0,0,0,0,0,1,1,1,0,1,1,0,0,0,0,0,1,1,1,0,1,0,1,0,0,1,0,0,0,1,0,1,0,0,0,0,0,1,1,0,0,1,0,0,1,0,0,1,1,1,0,1,0,0,0,0,0,1,0,1,1,0,0,0,1,0,1,0,0,1,0,1,1,1,1,1,0,0,0,0,1,1,0]
+var trials = []
+var go_stims = jsPsych.randomization.repeat(stimuli, test_len*0.6 / 4, true)
+var stop_stims = jsPsych.randomization.repeat(stimuli, test_len*0.4 / 4, true)
+for (var i=0; i<stim_index.length; i++) {
+	var stim = {}
+	if (stim_index[i] == 0) {
+		stim = go_stims.shift()
+		stim['SS_trial_type'] = 'go'
+	} else {
+		stim = stop_stims.shift()
+		stim['SS_trial_type'] = 'stop'
+	} 
+	trials.push(stim)
 }
+
 var blocks = []
 for (b=0; b<num_blocks; b++) {
-	blocks.push(trials.slice(block_len*b, (block_len*b+block_len)))
+	blocks.push(trials.slice(block_len*b, (block_len*(b+1))))
 }
 
 /* ************************************ */
