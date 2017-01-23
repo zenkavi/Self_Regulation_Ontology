@@ -206,8 +206,8 @@ var stims = [{
 // set up stim order based on optimized trial sequence
 var stim_index = [0,0,0,1,0,0,1,0,0,0,1,0,0,0,0,0,1,1,1,1,0,0,0,1,1,0,0,0,0,1,0,1,1,1,1,0,0,1,0,0,0,1,0,0,0,0,0,1,1,1,0,1,1,0,0,0,0,0,1,1,1,0,1,0,1,0,0,1,0,0,0,1,0,1,0,0,0,0,0,1,1,0,0,1,0,0,1,0,0,1,1,1,0,1,0,0,0,0,0,1,0,1,1,0,0,0,1,0,1,0,0,1,0,1,1,1,1,1,0,0,0,0,1,1,0]
 var trials = []
-var go_stims = jsPsych.randomization.repeat(stimuli, test_len*0.6 / 4, true)
-var stop_stims = jsPsych.randomization.repeat(stimuli, test_len*0.4 / 4, true)
+var go_stims = jsPsych.randomization.repeat(stims, exp_len*0.6 / 4)
+var stop_stims = jsPsych.randomization.repeat(stims, exp_len*0.4 / 4)
 for (var i=0; i<stim_index.length; i++) {
 	var stim = {}
 	if (stim_index[i] == 0) {

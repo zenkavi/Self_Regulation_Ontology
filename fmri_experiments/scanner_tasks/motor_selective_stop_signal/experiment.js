@@ -225,9 +225,9 @@ var stimuli = [{
 // set up stim order based on optimized trial sequence
 var stim_index = [0,0,2,1,0,1,0,0,2,2,2,2,0,0,0,1,1,2,0,0,1,0,0,1,0,0,0,0,0,2,0,0,0,0,1,2,0,2,0,0,0,1,0,1,0,2,2,0,0,2,1,0,0,1,2,0,2,0,2,0,2,0,0,0,1,2,0,0,0,0,0,2,0,1,0,1,2,0,0,2,0,1,0,0,0,0,2,1,2,0,0,0,2,1,0,1,0,2,0,0,0,0,2,1,0,0,0,0,2,2,0,1,2,0,1,0,0,0,0,1,1,0,1,0,1,0,0,2,0,2,0,1,0,0,1,0,2,1,1,0,0,0,0,2,0,2,1,0,0,2,0,0,0,0,0,2,2,0,2,1,0,1,0,1,0,0,1,0,0,1,0,0,0,0,0,2,0,0,0,2,0,0,1,0,0,0,0,0,2,0,1,0,0,1,0,0,0,1,0,1,2,0,0,0,0,2,0,0,1,0,2,0,1,0,0,0,0,0,2,0,0,0,1,1,2,0,0,0,2,1,0,0,0,0,0,2,2,2,0,0,0,1,1,1,0,0,0,0,1,1]
 var test_stims = []
-var go_stims = jsPsych.randomization.repeat(stimuli, test_len*0.6 / 4, true)
-var stop_stims = jsPsych.randomization.repeat(stimuli.slice(0,2), test_len*0.2 / 2, true)
-var ignore_stims = jsPsych.randomization.repeat(stimuli.slice(2,4), test_len*0.2 / 2, true)
+var go_stims = jsPsych.randomization.repeat(stimuli, test_len*0.6 / 4)
+var stop_stims = jsPsych.randomization.repeat(stimuli.slice(0,2), test_len*0.2 / 2)
+var ignore_stims = jsPsych.randomization.repeat(stimuli.slice(2,4), test_len*0.2 / 2)
 for (var i=0; i<stim_index.length; i++) {
 	var stim = {}
 	if (stim_index[i] == 0) {

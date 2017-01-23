@@ -306,7 +306,7 @@ var without_problems = jsPsych.randomization.shuffle(test_problems.slice(12).con
 // set up stim order based on optimized trial sequence
 var stim_index = [1,0,1,0,1,1,0,0,0,0,1,0,1,1,1,1,0,1,1,0,1,0,0,1,0,0,1,0,0,1,1,1,0,0,0,0,1,1,1,1,0,0,1,0,0,0,1,1]
 var test_problems = []
-for (var i=0; i<test_length; i++) {
+for (var i=0; i<stim_index.length; i++) {
   if (stim_index[i] == 0) {
     test_problems.push(with_problems.shift())
   } else {
@@ -367,7 +367,7 @@ var reminder_node = {
 
 var instructions_block = {
   type: 'poldrack-single-stim',
-  stimulus: "<div class = centerbox><div class = center-text>Solve the Tower Tasks!<br>Plan ahead first and work swiftly!<br>We'll start with some practice.</div></div>",
+  stimulus: "<div class = centerbox><div class = center-text>Solve the Tower Tasks!<br>Plan ahead first and work swiftly!<br><br>We'll start with some practice.</div></div>",
   is_html: true,
   choices: 'none',
   timing_stim: 5000, 
