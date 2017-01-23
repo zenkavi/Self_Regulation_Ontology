@@ -39,28 +39,7 @@ var getCTI = function() {
 }
 
 var get_ITI = function() {
-  // ref: https://gist.github.com/nicolashery/5885280
-  function randomExponential(rate, randomUniform) {
-    // http://en.wikipedia.org/wiki/Exponential_distribution#Generating_exponential_variates
-    rate = rate || 1;
-
-    // Allow to pass a random uniform value or function
-    // Default to Math.random()
-    var U = randomUniform;
-    if (typeof randomUniform === 'function') U = randomUniform();
-    if (!U) U = Math.random();
-
-    return -Math.log(U) / rate;
-  }
-  gap = randomExponential(1/2)*250
-  if (gap > 10000) {
-    gap = 10000
-  } else if (gap < 0) {
-    gap = 0
-  } else {
-    gap = Math.round(gap/1000)*1000
-  }
-  return 2000 + gap //1000 (stim time) + 1000 (minimum ITI)
+  return 2000 + ITIs.shift()
  }
 
 
@@ -143,7 +122,7 @@ var appendData = function() {
 
 var getPracticeTrials = function() {
   var practice = []
-  var task_switches = jsPsych.randomization.repeat(task_switches, practice_length)
+  var task_switches = jsPsych.randomization.repeat(task_switches, practice_length/8)
   for (var i = 0; i < practice_length; i++) {
     practice.push(setStims_block)
     practice.push(prompt_fixation_block)
@@ -199,7 +178,25 @@ for (var t = 0; t < task_switch_types.length; t++) {
     }
   }
 }
-var task_switches = jsPsych.randomization.repeat(task_switches, test_length / 8)
+
+var task_switch_trials = jsPsych.randomization.repeat(task_switches.slice(4), test_length / 2)
+var cue_stay_trials = jsPsych.randomization.repeat(task_switches.slice(0,2), test_length / 4)
+var cue_switch_trials = jsPsych.randomization.repeat(task_switches.slice(2,4), test_length / 4)
+
+// set up stim order based on optimized trial sequence
+var stim_index = []
+var test_task_switches = []
+for (var i=0; i<test_length; i++) {
+  if (stim_index[i] == 0) {
+    test_task_switches.push(task_switch_trials.shift())
+  } else if (stim_index[i] == 1) {
+    test_task_switches.push(cue_stay_trials.shift())
+  } else {
+    test_task_switches.push(cue_switch_trials.shift())
+  }
+}
+
+
 var testStims = genStims(test_length)
 var stims = testStims
 var curr_task = randomDraw(getKeys(tasks))
@@ -266,7 +263,7 @@ var start_test_block = {
   on_finish: function() {
     current_trial = 0
     exp_stage = 'test'
-    task_switches = jsPsych.randomization.repeat(task_switches, test_length / 8)
+    task_switches = test_task_switches
     curr_task = randomDraw(getKeys(tasks))
     curr_stim = 'na' //object that holds the current stim, set by setStims()
     curr_cue = tasks[curr_task].cues[cue_i] //object that holds the current cue, set by setStims()

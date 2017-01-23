@@ -2,32 +2,11 @@
 /* Define helper functions */
 /* ************************************ */
 var get_ITI = function() {
-  // ref: https://gist.github.com/nicolashery/5885280
-  function randomExponential(rate, randomUniform) {
-    // http://en.wikipedia.org/wiki/Exponential_distribution#Generating_exponential_variates
-    rate = rate || 1;
-
-    // Allow to pass a random uniform value or function
-    // Default to Math.random()
-    var U = randomUniform;
-    if (typeof randomUniform === 'function') U = randomUniform();
-    if (!U) U = Math.random();
-
-    return -Math.log(U) / rate;
-  }
-  gap = randomExponential(1/2)*260
-  if (gap > 10000) {
-    gap = 10000
-  } else if (gap < 0) {
-  	gap = 0
-  } else {
-  	gap = Math.round(gap/1000)*1000
-  }
-  return 2100 + gap //1700 (stim time) + 400 (minimum ITI)
+  return 2100 + ITIs.shift()
  }
 
 var getPracticeTrials = function() {
-	var practice_stim = jsPsych.randomization.repeat($.extend(true, [], test_stimuli), 1, true)
+	var practice_stim = jsPsych.randomization.repeat($.extend(true, [], base_practice_stim), 1, true)
 	var practice_trials = []
 	for (i=0; i<practice_length; i++) {
 		practice_trials.push(no_cue)
@@ -96,33 +75,36 @@ var block_length = 96
 
 var current_trial = 0
 var exp_stage = 'practice'
-var test_stimuli = []
 var choices = [89, 71]
 var path = '/static/experiments/attention_network_task/images/'
 var images = [path + 'left_arrow.png', path + 'right_arrow.png', path + 'no_arrow.png']
 //preload
 jsPsych.pluginAPI.preloadImages(images)
 
+
 /* set up stim: location (2) * cue (3) * direction (2) * condition (2) */
+var base_practice_stim = []
+var test_stim = [[],[],[],[],[],[]] // track each cue/condition separately
 var locations = ['up', 'down']
 var cues = ['nocue', 'center', 'spatial']
 var directions = ['left', 'right']
 var conditions = ['congruent', 'incongruent']
-for (l = 0; l < locations.length; l++) {
-	var loc = locations[l]
-	for (ci = 0; ci < cues.length; ci++) {
-		var c = cues[ci]
+
+for (ci = 0; ci < cues.length; ci++) {
+	var c = cues[ci]
+	for (coni = 0; coni < conditions.length; coni++) {
+		var condition = conditions[coni]
 		for (d = 0; d < directions.length; d++) {
 			var center_image = images[d]
 			var direction = directions[d]
-			for (coni = 0; coni < conditions.length; coni++) {
-				var condition = conditions[coni]
-				var side_image = ''
-				if (condition == 'incongruent') {
-					var side_image = images[1-d]
-				} else {
-					side_image = images[d]
-				}
+			var side_image = ''
+			if (condition == 'incongruent') {
+				var side_image = images[1-d]
+			} else {
+				side_image = images[d]
+			}
+			for (l = 0; l < locations.length; l++) {
+				var loc = locations[l]
 				var stim = {
 					stimulus: '<div class = centerbox><div class = ANT_text>+</div></div><div class = ANT_' + loc +
 						'><img class = ANT_img src = ' + side_image + '></img><img class = ANT_img src = ' + side_image + '></img><img class = ANT_img src = ' + center_image + '></img><img class = ANT_img src = ' + side_image + '></img><img class = ANT_img src = ' + side_image + '></img></div></div>',
@@ -135,17 +117,27 @@ for (l = 0; l < locations.length; l++) {
 						trial_id: 'stim'
 					}
 				}
-				test_stimuli.push(stim)
+				base_practice_stim.push(stim)
+				test_stim[ci*2+coni].push(stim)
 			}
 		}
 	}
 }
 
+for (var i=0; i<test_stim.length; i++) {
+	test_stim[i] = jsPsych.randomization.repeat(test_stim[i], block_length*num_blocks/24)
+}
+// set up stim order based on optimized trial sequence
+var stim_index = [2,0,2,5,3,2,0,0,1,5,2,3,2,3,5,0,0,1,3,2,1,0,2,0,2,2,1,1,1,1,4,4,1,1,3,3,4,4,4,4,3,0,0,0,0,0,3,3,4,4,4,4,0,0,4,4,5,5,3,3,4,4,0,0,1,1,3,3,0,0,1,1,2,2,2,2,3,4,0,0,1,1,4,4,1,1,4,5,4,5,5,5,2,2,2,2,3,3,3,3,5,5,3,3,2,2,5,5,1,1,3,5,0,0,5,5,1,1,2,1,5,0,2,5,1,0,2,2,5,3,4,3,3,5,5,3,5,5,5,3,0,0,3,2,4,4,4,0,5,4,5,3,3,4,2,4,5,0,4,1,2,5,3,1,1,4,1,1,5,5,2,4,3,3,1,5,4,4,5,2,2,0,4,0,1,5,0,4,4,2,4]
+var ordered_stim = []
+for (var i=0; i<stim_index.length; i++) {
+	ordered_stim.push(test_stim[stim_index[i]].shift())
+}
 
 /* set up repeats for test blocks */
 var blocks = []
 for (b = 0; b < num_blocks; b++) {
-	blocks.push(jsPsych.randomization.repeat($.extend(true, [], test_stimuli), block_length/test_stimuli.length, true))
+	blocks.push(ordered_stim.slice(b*block_length,(b+1)*block_length))
 }
 
 

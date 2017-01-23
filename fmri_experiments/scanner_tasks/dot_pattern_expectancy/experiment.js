@@ -2,28 +2,7 @@
 /* Define helper functions */
 /* ************************************ */
 var get_ITI = function() {
-  // ref: https://gist.github.com/nicolashery/5885280
-  function randomExponential(rate, randomUniform) {
-    // http://en.wikipedia.org/wiki/Exponential_distribution#Generating_exponential_variates
-    rate = rate || 1;
-
-    // Allow to pass a random uniform value or function
-    // Default to Math.random()
-    var U = randomUniform;
-    if (typeof randomUniform === 'function') U = randomUniform();
-    if (!U) U = Math.random();
-
-    return -Math.log(U) / rate;
-  }
-  gap = randomExponential(1/2)*400
-  if (gap > 10000) {
-    gap = 10000
-  } else if (gap < 0) {
-    gap = 0
-  } else {
-    gap = Math.round(gap/1000)*1000
-  }
-  return 1500 + gap //500 (stim time) + 1000 (minimum ITI)
+  return 1500 + ITIs.shift()
  }
 
 
@@ -141,11 +120,24 @@ jsPsych.pluginAPI.preloadImages(images)
 var num_blocks = 4
 var block_length = 40
 
-var trial_proportions = ["AX", "AX", "AX", "AX", "AX", "AX", "AX", "AX", "AX", "AX", "AX", "BX",
-  "BX", "BX", "AY", "AY", "AY", "BY", "BY", "BY"]
+var stim_index = [3,2,0,0,1,2,3,0,2,0,2,2,0,0,0,0,1,1,0,0,0,3,0,0,1,3,0,1,1,0,2,0,3,0,0,0,0,1,0,1,0,0,1,3,0,0,0,3,0,3,0,0,2,1,3,3,3,0,0,0,2,0,0,2,2,2,0,0,3,2,0,0,0,0,0,1,0,0,0,1,0]
+
+var trial_proportions = []
+for (var i=0; i<stim_index.length;i++) {
+  if (stim_index[i] == 0) {
+    trial_proportions.push('AX')
+  } else if (stim_index[i] == 1) {
+    trial_proportions.push('AY')
+  } else if (stim_index[i] == 2) {
+    trial_proportions.push('BX')
+  } else {
+    trial_proportions.push('BY')
+  }
+}
+
 var blocks = []
 for (b = 0; b < num_blocks; b++) {
-  blocks.push(jsPsych.randomization.repeat(trial_proportions, block_length/trial_proportions.length))
+  blocks.push(trial_proportions.slice(b*block_length,(b+1)*block_length))
 }
 
 
