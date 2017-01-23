@@ -424,7 +424,7 @@ for (b = 0; b < num_blocks; b++) {
 			is_html: true,
 			choices: choices,
 			timing_stim: 850,
-			timing_response: 1850,
+			timing_response: get_ITI,
 			SSD: getSSD,
 			timing_SS: 500,
 			timing_post_trial: 0,
