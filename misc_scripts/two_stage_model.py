@@ -7,9 +7,11 @@ Created on Wed Jan 18 20:35:26 2017
 """
 import lmfit
 import numpy
+import matplotlib.pyplot as plt
 from math import exp
 import pandas as pd
 from selfregulation.utils.utils import get_behav_data
+from selfregulation.utils.r_to_py_utils import glmer, psychICC
 import seaborn as sns
 import statsmodels.formula.api as smf
 import statsmodels.api as sm
@@ -136,6 +138,7 @@ class Two_Stage_Model(object):
         return self.sum_neg_ll
 
 def get_likelihood(params, df):
+        global model
         # set initial parameters
         alpha1 = params['alpha1']
         if 'alpha2' in params.keys():
@@ -159,8 +162,8 @@ def fit_decision_model(df):
     fit_params = lmfit.Parameters()
     fit_params.add('alpha1', value=.5, min=0, max=1)
     fit_params.add('alpha2', value=.5, min=0, max=1)
-    fit_params.add('lam', value = .5)
-    fit_params.add('W', value = .5)
+    fit_params.add('lam', value = .5, min=0, max=1)
+    fit_params.add('W', value = .5, min=0, max=1)
     fit_params.add('p', value = 0)
     fit_params.add('B1', value = 3)
     fit_params.add('B2', value = 3)
@@ -170,15 +173,41 @@ def fit_decision_model(df):
     return out.params.valuesdict()
 
 def logistic_analysis(df):
-    df.loc[:,'stage_transition'] = 'infrequent'
-    df.loc[abs(2-(df.stim_selected_first + df.stage_second))==0, 'stage_transition'] = 'frequent'
-    df.insert(0, 'stay', (df['stim_selected_first'].diff()==0).astype(int))
-    df.insert(0, 'stage_transition_last', df['stage_transition'].shift(1))
-    df.insert(0, 'feedback_last', df['feedback'].shift(1))
+    assert len(df.W.unique() == 1)
+    W = df.W.unique()[0]
+    p = df.p.unique()[0]
     rs = smf.glm(formula = 'stay ~ feedback_last * C(stage_transition_last, Treatment(reference = "infrequent"))', data = df, family = sm.families.Binomial()).fit()
-    return {'model_free': rs.params[2], 'model_based': rs.params[3]}
+    return {'model_free': rs.params[2], 'model_based': rs.params[3], 'W': W, 'p': p}
 
-df = get_behav_data(file = 'Individual_Measures/two_stage_decision.csv.gz')     
+def gen_data(params, n_subjects=50, W_space=None, p_space=None):
+    if W_space == None:
+        W_space = numpy.linspace(0,1,5)
+    if p_space == None:
+        p_space = numpy.linspace(0,1,5)
+    # generate data
+    data = pd.DataFrame()
+    sub_id = 1
+    for p in p_space:
+        for W in W_space:
+            params['W'] = W
+            for sub in range(n_subjects):
+                model = Two_Stage_Model(**params)
+                trials = model.simulate(200)
+                simulate_df = pd.DataFrame(trials)
+                simulate_df.loc[:,'id'] = sub_id
+                simulate_df.loc[:,'W'], simulate_df.loc[:,'p'] = [W,p]
+                data = pd.concat([data, simulate_df])
+                sub_id += 1
+    data.loc[:,'stage_transition'] = 'infrequent'
+    data.loc[abs(2-(data.stim_selected_first + data.stage_second))==0, 'stage_transition'] = 'frequent'
+    data.insert(0, 'stay', (data['stim_selected_first'].diff()==0).astype(int))
+    data.insert(0, 'stage_transition_last', data['stage_transition'].shift(1))
+    data.insert(0, 'feedback_last', data['feedback'].shift(1))
+    data.loc[:, 'stage_transition_last'] = pd.Categorical(data.stage_transition_last, categories = ['infrequent','frequent'])
+    return data
+    
+    
+    
 params = {'alpha1':.7,
           'alpha2': .4,
           'lam':.63,
@@ -186,47 +215,70 @@ params = {'alpha1':.7,
           'B2':2.95,
           'W':.51,
           'p':.17} 
+data = gen_data(params)
 
-n_subjects = 50
-W_space = numpy.linspace(0,1,5)
-p_space = numpy.linspace(0,1,5)
-# generate data
-data = pd.DataFrame()
-sub_id = 1
-for p in p_space:
-    for W in W_space:
-        params['W'] = W
-        for sub in range(n_subjects):
-            model = Two_Stage_Model(**params)
-            trials = model.simulate(200)
-            simulate_df = pd.DataFrame(trials)
-            simulate_df.loc[:,'id'] = sub_id
-            simulate_df.loc[:,'W'], simulate_df.loc[:,'p'] = [W,p]
-            data = pd.concat([data, simulate_df])
-            sub_id += 1
+#fit individual regression models                                                    
+logistic_vals = []
+for name, subj_data in data.groupby('id'):
+    logistic_output = logistic_analysis(subj_data)
+    logistic_vals.append(logistic_output)
+logistic_vals = pd.DataFrame(logistic_vals)
+logistic_vals.query('W == .5').hist(bins = 20)
+
+#fit mixed effects model
+formula = 'stay ~ feedback_last*stage_transition_last + (feedback_last*stage_transition_last|id)'
+fixed, random = glmer(data,formula)
+random.loc[:,'W'] = logistic_vals.W
+random.loc[:,'p'] = logistic_vals.p
+
+
+# plot calculated model-based and model-free parameter distributions for
+sns.set_context('poster')
+f,ax = plt.subplots(2,3)
+f.tight_layout()
+sns.boxplot(x='W', y='model_free', data=logistic_vals, ax=ax[0][0])
+ax[0][0].set_title('Individual Logistic')
+sns.boxplot(x='W', y='model_free', data=logistic_vals, ax=ax[0][1])
+ax[0][1].set_ylim([-5,5])
+ax[0][1].set_title('Individual Logistic (shortened axis)')
+sns.boxplot(x='W', y='feedback_last', data=random, ax=ax[0][2])
+ax[0][2].set_title('Mixed Logistic')
+sns.boxplot(x='W', y='model_based', data=logistic_vals, ax=ax[1][0])
+sns.boxplot(x='W', y='model_based', data=logistic_vals, ax=ax[1][1])
+ax[1][1].set_ylim([-5,5])
+sns.boxplot(x='W', y='feedback_last:stage_transition_last2', data=random, ax=ax[1][2])
+
+# one way anova to see which subjects are more disciminable
+from scipy import stats
+a,b,c,d,e = [list(group) for subj,group in logistic_vals.groupby('W').model_free]
+stats.f_oneway(a,b,c,d,e)
+
+a,b,c,d,e = [list(group) for subj,group in random.groupby('W').feedback_last]
+stats.f_oneway(a,b,c,d,e)
+
+
+#ICC
+logistic_vals.sort_values(by='W', inplace=True)
+logistic_vals.loc[:,'repeat'] = list(range(250))*5
+repeated_measures = logistic_vals.pivot('W','repeat',values = 'model_free')
+ICC_rs = psychICC(repeated_measures)
+print(ICC_rs[0])
+
+random.sort_values(by='W', inplace=True)
+random.loc[:,'repeat'] = list(range(250))*5
+random_repeated_measures = random.pivot('W','repeat',values = 'feedback_last')
+ICC_rs_random = psychICC(random_repeated_measures)
+print(ICC_rs_random[0])
+
 
 subject_params = []
 for name, subj_data in data.groupby('id'):
     recovered_params = fit_decision_model(subj_data)
-    recovered_params['actual_W'] = W
+    recovered_params['W'] = subj_data.W.unique()[0]
+    recovered_params['p'] = subj_data.p.unique()[0]
     subject_params.append(recovered_params)
-
-
-
-#get_likelihood(params,simulate_df)
-recovered_params = fit_decision_model(simulate_df)
-recovered_params['actual_W'] = W
-subject_params.append(recovered_params)
-logistic_output = logistic_analysis(simulate_df)
-logistic_output['actual_W'] = W
-logistic_vals.append(logistic_output)
-
-    
 subject_params = pd.DataFrame(subject_params)
-subject_params.loc[:,['W','p']].hist()
 
-logistic_vals = pd.DataFrame(logistic_vals)
-logistic_vals.hist()
 
 
         
