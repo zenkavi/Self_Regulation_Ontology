@@ -274,8 +274,8 @@ print(ICC_rs_random[0])
 subject_params = []
 for name, subj_data in data.groupby('id'):
     recovered_params = fit_decision_model(subj_data)
-    recovered_params['W'] = subj_data.W.unique()[0]
-    recovered_params['p'] = subj_data.p.unique()[0]
+    recovered_params['actual_W'] = subj_data.W.unique()[0]
+    recovered_params['actual_p'] = subj_data.p.unique()[0]
     subject_params.append(recovered_params)
 subject_params = pd.DataFrame(subject_params)
 
