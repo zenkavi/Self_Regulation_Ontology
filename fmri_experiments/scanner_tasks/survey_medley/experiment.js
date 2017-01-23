@@ -2,7 +2,7 @@
 /* Define helper functions */
 /* ************************************ */
 var get_ITI = function() {
-  return 500 + ITIs.shift()
+  return 500 // + ITIs.shift()
  }
 
 /* ************************************ */

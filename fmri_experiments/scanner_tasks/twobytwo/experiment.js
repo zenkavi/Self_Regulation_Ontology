@@ -4,7 +4,7 @@
 
 var ITIs = [0.0,0.0,0.0,0.1,0.4,0.1,0.1,0.3,0.1,0.1,0.9,0.6,0.0,0.0,0.0,0.2,0.0,0.5,0.2,0.0,0.7,0.1,0.0,0.1,0.1,0.5,0.9,0.3,0.2,0.0,0.1,0.0,0.2,0.1,0.1,0.3,0.0,0.2,0.0,0.1,0.3,0.1,0.0,0.0,0.2,0.1,0.1,0.0,0.4,0.2,0.0,0.4,0.2,0.6,0.0,0.2,0.3,0.5,0.1,0.0,0.1,0.0,0.5,0.2,0.0,0.0,0.3,0.0,0.0,0.0,0.1,0.0,0.1,0.5,0.6,0.1,0.0,0.1,0.5,0.3,0.7,0.1,0.0,0.3,0.0,0.4,0.0,0.2,0.0,0.0,0.2,0.1,0.0,0.0,0.0,0.1,0.4,0.3,0.0,0.0,0.4,0.2,0.2,0.1,0.3,0.1,0.5,0.0,0.2,0.2,0.8,0.3,0.1,0.4,0.0,0.4,0.5,0.0,0.2,0.0,0.1,0.2,0.3,0.0,1.1,0.2,0.0,0.1,0.0,0.0,0.3,0.0,0.8,0.1,0.3,0.1,1.3,0.1,0.0,0.3,0.2,0.1,0.4,0.0,0.0,0.5,0.4,0.1,0.7,0.6,0.3,0.9,0.1,0.4,0.2,0.1,0.4,0.1,0.0,0.0]
 var get_ITI = function() {
-  return 2000 + ITIs.shift()
+  return 2000 + ITIs.shift()*1000
 }
 
 var randomDraw = function(lst) {
@@ -49,7 +49,6 @@ change the task. If "stay", keep the same task but change the cue based on "cue 
 If "switch", switch to the other task and randomly draw a cue_i
 */
 var setStims = function() {
-  var tmp;
   switch (task_switches[current_trial].task_switch) {
     case "stay":
       if (task_switches[current_trial].cue_switch == "switch") {
@@ -89,16 +88,16 @@ var getResponse = function() {
   switch (curr_task) {
     case 'color':
       if (curr_stim.color == 'orange') {
-        return response_keys.key[0]
+        return response_keys_color.key[0]
       } else {
-        return response_keys.key[1]
+        return response_keys_color.key[1]
       }
       break;
     case 'magnitude':
       if (curr_stim.number > 5) {
-        return response_keys.key[0]
+        return response_keys_mag.key[0]
       } else {
-        return response_keys.key[1]
+        return response_keys_mag.key[1]
       }
       break;
   }
@@ -122,7 +121,8 @@ var appendData = function() {
 
 var getPracticeTrials = function() {
   var practice = []
-  var task_switches = jsPsych.randomization.repeat(task_switches, practice_length/8)
+  current_trial = 0
+  task_switches = jsPsych.randomization.repeat(base_task_switches, practice_length/8)
   for (var i = 0; i < practice_length; i++) {
     practice.push(setStims_block)
     practice.push(prompt_fixation_block)
@@ -138,14 +138,22 @@ var getPracticeTrials = function() {
 /* ************************************ */
 var practice_repeats = 0
 // task specific variables
-var response_keys = jsPsych.randomization.repeat([{
+var response_keys_color = jsPsych.randomization.repeat([{
   key: 89,
   key_name: 'Index Finger'
 }, {
   key: 71,
   key_name: 'Middle finger'
 }], 1, true)
-var choices = response_keys.key
+var response_keys_mag = jsPsych.randomization.repeat([{
+  key: 89,
+  key_name: 'Index Finger'
+}, {
+  key: 71,
+  key_name: 'Middle finger'
+}], 1, true)
+
+var choices = response_keys_color.key
 var practice_length = 16
 var num_blocks = 3
 var block_length = 80
@@ -163,14 +171,15 @@ var tasks = {
   }
 }
 
+var task_switches = []
+var base_task_switches = []
 var task_switch_types = ["stay", "switch"]
 var cue_switch_types = ["stay", "switch"]
 var CTIs = [100, 900]
-var task_switches = []
 for (var t = 0; t < task_switch_types.length; t++) {
   for (var c = 0; c < cue_switch_types.length; c++) {
     for (var j = 0; j < CTIs.length; j++) {
-      task_switches.push({
+      base_task_switches.push({
         task_switch: task_switch_types[t],
         cue_switch: cue_switch_types[c],
         CTI: CTIs[j]
@@ -179,9 +188,9 @@ for (var t = 0; t < task_switch_types.length; t++) {
   }
 }
 
-var task_switch_trials = jsPsych.randomization.repeat(task_switches.slice(4), test_length / 2)
-var cue_stay_trials = jsPsych.randomization.repeat(task_switches.slice(0,2), test_length / 4)
-var cue_switch_trials = jsPsych.randomization.repeat(task_switches.slice(2,4), test_length / 4)
+var task_switch_trials = jsPsych.randomization.repeat(base_task_switches.slice(4), test_length / 2)
+var cue_stay_trials = jsPsych.randomization.repeat(base_task_switches.slice(0,2), test_length / 4)
+var cue_switch_trials = jsPsych.randomization.repeat(base_task_switches.slice(2,4), test_length / 4)
 
 // set up stim order based on optimized trial sequence
 var stim_index = [1,2,0,1,1,1,1,0,2,0,0,0,0,2,1,2,0,0,2,2,0,2,0,1,1,1,1,0,0,1,2,1,0,0,1,0,2,1,0,0,0,1,2,0,0,0,0,2,0,2,1,1,2,2,0,2,0,0,1,0,2,1,2,0,1,0,0,0,0,0,2,2,2,2,1,0,1,1,0,0,2,0,0,2,0,0,0,1,1,0,1,1,2,0,2,2,2,0,0,0,0,1,0,0,2,2,1,2,2,0,2,0,1,2,0,0,2,0,0,0,0,2,0,1,1,0,1,0,2,0,0,2,2,1,0,1,0,1,0,0,0,0,1,0,0,0,1,2,0,0,0,0,0,2,0,0,2,1,0,1]
@@ -217,9 +226,9 @@ var exp_stage = 'practice' // defines the exp_stage, switched by start_test_bloc
 /* Set up jsPsych blocks */
 /* ************************************ */
 var prompt_task_list = '<strong>Color</strong> or <strong>Orange-Blue</strong>: ' +
-  response_keys.key_name[0] + ' if orange and ' + response_keys.key_name[1] + ' if blue.' +
-  '<br><br><strong>Magnitude</strong> or <strong>High-Low</strong>: ' + response_keys.key_name[0] +
-  ' if >5 and ' + response_keys.key_name[1] + ' if <5.'
+  response_keys_color.key_name[0] + ' if orange and ' + response_keys_color.key_name[1] + ' if blue.' +
+  '<br><br><strong>Magnitude</strong> or <strong>High-Low</strong>: ' + response_keys_mag.key_name[0] +
+  ' if >5 and ' + response_keys_mag.key_name[1] + ' if <5.'
 
 var instructions_block = {
   type: 'poldrack-single-stim',
