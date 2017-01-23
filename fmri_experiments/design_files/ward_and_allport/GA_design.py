@@ -10,7 +10,7 @@ EXP = geneticalgorithm.experiment(
     rho = 0.3, 
     n_stimuli = 2, 
     n_trials = 48, 
-    duration = 600, 
+    duration = 620, 
     resolution = 0.1, 
     stim_duration = 10, 
     t_pre = 0.0, 
@@ -36,7 +36,7 @@ POP = geneticalgorithm.population(
     preruncycles = 2000, 
     cycles = 5000, 
     convergence = 1000, 
-    outdes = 2, 
+    outdes = 4, 
     folder = '../fmri_experiments/design_files/ward_and_allport/ward_and_allport_designs_'+design_i) 
 
 

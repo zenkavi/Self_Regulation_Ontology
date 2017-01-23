@@ -10,7 +10,7 @@ EXP = geneticalgorithm.experiment(
     rho = 0.3, 
     n_stimuli = 2, 
     n_trials = 125, 
-    duration = 309.375, 
+    duration = 310, 
     resolution = 0.1, 
     stim_duration = 1.85, 
     t_pre = 0.0, 
@@ -36,7 +36,7 @@ POP = geneticalgorithm.population(
     preruncycles = 2000, 
     cycles = 5000, 
     convergence = 1000, 
-    outdes = 2, 
+    outdes = 4, 
     folder = '../fmri_experiments/design_files/stop_signal/stop_signal_designs_'+design_i) 
 
 

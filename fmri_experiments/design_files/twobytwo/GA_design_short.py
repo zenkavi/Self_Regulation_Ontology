@@ -10,7 +10,7 @@ EXP = geneticalgorithm.experiment(
     rho = 0.3, 
     n_stimuli = 3, 
     n_trials = 160, 
-    duration = 360, 
+    duration = 440, 
     resolution = 0.1, 
     stim_duration = 1.5, 
     t_pre = 0.0, 
@@ -36,7 +36,7 @@ POP = geneticalgorithm.population(
     preruncycles = 10, 
     cycles = 10, 
     convergence = 10, 
-    outdes = 2, 
+    outdes = 4, 
     folder = '../fmri_experiments/design_files/twobytwo/twobytwo_designs_'+design_i) 
 
 

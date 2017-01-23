@@ -11,7 +11,7 @@ EXP = geneticalgorithm.experiment(
     rho = 0.3, 
     n_stimuli = 6, 
     n_trials = 192, 
-    duration = 549.12, 
+    duration = 550, 
     resolution = 0.1, 
     stim_duration = 2.2, 
     t_pre = 0.0, 
@@ -37,7 +37,7 @@ POP = geneticalgorithm.population(
     preruncycles = 2000, 
     cycles = 5000, 
     convergence = 1000, 
-    outdes = 2, 
+    outdes = 4, 
     folder = '../fmri_experiments/design_files/attention_network_task/attention_network_task_designs_'+design_i) 
 
 

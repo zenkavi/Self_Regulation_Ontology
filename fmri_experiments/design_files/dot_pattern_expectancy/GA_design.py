@@ -10,7 +10,7 @@ EXP = geneticalgorithm.experiment(
     rho = 0.3, 
     n_stimuli = 4, 
     n_trials = 160, 
-    duration = 360, 
+    duration = 704, 
     resolution = 0.1, 
     stim_duration = 3.5, 
     t_pre = 0.0, 
@@ -36,7 +36,7 @@ POP = geneticalgorithm.population(
     preruncycles = 2000, 
     cycles = 5000, 
     convergence = 1000, 
-    outdes = 2, 
+    outdes = 4, 
     folder = '../fmri_experiments/design_files/dot_pattern_expectancy/dot_pattern_expectancy_designs_'+design_i) 
 
 
