@@ -38,7 +38,7 @@ function addID(exp_id) {
 
 var fmri_scanner_wait_block = {
 	type: 'poldrack-text',
-	text: "<div class = centerbox><div style = 'font-size: 50px', class = center-text>Test run will start after scanner calibration</p></div>",
+	text: "<div class = centerbox><div style = 'font-size: 50px', class = center-text>Scan will start after scanner calibration</p></div>",
 	cont_key: [32],
 	data: {
 		trial_id: "fmri_scanner_wait"
@@ -65,7 +65,7 @@ var fmri_buffer_block = {
 var create_trigger_block = function(trigger) {
 	var fMRI_wait_block = {
 		type: 'poldrack-text',
-		text: "<div class = centerbox><div  class = center-text>Scanner calibration<br><strong>Please don't move!</strong></p></div>",
+		text: "<div class = centerbox><div  class = center-text>Scanner calibration<br><strong>Please don't move!</strong></div></div>",
 		cont_key: [trigger],
 		data: {
 			trial_id: "fmri_trigger_wait"
