@@ -1,5 +1,6 @@
 import sys
 sys.path.append('/Users/zeynepenkavi/Dropbox/PoldrackLab/expfactory-analysis')
+sys.path.append('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/data_preparation')
 from expanalysis.experiments.jspsych import calc_time_taken, get_post_task_responses
 from expanalysis.experiments.processing import post_process_data, extract_DVs
 from expanalysis.results import get_filters, get_fields
@@ -115,3 +116,71 @@ data.to_json(path.join(data_dir,'mturk_retest_data_manual_post.json'))
 # save failed data
 failed_data = failed_data.reset_index(drop = True)
 failed_data.to_json(data_dir + 'mturk_retest_failed_data_manual_post.json')
+
+## DV calculations
+
+## To be created
+    
+# DV_valence.csv:
+from expanalysis.experiments.processing import get_battery_DVs
+DV_df, valence_df = get_battery_DVs(data)
+DV_df.to_json(path.join(data_dir, 'mturk_' + sample + '_DV.json'))
+valence_df.to_json(path.join(data_dir, 'mturk_' + sample + '_DV_valence.json'))    
+
+
+# Individual_Measures/ - done
+from selfregulation.utils.data_preparation_utils import save_task_data
+save_task_data(data_dir, data)
+
+#alcohol_drugs.csv
+#alcohol_drugs_ordinal.csv
+#demographic_health.csv
+
+#demographics.csv
+#demographics_ordinal.csv
+demog_data = extract_experiment(data,'demographics_survey')
+from process_demographics import process_demographics
+demog_data = process_demographics(demog_data, directory, meta_dir)
+    
+
+health.csv
+health_ordinal.csv
+items.csv.gz
+meaningful_variables.csv
+meaningful_variables_EZ.csv
+meaningful_variables_clean.csv
+meaningful_variables_hddm.csv
+meaningful_variables_imputed.csv
+meaningful_variables_imputed_for_task_selection.csv
+meaningful_variables_noDDM.csv
+
+#metadata/
+#references/
+meta_dir = path.join(data_dir,'metadata')
+reference_dir = path.join(data_dir,'references')
+from os import makedirs
+if not path.exists(meta_dir):
+    makedirs(meta_dir)
+if not path.exists(reference_dir):
+    makedirs(reference_dir)
+
+short_DV_valence.csv
+short_meaningful_variables.csv
+short_meaningful_variables_EZ.csv
+short_meaningful_variables_clean.csv
+short_meaningful_variables_hddm.csv
+short_meaningful_variables_imputed.csv
+short_meaningful_variables_imputed_for_task_selection.csv
+short_meaningful_variables_noDDM.csv
+short_subject_x_items.csv
+short_taskdata.csv
+short_taskdata_clean.csv
+short_taskdata_imputed.csv
+short_taskdata_imputed_for_task_selection.csv
+short_variables_exhaustive.csv
+subject_x_items.csv
+taskdata.csv
+taskdata_clean.csv
+taskdata_imputed.csv
+taskdata_imputed_for_task_selection.csv
+variables_exhaustive.csv
