@@ -42,23 +42,51 @@ var randomDraw = function(lst) {
   return lst[index]
 }
 
-var i,j,temparray,chunk = 10;
-chunks = []
-for (i=0,j=array.length; i<j; i+=chunk) {
-    chunks.push(array.slice(i,i+chunk));
+function chunkify(a, n, balanced) {
+    if (n < 2)
+        return [a];
+    var len = a.length, out = [], i = 0, size;
+    if (len % n === 0) {
+        size = Math.floor(len / n);
+        while (i < len) {
+            out.push(a.slice(i, i += size));
+        }
+    }
+    else if (balanced) {
+        while (i < len) {
+            size = Math.ceil((len - i) / n--);
+            out.push(a.slice(i, i += size));
+        }
+    }
+    else {
+        n--;
+        size = Math.floor(len / n);
+        if (len % size === 0)
+            size--;
+        while (i < size * n) {
+            out.push(a.slice(i, i += size));
+        }
+        out.push(a.slice(size * n));
+    }
+    return out;
 }
 
 var getButtons = function(nCards) {
-	var chunk_size = Math.Floor(nCards/choices.length)
-	chunks = []
-	for (i=0,j=array.length; i<j; i+=chunk) {
-	    chunks.push(array.slice(i,i+chunk));
+	var card_array = []
+	for (var i=0; i<nCards; i++) {
+		card_array.push(i)
+	}
+	var chunk_index = 0
+	var chunks = chunkify(card_array,choices.length,true)
+	var button_values = []
+	for (var i=0; i<chunks.length; i++) {
+		button_values.push(randomDraw(chunks[i]))
 	}
 	var buttons = ""
 	buttons = "<div class = allbuttons>"
 	for (i = 0; i < choices.length; i++) {
 		buttons += "<button type = 'button' class = 'CCT-btn chooseButton' id = " + i +
-			" onclick = chooseButton(this.id)>" + i + "</button>"
+			" >" + button_values[i] + "</button>"
 	}
 	return buttons
 }
