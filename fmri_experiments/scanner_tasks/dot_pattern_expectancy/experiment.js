@@ -1,29 +1,10 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
+
+var test_ITIs = [0.5,0.4,2.0,0.5,0.1,0.2,0.0,0.0,0.2,1.1,0.0,0.1,0.4,0.3,0.0,0.5,0.0,0.5,1.1,1.9,0.3,1.1,0.2,0.4,0.7,0.2,0.1,0.5,0.1,0.0,0.3,0.7,0.4,0.4,0.4,0.2,0.2,0.1,0.6,0.2,1.5,0.0,0.3,0.0,0.5,0.3,0.3,0.2,0.0,0.0,0.0,0.1,0.0,0.2,0.0,0.2,0.2,0.0,0.0,0.0,0.0,0.1,0.2,0.5,0.2,0.3,0.7,0.3,0.2,0.2,0.5,0.0,0.1,0.8,0.8,0.6,0.1,0.0,0.0,0.6,0.2,0.0,0.2,0.9,1.0,0.7,0.2,0.4,0.0,1.7,0.1,0.1,0.3,0.0,0.4,0.7,0.4,0.5,0.2,0.3,0.2,1.3,0.1,0.3,0.1,0.0,0.2,0.2,0.1,0.1,0.1,0.0,0.0,0.2,0.4,0.0,0.3,0.0,2.0,0.3,0.3,0.5,0.8,0.2,0.3,0.0,0.1,0.8,0.4,0.1,0.4,0.3,0.1,1.1,0.0,0.5,0.5,0.3,0.0,0.7,0.5,0.6,0.4,0.1,0.0,0.1,0.4,0.5,0.2,0.8,0.1,0.0,0.0,1.7,0.1,0.0,0.6,0.1,0.3,0.3]
 var get_ITI = function() {
-  // ref: https://gist.github.com/nicolashery/5885280
-  function randomExponential(rate, randomUniform) {
-    // http://en.wikipedia.org/wiki/Exponential_distribution#Generating_exponential_variates
-    rate = rate || 1;
-
-    // Allow to pass a random uniform value or function
-    // Default to Math.random()
-    var U = randomUniform;
-    if (typeof randomUniform === 'function') U = randomUniform();
-    if (!U) U = Math.random();
-
-    return -Math.log(U) / rate;
-  }
-  gap = randomExponential(1/2)*400
-  if (gap > 10000) {
-    gap = 10000
-  } else if (gap < 0) {
-    gap = 0
-  } else {
-    gap = Math.round(gap/1000)*1000
-  }
-  return 1500 + gap //500 (stim time) + 1000 (minimum ITI)
+  return 1500 + ITIs.shift()*1000
  }
 
 
@@ -40,18 +21,85 @@ var getInvalidProbe = function() {
   return prefix + path + randomDraw(probes) + postfix
 }
 
+
+var getFeedback = function() {
+  var curr_trial = jsPsych.progress().current_trial_global
+  var curr_data = jsPsych.data.getData()[curr_trial - 1]
+  var condition = curr_data.condition
+  var response = curr_data.key_press
+  var feedback_text = ''
+  var correct = false
+  var correct_response = choices[1]
+  if (condition == "AX") {
+    correct_response = choices[0]
+  }
+  if (response == correct_response) {
+    correct = true
+    feedback_text =  '<div class = centerbox><div style="color:#4FE829"; class = center-text>Correct!</div></div>'
+  } else if (response == -1) {
+    feedback_text =  '<div class = centerbox><div class = center-text>Respond Faster!</p></div>'
+  } else {
+    feedback_text = '<div class = centerbox><div style="color:red"; class = center-text>Incorrect</div></div>'
+  }
+  jsPsych.data.addDataToLastTrial({'correct': correct, 'correct_response': correct_response})
+  return feedback_text
+}
+
+
+var getPracticeTrials = function() {
+  ITIs = jsPsych.randomization.shuffle([0,1,.2,0,.6,0,0,.4,0,.8])
+  var practice_proportions = ['AX','AX','AX','AX','AY','BX','BY','AY','BX','BY']
+  var practice_block = jsPsych.randomization.repeat(practice_proportions, 1)
+  var practice = []
+  for (i = 0; i < practice_block.length; i++) {
+    switch (practice_block[i]) {
+      case "AX":
+        cue = jQuery.extend(true, {}, A_cue)
+        probe = jQuery.extend(true, {}, X_probe)
+        cue.data.condition = "AX"
+        probe.data.condition = "AX"
+        break;
+      case "BX":
+        cue = jQuery.extend(true, {}, other_cue)
+        probe = jQuery.extend(true, {}, X_probe)
+        cue.data.condition = "BX"
+        probe.data.condition = "BX"
+        break;
+      case "AY":
+        cue = jQuery.extend(true, {}, A_cue)
+        probe = jQuery.extend(true, {}, other_probe)
+        cue.data.condition = "AY"
+        probe.data.condition = "AY"
+        break;
+      case "BY":
+        cue = jQuery.extend(true, {}, other_cue)
+        probe = jQuery.extend(true, {}, other_probe)
+        cue.data.condition = "BY"
+        probe.data.condition = "BY"
+        break;
+    }
+    practice.push(cue)
+    practice.push(fixation_block)
+    practice.push(probe)
+    practice.push(feedback_block)
+  }
+  return practice
+}
+
+
 /* ************************************ */
 /* Define experimental variables */
 /* ************************************ */
-
+var practice_repeats = 0
+var ITIs = []
 // task specific variables
 var current_trial = 0
-var choices = [71, 66]
+var choices = [89, 71]
 var correct_responses = [
-  ["left button", 71],
-  ["right button", 66]
+  ["left button", 89],
+  ["right button",71]
 ]
-var exp_stage = 'tests'
+var exp_stage = 'practice'
 var path = '/static/experiments/dot_pattern_expectancy/images/'
 var prefix = '<div class = centerbox><div class = img-container><img src = "'
 var postfix = '"</img></div></div>'
@@ -76,11 +124,24 @@ jsPsych.pluginAPI.preloadImages(images)
 var num_blocks = 4
 var block_length = 40
 
-var trial_proportions = ["AX", "AX", "AX", "AX", "AX", "AX", "AX", "AX", "AX", "AX", "AX", "BX",
-  "BX", "BX", "AY", "AY", "AY", "BY", "BY", "BY"]
+var stim_index = [1,0,3,3,0,0,0,0,2,0,0,3,0,1,0,0,0,0,1,0,3,0,0,3,0,0,1,0,0,3,0,0,0,1,0,3,0,0,2,0,0,0,0,3,0,2,0,2,0,0,0,0,3,2,2,1,1,0,2,1,1,0,0,2,0,3,2,0,2,3,0,1,0,0,0,2,3,1,0,2,0,0,0,2,1,2,2,1,1,0,0,1,2,0,0,2,0,0,0,0,0,3,0,0,3,3,0,0,2,0,2,2,0,0,1,3,3,0,3,3,2,0,0,1,0,0,0,0,0,1,3,0,0,1,1,1,3,3,0,0,2,2,0,3,3,0,0,0,2,2,0,0,0,0,0,1,0,0,1,0]
+
+var trial_proportions = []
+for (var i=0; i<stim_index.length;i++) {
+  if (stim_index[i] == 0) {
+    trial_proportions.push('AX')
+  } else if (stim_index[i] == 1) {
+    trial_proportions.push('AY')
+  } else if (stim_index[i] == 2) {
+    trial_proportions.push('BX')
+  } else {
+    trial_proportions.push('BY')
+  }
+}
+
 var blocks = []
 for (b = 0; b < num_blocks; b++) {
-  blocks.push(jsPsych.randomization.repeat(trial_proportions, block_length/trial_proportions.length))
+  blocks.push(trial_proportions.slice(b*block_length,(b+1)*block_length))
 }
 
 
@@ -97,7 +158,12 @@ var start_test_block = {
   data: {
     trial_id: "test_start_block"
   },
-  timing_post_trial: 500
+  timing_post_trial: 500,
+  on_finish: function() {
+      exp_stage = 'test'
+      ITIs = test_ITIs
+      current_trial = 0
+  }
 };
 
 /* define static blocks */
@@ -110,23 +176,26 @@ var start_test_block = {
   response_ends_trial: true,
   data: {
     trial_id: "end",
-    exp_id: 'stroop'
+    exp_id: 'dot_pattern_expectancy'
   },
   timing_post_trial: 0
 };
 
 
-var instructions_block = {
-  type: 'poldrack-text',
-  data: {
-    trial_id: "instruction"
-  },
-  text: '<div class = centerbox><p style = "font-size:40px" class = center-block-text>Target Pair (press left):</p><p class = center-block-text><img src = "/static/experiments/dot_pattern_expectancy/images/' +
+ var instructions_block = {
+  type: 'poldrack-single-stim',
+  stimulus: '<div class = centerbox><p style = "font-size:40px" class = center-block-text>Target Pair (press index finger):</p><p class = center-block-text><img src = "/static/experiments/dot_pattern_expectancy/images/' +
     valid_cue +
     '" ></img>&nbsp&nbsp&nbsp...followed by...&nbsp&nbsp&nbsp<img src = "/static/experiments/dot_pattern_expectancy/images/' +
-    valid_probe + '" ></img><br></br></p><p style = "font-size:40px" class = center-block-text>Otherwise press right</div>',
-  cont_key: [32],
-  timing_post_trial: 1000
+    valid_probe + '" ></img><br></br></p><p style = "font-size:40px" class = center-block-text>Otherwise press middle finger</div>',
+  is_html: true,
+  choices: 'none',
+  timing_stim: 14500, 
+  timing_response: 14500,
+  data: {
+    trial_id: "instructions",
+  },
+  timing_post_trial: 500
 };
 
 var rest_block = {
@@ -134,7 +203,7 @@ var rest_block = {
   stimulus: '<div class = centerbox><div class = center-text>Take a break!<br>Next run will start in a moment</div></div>',
   is_html: true,
   choices: 'none',
-  timing_response: 10000,
+  timing_response: 7500,
   data: {
     trial_id: "rest_block"
   },
@@ -157,6 +226,24 @@ var fixation_block = {
   }
 }
 
+var feedback_block = {
+  type: 'poldrack-single-stim',
+  stimulus: getFeedback,
+  is_html: true,
+  choices: 'none',
+  data: {
+    trial_id: "feedback",
+  },
+  timing_post_trial: 0,
+  timing_stim: 500,
+  timing_response: 500,
+  on_finish: function() {
+    jsPsych.data.addDataToLastTrial({
+      exp_stage: exp_stage,
+      trial_num: current_trial
+    })
+  }
+}
 
 /* define test block cues and probes*/
 var A_cue = {
@@ -225,8 +312,9 @@ var X_probe = {
     	exp_stage: exp_stage,
     	trial_num: current_trial
 	   })
-     console.log('Trial Num: ', current_trial)
-     console.log('Correct Response? ', correct)
+     console.log('Trial: ' + current_trial +
+              '\nCorrect Response? ' + correct + ', RT: ' + data.rt)
+     current_trial += 1
   }
 };
 
@@ -257,8 +345,35 @@ var other_probe = {
       exp_stage: exp_stage,
       trial_num: current_trial
      })
-     console.log('Trial Num: ', current_trial)
-     console.log('Correct Response? ', correct)
+     console.log('Trial: ' + current_trial +
+              '\nCorrect Response? ' + correct + ', RT: ' + data.rt)
+     current_trial += 1
+  }
+};
+
+/* Set up practice trials */
+var practice_trials = getPracticeTrials()
+var practice_loop = {
+  timeline: practice_trials,
+  loop_function: function(data) {
+    practice_repeats+=1
+    total_trials = 0
+    correct_trials = 0
+    for (var i = 0; i < data.length; i++) {
+      if (data[i].trial_id == 'probe') {
+        total_trials+=1
+        if (data[i].correct == true) {
+          correct_trials+=1
+        }
+      }
+    }
+    console.log('Practice Block Accuracy: ', correct_trials/total_trials)
+    if (correct_trials/total_trials > .75 || practice_repeats == 3) {
+      return false
+    } else {
+      practice_trials = getPracticeTrials()
+      return true
+    }
   }
 };
 
@@ -268,10 +383,11 @@ var other_probe = {
 
 var dot_pattern_expectancy_experiment = []
 dot_pattern_expectancy_experiment.push(instructions_block);
+dot_pattern_expectancy_experiment.push(practice_loop);
 setup_fmri_intro(dot_pattern_expectancy_experiment, choices)
 
-dot_pattern_expectancy_experiment.push(start_test_block);
 for (b = 0; b < num_blocks; b++) {
+  dot_pattern_expectancy_experiment.push(start_test_block);
   var block = blocks[b]
   for (i = 0; i < block_length; i++) {
     switch (block[i]) {
@@ -304,6 +420,8 @@ for (b = 0; b < num_blocks; b++) {
     dot_pattern_expectancy_experiment.push(fixation_block)
     dot_pattern_expectancy_experiment.push(probe)
   }
-  dot_pattern_expectancy_experiment.push(rest_block)
+  if ((b+1)<num_blocks) {
+    dot_pattern_expectancy_experiment.push(rest_block)
+  }
 }
 dot_pattern_expectancy_experiment.push(end_block)

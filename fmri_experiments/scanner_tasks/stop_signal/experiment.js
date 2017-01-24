@@ -6,29 +6,9 @@ var randomDraw = function(lst) {
 	return lst[index]
 }
 
+var ITIs = [0.0,0.2,0.0,0.0,0.0,0.1,0.3,0.0,0.6,0.0,0.3,0.2,0.3,0.0,0.0,0.0,0.1,0.3,0.4,0.0,0.4,0.0,0.0,0.1,0.3,0.1,0.2,0.3,0.5,0.1,0.1,0.0,0.0,0.1,0.0,0.3,0.0,0.0,0.2,0.0,0.0,0.1,0.8,0.2,0.1,0.0,0.4,0.1,0.4,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.6,0.2,0.1,0.2,0.2,0.3,0.5,0.3,0.0,0.9,0.0,0.2,0.1,0.1,0.0,0.0,0.4,0.0,0.0,0.0,0.4,0.2,0.0,0.9,0.1,0.5,0.1,0.0,0.8,0.3,0.1,0.1,0.0,0.8,0.3,0.1,0.2,0.1,0.0,0.3,0.0,0.2,0.7,0.1,0.2,0.2,0.0,0.5,0.1,0.2,1.0,0.0,0.1,0.4,0.0,0.2,0.2,0.0,0.0,0.1,0.0,0.1,0.1,0.0,0.0,0.1,0.0,0.0,0.0]
 var get_ITI = function() {
-  // ref: https://gist.github.com/nicolashery/5885280
-  function randomExponential(rate, randomUniform) {
-    // http://en.wikipedia.org/wiki/Exponential_distribution#Generating_exponential_variates
-    rate = rate || 1;
-
-    // Allow to pass a random uniform value or function
-    // Default to Math.random()
-    var U = randomUniform;
-    if (typeof randomUniform === 'function') U = randomUniform();
-    if (!U) U = Math.random();
-
-    return -Math.log(U) / rate;
-  }
-  gap = randomExponential(1/2)*225
-  if (gap > 10000) {
-    gap = 10000
-  } else if (gap < 0) {
-  	gap = 0
-  } else {
-  	gap = Math.round(gap/1000)*1000
-  }
-  return 2250 + gap //1850 (response time) + 500 (minimum ITI)
+  return 2250 + ITIs.shift()*1000
  }
 
 
@@ -112,14 +92,49 @@ var getTestFeedback = function() {
 	return '<div class = centerbox><p class = block-text>' + test_feedback_text + '</p></div>'
 }
 
+var getPracticeTrials = function() {
+	var practice = []
+	var trials = jsPsych.randomization.repeat(stims, practice_len/4)
+	for (i=0; i<trials.length; i++) {
+		trials[i]['key_answer'] = trials[i].data.correct_response
+	}
+	practice.push(fixation_block)
+	var practice_block = {
+		type: 'poldrack-categorize',
+		timeline: trials, 
+		is_html: true,
+		choices: choices,
+		timing_stim: 850,
+		timing_response: 1850,
+		correct_text: '<div class = feedbackbox><div style="color:#4FE829"; class = center-text>Correct!</p></div>',
+		incorrect_text: '<div class = feedbackbox><div style="color:red"; class = center-text>Incorrect</p></div>',
+		timeout_message: '<div class = feedbackbox><div class = center-text>Too Slow</div></div>',
+		show_stim_with_feedback: false,
+		timing_feedback_duration: 500,
+		timing_post_trial: 250,
+		on_finish: function(data) {
+			jsPsych.data.addDataToLastTrial({
+				exp_stage: 'practice',
+				trial_num: current_trial,
+			})
+			current_trial += 1
+			console.log('Trial: ' + current_trial +
+              '\nCorrect Response? ' + data.correct + ', RT: ' + data.rt)
+		}
+	}
+	practice.push(practice_block)
+	return practice
+}
+
 /* ************************************ */
 /* Define experimental variables */
 /* ************************************ */
+var practice_repeats = 0
 // task specific variables
 // Define and load images
 var prefix = '/static/experiments/stop_signal/images/'
-var images = [prefix + 'pentagon.png', prefix + 'hourglass.png', prefix + 'tear.png', prefix +
-	'square.png'
+var images = [prefix + 'moon.png', prefix + 'oval.png', prefix + 'rectangle.png', prefix +
+	'trapezoid.png'
 ]
 jsPsych.pluginAPI.preloadImages(images);
 /* Stop signal delay in ms */
@@ -129,8 +144,8 @@ var stop_signal =
 
 /* Instruction Prompt */
 var possible_responses = [
-	["left button", 71],
-	["right button", 66]
+	["index finger", 89],
+	["middle finger", 71]
 ]
 var choices = [possible_responses[0][1], possible_responses[1][1]]
 var correct_responses = jsPsych.randomization.shuffle([possible_responses[0], possible_responses[0],
@@ -155,6 +170,7 @@ var rt_diff_thresh = 75
 var missed_response_thresh = 0.1
 var accuracy_thresh = 0.8
 var stop_thresh = 0.2	
+var practice_len = 12
 var exp_len = 125
 var num_blocks = 3
 var block_len = exp_len/num_blocks
@@ -187,17 +203,26 @@ var stims = [{
 	}
 }]
 
-
-
-//setup test sequence
-trials = jsPsych.randomization.repeat(stims, exp_len/4).slice(0,exp_len).slice(0,125)
-var stop_trials = jsPsych.randomization.repeat(['stop', 'stop', 'go', 'go', 'go'], exp_len /5)
-for (i=0; i<trials.length; i++) {
-	trials[i]['SS_trial_type'] = stop_trials[i]
+// set up stim order based on optimized trial sequence
+var stim_index = [0,0,0,1,0,0,1,0,0,0,1,0,0,0,0,0,1,1,1,1,0,0,0,1,1,0,0,0,0,1,0,1,1,1,1,0,0,1,0,0,0,1,0,0,0,0,0,1,1,1,0,1,1,0,0,0,0,0,1,1,1,0,1,0,1,0,0,1,0,0,0,1,0,1,0,0,0,0,0,1,1,0,0,1,0,0,1,0,0,1,1,1,0,1,0,0,0,0,0,1,0,1,1,0,0,0,1,0,1,0,0,1,0,1,1,1,1,1,0,0,0,0,1,1,0]
+var trials = []
+var go_stims = jsPsych.randomization.repeat(stims, exp_len*0.6 / 4)
+var stop_stims = jsPsych.randomization.repeat(stims, exp_len*0.4 / 4)
+for (var i=0; i<stim_index.length; i++) {
+	var stim = {}
+	if (stim_index[i] == 0) {
+		stim = go_stims.shift()
+		stim['SS_trial_type'] = 'go'
+	} else {
+		stim = stop_stims.shift()
+		stim['SS_trial_type'] = 'stop'
+	} 
+	trials.push(stim)
 }
+
 var blocks = []
 for (b=0; b<num_blocks; b++) {
-	blocks.push(trials.slice(block_len*b, (block_len*b+block_len)))
+	blocks.push(trials.slice(block_len*b, (block_len*(b+1))))
 }
 
 /* ************************************ */
@@ -228,7 +253,10 @@ var start_test_block = {
   data: {
     trial_id: "test_start_block"
   },
-  timing_post_trial: 500
+  timing_post_trial: 500,
+  on_finish: function() {
+  	current_trial = 0
+  }
 };
 
  var end_block = {
@@ -245,15 +273,18 @@ var start_test_block = {
 	timing_post_trial: 0
 };
 
-var instructions_block = {
-	type: 'poldrack-text',
-	data: {
-		trial_id: "instruction"
-	},
-	text: '<div class = centerbox><p class = block-text>Only one key is correct for each shape. The correct keys are as follows:' + prompt_text +
-		'</p><p class = block-text>Do not respond if you see the black star!</p></div>',
-	cont_key: [32],
-	timing_post_trial: 1000
+ var instructions_block = {
+  type: 'poldrack-single-stim',
+  stimulus: '<div class = centerbox><p class = block-text>Only one key is correct for each shape. The correct keys are as follows:' + prompt_text +
+		'</p><p class = block-text>Do not respond if you see the red star!</p><br><p class = block-text>We will start with practice</p></div>',
+  is_html: true,
+  choices: 'none',
+  timing_stim: 15000, 
+  timing_response: 15000,
+  data: {
+    trial_id: "instructions",
+  },
+  timing_post_trial: 0
 };
 
 
@@ -271,34 +302,46 @@ var fixation_block = {
 }
 
 
-/* Initialize 'feedback text' and set up feedback blocks */
-var test_feedback_block = {
-	type: 'poldrack-text',
-	data: {
-		trial_id: "feedback",
-		exp_stage: "test"
-	},
-	timing_response: 180000,
-	cont_key: [13],
-	text: getTestFeedback,
-	on_finish: function() {
-		test_block_data = []
-	}
-};
-
+/* set up feedback blocks */
 var test_feedback_block = {
   type: 'poldrack-single-stim',
   stimulus: getTestFeedback,
   is_html: true,
   choices: 'none',
-  timing_stim: 10000, 
-  timing_response: 10000,
+  timing_stim: 13500, 
+  timing_response: 13500,
   data: {
     trial_id: "test_feedback"
   },
-  timing_post_trial: 500,
+  timing_post_trial: 1000,
   on_finish: function() {
   	test_block_data = []
+  }
+};
+
+// set up practice trials
+var practice_trials = getPracticeTrials()
+var practice_loop = {
+  timeline: practice_trials,
+  loop_function: function(data) {
+    practice_repeats+=1
+    total_trials = 0
+    correct_trials = 0
+    for (var i = 0; i < data.length; i++) {
+      if (data[i].trial_id == 'stim') {
+        total_trials+=1
+        if (data[i].correct == true) {
+          correct_trials+=1
+        }
+      }
+    }
+    console.log('Practice Block Accuracy: ', correct_trials/total_trials)
+    if (correct_trials/total_trials > .75 || practice_repeats == 3) {
+      return false
+    } else {
+      practice_trials = getPracticeTrials()
+      return true
+    }
   }
 };
 
@@ -309,6 +352,7 @@ var test_feedback_block = {
 var stop_signal_experiment = []
 stop_signal_experiment.push(task_setup_block);
 stop_signal_experiment.push(instructions_block);
+stop_signal_experiment.push(practice_loop);
 setup_fmri_intro(stop_signal_experiment, choices)
 
 /* Test blocks */
@@ -341,12 +385,14 @@ for (b = 0; b < num_blocks; b++) {
 			})
 			current_trial += 1
 			test_block_data.push(data)
-			console.log('Trial Num: ', current_trial)
-			console.log('Correct Key? ', correct)
+			console.log('Trial: ' + current_trial +
+              '\nCorrect Response? ' + correct + ', RT: ' + data.rt + ', SSD: ' + data.SS_delay)
 		}
 	}
 	stop_signal_experiment.push(stop_signal_block)
-	stop_signal_experiment.push(test_feedback_block)
+	if ((b+1)<num_blocks) {
+		stop_signal_experiment.push(test_feedback_block)
+	}
 }
 
 stop_signal_experiment.push(end_block)
