@@ -15,7 +15,7 @@ var get_ITI = function() {
 
     return -Math.log(U) / rate;
   }
-  gap = randomExponential(1/2)*500
+  gap = randomExponential(1/2)*200
   if (gap > 10000) {
     gap = 10000
   } else if (gap < 0) {
@@ -23,7 +23,7 @@ var get_ITI = function() {
   } else {
   	gap = Math.round(gap/1000)*1000
   }
-  return 2500 + gap //1500 (stim time) + 500 (minimum ITI)
+  return 2000 + gap //1500 (stim time) + 500 (minimum ITI)
  }
 
 function getRandomInt(min, max) {
@@ -177,12 +177,17 @@ var setNextRound = function() {
 	numLossCards = roundParams[1]
 	lossAmt = roundParams[2]
 	gainAmt = roundParams[3]
-	whichClickInRound = 0
 	cardArray = getCardArray(numCards)
 	unclickedCards = cardArray
 	clickedGainCards = [] //num
 	clickedLossCards = [] //num
+	roundOver = 0
+	roundPoints = 0
+	whichClickInRound = 0
+	whichRound = whichRound + 1
+	lossClicked = false
 }
+
 var turnCards = function(cards) {
 	for (i = 0; i < numCards; i++) {
 		if (whichGainCards.indexOf(i) != -1) {
@@ -203,13 +208,6 @@ var turnOneCard = function(whichCard, win) {
 		document.getElementById("" + whichCard + "").src =
 			'/static/experiments/columbia_card_task_hot/images/chosen.png';
 	}
-}
-
-function doSetTimeout(card_i, delay, points, win) {
-	CCT_timeouts.push(setTimeout(function() {
-		turnOneCard(card_i, win);
-		document.getElementById("current_round").innerHTML = 'Current Round Points: ' + points
-	}, delay));
 }
 
 /* ************************************ */
@@ -250,7 +248,6 @@ var currID = ""
 var numLossCards = ""
 var gainAmt = ""
 var lossAmt = ""
-var CCT_timeouts = []
 var lossClicked = false
 var whichClickInRound = 0
 var whichRound = 1
@@ -266,7 +263,7 @@ var whichLossCards = []
 var prize1 = 0
 var prize2 = 0
 var prize3 = 0
-
+var num_blocks = 0
 
 
 
@@ -319,6 +316,19 @@ var start_test_block = {
 	timing_post_trial: 0
 };
 
+var rest_block = {
+  type: 'poldrack-single-stim',
+  stimulus: '<div class = centerbox><div class = center-text>Take a break!<br>Next run will start in a moment</div></div>',
+  is_html: true,
+  choices: 'none',
+  timing_response: 10000,
+  data: {
+    trial_id: "rest_block"
+  },
+  timing_post_trial: 1000
+};
+
+
 var test_block = {
 	type: 'poldrack-single-stim',
 	stimulus: getRound,
@@ -365,11 +375,6 @@ var ITI_block = {
 	timing_response: get_ITI,
 	on_finish: function() {
 		roundPointsArray.push(roundPoints)
-		roundOver = 0
-		roundPoints = 0
-		whichClickInRound = 0
-		whichRound = whichRound + 1
-		lossClicked = false
 		setNextRound()
 	}
 }
@@ -405,9 +410,11 @@ var columbia_card_task_hot_experiment = [];
 columbia_card_task_hot_experiment.push(instructions_block)
 setup_fmri_intro(columbia_card_task_hot_experiment, choices)
 columbia_card_task_hot_experiment.push(start_test_block);
-for (i = 0; i < ParamsArray.length; i++) {
-	columbia_card_task_hot_experiment.push(test_node);
-	columbia_card_task_hot_experiment.push(ITI_block)
+for (var b=0; b<num_blocks; b++) {
+	for (var i = 0; i < ParamsArray.length/num_blocks; i++) {
+		columbia_card_task_hot_experiment.push(test_node);
+		columbia_card_task_hot_experiment.push(ITI_block)
+	}
 }
 columbia_card_task_hot_experiment.push(payoutTrial);
 columbia_card_task_hot_experiment.push(payout_text);
