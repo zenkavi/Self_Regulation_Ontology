@@ -140,7 +140,7 @@ save_task_data(data_dir, data)
 #demographics_ordinal.csv
 demog_data = extract_experiment(data,'demographics_survey')
 from process_demographics import process_demographics
-demog_data = process_demographics(demog_data, directory, meta_dir)
+demog_data = process_demographics(demog_data, data_dir, meta_dir)
     
 
 health.csv
@@ -154,8 +154,8 @@ meaningful_variables_imputed.csv
 meaningful_variables_imputed_for_task_selection.csv
 meaningful_variables_noDDM.csv
 
-#metadata/
-#references/
+#metadata/ - done
+#references/ - done
 meta_dir = path.join(data_dir,'metadata')
 reference_dir = path.join(data_dir,'references')
 from os import makedirs
