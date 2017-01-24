@@ -166,7 +166,7 @@ def fit_decision_model(df):
     fit_params.add('W', value = .5, min=0, max=1)
     fit_params.add('p', value = 0)
     fit_params.add('B1', value = 3)
-    fit_params.add('B2', value = 3)
+    #fit_params.add('B2', value = 3)
     
     out = lmfit.minimize(get_likelihood, fit_params, method = 'lbfgsb', kws={'df': df})
     lmfit.report_fit(out)
@@ -183,13 +183,14 @@ def gen_data(params, n_subjects=50, W_space=None, p_space=None):
     if W_space == None:
         W_space = numpy.linspace(0,1,5)
     if p_space == None:
-        p_space = numpy.linspace(0,1,5)
+        p_space = numpy.linspace(0,.9,5)
     # generate data
     data = pd.DataFrame()
     sub_id = 1
     for p in p_space:
         for W in W_space:
             params['W'] = W
+            params['p'] = p
             for sub in range(n_subjects):
                 model = Two_Stage_Model(**params)
                 trials = model.simulate(200)

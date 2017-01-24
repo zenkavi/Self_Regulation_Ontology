@@ -16,14 +16,14 @@ var get_ITI = function() {
     return -Math.log(U) / rate;
   }
   gap = randomExponential(1/2)*200
-  if (gap > 10000) {
-    gap = 10000
+  if (gap > 6000) {
+    gap = 6000
   } else if (gap < 0) {
   	gap = 0
   } else {
   	gap = Math.round(gap/1000)*1000
   }
-  return 2000 + gap //1500 (stim time) + 500 (minimum ITI)
+  return 500 + gap //500 (minimum ITI)
  }
 
 function getRandomInt(min, max) {
@@ -84,6 +84,7 @@ var appendTestData = function() {
 	jsPsych.data.addDataToLastTrial({
 		which_round: whichRound,
 		num_click_in_round: whichClickInRound,
+		num_cards: numCards,
 		num_loss_cards: numLossCards,
 		gain_amount: gainAmt,
 		loss_amount: lossAmt,
@@ -250,7 +251,7 @@ var gainAmt = ""
 var lossAmt = ""
 var lossClicked = false
 var whichClickInRound = 0
-var whichRound = 1
+var whichRound = 0
 var roundPoints = 0
 var totalPoints = 0
 var roundOver = 0 //0 at beginning of round, 1 during round, 2 at end of round
@@ -264,7 +265,9 @@ var prize1 = 0
 var prize2 = 0
 var prize3 = 0
 var num_blocks = 0
-
+// timing variables
+var start_time = new Date()
+var task_limit = 720000
 
 
 /* ************************************ */
@@ -273,11 +276,11 @@ var num_blocks = 0
 /* define static blocks */
 var instructions_block = {
   type: 'poldrack-single-stim',
-  stimulus: '<div class = centerbox><div class = center-text>Try to get as many points as possible<br><br>Index Finger: Take Another Card<br><br>Middle Finger: End The Round</div></div>',
+  stimulus: '<div class = centerbox><div class = center-text>Try to get as many points as possible<br><br>The loss amount, the gain amount, and the number of loss cards may change each trial<br><br>Index Finger: Take Another Card<br>Middle Finger: End The Round</div></div>',
   is_html: true,
   choices: 'none',
-  timing_stim: 9500, 
-  timing_response: 9500,
+  timing_stim: 5000, 
+  timing_response: 5000,
   data: {
     trial_id: "instructions",
   },
@@ -329,7 +332,7 @@ var rest_block = {
 };
 
 
-var test_block = {
+var task_block = {
 	type: 'poldrack-single-stim',
 	stimulus: getRound,
 	choices: choices,
@@ -350,8 +353,8 @@ var test_block = {
 	}
 };
 
-var test_node = {
-	timeline: [test_block],
+var task_node = {
+	timeline: [task_block],
 	loop_function: function(data) {
 		if (roundOver == 2) {
 			return false
@@ -377,6 +380,42 @@ var ITI_block = {
 		roundPointsArray.push(roundPoints)
 		setNextRound()
 	}
+}
+
+var rest_block = {
+  type: 'poldrack-single-stim',
+  stimulus: '<div class = centerbox><div class = center-text>Take a break!<br>Next run will start in a moment</div></div>',
+  is_html: true,
+  choices: 'none',
+  timing_response: 10000,
+  data: {
+    trial_id: "rest_block"
+  },
+  timing_post_trial: 1000
+};
+
+var rest_node = {
+    timeline: [rest_block],
+    conditional_function: function(){
+        if(whichRound%44 == 1 && whichRound > 2){
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
+var test_node = {
+  timeline: [task_node, ITI_block, rest_node],
+  loop_function: function(data) {
+    var time_elapsed = new Date() - start_time
+    if (time_elapsed < task_limit && ParamsArray.length>0) {
+      return true
+    } else {
+      return false
+    }
+  },
+  timing_post_trial: 1000
 }
 
 var payout_text = {
@@ -410,12 +449,7 @@ var columbia_card_task_hot_experiment = [];
 columbia_card_task_hot_experiment.push(instructions_block)
 setup_fmri_intro(columbia_card_task_hot_experiment, choices)
 columbia_card_task_hot_experiment.push(start_test_block);
-for (var b=0; b<num_blocks; b++) {
-	for (var i = 0; i < ParamsArray.length/num_blocks; i++) {
-		columbia_card_task_hot_experiment.push(test_node);
-		columbia_card_task_hot_experiment.push(ITI_block)
-	}
-}
+columbia_card_task_hot_experiment.push(test_node)
 columbia_card_task_hot_experiment.push(payoutTrial);
 columbia_card_task_hot_experiment.push(payout_text);
 columbia_card_task_hot_experiment.push(end_block);

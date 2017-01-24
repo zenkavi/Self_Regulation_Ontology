@@ -355,7 +355,6 @@ var curr_placement = jQuery.extend(true, [], problems[problem_i].start_state)
 var reminder_node = {
     timeline: [reminder_block],
     conditional_function: function(){
-        var data = jsPsych.data.getLastTrialData();
         if(problem_i%15 == 0 && problem_i > 0){
             return true;
         } else {
