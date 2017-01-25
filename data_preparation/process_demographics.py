@@ -65,24 +65,28 @@ def get_metadata(demog_items):
     demog_dict={"MeasurementToolMetadata": {"Description": 'Demographics',
             "TermURL": ''}}
     for i in demog_items:
-            r=demog_items[i]
-            itemoptions=r.options
-            itemid='_'.join(r['id'].split('_')[:3])
-            assert itemid not in demog_dict  # check for duplicates
-            demog_dict[itemid]={}
-            demog_dict[itemid]['Description']=r.text
-            demog_dict[itemid]['Levels']={}
-            if itemid in nominalvars:
-                demog_dict[itemid]['Nominal']=True
-            levelctr=0
-            if itemoptions is not None and isinstance(itemoptions, list):
+        r=demog_items[i]
+        itemoptions=r.options
+        itemid='_'.join(r['id'].split('_')[:3])
+        assert itemid not in demog_dict  # check for duplicates
+        demog_dict[itemid]={}
+        demog_dict[itemid]['Description']=r.text
+        demog_dict[itemid]['Levels']={}
+        if itemid in nominalvars:
+            demog_dict[itemid]['Nominal']=True
+        levelctr=0
+        if itemoptions is not None:
+            try: 
+                iter(itemoptions)
                 for i in itemoptions:
                     if not 'value' in i:
                         value=levelctr
                         levelctr+=1
                     else:
                         value=i['value']
-                    demog_dict[itemid]['Levels'][value]=i['text']
+            except:
+               continue 
+            demog_dict[itemid]['Levels'][value]=i['text']
     #rename according to more useful names
     demog_dict_renamed={}
     for k in demog_dict.keys():
