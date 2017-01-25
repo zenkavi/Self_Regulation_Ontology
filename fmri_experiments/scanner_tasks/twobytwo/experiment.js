@@ -188,9 +188,9 @@ for (var t = 0; t < task_switch_types.length; t++) {
   }
 }
 
-var task_switch_trials = jsPsych.randomization.repeat(base_task_switches.slice(4), test_length / 2)
-var cue_stay_trials = jsPsych.randomization.repeat(base_task_switches.slice(0,2), test_length / 4)
-var cue_switch_trials = jsPsych.randomization.repeat(base_task_switches.slice(2,4), test_length / 4)
+var task_switch_trials = jsPsych.randomization.repeat(base_task_switches.slice(4), test_length/2)
+var cue_stay_trials = jsPsych.randomization.repeat(base_task_switches.slice(0,2), test_length/4)
+var cue_switch_trials = jsPsych.randomization.repeat(base_task_switches.slice(2,4), test_length/4)
 
 // set up stim order based on optimized trial sequence
 var stim_index = [1,2,0,1,1,1,1,0,2,0,0,0,0,2,1,2,0,0,2,2,0,2,0,1,1,1,1,0,0,1,2,1,0,0,1,0,2,1,0,0,0,1,2,0,0,0,0,2,0,2,1,1,2,2,0,2,0,0,1,0,2,1,2,0,1,0,0,0,0,0,2,2,2,2,1,0,1,1,0,0,2,0,0,2,0,0,0,1,1,0,1,1,2,0,2,2,2,0,0,0,0,1,0,0,2,2,1,2,2,0,2,0,1,2,0,0,2,0,0,0,0,2,0,1,1,0,1,0,2,0,0,2,2,1,0,1,0,1,0,0,0,0,1,0,0,0,1,2,0,0,0,0,0,2,0,0,2,1,0,1]
@@ -202,6 +202,16 @@ for (var i=0; i<test_length; i++) {
     test_task_switches.push(cue_stay_trials.shift())
   } else {
     test_task_switches.push(cue_switch_trials.shift())
+  }
+  //refill if necessary
+  if (task_switch_trials.length == 0) {
+  	task_switch_trials = jsPsych.randomization.repeat(base_task_switches.slice(4), test_length/2)
+  }
+  if (cue_stay_trials.length == 0) {
+	cue_stay_trials = jsPsych.randomization.repeat(base_task_switches.slice(0,2), test_length/4)
+  }
+  if (cue_switch_trials.length == 0) {
+	cue_switch_trials = jsPsych.randomization.repeat(base_task_switches.slice(2,4), test_length/4)
   }
 }
 

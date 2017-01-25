@@ -241,6 +241,16 @@ for (var i=0; i<stim_index.length; i++) {
 		stim.type = 'ignore'
 	}
 	test_stims.push(stim)
+	// refill if necessary
+	if (go_stims.length == 0) {
+		go_stims = jsPsych.randomization.repeat(stimuli, test_len*0.6 / 4)
+	} 
+	if (stop_stims.length == 0) {
+		stop_stims = jsPsych.randomization.repeat(stimuli.slice(0,2), test_len*0.2 / 2)
+	} 
+	if (ignore_stims.length == 0) {
+		ignore_stims = jsPsych.randomization.repeat(stimuli.slice(2,4), test_len*0.2 / 2)
+	} 
 }
 /* ************************************ */
 /* Set up jsPsych blocks */
@@ -272,7 +282,6 @@ var start_test_block = {
   },
   timing_post_trial: 500,
   on_finish: function() {
-  	current_trial = 0
   	exp_stage = 'test'
   }
 };
@@ -369,6 +378,7 @@ var practice_loop = {
     }
     console.log('Practice Block Accuracy: ', correct_trials/total_trials)
     if (correct_trials/total_trials > .75 || practice_repeats == 3) {
+    	current_trial = 0
       return false
     } else {
       practice_trials = getPracticeTrials()
@@ -403,7 +413,7 @@ for (b = 0; b < num_blocks; b++) {
 		var trial_data = current_stim.stim.data
 
 	    trial_data = $.extend({}, trial_data)
-	    trial_data.condition = stop_trials[i]
+	    trial_data.condition = stop_trial
 		var stop_signal_block = {
 			type: 'stop-signal',
 			stimulus: trial_stim,

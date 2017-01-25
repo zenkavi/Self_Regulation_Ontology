@@ -218,6 +218,13 @@ for (var i=0; i<stim_index.length; i++) {
 		stim['SS_trial_type'] = 'stop'
 	} 
 	trials.push(stim)
+	// refill if necessary
+	if (go_stims.length == 0) {
+		go_stims = jsPsych.randomization.repeat(stimuli, test_len*0.6 / 4)
+	} 
+	if (stop_stims.length == 0) {
+		stop_stims = jsPsych.randomization.repeat(stimuli, test_len*0.4 / 4)
+	} 
 }
 
 var blocks = []
@@ -255,7 +262,7 @@ var start_test_block = {
   },
   timing_post_trial: 500,
   on_finish: function() {
-  	current_trial = 0
+  	exp_stage = 'test'
   }
 };
 
@@ -337,6 +344,7 @@ var practice_loop = {
     }
     console.log('Practice Block Accuracy: ', correct_trials/total_trials)
     if (correct_trials/total_trials > .75 || practice_repeats == 3) {
+    	current_trial = 0
       return false
     } else {
       practice_trials = getPracticeTrials()
