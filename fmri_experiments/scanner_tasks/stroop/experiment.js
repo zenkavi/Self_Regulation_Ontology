@@ -150,8 +150,8 @@ var incongruent_stim = [{
 var exp_len = 96
 var practice_len = 12
 var stims = congruent_stim.concat(incongruent_stim)
-congruent_stim = jsPsych.randomization.repeat(congruent_stim, (exp_len/2)/3)
-incongruent_stim = jsPsych.randomization.repeat(incongruent_stim, (exp_len/2)/6)
+var congruent_stim = jsPsych.randomization.repeat(congruent_stim, (exp_len/2)/3)
+var incongruent_stim = jsPsych.randomization.repeat(incongruent_stim, (exp_len/2)/6)
 
 // set up stim order based on optimized trial sequence
 var stim_index = [0,0,0,0,0,1,1,1,1,1,0,0,0,1,1,1,0,1,1,0,1,1,0,0,1,0,1,1,1,1,1,0,0,1,0,0,0,0,1,0,1,1,0,1,1,0,0,0,0,1,1,0,1,1,1,0,0,1,1,0,0,0,0,0,1,1,1,0,1,0,0,0,0,1,0,1,1,1,0,1,0,0,1,1,1,0,0,0,0,0,1,0,1,1,1,1]
@@ -161,6 +161,12 @@ for (var i=0; i<exp_len; i++) {
 		test_stims.push(congruent_stim.shift())
 	} else {
 		test_stims.push(incongruent_stim.shift())
+	}
+	if (congruent_stim.length == 0) {
+		congruent_stim = jsPsych.randomization.repeat(congruent_stim, (exp_len/2)/3)
+	}
+	if (incongruent_stim.length == 0) {
+		incongruent_stim = jsPsych.randomization.repeat(incongruent_stim, (exp_len/2)/6)
 	}
 }
 

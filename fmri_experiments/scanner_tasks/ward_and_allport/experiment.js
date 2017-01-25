@@ -312,6 +312,12 @@ for (var i=0; i<stim_index.length; i++) {
   } else {
     test_problems.push(without_problems.shift())
   }
+  if (with_problems.length==0) {
+  	with_problems = jsPsych.randomization.shuffle(test_problems.slice(0,12).concat(test_problems.slice(0,12)))
+  }
+  if (without_problems.length==0) {
+  	without_problems = jsPsych.randomization.shuffle(test_problems.slice(0,12).concat(test_problems.slice(12)))
+  }
 }
 
 // set up practice
@@ -355,7 +361,6 @@ var curr_placement = jQuery.extend(true, [], problems[problem_i].start_state)
 var reminder_node = {
     timeline: [reminder_block],
     conditional_function: function(){
-        var data = jsPsych.data.getLastTrialData();
         if(problem_i%15 == 0 && problem_i > 0){
             return true;
         } else {

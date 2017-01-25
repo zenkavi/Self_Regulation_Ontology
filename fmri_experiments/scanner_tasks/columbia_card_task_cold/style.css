@@ -26,7 +26,7 @@
  top:20%;
  left:50%;
  margin-right:50%;
- transform: translate(-47%,85%);
+ transform: translate(-47%,76%);
  background-color: black;
 }
 
@@ -73,7 +73,7 @@
 }
 
 .card_image {
-   height: 9vw;
+   height: 8vw;
 }
 
 
@@ -151,30 +151,6 @@
   border-color: black;
 }
 
-.buttonbox {
-  width:32vw;
-  height: 2vw;
-  position:absolute;
-  top:65%;
-  left:50%;
-  margin-right:-50%;
-  transform: translate(-50%,0%);
-  border-style: solid;
-  border-color: black;
-}
-
-.buttonbox2 {
-  width:7vw;
-  height: 2vw;
-  position:absolute;
-  top:65%;
-  left:65%;
-  margin-right:-50%;
-  transform: translate(45%,0%);
-  border-style: solid;
-  border-color: black;
-}
-
 .CCT-btn {
   font-size:35px;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -199,7 +175,7 @@
   width:60vw;
   height: 3vw;
   position:absolute;
-  top:76%;
+  top:65%;
   left:50%;
   margin-right:0%;
   transform: translate(-50%,0%);

@@ -85,6 +85,7 @@ jsPsych.pluginAPI.preloadImages(images)
 
 /* set up stim: location (2) * cue (3) * direction (2) * condition (2) */
 var base_practice_stim = []
+var base_test_stim = [[],[],[],[],[],[]]
 var test_stim = [[],[],[],[],[],[]] // track each cue/condition separately
 var locations = ['up', 'down']
 var cues = ['nocue', 'center', 'spatial']
@@ -119,20 +120,25 @@ for (ci = 0; ci < cues.length; ci++) {
 					}
 				}
 				base_practice_stim.push(stim)
-				test_stim[ci*2+coni].push(stim)
+				base_test_stim[ci*2+coni].push(stim)
 			}
 		}
 	}
 }
 
 for (var i=0; i<test_stim.length; i++) {
-	test_stim[i] = jsPsych.randomization.repeat(test_stim[i], block_length*num_blocks/24)
+	test_stim[i] = jsPsych.randomization.repeat(base_test_stim[i], block_length*num_blocks/24)
 }
 // set up stim order based on optimized trial sequence
 var stim_index = [3,5,4,2,3,1,1,0,1,3,5,5,3,2,2,5,1,4,5,3,0,2,0,3,3,1,5,3,4,4,0,2,4,1,2,1,1,0,1,5,3,2,4,5,0,0,2,5,2,0,2,1,5,3,4,1,0,2,2,3,2,5,4,2,0,4,3,5,1,3,5,0,4,4,4,5,5,2,3,1,4,0,1,2,2,0,5,4,4,1,4,2,3,1,0,1,5,2,1,1,3,5,1,4,0,4,1,2,5,3,1,2,4,0,4,0,4,3,2,1,5,5,5,3,0,0,0,0,5,2,4,4,2,3,0,4,5,1,3,1,2,4,5,2,4,0,2,0,1,1,4,0,0,3,3,4,1,2,1,0,2,4,4,3,3,0,1,1,1,0,4,5,0,4,5,5,2,4,3,5,5,5,2,3,0,3,0,1,1,2,0,1]
 var ordered_stim = []
 for (var i=0; i<stim_index.length; i++) {
-	ordered_stim.push(test_stim[stim_index[i]].shift())
+	var stim = test_stim[stim_index[i]].shift()
+	ordered_stim.push(stim)
+	//refill if necessary
+	if (test_stim[stim_index[i]].length == 0) {
+		test_stim[stim_index[i]] = jsPsych.randomization.repeat(base_test_stim[stim_index[i]], block_length*num_blocks/24)
+	}
 }
 
 /* set up repeats for test blocks */
@@ -294,17 +300,16 @@ var trial_num = 0
 for (b = 0; b < blocks.length; b++) {
 	attention_network_task_experiment.push(test_intro_block);
 	var block = blocks[b]
-	for (i = 0; i < block.data.length; i++) {
-		var trial_num = trial_num + 1
+	for (i = 0; i < block.length; i++) {
 
-		if (block.data[i].cue == 'nocue') {
+		if (block[i].data.cue == 'nocue') {
 			attention_network_task_experiment.push(no_cue)
-		} else if (block.data[i].cue == 'center') {
+		} else if (block[i].data.cue == 'center') {
 			attention_network_task_experiment.push(center_cue)
 		} else {
 			var spatial_cue = {
 				type: 'poldrack-single-stim',
-				stimulus: '<div class = centerbox><div class = ANT_' + block.data[i].flanker_location +
+				stimulus: '<div class = centerbox><div class = ANT_' + block[i].data.flanker_location +
 					'><div class = ANT_text>*</p></div></div>',
 				is_html: true,
 				choices: 'none',
@@ -321,13 +326,12 @@ for (b = 0; b < blocks.length; b++) {
 		}
 		attention_network_task_experiment.push(fixation)
 
-		block.data[i].trial_num = trial_num
 		var ANT_trial = {
 			type: 'poldrack-single-stim',
-			stimulus: block.stimulus[i],
+			stimulus: block[i].stimulus,
 			is_html: true,
 			choices: choices,
-			data: block.data[i],
+			data: block[i].data,
 			timing_response: get_ITI,
 			timing_stim: 1700,
 			response_ends_trial: false,
@@ -339,8 +343,10 @@ for (b = 0; b < blocks.length; b++) {
               '\nCorrect Response? ' + correct + ', RT: ' + data.rt)
 				jsPsych.data.addDataToLastTrial({ 
 					correct: correct,
-					exp_stage: exp_stage
+					exp_stage: exp_stage,
+					trial_num: trial_num
 				})
+				trial_num = trial_num + 1
 			}
 		}
 		attention_network_task_experiment.push(ANT_trial)
