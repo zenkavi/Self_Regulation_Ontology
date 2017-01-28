@@ -5,22 +5,22 @@ import sys
 
 from selfregulation.utils.utils import get_info
 
-try:
-    data_dir=get_info('data_directory')
-except Exception:
-    data_dir=path.join(get_info('base_directory'),'Data')
+
+data_dir='/scratch/users/zenkavi/Self_Regulation_Ontology/Data/Retest_Data_NewApi'
 
 #parse arguments
 exp_id = sys.argv[1]
 data = sys.argv[2]
-if len(sys.argv) > 3:
-    out_dir = sys.argv[3]
-else:
-    out_dir = data_dir
+#if len(sys.argv) > 3:
+#    out_dir = sys.argv[3]
+#else:
+ #   out_dir = data_dir
+
+ out_dir = '/scratch/users/zenkavi/Self_Regulation_Ontology/Data/Retest_Data_NewApi/batch_output'
 
 #discovery
 #load Data
-dataset = pd.read_json(path.join(data_dir,'mturk_' + data + '_data_post.json'))
+dataset = pd.read_json(path.join(data_dir,'mturk_' + data + '_data_manual_post.json'))
 
 #calculate DVs
 DV_df, valence_df, description = get_exp_DVs(dataset, exp_id, use_group_fun = True)

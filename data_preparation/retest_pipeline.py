@@ -3,7 +3,7 @@ sys.path.append('/Users/zeynepenkavi/Dropbox/PoldrackLab/expfactory-analysis')
 sys.path.append('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/data_preparation')
 from expanalysis.experiments.jspsych import calc_time_taken, get_post_task_responses
 from expanalysis.experiments.processing import post_process_data, extract_DVs, extract_experiment
-from expanalysis.results import get_filters, get_fields
+from expanalysis.results import get_filters, get_result_fields
 import json
 import numpy as np
 from os import path
@@ -16,9 +16,6 @@ from selfregulation.utils.utils import get_info
 #set token and data directory
 token = get_info('expfactory_token', infile='/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Self_Regulation_Retest_Settings_Local_NewApi.txt')
 data_dir=get_info('retest_data_directory', infile='/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Self_Regulation_Retest_Settings_Local_NewApi.txt')
-
-# Setup options
-pd.set_option('display.width', 200)
 
 # Set up filters
 filters = get_filters()
@@ -59,7 +56,7 @@ battery = 'Self Regulation Retest Battery'
 url = 'http://www.expfactory.org/new_api/results/62/'
 file_name = 'mturk_retest_data_manual_newapi.json'
 
-fields = get_fields()
+fields = get_result_fields()
 
 # Create results object
 results = Result(access_token, filters = filters, url = url)
@@ -88,10 +85,14 @@ json.dump(worker_lookup, open(path.join(data_dir, 'retest_worker_lookup.json'),'
 # record subject completion statistics
 (data.groupby('worker_id').count().finishtime).to_json(path.join(data_dir, 'retest_worker_counts.json'))
 
+#load data (in case anything broke)
+#data = pd.read_json(path.join(data_dir, 'mturk_retest_data_manual_newapi.json'))
+
 # add a few extras
 convert_date(data)
 bonuses = get_bonuses(data)
 calc_time_taken(data)
+# might get error
 get_post_task_responses(data)   
 calc_trial_order(data)
 
