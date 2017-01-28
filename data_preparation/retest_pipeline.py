@@ -95,7 +95,7 @@ calc_time_taken(data)
 get_post_task_responses(data)   
 calc_trial_order(data)
 
-# save data (gives an error but works?)
+# save data (gives an error but works? - NO EMPTY FILE. FIGURE OUT!)
 file_name = 'mturk_retest_data_manual_extras.json'
 data.to_json(data_dir + file_name)
 
@@ -183,6 +183,8 @@ readme_lines += ["items.csv.gz: gzipped csv of all item information across surve
 readme_lines += ["subject_x_items.csv: reshaped items.csv such that rows are subjects and columns are individual items\n\n"]
 readme_lines += ["Individual Measures: directory containing gzip compressed files for each individual measures\n\n"]    
 
+#continue going over save_data once Sherlock is done
+
 #meaningful_variables.csv
 #meaningful_variables_EZ.csv
 #meaningful_variables_clean.csv
@@ -210,8 +212,8 @@ readme_lines += ["Individual Measures: directory containing gzip compressed file
 #taskdata_imputed_for_task_selection.csv
 #variables_exhaustive.csv
 
-# DV_valence.csv:
-from expanalysis.experiments.processing import get_battery_DVs
-DV_df, valence_df = get_battery_DVs(data)
-DV_df.to_json(path.join(data_dir, 'mturk_' + sample + '_DV.json'))
-valence_df.to_json(path.join(data_dir, 'mturk_' + sample + '_DV_valence.json'))    
+# DV_valence.csv: (to be ran on Sherlock)
+#from expanalysis.experiments.processing import get_battery_DVs
+#DV_df, valence_df = get_battery_DVs(data)
+#DV_df.to_json(path.join(data_dir, 'mturk_' + sample + '_DV.json'))
+#valence_df.to_json(path.join(data_dir, 'mturk_' + sample + '_DV_valence.json'))    
