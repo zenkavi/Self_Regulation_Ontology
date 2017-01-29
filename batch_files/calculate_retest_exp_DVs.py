@@ -1,5 +1,5 @@
 import sys
-sys.path.append('/Users/zeynepenkavi/Dropbox/PoldrackLab/expfactory-analysis')
+sys.path.append('/scratch/users/zenkavi/expfactory-analysis')
 from expanalysis.experiments.processing import get_exp_DVs
 from os import path
 import pandas as pd
