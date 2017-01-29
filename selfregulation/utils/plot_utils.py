@@ -86,23 +86,25 @@ def DDM_plot(v,t,a, sigma = .1, n = 10, plot_n = 15, file = None):
     return fig, trajectories
 
 
-def dendroheatmap(df, labels = True):
+def dendroheatmap(df, labels = True, label_fontsize = None):
     """
     :df: plot hierarchical clustering and heatmap
     """
     #clustering
-    
     row_clusters = linkage(df.values, method='ward', metric='euclidean')    
     #dendrogram
     row_dendr = dendrogram(row_clusters, labels=df.columns, no_plot = True)
     df_rowclust = df.ix[row_dendr['leaves'],row_dendr['leaves']]
+    #plotting
+    if label_fontsize == None:
+        label_fontsize = len(df_rowclust)/22
     sns.set_style("white")
     fig = plt.figure(figsize = [16,16])
     ax = fig.add_axes([.1,.2,.6,.6]) 
     cax = fig.add_axes([0.02,0.3,0.02,0.4]) 
     sns.heatmap(df_rowclust, ax = ax, cbar_ax = cax, xticklabels = False)
     ax.yaxis.tick_right()
-    ax.set_yticklabels(df_rowclust.columns[::-1], rotation=0, rotation_mode="anchor", fontsize = len(df_rowclust)/22, visible = labels)
+    ax.set_yticklabels(df_rowclust.columns[::-1], rotation=0, rotation_mode="anchor", fontsize = label_fontsize, visible = labels)
     ax.set_xticklabels(df_rowclust.columns, rotation=-90, rotation_mode = "anchor", ha = 'left')
     ax1 = fig.add_axes([.1,.8,.6,.2])
     plt.axis('off')
@@ -110,12 +112,11 @@ def dendroheatmap(df, labels = True):
                            count_sort='ascending', ax = ax1) 
     return fig, row_dendr['leaves']
 
-def dendroheatmap_left(df, labels = True):
+def dendroheatmap_left(df, labels = True, label_fontsize = 'large'):
     """
     :df: plot hierarchical clustering and heatmap, dendrogram on left
     """
     #clustering
-    
     row_clusters = linkage(df.values, method='ward', metric='euclidean')    
     #dendrogram
     row_dendr = dendrogram(row_clusters, labels=df.columns, no_plot = True)
@@ -126,7 +127,7 @@ def dendroheatmap_left(df, labels = True):
     cax = fig.add_axes([0.21,0.25,0.5,0.02]) 
     sns.heatmap(df_rowclust, ax = ax, cbar_ax = cax, cbar_kws = {'orientation': 'horizontal'}, xticklabels = False)
     ax.yaxis.tick_right()
-    ax.set_yticklabels(df_rowclust.columns[::-1], rotation=0, rotation_mode="anchor", fontsize = 'large', visible = labels)
+    ax.set_yticklabels(df_rowclust.columns[::-1], rotation=0, rotation_mode="anchor", fontsize = label_fontsize, visible = labels)
     ax.set_xticklabels(df_rowclust.columns, rotation=-90, rotation_mode = "anchor", ha = 'left')
     ax1 = fig.add_axes([.01,.3,.15,.62])
     plt.axis('off')
