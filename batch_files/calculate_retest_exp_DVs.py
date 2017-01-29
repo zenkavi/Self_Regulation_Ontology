@@ -14,7 +14,7 @@ data = sys.argv[2]
 #else:
  #   out_dir = data_dir
 
- out_dir = '/scratch/users/zenkavi/Self_Regulation_Ontology/Data/Retest_Data_NewApi/batch_output'
+out_dir = '/scratch/users/zenkavi/Self_Regulation_Ontology/Data/Retest_Data_NewApi/batch_output'
 
 #discovery
 #load Data
