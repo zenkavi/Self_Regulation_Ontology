@@ -1,0 +1,13 @@
+#!/bin/bash
+#SBATCH --job-name=calculate_retest_DV_digit_span
+#SBATCH --output=.out/calculate_retest_DV_digit_span.job.out
+#SBATCH --error=.err/calculate_retest_DV_digit_span.job.err
+#SBATCH --time=00:10:00
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=8000
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=zenkavi@stanford.edu
+/home/zenkavi/.bash_profile
+python calculate_retest_exp_DVs.py digit_span retest
