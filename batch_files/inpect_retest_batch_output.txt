@@ -9,6 +9,7 @@ find . -not -empty -print | sort
 ./calculate_retest_DV_directed_forgetting.job.err
 ./calculate_retest_DV_discount_titrate.job.err
 ./calculate_retest_DV_dot_pattern_expectancy.job.err
+./calculate_retest_DV_local_global_letter.job.err
 ./calculate_retest_DV_motor_selective_stop_signal.job.err
 ./calculate_retest_DV_recent_probes.job.err
 ./calculate_retest_DV_simon.job.err
@@ -31,10 +32,12 @@ find . -name "*.out" -exec awk 'END { if (NR > 1) print FILENAME }' {} \;
 
 ./calculate_retest_DV_time_perspective_survey.job.out
 ./calculate_retest_DV_stim_selective_stop_signal.job.out
+./calculate_retest_DV_threebytwo.job.out
 ./calculate_retest_DV_stroop.job.out
 ./calculate_retest_DV_choice_reaction_time.job.out
 ./calculate_retest_DV_directed_forgetting.job.out
 ./calculate_retest_DV_motor_selective_stop_signal.job.out
+./calculate_retest_DV_local_global_letter.job.out
 ./calculate_retest_DV_shape_matching.job.out
 ./calculate_retest_DV_adaptive_n_back.job.out
 ./calculate_retest_DV_selection_optimization_compensation_survey.job.out
@@ -48,7 +51,7 @@ find . -name "*.out" -exec awk 'END { if (NR > 1) print FILENAME }' {} \;
 ./calculate_retest_DV_two_stage_decision.job.out
 
 CONCLUSIONS: 
-time_perspective_survey: future score failed for all subjects; redo
+time_perspective_survey: future score failed for all subjects
 
 stim_selective_stop_signal: Saving condition model failed
 
@@ -62,6 +65,8 @@ directed_forgetting DV calculation failed for worker: s071
 directed_forgetting DV calculation failed for worker: s099
 
 motor_selective_stop_signal: Saving condition model failed
+
+local_global_letter: Saving condition model failed
 
 shape_matching: still going
 
