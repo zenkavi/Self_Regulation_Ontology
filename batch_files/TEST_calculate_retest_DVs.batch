@@ -3,9 +3,6 @@
 #SBATCH --output=.out/calculate_retest_DV_digit_span.job.out
 #SBATCH --error=.err/calculate_retest_DV_digit_span.job.err
 #SBATCH --time=00:10:00
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1
-#SBATCH --mem=8000
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=zenkavi@stanford.edu
 #SBATCH -p dev
