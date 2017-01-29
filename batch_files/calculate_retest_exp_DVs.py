@@ -1,10 +1,8 @@
+import sys
+sys.path.append('/Users/zeynepenkavi/Dropbox/PoldrackLab/expfactory-analysis')
 from expanalysis.experiments.processing import get_exp_DVs
 from os import path
 import pandas as pd
-import sys
-
-from selfregulation.utils.utils import get_info
-
 
 data_dir='/scratch/users/zenkavi/Self_Regulation_Ontology/Data/Retest_Data_NewApi'
 
