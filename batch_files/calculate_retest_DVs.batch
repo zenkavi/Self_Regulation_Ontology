@@ -9,4 +9,4 @@
 #SBATCH --mem=16000
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=zenkavi@stanford.edu
-python calculate_exp_DVs.py {EXP_ID} retest
+python calculate_retest_exp_DVs.py {EXP_ID} retest
