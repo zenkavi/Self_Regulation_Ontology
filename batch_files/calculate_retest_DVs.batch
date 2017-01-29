@@ -10,4 +10,4 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=zenkavi@stanford.edu
 /home/zenkavi/.bash_profile
-python calculate_retest_exp_DVs.py {EXP_ID} retest
+python calculate_retest_exp_DVs.py digit_span retest
