@@ -2,10 +2,10 @@ import glob
 import os
 import pandas
 
-#discovery
+#retest
 DVs = pandas.DataFrame()
 valence = pandas.DataFrame()
-for exp_file in glob.glob(os.path.join('batch_output', '*retest*DV.json')):
+for exp_file in glob.glob(os.path.join('/scratch/users/zenkavi/Self_Regulation_Ontology/Data/Retest_Data_NewApi/batch_output', '*retest*DV.json')):
     base_name = os.path.basename(exp_file)
     exp = base_name.replace('_retest_DV.json','')
     print('Retest: Extracting %s DVs' % exp)
