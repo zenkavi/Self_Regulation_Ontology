@@ -258,14 +258,37 @@ readme_lines += ["meaningful_variables_clean.csv: same as meaningful_variables.c
 selected_variables_reference = valence_df
 selected_variables_reference.loc[selected_variables.columns].to_csv(path.join(reference_dir, 'selected_variables_reference.csv'))
 
+#meaningful_variables_imputed.csv
 # imputed data
 from selfregulation.utils.r_to_py_utils import missForest
 selected_variables_imputed, error = missForest(selected_variables_clean)
 selected_variables_imputed.to_csv(path.join(data_dir, 'meaningful_variables_imputed.csv'))
 readme_lines += ["meaningful_variables_imputed.csv: meaningful_variables_clean.csv after imputation with missForest\n\n"]
 
-#meaningful_variables_imputed.csv
+#taskdata.csv
+#taskdata_clean.csv
+#taskdata_imputed.csv
+#taskdata_imputed_for_task_selection.csv
+# save task data subset
+task_data = drop_vars(selected_variables, ['survey'], saved_vars = ['holt','cognitive_reflection'])
+task_data.to_csv(path.join(data_dir, 'taskdata.csv'))
+task_data_clean = drop_vars(selected_variables_clean, ['survey'], saved_vars = ['holt','cognitive_reflection'])
+task_data_clean.to_csv(path.join(data_dir, 'taskdata_clean.csv'))
+task_data_imputed = drop_vars(selected_variables_imputed, ['survey'], saved_vars = ['holt','cognitive_reflection'])
+task_data_imputed.to_csv(path.join(data_dir, 'taskdata_imputed.csv'))
+readme_lines += ["taskdata*.csv: taskdata are the same as meaningful_variables excluded surveys. Note that imputation is performed on the entire dataset including surveys\n\n"]
+
+
 #meaningful_variables_imputed_for_task_selection.csv
+# create task selection dataset
+task_selection_data = drop_vars(selected_variables_imputed, ['stop_signal.SSRT_low', '^stop_signal.proactive'])
+task_selection_data.to_csv(path.join(data_dir,'meaningful_variables_imputed_for_task_selection.csv'))
+task_selection_taskdata = drop_vars(task_data_imputed, ['stop_signal.SSRT_low', '^stop_signal.proactive'])
+task_selection_taskdata.to_csv(path.join(data_dir,'taskdata_imputed_for_task_selection.csv'))
+        
+#save selected variables
+selected_variables_reference.loc[task_selection_data.columns].to_csv(path.join(reference_dir, 'selected_variables_for_task_selection_reference.csv'))
+
 #short_DV_valence.csv
 #short_meaningful_variables.csv
 #short_meaningful_variables_EZ.csv
@@ -280,9 +303,18 @@ readme_lines += ["meaningful_variables_imputed.csv: meaningful_variables_clean.c
 #short_taskdata_imputed.csv
 #short_taskdata_imputed_for_task_selection.csv
 #short_variables_exhaustive.csv
-#taskdata.csv
-#taskdata_clean.csv
-#taskdata_imputed.csv
-#taskdata_imputed_for_task_selection.csv
+from glob import glob
+files = glob(path.join(data_dir,'*csv'))
+files = [f for f in files if not any(i in f for i in ['demographic','health','alcohol_drug'])]
+from selfregulation.utils.data_preparation_utils import convert_var_names
+for f in files:
+    name = f.split('/')[-1]
+    df = pd.DataFrame.from_csv(f)
+    convert_var_names(df)
+    df.to_csv(path.join(data_dir, 'short_' + name))
+    print('short_' + name)
+readme_lines += ["short*.csv: short versions are the same as long versions with variable names shortened using variable_name_lookup.csv\n\n"]
 
-
+readme = open(path.join(data_dir, "README.txt"), "w")
+readme.writelines(readme_lines)
+readme.close()
