@@ -62,8 +62,4 @@ for task in ['attention_network_task', 'dot_pattern_expectancy',
 	        seaborn.plt.subplot(3,2,i+1)
 	        seaborn.plt.hist(block)
 	    f.suptitle(task + ' Block Histogram', fontsize = 16)
-<<<<<<< HEAD
 	    f.savefig(os.path.join(design_dir,'task_block_histogram.pdf'))
-=======
-	    f.savefig(os.path.join(design_dir,'task_block_histogram.pdf'))
->>>>>>> 36462a701c6f8563893d48b6577e0ebcf10fc81c
