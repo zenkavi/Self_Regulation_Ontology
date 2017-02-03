@@ -19,7 +19,8 @@ def GPArotation(data, method='varimax', normalize=True):
     rotated_data = pd.DataFrame(data = np.matrix(rotated_data), index=data.index, columns=data.columns)
     return rotated_data
 
-def psychFA(data, n_components, return_attrs=['BIC', 'RMSEA'], verbose=False):
+def psychFA(data, n_components, return_attrs=['BIC', 'RMSEA'], rotate='oblimin',
+	method='ml', verbose=False):
     def get_attr(attr):
         try:
             index = list(fa.names).index(attr)
@@ -30,7 +31,7 @@ def psychFA(data, n_components, return_attrs=['BIC', 'RMSEA'], verbose=False):
         except ValueError:
             print('Did not pass a valid attribute')
     psych = importr('psych')
-    fa = psych.fa(data, n_components)
+    fa = psych.fa(data, n_components, rotate=rotate, fm='minres')
     attr_dic = {}
     # loadings are roughly equivalent to the correlation between each variable
     # and the factor scores
