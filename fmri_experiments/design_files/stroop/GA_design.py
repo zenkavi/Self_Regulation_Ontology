@@ -11,7 +11,7 @@ EXP = geneticalgorithm.experiment(
     n_stimuli = 2, 
     n_trials = 96, 
     duration = 212, 
-    resolution = 0.1, 
+    resolution = 0.068, 
     stim_duration = 1.5, 
     t_pre = 0.0, 
     t_post = 0.5, 
@@ -21,7 +21,7 @@ EXP = geneticalgorithm.experiment(
     ITImodel = 'exponential', 
     ITImin = 0.0, 
     ITImean = 0.2, 
-    ITImax = 10.0, 
+    ITImax = 6.0, 
     restnum = 0, 
     restdur = 0.0) 
 

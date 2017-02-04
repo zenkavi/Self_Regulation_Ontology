@@ -183,7 +183,7 @@ def gen_data(params, n_subjects=50, W_space=None, p_space=None):
     if W_space == None:
         W_space = numpy.linspace(0,1,5)
     if p_space == None:
-        p_space = numpy.linspace(0,.9,5)
+        p_space = numpy.linspace(0,.3,5)
     # generate data
     data = pd.DataFrame()
     sub_id = 1

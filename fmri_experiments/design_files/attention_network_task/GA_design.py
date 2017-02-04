@@ -5,14 +5,13 @@ design_i = sys.argv[1]
 
 EXP = geneticalgorithm.experiment( 
     TR = 0.68, 
-    P = [1.0/6,1.0/6,1.0/6,1.0/6,1.0/6,1.0/6], 
-    C = [[0.25,0.25,-0.25,-0.25,0,0],[-0.25,-0.25,0,0,0.25,0.25],
-        [1.0/6,-1.0/6,1.0/6,-1.0/6,1.0/6,-1.0/6]], 
+    P = [.25,.25,.25,.25], 
+    C = [[0.5,0.5,-0.5,-0.5],[-0.5,0.5,-0.5,0.5]],
     rho = 0.3, 
-    n_stimuli = 6, 
-    n_trials = 192, 
-    duration = 550, 
-    resolution = 0.1, 
+    n_stimuli = 4, 
+    n_trials = 128, 
+    duration = 368, 
+    resolution = 0.068, 
     stim_duration = 2.2, 
     t_pre = 0.0, 
     t_post = .4, 
@@ -22,7 +21,7 @@ EXP = geneticalgorithm.experiment(
     ITImodel = 'exponential', 
     ITImin = 0.0, 
     ITImean = 0.26, 
-    ITImax = 10.0, 
+    ITImax = 6.0, 
     restnum = 0, 
     restdur = 0.0) 
 
