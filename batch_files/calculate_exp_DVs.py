@@ -3,8 +3,7 @@ from os import path
 import pandas as pd
 import sys
 
-sys.path.append('../utils')
-from utils import get_info
+from selfregulation.utils.utils import get_info
 
 try:
     data_dir=get_info('data_directory')

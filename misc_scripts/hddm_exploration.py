@@ -3,10 +3,8 @@ import numpy as np
 import pandas as pd
 from scipy.stats import ttest_ind, ttest_1samp
 import seaborn as sns
-import sys
-sys.path.append('../utils')
-from utils import get_behav_data
-from data_preparation_utils import drop_vars
+from selfregulation.utils.utils import get_behav_data
+from selfregulation.utils.data_preparation_utils import drop_vars
 
 
 DV_df = get_behav_data(file = 'variables_exhaustive.csv')

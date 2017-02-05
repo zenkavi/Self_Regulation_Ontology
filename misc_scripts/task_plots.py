@@ -1,8 +1,6 @@
 import os
 import numpy as np
-import sys
-sys.path.append('../utils')
-from utils import get_behav_data
+from selfregulation.utils.utils import get_behav_data
 import seaborn as sns
 
 #Make Plot Directy if it doesn't exist

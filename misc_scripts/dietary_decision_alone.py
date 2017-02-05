@@ -5,9 +5,8 @@ import numpy
 import pandas 
 import statsmodels.formula.api as smf
 import statsmodels.api as sm
-import sys
-sys.path.append('../utils')
-from utils import get_behav_data
+from selfregulation.utils.utils import get_behav_data
+
 
 def group_decorate(group_fun = None):
     """ Group decorate is a wrapper for multi_worker_decorate to pass an optional group level

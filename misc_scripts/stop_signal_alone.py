@@ -7,9 +7,8 @@ Created on Wed Nov 23 14:56:35 2016
 from math import floor, ceil
 import numpy
 import pandas as pd
-import sys
-sys.path.append('../utils')
-from utils import get_behav_data
+from selfregulation.utils.utils import get_behav_data
+
 
 
 df = get_behav_data(dataset = 'Discovery_11-20-2016', file = 'Individual_Measures/stop_signal.csv.gz')

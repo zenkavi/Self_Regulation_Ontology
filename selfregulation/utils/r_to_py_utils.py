@@ -1,11 +1,11 @@
 import numpy as np
 import pandas as pd
 import readline
-import rpy2.robjects as robjects
+import rpy2.robjects
+from rpy2.robjects import pandas2ri, Formula
 from rpy2.robjects.packages import importr
-from rpy2.robjects import pandas2ri
-
 pandas2ri.activate()
+
 def missForest(data):
     missForest = importr('missForest')
     data_complete, error = missForest.missForest(data)
@@ -19,7 +19,8 @@ def GPArotation(data, method='varimax', normalize=True):
     rotated_data = pd.DataFrame(data = np.matrix(rotated_data), index=data.index, columns=data.columns)
     return rotated_data
 
-def psychFA(data, n_components, return_attrs = ['BIC', 'RMSEA']):
+def psychFA(data, n_components, return_attrs=['BIC', 'RMSEA'], rotate='oblimin',
+	method='ml', verbose=False):
     def get_attr(attr):
         try:
             index = list(fa.names).index(attr)
@@ -30,10 +31,36 @@ def psychFA(data, n_components, return_attrs = ['BIC', 'RMSEA']):
         except ValueError:
             print('Did not pass a valid attribute')
     psych = importr('psych')
-    fa = psych.fac(data, n_components)
+    fa = psych.fa(data, n_components, rotate=rotate, fm='minres')
     attr_dic = {}
+    # loadings are roughly equivalent to the correlation between each variable
+    # and the factor scores
     attr_dic['loadings'] = np.matrix(get_attr('loadings'))
+    # scores are the the factors
+    attr_dic['scores'] = np.matrix(get_attr('scores'))
+    # weights are the "mixing matrix" such that the final data is
+    # S * W
+    attr_dic['weights'] = np.matrix(get_attr('weights'))
     for attr in return_attrs:
         attr_dic[attr] = get_attr(attr)
-    return attr_dic
+    if verbose:
+        print(fa)
+    return fa, attr_dic
     
+def glmer(data, formula):
+    base = importr('base')
+    lme4 = importr('lme4')
+    rs = lme4.glmer(Formula(formula), data, family = 'binomial')
+    
+    fixed_effects = lme4.fixed_effects(rs)
+    fixed_effects = {k:v for k,v in zip(fixed_effects.names, list(fixed_effects))}
+                                  
+    random_effects = lme4.random_effects(rs)[0]
+    random_effects = pd.DataFrame([list(lst) for lst in random_effects], index = list(random_effects.colnames)).T
+    print(base.summary(rs))
+    return fixed_effects, random_effects
+
+def psychICC(df):
+    psych = importr('psych')
+    rs = psych.ICC(df)
+    return rs

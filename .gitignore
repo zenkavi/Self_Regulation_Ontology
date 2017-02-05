@@ -14,4 +14,8 @@ batch_files/.err
 batch_files/output
 batch_files/hddm*
 batch_files/previous_models
+<<<<<<< HEAD
 discovery_analyses
+=======
+*.egg-info
+>>>>>>> 1d6d4b04b9a5c0ca54ecddc0160c7ec6014f4f47
