@@ -360,10 +360,10 @@ var practice_loop = {
 /* ************************************ */
 
 var stop_signal_experiment = []
-//stop_signal_experiment.push(task_setup_block);
-//stop_signal_experiment.push(instructions_block);
-//stop_signal_experiment.push(practice_loop);
-//setup_fmri_intro(stop_signal_experiment, choices)
+stop_signal_experiment.push(task_setup_block);
+stop_signal_experiment.push(instructions_block);
+stop_signal_experiment.push(practice_loop);
+setup_fmri_intro(stop_signal_experiment, choices)
 
 /* Test blocks */
 // Loop through each trial within the block
