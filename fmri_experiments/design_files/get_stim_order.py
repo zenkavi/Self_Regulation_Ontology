@@ -35,7 +35,7 @@ for task in ['attention_network_task', 'dot_pattern_expectancy',
 	        stim_onsets = []
 	        stims = []
 	        stim_i = 0
-	        for stim_file in glob(os.path.join(directory,'stimulus*')):
+	        for stim_file in np.sort(glob(os.path.join(directory,'stimulus*'))):
 	            stim_onset=list(np.loadtxt(stim_file))
 	            stim_onsets+=stim_onset
 	            stims+= [stim_i]*len(stim_onset)

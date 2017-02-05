@@ -304,7 +304,7 @@ for (var c=0; c<2; c++) {
 var with_problems = jsPsych.randomization.shuffle(test_problems.slice(0,12).concat(test_problems.slice(0,12)))
 var without_problems = jsPsych.randomization.shuffle(test_problems.slice(12).concat(test_problems.slice(12)))
 // set up stim order based on optimized trial sequence
-var stim_index = [0,1,0,1,0,0,1,1,1,1,1,0,1,1,0,0,0,0,1,0,0,1,1,1,0,1,0,0,0,0,1,0,0,1,1,1,1,0,0,1,0,1,1,1,0,1,0,0]
+var stim_index = [1,0,1,0,1,1,0,0,0,0,0,1,0,0,1,1,1,1,0,1,1,0,0,0,1,0,1,1,1,1,0,1,1,0,0,0,0,1,1,0,1,0,0,0,1,0,1,1]
 var test_problems = []
 for (var i=0; i<stim_index.length; i++) {
   if (stim_index[i] == 0) {

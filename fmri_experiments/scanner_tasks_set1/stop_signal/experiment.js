@@ -206,7 +206,7 @@ var stims = [{
 }]
 
 // set up stim order based on optimized trial sequence
-var stim_index = [0,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,0,1,0,0,0,1,1,1,1,1,0,0,1,0,0,0,1,1,0,1,1,1,1,0,1,0,0,1,1,0,1,1,1,1,1,0,1,1,0,0,1,1,0,1,1,1,1,0,0,1,0,1,1,1,0,1,0,0,0,1,0,1,1,0,1,1,0,0,0,0,1,0,1,1,1,0,1,1,1,1,0,1,1,1,0,1,1,1,1,0,1,0,0,1,0,1,1,1,0,1,0,0,1,1,1,1,0,0,1]
+var stim_index = [1,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,1,0,1,1,1,0,0,0,0,0,1,1,0,1,1,1,0,0,1,0,0,0,0,1,0,1,1,0,0,1,0,0,0,0,0,1,0,0,1,1,0,0,1,0,0,0,0,1,1,0,1,0,0,0,1,0,1,1,1,0,1,0,0,1,0,0,1,1,1,1,0,1,0,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,1,1,0,1,0,0,0,1,0,1,1,0,0,0,0,1,1,0]
 var trials = []
 var go_stims = jsPsych.randomization.repeat(stims, exp_len*0.6 / 4)
 var stop_stims = jsPsych.randomization.repeat(stims, exp_len*0.4 / 4)
@@ -360,10 +360,10 @@ var practice_loop = {
 /* ************************************ */
 
 var stop_signal_experiment = []
-stop_signal_experiment.push(task_setup_block);
-stop_signal_experiment.push(instructions_block);
-stop_signal_experiment.push(practice_loop);
-setup_fmri_intro(stop_signal_experiment, choices)
+//stop_signal_experiment.push(task_setup_block);
+//stop_signal_experiment.push(instructions_block);
+//stop_signal_experiment.push(practice_loop);
+//setup_fmri_intro(stop_signal_experiment, choices)
 
 /* Test blocks */
 // Loop through each trial within the block
