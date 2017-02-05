@@ -1,29 +1,13 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
+
+//random ITIs for practice
+var practice_ITIs = [0.5,0.1,0.2,0.0]
+//optimized ITIs for test
+var test_ITIs = [0.816,0.544,1.904,0.816,0.408,0.136,1.088,0.272,3.944,2.176,2.176,2.312,2.176,0.0,0.272,0.272,0.544,0.544,1.36,3.4,0.68,2.176,0.272,0.272,0.408,0.68,0.272,0.544,0.136,0.0,1.496,0.0,0.136,0.272,0.408,0.408,0.408,0.544,0.136,0.408,0.544,1.36,0.136,0.136,0.952,0.816,0.952,0.408]
 var get_ITI = function() {
-  // ref: https://gist.github.com/nicolashery/5885280
-  function randomExponential(rate, randomUniform) {
-    // http://en.wikipedia.org/wiki/Exponential_distribution#Generating_exponential_variates
-    rate = rate || 1;
-
-    // Allow to pass a random uniform value or function
-    // Default to Math.random()
-    var U = randomUniform;
-    if (typeof randomUniform === 'function') U = randomUniform();
-    if (!U) U = Math.random();
-
-    return -Math.log(U) / rate;
-  }
-  gap = randomExponential(1/2)*900
-  if (gap > 10000) {
-    gap = 10000
-  } else if (gap < 0) {
-    gap = 0
-  } else {
-    gap = Math.round(gap/1000)*1000
-  }
-  return 2000 + gap //1000 (feedback time) + 1000 (minimum ITI)
+  return 2000 + ITIs.shift()*1000
  }
 
 var getStim = function() {
@@ -252,7 +236,7 @@ var base_start_state = [
     [0, 0, 0],
     [0, 0, 0]
   ]
-var base_goal_states = [
+var goal_states = [[
   {'condition': 'PA_with_intermediate',
   'problem': [
     [1, 0, 0],
@@ -264,7 +248,8 @@ var base_goal_states = [
     [1, 3, 0],
     [2, 0, 0],
     [0, 0, 0]
-  ]},
+  ]}
+],[
   {'condition': 'PA_without_intermediate',
   'problem': [
     [0, 0, 0],
@@ -277,46 +262,68 @@ var base_goal_states = [
     [3, 1, 0],
     [2, 0, 0]
   ]},
-]
+]]
 
 //permute start and goal states
 var start_permutations = [[0,1,2],[1,0,2],[1,2,0]]
 //second permutations used for flipping the non-tower peg
 var goal_permutations = [[0,2,1],[2,0,1],[2,1,0]]
 
-for (s=0; s<start_permutations.length; s++) {
-  var start_permute = start_permutations[s]
-  var goal_permute = goal_permutations[s]
-  var start_state = []
-  for (peg=0; peg<start_permutations.length; peg++){
-    start_state.push(base_start_state[start_permute[peg]])
-  }
-  //permute goal states
-  for (gs=0; gs<base_goal_states.length; gs++) {
-    var goal_state = []
-    for (peg=0; peg<start_permutations.length; peg++){
-      goal_state.push(base_goal_states[gs]['problem'][start_permute[peg]])
+for (var c=0; c<2; c++) {
+  var base_goal_states = goal_states[c]
+  for (s=0; s<start_permutations.length; s++) {
+    var start_permute = start_permutations[s]
+    var goal_permute = goal_permutations[s]
+    var start_state = []
+    for (peg=0; peg<start_permute.length; peg++){
+      start_state.push(base_start_state[start_permute[peg]])
     }
-    test_problems.push(
-      {'start_state': start_state, 
-      'goal_state': {'problem': goal_state, 'condition': base_goal_states[gs]['condition']}}
-      )
-    // flip pegs that don't start with a tower
-    var goal_state = []
-    for (peg=0; peg<start_permutations.length; peg++){
-      goal_state.push(base_goal_states[gs]['problem'][goal_permute[peg]])
+    //permute goal states
+    for (gs=0; gs<base_goal_states.length; gs++) {
+      var goal_state = []
+      for (peg=0; peg<start_permutations.length; peg++){
+        goal_state.push(base_goal_states[gs]['problem'][start_permute[peg]])
+      }
+      test_problems.push(
+        {'start_state': start_state, 
+        'goal_state': {'problem': goal_state, 'condition': base_goal_states[gs]['condition']}}
+        )
+      // flip pegs that don't start with a tower
+      var goal_state = []
+      for (peg=0; peg<start_permutations.length; peg++){
+        goal_state.push(base_goal_states[gs]['problem'][goal_permute[peg]])
+      }
+      test_problems.push(
+        {'start_state': start_state, 
+        'goal_state': {'problem': goal_state, 'condition': base_goal_states[gs]['condition']}}
+        )
     }
-    test_problems.push(
-      {'start_state': start_state, 
-      'goal_state': {'problem': goal_state, 'condition': base_goal_states[gs]['condition']}}
-      )
   }
 }
-var test_problems = jsPsych.randomization.shuffle(test_problems).concat(jsPsych.randomization.shuffle(test_problems))
+
+var with_problems = jsPsych.randomization.shuffle(test_problems.slice(0,12).concat(test_problems.slice(0,12)))
+var without_problems = jsPsych.randomization.shuffle(test_problems.slice(12).concat(test_problems.slice(12)))
+// set up stim order based on optimized trial sequence
+var stim_index = [1,0,1,0,1,1,0,0,0,0,0,1,0,0,1,1,1,1,0,1,1,0,0,0,1,0,1,1,1,1,0,1,1,0,0,0,0,1,1,0,1,0,0,0,1,0,1,1]
+var test_problems = []
+for (var i=0; i<stim_index.length; i++) {
+  if (stim_index[i] == 0) {
+    test_problems.push(with_problems.shift())
+  } else {
+    test_problems.push(without_problems.shift())
+  }
+  if (with_problems.length==0) {
+  	with_problems = jsPsych.randomization.shuffle(test_problems.slice(0,12).concat(test_problems.slice(0,12)))
+  }
+  if (without_problems.length==0) {
+  	without_problems = jsPsych.randomization.shuffle(test_problems.slice(0,12).concat(test_problems.slice(12)))
+  }
+}
 
 // set up practice
 var exp_stage = 'practice'
 var problems = practice_problems
+var ITIs = practice_ITIs
 // setup blocks
 var num_blocks = 3
 var block_length = test_problems.length/num_blocks
@@ -354,7 +361,6 @@ var curr_placement = jQuery.extend(true, [], problems[problem_i].start_state)
 var reminder_node = {
     timeline: [reminder_block],
     conditional_function: function(){
-        var data = jsPsych.data.getLastTrialData();
         if(problem_i%15 == 0 && problem_i > 0){
             return true;
         } else {
@@ -366,7 +372,7 @@ var reminder_node = {
 
 var instructions_block = {
   type: 'poldrack-single-stim',
-  stimulus: "<div class = centerbox><div class = center-text>Solve the Tower Tasks!<br>Plan ahead first and work swiftly!<br>We'll start with some practice.</div></div>",
+  stimulus: "<div class = centerbox><div class = center-text>Solve the Tower Tasks!<br>Plan ahead first and work swiftly!<br><br>We'll start with some practice.</div></div>",
   is_html: true,
   choices: 'none',
   timing_stim: 5000, 
@@ -390,6 +396,7 @@ var start_test_block = {
   timing_post_trial: 500,
   on_finish: function() {
     exp_stage = 'test'
+    ITIs = test_ITIs
     problem_i = 0
     problems = test_problems
     reset_problem()

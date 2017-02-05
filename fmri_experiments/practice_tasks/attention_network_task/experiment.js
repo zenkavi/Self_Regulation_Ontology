@@ -1,38 +1,17 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
+var ITIs = [0.816,0.136,0.0,0.272,0.0,0.0,0.136,0.816,0.136,0.0,0.136,0.136,0.136,0.0,0.136,0.136,0.136,0.136,0.272,0.136,0.68,0.544,0.408,0.272,0.0,0.952,0.272,0.136,0.136,0.0,0.0,0.136,0.0,0.0,0.136,0.0,0.272,0.68,0.136,0.0,0.136,0.0,0.136,0.272,0.272,0.272,0.0,0.0,0.544,0.816,0.408,0.0,0.408,0.0,0.136,0.0,0.0,0.136,0.0,0.408,0.408,0.0,0.408,0.0,0.408,0.272,0.0,0.136,0.272,0.0,0.816,0.0,0.0,0.0,0.272,0.544,0.0,0.544,0.408,0.0,0.816,0.136,0.0,0.136,0.0,0.0,0.136,0.272,0.136,0.0,0.136,0.0,0.0,0.0,0.136,0.408,0.136,0.0,0.272,0.0,0.68,0.0,0.544,0.136,0.136,0.136,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.224,0.0,0.272,0.0,0.136,0.136,0.136,0.0,0.0,0.408,0.0,0.0,0.136,0.68,0.68]
 var get_ITI = function() {
-  // ref: https://gist.github.com/nicolashery/5885280
-  function randomExponential(rate, randomUniform) {
-    // http://en.wikipedia.org/wiki/Exponential_distribution#Generating_exponential_variates
-    rate = rate || 1;
-
-    // Allow to pass a random uniform value or function
-    // Default to Math.random()
-    var U = randomUniform;
-    if (typeof randomUniform === 'function') U = randomUniform();
-    if (!U) U = Math.random();
-
-    return -Math.log(U) / rate;
-  }
-  gap = randomExponential(1/2)*260
-  if (gap > 10000) {
-    gap = 10000
-  } else if (gap < 0) {
-  	gap = 0
-  } else {
-  	gap = Math.round(gap/1000)*1000
-  }
-  return 2100 + gap //1700 (stim time) + 400 (minimum ITI)
+  return 2100 + ITIs.shift()
  }
 
 var getPracticeTrials = function() {
-	var practice_stim = jsPsych.randomization.repeat($.extend(true, [], test_stimuli), 1, true)
+	var practice_stim = jsPsych.randomization.repeat($.extend(true, [], base_practice_stim), 1, true)
 	var practice_trials = []
 	for (i=0; i<practice_length; i++) {
-		practice_trials.push(no_cue)
-		if (practice_stim.data[i].cue == 'nocue') {
-			
+		if (practice_stim.data[i].cue == 'double') {
+			practice_trials.push(double_cue)
 		} else if (practice_stim.data[i].cue == 'center') {
 			practice_trials.push(center_cue)
 		} else {
@@ -92,40 +71,44 @@ var practice_repeats = 0
 // task specific variables
 var practice_length = 12
 var num_blocks = 1
-var block_length = 24
+var block_length = 12
 
 var current_trial = 0
 var exp_stage = 'practice'
-var test_stimuli = []
-var choices = [37,40]
+var choices = [37,39]
 var path = '/static/experiments/attention_network_task/images/'
 var images = [path + 'left_arrow.png', path + 'right_arrow.png', path + 'no_arrow.png']
 //preload
 jsPsych.pluginAPI.preloadImages(images)
 
+
 /* set up stim: location (2) * cue (3) * direction (2) * condition (2) */
+var base_practice_stim = []
+var base_test_stim = [[],[],[],[],[],[]]
+var test_stim = [[],[],[],[],[],[]] // track each cue/condition separately
 var locations = ['up', 'down']
-var cues = ['nocue', 'center', 'spatial']
+var cues = ['double', 'spatial']
 var directions = ['left', 'right']
 var conditions = ['congruent', 'incongruent']
-for (l = 0; l < locations.length; l++) {
-	var loc = locations[l]
-	for (ci = 0; ci < cues.length; ci++) {
-		var c = cues[ci]
+
+for (ci = 0; ci < cues.length; ci++) {
+	var c = cues[ci]
+	for (coni = 0; coni < conditions.length; coni++) {
+		var condition = conditions[coni]
 		for (d = 0; d < directions.length; d++) {
 			var center_image = images[d]
 			var direction = directions[d]
-			for (coni = 0; coni < conditions.length; coni++) {
-				var condition = conditions[coni]
-				var side_image = ''
-				if (condition == 'incongruent') {
-					var side_image = images[1-d]
-				} else {
-					side_image = images[d]
-				}
+			var side_image = ''
+			if (condition == 'incongruent') {
+				var side_image = images[1-d]
+			} else {
+				side_image = images[d]
+			}
+			for (l = 0; l < locations.length; l++) {
+				var loc = locations[l]
 				var stim = {
 					stimulus: '<div class = centerbox><div class = ANT_text>+</div></div><div class = ANT_' + loc +
-						'><img class = ANT_img src = ' + side_image + '></img><img class = ANT_img src = ' + side_image + '></img><img class = ANT_img src = ' + center_image + '></img><img class = ANT_img src = ' + side_image + '></img><img class = ANT_img src = ' + side_image + '></img></div></div>',
+						'><img class = "ANT_img first" src = ' + side_image + '></img><img class = ANT_img src = ' + side_image + '></img><img class = ANT_img src = ' + center_image + '></img><img class = ANT_img src = ' + side_image + '></img><img class = ANT_img src = ' + side_image + '></img></div></div>',
 					data: {
 						correct_response: choices[d],
 						flanker_middle_direction: direction,
@@ -135,17 +118,32 @@ for (l = 0; l < locations.length; l++) {
 						trial_id: 'stim'
 					}
 				}
-				test_stimuli.push(stim)
+				base_practice_stim.push(stim)
+				base_test_stim[ci*2+coni].push(stim)
 			}
 		}
 	}
 }
 
+for (var i=0; i<test_stim.length; i++) {
+	test_stim[i] = jsPsych.randomization.repeat(base_test_stim[i], block_length*num_blocks/24)
+}
+// set up stim order based on optimized trial sequence
+var stim_index = [0,1,2,3,2,1,3,4]
+var ordered_stim = []
+for (var i=0; i<stim_index.length; i++) {
+	var stim = test_stim[stim_index[i]].shift()
+	ordered_stim.push(stim)
+	//refill if necessary
+	if (test_stim[stim_index[i]].length == 0) {
+		test_stim[stim_index[i]] = jsPsych.randomization.repeat(base_test_stim[stim_index[i]], block_length*num_blocks/24)
+	}
+}
 
 /* set up repeats for test blocks */
 var blocks = []
 for (b = 0; b < num_blocks; b++) {
-	blocks.push(jsPsych.randomization.repeat($.extend(true, [], test_stimuli), block_length/test_stimuli.length, true))
+	blocks.push(ordered_stim.slice(b*block_length,(b+1)*block_length))
 }
 
 
@@ -198,7 +196,7 @@ var rest_block = {
 
  var instructions_block = {
 	type: 'poldrack-single-stim',
-	stimulus: '<div class = centerbox><div class = center-text>Indicate which direction the center arrow is pointing using the left (index) and right (middle) keys.</div>',
+	stimulus: '<div class = centerbox><div class = center-text>Indicate which direction the center arrow is pointing using the left (index) and right (middle) arrow keys.</div>',
 	is_html: true,
 	choices: 'none',
 	timing_stim: 9500, 
@@ -227,13 +225,13 @@ var fixation = {
 	}
 }
 
-var no_cue = {
+var double_cue = {
 	type: 'poldrack-single-stim',
-	stimulus: '<div class = centerbox><div class = ANT_text>+</div></div>',
+	stimulus: '<div class = centerbox><div class = ANT_text>+</div></div><div class = ANT_down><div class = ANT_text>*</div></div><div class = ANT_up><div class = ANT_text>*</div><div></div>',
 	is_html: true,
 	choices: 'none',
 	data: {
-		trial_id: 'nocue'
+		trial_id: 'doublecue'
 	},
 	timing_post_trial: 0,
 	timing_stim: 100,
@@ -245,24 +243,6 @@ var no_cue = {
 	}
 }
 
-var center_cue = {
-	type: 'poldrack-single-stim',
-	stimulus: '<div class = centerbox><div class = ANT_centercue_text>*</div></div>',
-	is_html: true,
-	choices: 'none',
-	data: {
-		trial_id: 'centercue'
-	},
-	timing_post_trial: 0,
-	timing_stim: 100,
-	timing_response: 100,
-	on_finish: function() {
-		jsPsych.data.addDataToLastTrial({
-			exp_stage: exp_stage
-		})
-	}
-
-}
 
 /* Set up practice trials */
 var practice_trials = getPracticeTrials()
@@ -300,17 +280,14 @@ var trial_num = 0
 for (b = 0; b < blocks.length; b++) {
 	attention_network_task_experiment.push(test_intro_block);
 	var block = blocks[b]
-	for (i = 0; i < block.data.length; i++) {
-		var trial_num = trial_num + 1
+	for (i = 0; i < block.length; i++) {
 
-		if (block.data[i].cue == 'nocue') {
-			attention_network_task_experiment.push(no_cue)
-		} else if (block.data[i].cue == 'center') {
-			attention_network_task_experiment.push(center_cue)
+		if (block[i].data.cue == 'double') {
+			attention_network_task_experiment.push(double_cue)
 		} else {
 			var spatial_cue = {
 				type: 'poldrack-single-stim',
-				stimulus: '<div class = centerbox><div class = ANT_' + block.data[i].flanker_location +
+				stimulus: '<div class = centerbox><div class = ANT_' + block[i].data.flanker_location +
 					'><div class = ANT_text>*</p></div></div>',
 				is_html: true,
 				choices: 'none',
@@ -327,13 +304,12 @@ for (b = 0; b < blocks.length; b++) {
 		}
 		attention_network_task_experiment.push(fixation)
 
-		block.data[i].trial_num = trial_num
 		var ANT_trial = {
 			type: 'poldrack-single-stim',
-			stimulus: block.stimulus[i],
+			stimulus: block[i].stimulus,
 			is_html: true,
 			choices: choices,
-			data: block.data[i],
+			data: block[i].data,
 			timing_response: get_ITI,
 			timing_stim: 1700,
 			response_ends_trial: false,
@@ -345,8 +321,10 @@ for (b = 0; b < blocks.length; b++) {
               '\nCorrect Response? ' + correct + ', RT: ' + data.rt)
 				jsPsych.data.addDataToLastTrial({ 
 					correct: correct,
-					exp_stage: exp_stage
+					exp_stage: exp_stage,
+					trial_num: trial_num
 				})
+				trial_num = trial_num + 1
 			}
 		}
 		attention_network_task_experiment.push(ANT_trial)

@@ -80,7 +80,7 @@ var getTestFeedback = function() {
 	}
 	if (StopCorrect_percent < (0.5-stop_thresh) || stopAverage < 0.45){
 			 	test_feedback_text +=
-			 		'</p><p class = block-text><strong>Remember to try and withhold your response when you see a stop signal AND the correct key is the ' +
+			 		'</p><p class = block-text><strong>Remember to try and withhold your response when you see a stop signal AND the correct response is your ' +
 					stop_response[0] + '.</strong>' 
 
 	} else if (StopCorrect_percent > (0.5+stop_thresh) || stopAverage > 0.55){
@@ -89,7 +89,7 @@ var getTestFeedback = function() {
 	}
 	if (ignoreRespond_percent <= motor_thresh){
       	test_feedback_text +=
-          '</p><p class = block-text> You have been stopping to both the Z and M keys.  Please make sure to <strong>stop your response only when the star appears and you were going to hit the '+ stop_response[0]+'.</strong>'
+          '</p><p class = block-text> You have been stopping to both the Z and M keys.  Please make sure to <strong>stop your response only when the star appears and you were going to press your '+ stop_response[0]+'.</strong>'
   	}
 
 	return '<div class = centerbox><p class = block-text>' + test_feedback_text + '</p></div>'
@@ -305,7 +305,7 @@ var start_test_block = {
  var instructions_block = {
   type: 'poldrack-single-stim',
   stimulus: '<div class = centerbox><p class = block-text>Only one key is correct for each shape. The correct keys are as follows:' + prompt_text +
-		'</p><p class = block-text>Do not respond if you see the red star if your response was going to be the ' + stop_response[0] + '!</p><br><p class = block-text>We will start with practice</p></div>',
+		'</p><p class = block-text>Do not respond if you see the red star if your response was going to be your ' + stop_response[0] + '!</p><br><p class = block-text>We will start with practice</p></div>',
   is_html: true,
   choices: 'none',
   timing_stim: 15000, 

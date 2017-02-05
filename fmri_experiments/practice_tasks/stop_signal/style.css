@@ -47,7 +47,15 @@
 
 .prompt_stim {
   height: 90px;
-  width: 90px;
+  margin: auto;
+  display: block;
+  padding-bottom:5px;
+}
+
+.prompt_container {
+  height: 140px;
+  width: 180px;
+  font-size: 25px;
 }
 
 .stopbox {
@@ -147,4 +155,8 @@
        -moz-transform: rotate(60deg);
         -ms-transform: rotate(60deg);
          -o-transform: rotate(60deg);
+}
+
+ul {
+  list-style-type: none;
 }

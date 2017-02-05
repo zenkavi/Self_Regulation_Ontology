@@ -6,29 +6,9 @@ var randomDraw = function(lst) {
 	return lst[index]
 }
 
+var ITIs = [0.0,0.408,0.408,0.0,0.0,0.136,0.544,0.136,0.0,0.0,0.0,0.408,0.408,0.0,0.272,0.0,0.272,0.272,0.272,0.136,0.272,0.272,0.136,0.0,0.272,0.544,0.272,0.136,0.0,0.0,0.0,0.0,0.272,0.0,0.0,0.0,0.0,0.136,0.0,0.0,0.0,0.0,0.272,0.136,0.272,0.0,0.136,0.136,0.0,0.136,0.136,0.136,0.408,0.272,0.0,0.68,0.0,0.272,0.0,0.0,0.0,0.0,0.272,0.816,0.0,0.136,0.136,0.272,0.136,0.136,0.544,0.136,0.0,0.272,0.136,0.136,0.0,0.136,0.0,0.0,0.0,0.136,0.0,0.0,0.136,0.136,0.0,0.272,0.0,0.136,0.0,0.0,0.136,0.272,0.136,0.272,0.68,0.272,0.272,0.0,0.272,0.136,0.0,0.136,0.0,0.136,0.272,0.0,0.136,0.408,0.0,0.952,0.136,0.136,0.272,0.0,0.0,0.0,0.68,0.272,0.272,0.0,0.272,0.0,0.136]
 var get_ITI = function() {
-  // ref: https://gist.github.com/nicolashery/5885280
-  function randomExponential(rate, randomUniform) {
-    // http://en.wikipedia.org/wiki/Exponential_distribution#Generating_exponential_variates
-    rate = rate || 1;
-
-    // Allow to pass a random uniform value or function
-    // Default to Math.random()
-    var U = randomUniform;
-    if (typeof randomUniform === 'function') U = randomUniform();
-    if (!U) U = Math.random();
-
-    return -Math.log(U) / rate;
-  }
-  gap = randomExponential(1/2)*225
-  if (gap > 10000) {
-    gap = 10000
-  } else if (gap < 0) {
-  	gap = 0
-  } else {
-  	gap = Math.round(gap/1000)*1000
-  }
-  return 2250 + gap //1850 (response time) + 500 (minimum ITI)
+  return 2250 + ITIs.shift()*1000
  }
 
 
@@ -164,22 +144,24 @@ var stop_signal =
 
 /* Instruction Prompt */
 var possible_responses = [
-	["index finger", 37],
-	["middle finger", 40]
+	["left arrow", 37],
+	["down arrow", 40]
 ]
 var choices = [possible_responses[0][1], possible_responses[1][1]]
 var correct_responses = jsPsych.randomization.shuffle([possible_responses[0], possible_responses[0],
 	possible_responses[1], possible_responses[1]
 ])
 
-var tab = '&nbsp&nbsp&nbsp&nbsp'
 
-var prompt_text = '<ul list-text><li><img class = prompt_stim src = ' + images[0] + '></img>' + tab +
-	correct_responses[0][0] + '</li><li><img class = prompt_stim src = ' + images[1] + '></img>' + tab +
-	correct_responses[1][0] + ' </li><li><img class = prompt_stim src = ' + images[2] + '></img>   ' +
-	tab + correct_responses[2][0] +
-	' </li><li><img class = prompt_stim src = ' + images[3] + '></img>' + tab + correct_responses[3][0] +
-	' </li></ul>'
+var prompt_text = '<ul list-text>' + 
+					'<li><div class = prompt_container><img class = prompt_stim src = ' + 
+					images[0] + '></img>' + correct_responses[0][0] + '</div></li>' +
+					'</li><li><div class = prompt_container><img class = prompt_stim src = ' +
+					images[1] + '></img>'  + correct_responses[1][0] + '</div></li>' +
+					' </li><li><div class = prompt_container><img class = prompt_stim src = ' 
+					+ images[2] + '></img>' + correct_responses[2][0] + '</div></li>' +
+					' </li><li><div class = prompt_container><img class = prompt_stim src = ' +
+					images[3] + '></img>' + correct_responses[3][0] + '</div></li></ul>'
 
 /* Global task variables */
 var current_trial = 0
@@ -223,17 +205,33 @@ var stims = [{
 	}
 }]
 
-
-
-//setup test sequence
-trials = jsPsych.randomization.repeat(stims, exp_len/4).slice(0,exp_len)
-var stop_trials = jsPsych.randomization.repeat(['stop', 'stop', 'go', 'go', 'go'], exp_len /5)
-for (i=0; i<trials.length; i++) {
-	trials[i]['SS_trial_type'] = stop_trials[i]
+// set up stim order based on optimized trial sequence
+var stim_index = [1,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,1,0,1,1,1,0,0,0,0,0,1,1,0,1,1,1,0,0,1,0,0,0,0,1,0,1,1,0,0,1,0,0,0,0,0,1,0,0,1,1,0,0,1,0,0,0,0,1,1,0,1,0,0,0,1,0,1,1,1,0,1,0,0,1,0,0,1,1,1,1,0,1,0,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,1,1,0,1,0,0,0,1,0,1,1,0,0,0,0,1,1,0]
+var trials = []
+var go_stims = jsPsych.randomization.repeat(stims, exp_len*0.6 / 4)
+var stop_stims = jsPsych.randomization.repeat(stims, exp_len*0.4 / 4)
+for (var i=0; i<stim_index.length; i++) {
+	var stim = {}
+	if (stim_index[i] == 0) {
+		stim = go_stims.shift()
+		stim['SS_trial_type'] = 'go'
+	} else {
+		stim = stop_stims.shift()
+		stim['SS_trial_type'] = 'stop'
+	} 
+	trials.push(stim)
+	// refill if necessary
+	if (go_stims.length == 0) {
+		go_stims = jsPsych.randomization.repeat(stims, exp_len*0.6 / 4)
+	} 
+	if (stop_stims.length == 0) {
+		stop_stims = jsPsych.randomization.repeat(stims, exp_len*0.4 / 4)
+	} 
 }
+
 var blocks = []
 for (b=0; b<num_blocks; b++) {
-	blocks.push(trials.slice(block_len*b, (block_len*b+block_len)))
+	blocks.push(trials.slice(block_len*b, (block_len*(b+1))))
 }
 
 /* ************************************ */
@@ -266,7 +264,7 @@ var start_test_block = {
   },
   timing_post_trial: 500,
   on_finish: function() {
-  	current_trial = 0
+  	exp_stage = 'test'
   }
 };
 
@@ -348,6 +346,7 @@ var practice_loop = {
     }
     console.log('Practice Block Accuracy: ', correct_trials/total_trials)
     if (correct_trials/total_trials > .75 || practice_repeats == 3) {
+    	current_trial = 0
       return false
     } else {
       practice_trials = getPracticeTrials()

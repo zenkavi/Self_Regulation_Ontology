@@ -1,29 +1,10 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
+var ITIs = [0.0,0.0,0.272,0.0,0.136,0.0,0.136,0.0,0.0,0.0,0.272,0.0,0.136,0.408,0.272,0.68,0.0,0.408,0.136,0.68,0.0,0.136,0.952,0.0,0.272,0.0,0.0,0.0,0.0,0.136,0.0,0.0,0.136,0.0,0.0,0.136,0.136,0.272,0.68,0.0,0.0,0.272,0.0,0.0,0.0,0.0,0.0,0.0,0.272,0.0,0.408,0.0,0.136,0.0,0.0,0.0,0.272,0.0,0.272,0.272,0.0,0.68,0.0,0.272,0.0,0.0,0.272,0.136,0.544,0.408,0.0,0.0,0.0,0.544,0.136,0.0,0.0,0.272,0.0,0.0,0.136,0.0,0.272,0.136,0.408,0.0,0.0,0.816,0.0,0.0,0.136,0.0,0.0,0.0,0.0,0.0]
+
 var get_ITI = function() {
-  // ref: https://gist.github.com/nicolashery/5885280
-  function randomExponential(rate, randomUniform) {
-    // http://en.wikipedia.org/wiki/Exponential_distribution#Generating_exponential_variates
-    rate = rate || 1;
-
-    // Allow to pass a random uniform value or function
-    // Default to Math.random()
-    var U = randomUniform;
-    if (typeof randomUniform === 'function') U = randomUniform();
-    if (!U) U = Math.random();
-
-    return -Math.log(U) / rate;
-  }
-  gap = randomExponential(1/2)*200
-  if (gap > 10000) {
-    gap = 10000
-  } else if (gap < 0) {
-  	gap = 0
-  } else {
-  	gap = Math.round(gap/1000)*1000
-  }
-  return 2000 + gap //1500 (stim time) + 500 (minimum ITI)
+  return 2000 + ITIs.shift()*1000
  }
 
 var getPracticeTrials = function() {
@@ -166,11 +147,29 @@ var incongruent_stim = [{
 	},
 	key_answer: choices[2]
 }];
-
-var stims = [].concat(congruent_stim, congruent_stim, incongruent_stim)
-var exp_len = 12
+var exp_len = 96
 var practice_len = 12
-var test_stims = jsPsych.randomization.repeat(stims, exp_len / 12)
+var stims = congruent_stim.concat(incongruent_stim)
+var congruent_stim = jsPsych.randomization.repeat(congruent_stim, (exp_len/2)/3)
+var incongruent_stim = jsPsych.randomization.repeat(incongruent_stim, (exp_len/2)/6)
+
+// set up stim order based on optimized trial sequence
+var stim_index = [1,0,1,1,0,0,0,0,0,1,1,1,1,0,1,0,0,0,0,1,1,1,0,1,1,1,0,0,1,0,0,1,0,1,1,1,0,0,1,0,0,1,1,0,1,1,1,1,0,1,0,0,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1,0,0,1,1,1,1,0,0,0,0,0,1,0,1,1,1,0,1,1,1,0,0,1,0,1,0,0,1,0]
+var test_stims = []
+for (var i=0; i<exp_len; i++) {
+	if (stim_index[i] == 0) {
+		test_stims.push(congruent_stim.shift())
+	} else {
+		test_stims.push(incongruent_stim.shift())
+	}
+	if (congruent_stim.length == 0) {
+		congruent_stim = jsPsych.randomization.repeat(congruent_stim, (exp_len/2)/3)
+	}
+	if (incongruent_stim.length == 0) {
+		incongruent_stim = jsPsych.randomization.repeat(incongruent_stim, (exp_len/2)/6)
+	}
+}
+
 var exp_stage = 'practice'
 var current_trial = 1
 

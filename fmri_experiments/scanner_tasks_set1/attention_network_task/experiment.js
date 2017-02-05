@@ -108,7 +108,7 @@ for (ci = 0; ci < cues.length; ci++) {
 				var loc = locations[l]
 				var stim = {
 					stimulus: '<div class = centerbox><div class = ANT_text>+</div></div><div class = ANT_' + loc +
-						'><img class = ANT_img src = ' + side_image + '></img><img class = ANT_img src = ' + side_image + '></img><img class = ANT_img src = ' + center_image + '></img><img class = ANT_img src = ' + side_image + '></img><img class = ANT_img src = ' + side_image + '></img></div></div>',
+						'><img class = "ANT_img first" src = ' + side_image + '></img><img class = ANT_img src = ' + side_image + '></img><img class = ANT_img src = ' + center_image + '></img><img class = ANT_img src = ' + side_image + '></img><img class = ANT_img src = ' + side_image + '></img></div></div>',
 					data: {
 						correct_response: choices[d],
 						flanker_middle_direction: direction,
@@ -196,7 +196,7 @@ var rest_block = {
 
  var instructions_block = {
 	type: 'poldrack-single-stim',
-	stimulus: '<div class = centerbox><div class = center-text>Indicate which direction the center arrow is pointing using the left (index) and right (middle) keys.</div>',
+	stimulus: '<div class = centerbox><div class = center-text>Indicate which direction the center arrow is pointing using your index (left) and middle (right) fingers.</div>',
 	is_html: true,
 	choices: 'none',
 	timing_stim: 9500, 

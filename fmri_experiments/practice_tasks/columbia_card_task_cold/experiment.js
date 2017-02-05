@@ -1,9 +1,34 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
+var get_ITI = function() {
+  // ref: https://gist.github.com/nicolashery/5885280
+  function randomExponential(rate, randomUniform) {
+    // http://en.wikipedia.org/wiki/Exponential_distribution#Generating_exponential_variates
+    rate = rate || 1;
+
+    // Allow to pass a random uniform value or function
+    // Default to Math.random()
+    var U = randomUniform;
+    if (typeof randomUniform === 'function') U = randomUniform();
+    if (!U) U = Math.random();
+
+    return -Math.log(U) / rate;
+  }
+  gap = randomExponential(1/2)*500
+  if (gap > 6000) {
+    gap = 6000
+  } else if (gap < 0) {
+  	gap = 0
+  } else {
+  	gap = Math.round(gap/1000)*1000
+  }
+  return 500 + gap //500 (minimum ITI)
+ }
+ 
 var appendTestData = function() {
 	jsPsych.data.addDataToLastTrial({
-		num_cards_chosen: currID,
+		num_cards: numCards,
 		num_loss_cards: numLossCards,
 		gain_amount: gainAmt,
 		loss_amount: lossAmt,
@@ -12,32 +37,70 @@ var appendTestData = function() {
 	})
 }
 
-var getButtons = function(buttonType) {
+var randomDraw = function(lst) {
+  var index = Math.floor(Math.random() * (lst.length))
+  return lst[index]
+}
+
+function chunkify(a, n, balanced) {
+    if (n < 2)
+        return [a];
+    var len = a.length, out = [], i = 0, size;
+    if (len % n === 0) {
+        size = Math.floor(len / n);
+        while (i < len) {
+            out.push(a.slice(i, i += size));
+        }
+    }
+    else if (balanced) {
+        while (i < len) {
+            size = Math.ceil((len - i) / n--);
+            out.push(a.slice(i, i += size));
+        }
+    }
+    else {
+        n--;
+        size = Math.floor(len / n);
+        if (len % size === 0)
+            size--;
+        while (i < size * n) {
+            out.push(a.slice(i, i += size));
+        }
+        out.push(a.slice(size * n));
+    }
+    return out;
+}
+
+var getButtons = function(nCards) {
+	var card_array = []
+	for (var i=0; i<nCards; i++) {
+		card_array.push(i)
+	}
+	var chunk_index = 0
+	var chunks = chunkify(card_array,choices.length,true)
+	button_values = []
+	for (var i=0; i<chunks.length; i++) {
+		button_values.push(randomDraw(chunks[i]))
+	}
 	var buttons = ""
 	buttons = "<div class = allbuttons>"
-	for (i = 0; i < 33; i++) {
+	for (i = 0; i < choices.length; i++) {
 		buttons += "<button type = 'button' class = 'CCT-btn chooseButton' id = " + i +
-			" onclick = chooseButton(this.id)>" + i + "</button>"
+			" >" + button_values[i] + "</button>"
 	}
 	return buttons
 }
 
-var getBoard = function(board_type) {
-	var board = ''
-	if (board_type == 2) {
-		board = "<div class = cardbox>"
-		for (i = 1; i < 33; i++) {
-		board += "<div class = square><input type='image' class = card_image id = c" + i +
-			" src='/static/experiments/columbia_card_task_cold/images/beforeChosen.png'></div>"
-		}
-		
-	} else {
-		board = "<div class = cardbox2>"
-		for (i = 1; i < 33; i++) {
-		board += "<div class = square><input class = card_image type='image' id = c" + i +
-			" src='/static/experiments/columbia_card_task_cold/images/beforeChosen.png'></div>"
-		}
+var getBoard = function(nCards) {
+	var board = "<div class = cct-box>"+
+	"<div class = titleBigBox>   <div class = titleboxLeft><div class = game-text id = game_round>Game Round: </div></div>   <div class = titleboxLeft1><div class = game-text id = loss_amount>Loss Amount: </div></div>    <div class = titleboxMiddle1><div class = game-text id = gain_amount>Gain Amount: </div></div>    <div class = titlebox><div class = game-text>How many cards do you want to take? </div></div>     <div class = titleboxRight1><div class = game-text id = num_loss_cards>Number of Loss Cards: </div></div>   <div class = titleboxRight><div class = game-text id = current_round>Current Round Points: 0</div></div>" +
+	getButtons(nCards)+
+	"</div><div class = cardbox>"
+	for (i = 1; i < nCards+1; i++) {
+		board += "<div class = square><input type='image' id = " + i +
+			" class = 'card_image' src='/static/experiments/columbia_card_task_cold/images/beforeChosen.png'></div>"
 	}
+
 	board += "</div>"
 	return board
 }
@@ -58,33 +121,16 @@ var turnOneCard = function(whichCard, win) {
 	}
 }
 
-function doSetTimeout(card_i, delay, points, win) {
-	CCT_timeouts.push(setTimeout(function() {
-		turnOneCard(card_i, win);
-		document.getElementById("current_round").innerHTML = 'Current Round Points: ' + points
-	}, delay));
-}
-
-function clearTimers() {
-	for (var i = 0; i < CCT_timeouts.length; i++) {
-		clearTimeout(CCT_timeouts[i]);
-	}
-}
-
-
 var appendPayoutData = function(){
 	jsPsych.data.addDataToLastTrial({reward: [prize1, prize2, prize3]})
 }
 
-var chooseButton = function(clicked_id) {
-	$('#nextButton').prop('disabled', false)
-	$('.chooseButton').prop('disabled', true)
-	currID = parseInt(clicked_id)
+var getChoice = function(key_press) {
+	var choice = choices.indexOf(key_press)
+	var cardID = button_values[choice]
 	var roundPoints = 0
-	var cards_to_turn = jsPsych.randomization.repeat(cardArray, 1).slice(0, currID)
-	for (var i = 0; i < cards_to_turn.length; i++) {
-		var card_i = cards_to_turn[i]
-		if (whichLossCards.indexOf(card_i) == -1) {
+	for (var i=0; i<cardID; i++) {
+		if (Math.random() > numLossCards/numCards) {
 			roundPoints += gainAmt
 		} else {
 			roundPoints -= lossAmt
@@ -92,17 +138,10 @@ var chooseButton = function(clicked_id) {
 		}
 	}
 	roundPointsArray.push(roundPoints)
-	if ($('#feedback').length) {
-		document.getElementById("feedback").innerHTML =
-			'<strong>You chose ' + clicked_id +
-			' card(s)</strong>. When you click on the "Next" button, the next round starts. Please note that the loss amount, the gain amount, and the number of loss cards might have changed.'
-	}
-}
-
-var instructButton = function(clicked_id) {
-	currID = parseInt(clicked_id)
-	document.getElementById(clicked_id).src =
-		'/static/experiments/columbia_card_task_cold/images/chosen.png';
+	jsPsych.data.addDataToLastTrial({
+		choice: choice,
+		num_cards_chosen: cardID
+	})
 }
 
 // appends text to be presented in the game
@@ -111,26 +150,31 @@ function appendTextAfter(input, search_term, new_text) {
 	return input.slice(0, index) + new_text + input.slice(index)
 }
 
+var getCardArray = function(nCards){
+	var cardArray = []
+	for (var i = 0; i<nCards; i++) {
+		cardArray.push(i+1)
+	}
+	return cardArray
+}
 
+var setNextRound = function() {
+	roundParams = ParamsArray.shift()
+	numCards = roundParams[0]
+	numLossCards = roundParams[1]
+	lossAmt = roundParams[2]
+	gainAmt = roundParams[3]
+	cardArray = getCardArray(numCards)
+	roundOver = 0
+	roundPoints = 0
+	whichClickInRound = 0
+	whichRound = whichRound + 1
+	lossClicked = false
+}
 
 // this function sets up the round params (loss amount, gain amount, which ones are loss cards, initializes the array for cards to be clicked, )
 var getRound = function() {
-	var currID = 0
-	cardArray = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
-		24, 25, 26, 27, 28, 29, 30, 31, 32
-	]
-	shuffledCardArray = jsPsych.randomization.repeat(cardArray, 1)
-	whichRound = whichRound + 1
-	randomChosenCards = []
-	roundParams = shuffledParamsArray.pop()
-	numLossCards = roundParams[0]
-	gainAmt = roundParams[1]
-	lossAmt = roundParams[2]
-	whichLossCards = []
-	for (i = 0; i < numLossCards; i++) {
-		whichLossCards.push(shuffledCardArray.pop())
-	}
-	gameState = gameSetup
+	var gameState = getBoard(numCards)
 	gameState = appendTextAfter(gameState, 'Game Round: ', whichRound)
 	gameState = appendTextAfter(gameState, 'Loss Amount: ', lossAmt)
 	gameState = appendTextAfter(gameState, 'Number of Loss Cards: ', numLossCards)
@@ -145,53 +189,53 @@ var getRound = function() {
 /* Define experimental variables */
 /* ************************************ */
 // task specific variables
-var choices = [82]
+var choices = [66,89,71,82,77]
 var currID = 0
+// global variables to hold round params
+var numCards = 6
 var numLossCards = 1
 var gainAmt = ""
 var lossAmt = ""
 var points = []
-var whichLossCards = [17]
-var CCT_timeouts = []
-var numRounds = 24
 var whichRound = 0
 var totalPoints = 0
 var roundOver = 0
 var roundPointsArray = []
+var button_values = []
 var prize1 = 0
 var prize2 = 0
 var prize3 = 0
+// timing variables
+var start_time = new Date()
+var task_limit = 720000
 
+//round params
+block1_params = [[6,1,-70,12],[6,1,-75,14],[6,1,-70,15],
+	[6,1,-75,17],[8,2,-60,24],[8,2,-75,29],[9,2,-65,17],[10,1,-95,14],
+	[10,2,-65,15],[10,2,-65,17],[12,2,-70,13],[12,2,-80,15],[15,3,-65,14],
+	[16,1,-45,1],[16,3,-70,15],[10,3,-50,30],[15,2,-70,17], [16,1,-95,7],
+	[16,1,-100,9],[16,2,-80,15],[16,2,-70,16],[16,5,-45,30]]
 
-	
-// this params array is organized such that the 0 index = the number of loss cards in round, the 1 index = the gain amount of each happy card, and the 2nd index = the loss amount when you turn over a sad face
-var paramsArray = [
-	[1, 10, 250],
-	[1, 10, 750],
-	[1, 30, 250],
-	[1, 30, 750],
-	[3, 10, 250],
-	[3, 10, 750],
-	[3, 30, 250],
-	[3, 30, 750]
-]
+block2_params = [[6,1,-75,13],[6,1,-70,14],[6,1,-80,16],[6,1,-70,17],
+	[8,2,-65,25],[8,2,-80,30],[10,1,-95,13],[10,1,-90,14],[10,2,-70,16],
+	[12,1,-100,7],[12,2,-80,14],[12,2,-75,15],[15,3,-65,15],[16,3,-70,14],
+	[16,5,-30,11],[15,2,-75,15],[15,2,-75,17],[16,1,-25,2],[16,1,-95,9],
+	[16,1,-100,11],[16,2,-75,16],[16,2,-80,17]]
 
-var cardArray = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
-	24, 25, 26, 27, 28, 29, 30, 31, 32
-]
+block3_params = [[6,1,-70,13],[6,1,-80,15],[6,1,-75,16],[8,2,-55,21],
+	[8,2,-65,26],[9,2,-60,15],[10,1,-90,13],[10,1,-95,15],[10,2,-65,16],
+	[12,1,-95,7],[12,2,-75,14],[12,2,-70,15],[15,3,-70,16],[16,3,-65,14],
+	[16,3,-75,16],[15,2,-80,16],[15,2,-80,17],[16,1,-15,1],[16,1,-100,10],
+	[16,2,-75,15],[16,2,-80,16],[16,5,-5,4]]
 
-var shuffledCardArray = jsPsych.randomization.repeat(cardArray, 1)
-var shuffledParamsArray = jsPsych.randomization.repeat(paramsArray, numRounds/8)
+block4_params = [[6,1,-80,14],[6,1,-75,15],[6,1,-70,16],[8,2,-60,23],
+	[8,2,-70,27],[9,2,-65,16],[10,1,-85,13],[10,2,-65,14],[10,2,-70,17],
+	[12,2,-75,13],[12,2,-70,14],[12,2,-80,16],[15,3,-65,16],[16,3,-75,15],
+	[16,5,-35,14],[15,2,-75,16],[15,2,-70,16],[16,1,-90,8],[16,1,-95,10],
+	[16,2,-70,15],[16,2,-85,16],[16,2,-75,17]]
 
+ParamsArray = block1_params.concat(block2_params,block3_params,block4_params)
 
-var gameSetup = 
-	"<div class = practiceText><div class = block-text2 id = feedback></div></div>" +
-	"<div class = cct-box2>"+
-	"<div class = titleBigBox>   <div class = titleboxLeft><div class = game-text id = game_round>Game Round: </div></div>   <div class = titleboxLeft1><div class = game-text id = loss_amount>Loss Amount: </div></div>    <div class = titleboxMiddle1><div class = game-text id = gain_amount>Gain Amount: </div></div>    <div class = titlebox><div class = game-text>How many cards do you want to take? </div></div>     <div class = titleboxRight1><div class = game-text id = num_loss_cards>Number of Loss Cards: </div></div>" +
-	"<div class = buttonbox><button type='button' id = nextButton class = 'CCT-btn select-button' onclick = clearTimers() disabled>Next Round</button></div>"+
-	getButtons()+
-	"</div>"+
-	getBoard()
 
 
 
@@ -201,11 +245,11 @@ var gameSetup =
 /* define static blocks */
 var instructions_block = {
   type: 'poldrack-single-stim',
-  stimulus: '<div class = centerbox><div class = center-text>Try to get as many points as possible</div></div>',
+  stimulus: '<div class = centerbox><div class = center-text>Try to get as many points as possible!<br><br>Select the number of cards you want by pressing the finger corresponding to the buttons on the screen<br><br>The loss amount, the gain amount, and the number of loss cards may change each trial</div></div>',
   is_html: true,
   choices: 'none',
-  timing_stim: 9500, 
-  timing_response: 9500,
+  timing_stim: 10000, 
+  timing_response: 10000,
   data: {
     trial_id: "instructions",
   },
@@ -226,6 +270,7 @@ var start_test_block = {
   on_finish: function() {
   	current_trial = 0
   	exp_stage = 'test'
+  	setNextRound()
   }
 };
 
@@ -243,19 +288,61 @@ var start_test_block = {
 	timing_post_trial: 0
 };
 
+var rest_block = {
+  type: 'poldrack-single-stim',
+  stimulus: '<div class = centerbox><div class = center-text>Take a break!<br>Next run will start in a moment</div></div>',
+  is_html: true,
+  choices: 'none',
+  timing_response: 10000,
+  data: {
+    trial_id: "rest_block"
+  },
+  timing_post_trial: 1000
+};
+
 
 var test_block = {
-	type: 'single-stim-button',
-	button_class: 'select-button',
+	type: 'poldrack-single-stim',
 	stimulus: getRound,
+	choices: choices,
+	is_html: true,
+	response_ends_trial: true,
 	data: {
 		trial_id: 'stim',
 		exp_stage: 'test'
 	},
-	timing_post_trial: 0,
-	on_finish: appendTestData,
-	response_ends_trial: true,
+	timing_post_trial: get_ITI,
+	on_finish: function(data) {
+		getChoice(data.key_press)
+		appendTestData()
+		setNextRound()
+	}
 };
+
+var rest_node = {
+    timeline: [rest_block],
+    conditional_function: function(){
+        if(whichRound%44 == 1 && whichRound > 2){
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
+
+var test_node = {
+  timeline: [test_block, rest_node],
+  loop_function: function(data) {
+    var time_elapsed = new Date() - start_time
+    if (time_elapsed < task_limit && ParamsArray.length>0) {
+      return true
+    } else {
+      return false
+    }
+  },
+  timing_post_trial: 1000
+}
 
 var payout_text = {
 	type: 'poldrack-text',
@@ -288,10 +375,9 @@ var payoutTrial = {
 /* create experiment definition array */
 var columbia_card_task_cold_experiment = [];
 columbia_card_task_cold_experiment.push(instructions_block);
+setup_fmri_intro(columbia_card_task_cold_experiment, choices)
 columbia_card_task_cold_experiment.push(start_test_block);
-for (b = 0; b < numRounds; b++) {
-	columbia_card_task_cold_experiment.push(test_block);
-}
+columbia_card_task_cold_experiment.push(test_node)
 columbia_card_task_cold_experiment.push(payoutTrial);
 columbia_card_task_cold_experiment.push(payout_text);
 columbia_card_task_cold_experiment.push(end_block);

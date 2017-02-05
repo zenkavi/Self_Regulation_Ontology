@@ -15,15 +15,15 @@ var get_ITI = function() {
 
     return -Math.log(U) / rate;
   }
-  gap = randomExponential(1/2)*500
-  if (gap > 10000) {
-    gap = 10000
+  gap = randomExponential(1/2)*200
+  if (gap > 6000) {
+    gap = 6000
   } else if (gap < 0) {
   	gap = 0
   } else {
   	gap = Math.round(gap/1000)*1000
   }
-  return 2500 + gap //1500 (stim time) + 500 (minimum ITI)
+  return 2250 + gap //500 (minimum ITI)
  }
 
 function getRandomInt(min, max) {
@@ -84,6 +84,7 @@ var appendTestData = function() {
 	jsPsych.data.addDataToLastTrial({
 		which_round: whichRound,
 		num_click_in_round: whichClickInRound,
+		num_cards: numCards,
 		num_loss_cards: numLossCards,
 		gain_amount: gainAmt,
 		loss_amount: lossAmt,
@@ -177,12 +178,17 @@ var setNextRound = function() {
 	numLossCards = roundParams[1]
 	lossAmt = roundParams[2]
 	gainAmt = roundParams[3]
-	whichClickInRound = 0
 	cardArray = getCardArray(numCards)
 	unclickedCards = cardArray
 	clickedGainCards = [] //num
 	clickedLossCards = [] //num
+	roundOver = 0
+	roundPoints = 0
+	whichClickInRound = 0
+	whichRound = whichRound + 1
+	lossClicked = false
 }
+
 var turnCards = function(cards) {
 	for (i = 0; i < numCards; i++) {
 		if (whichGainCards.indexOf(i) != -1) {
@@ -203,13 +209,6 @@ var turnOneCard = function(whichCard, win) {
 		document.getElementById("" + whichCard + "").src =
 			'/static/experiments/columbia_card_task_hot/images/chosen.png';
 	}
-}
-
-function doSetTimeout(card_i, delay, points, win) {
-	CCT_timeouts.push(setTimeout(function() {
-		turnOneCard(card_i, win);
-		document.getElementById("current_round").innerHTML = 'Current Round Points: ' + points
-	}, delay));
 }
 
 /* ************************************ */
@@ -250,10 +249,9 @@ var currID = ""
 var numLossCards = ""
 var gainAmt = ""
 var lossAmt = ""
-var CCT_timeouts = []
 var lossClicked = false
 var whichClickInRound = 0
-var whichRound = 1
+var whichRound = 0
 var roundPoints = 0
 var totalPoints = 0
 var roundOver = 0 //0 at beginning of round, 1 during round, 2 at end of round
@@ -266,8 +264,10 @@ var whichLossCards = []
 var prize1 = 0
 var prize2 = 0
 var prize3 = 0
-
-
+var num_blocks = 0
+// timing variables
+var start_time = new Date()
+var task_limit = 720000
 
 
 /* ************************************ */
@@ -276,11 +276,11 @@ var prize3 = 0
 /* define static blocks */
 var instructions_block = {
   type: 'poldrack-single-stim',
-  stimulus: '<div class = centerbox><div class = center-text>Try to get as many points as possible<br><br>Index Finger: Take Another Card<br><br>Middle Finger: End The Round</div></div>',
+  stimulus: '<div class = centerbox><div class = center-text>Try to get as many points as possible<br><br>The loss amount, the gain amount, and the number of loss cards may change each trial<br><br>Left Arrow: Take Another Card<br>Down Arrow: End The Round</div></div>',
   is_html: true,
   choices: 'none',
-  timing_stim: 9500, 
-  timing_response: 9500,
+  timing_stim: 5000, 
+  timing_response: 5000,
   data: {
     trial_id: "instructions",
   },
@@ -319,7 +319,20 @@ var start_test_block = {
 	timing_post_trial: 0
 };
 
-var test_block = {
+var rest_block = {
+  type: 'poldrack-single-stim',
+  stimulus: '<div class = centerbox><div class = center-text>Take a break!<br>Next run will start in a moment</div></div>',
+  is_html: true,
+  choices: 'none',
+  timing_response: 10000,
+  data: {
+    trial_id: "rest_block"
+  },
+  timing_post_trial: 1000
+};
+
+
+var task_block = {
 	type: 'poldrack-single-stim',
 	stimulus: getRound,
 	choices: choices,
@@ -340,8 +353,8 @@ var test_block = {
 	}
 };
 
-var test_node = {
-	timeline: [test_block],
+var task_node = {
+	timeline: [task_block],
 	loop_function: function(data) {
 		if (roundOver == 2) {
 			return false
@@ -365,13 +378,44 @@ var ITI_block = {
 	timing_response: get_ITI,
 	on_finish: function() {
 		roundPointsArray.push(roundPoints)
-		roundOver = 0
-		roundPoints = 0
-		whichClickInRound = 0
-		whichRound = whichRound + 1
-		lossClicked = false
 		setNextRound()
 	}
+}
+
+var rest_block = {
+  type: 'poldrack-single-stim',
+  stimulus: '<div class = centerbox><div class = center-text>Take a break!<br>Next run will start in a moment</div></div>',
+  is_html: true,
+  choices: 'none',
+  timing_response: 10000,
+  data: {
+    trial_id: "rest_block"
+  },
+  timing_post_trial: 1000
+};
+
+var rest_node = {
+    timeline: [rest_block],
+    conditional_function: function(){
+        if(whichRound%44 == 1 && whichRound > 2){
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
+var test_node = {
+  timeline: [task_node, ITI_block, rest_node],
+  loop_function: function(data) {
+    var time_elapsed = new Date() - start_time
+    if (time_elapsed < task_limit && ParamsArray.length>0) {
+      return true
+    } else {
+      return false
+    }
+  },
+  timing_post_trial: 1000
 }
 
 var payout_text = {
@@ -404,10 +448,7 @@ var payoutTrial = {
 var columbia_card_task_hot_experiment = [];
 columbia_card_task_hot_experiment.push(instructions_block)
 columbia_card_task_hot_experiment.push(start_test_block);
-for (i = 0; i < ParamsArray.length; i++) {
-	columbia_card_task_hot_experiment.push(test_node);
-	columbia_card_task_hot_experiment.push(ITI_block)
-}
+columbia_card_task_hot_experiment.push(test_node)
 columbia_card_task_hot_experiment.push(payoutTrial);
 columbia_card_task_hot_experiment.push(payout_text);
 columbia_card_task_hot_experiment.push(end_block);

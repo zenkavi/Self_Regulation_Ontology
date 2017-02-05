@@ -95,10 +95,6 @@ var ITIs = []
 // task specific variables
 var current_trial = 0
 var choices = [89, 71]
-var correct_responses = [
-  ["left button", 89],
-  ["right button",71]
-]
 var exp_stage = 'practice'
 var path = '/static/experiments/dot_pattern_expectancy/images/'
 var prefix = '<div class = centerbox><div class = img-container><img src = "'
