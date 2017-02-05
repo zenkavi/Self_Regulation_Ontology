@@ -103,6 +103,14 @@ for (var si=0; si<survey_items.length; si++) {
 		stims.push({'stimulus': item_text, 'data': item_data, 'choices': item_choice})
 	}
 }
+var stim_index = [16,34,8,0,29,13,5,26,15,39,6,4,30,23,25,14,24,27,18,11,21,10,2,33,37,3,17,28,20,9,38,1,12,35,32,36,7,19,22,31]
+stim_reorder = []
+for (var i=0; i<stim_index.length; i++) {
+	stim_reorder.push(stims[stim_index[i]])
+}
+stims = stim_reorder
+
+
 
 /* ************************************ */
 /* Set up jsPsych blocks */
