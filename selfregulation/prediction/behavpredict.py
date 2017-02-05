@@ -132,13 +132,13 @@ class BehavPredict:
                                 full_dataset=self.use_full_dataset)
         if datasubset=='survey':
             for v in self.behavdata.columns:
-                if not v.find('survey')>-1:
+                if not v.find('survey')>-1 or v.find('cognitive_reflection')>-1:
                     del self.behavdata[v]
                     if self.verbose>1:
                         print('dropping non-survey var:',v)
         if datasubset=='task':
             for v in self.behavdata.columns:
-                if v.find('survey')>-1:
+                if v.find('survey')>-1 and not v.find('cognitive_reflection')>-1:
                     del self.behavdata[v]
                     if self.verbose>1:
                         print('dropping non-task var:',v)
