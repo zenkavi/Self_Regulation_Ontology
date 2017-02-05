@@ -169,14 +169,16 @@ var possible_responses = jsPsych.randomization.shuffle([
 
 var choices = [possible_responses[0][1], possible_responses[1][1]]
 
-var tab = '&nbsp&nbsp&nbsp&nbsp'
-var prompt_text = '<ul list-text><li><img class = prompt_stim src = ' + images[0] + '></img>' + tab +
-  possible_responses[0][0] + '</li><li><img class = prompt_stim src = ' + images[1] + '></img>' +
-  tab +
-  possible_responses[0][0] + ' </li><li><img class = prompt_stim src = ' + images[2] + '></img>   ' +
-  '&nbsp&nbsp&nbsp' + possible_responses[1][0] +
-  ' </li><li><img class = prompt_stim src = ' + images[3] + '></img>' + tab + possible_responses[1][0] + ' </li></ul>'
-
+var prompt_text = '<ul list-text>' + 
+					'<li><div class = prompt_container><img class = prompt_stim src = ' + 
+					images[0] + '></img>' + possible_responses[0][0] + '</div></li>' +
+					'</li><li><div class = prompt_container><img class = prompt_stim src = ' +
+					images[1] + '></img>'  + possible_responses[0][0] + '</div></li>' +
+					' </li><li><div class = prompt_container><img class = prompt_stim src = ' 
+					+ images[2] + '></img>' + possible_responses[1][0] + '</div></li>' +
+					' </li><li><div class = prompt_container><img class = prompt_stim src = ' +
+					images[3] + '></img>' + possible_responses[1][0] + '</div></li></ul>'
+	
 /* Global task variables */
 var current_trial = 0
 var rtMedians = []

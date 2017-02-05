@@ -6,7 +6,7 @@ var randomDraw = function(lst) {
 	return lst[index]
 }
 
-var ITIs = [0.6,0.2,0.0,0.3,0.1,1.2,0.6,0.3,0.1,0.0,0.0,0.3,0.0,0.1,0.1,0.3,0.0,0.0,0.4,0.1,0.1,0.2,0.3,0.1,0.2,0.1,0.1,0.1,0.0,0.1,0.2,0.2,0.5,0.3,0.4,0.1,0.2,0.3,0.0,0.4,0.0,0.0,0.2,0.3,0.0,0.1,0.3,0.0,0.5,0.0,0.0,0.2,0.0,0.2,0.1,0.1,0.4,0.0,0.0,0.9,0.0,0.0,0.0,0.0,0.3,0.2,0.0,0.1,0.3,0.4,0.3,0.1,0.0,0.4,0.1,0.3,0.4,0.0,0.1,0.0,0.0,0.0,0.1,0.1,0.4,0.0,0.0,0.0,0.0,0.2,0.2,0.0,0.6,0.4,0.3,0.3,0.2,0.0,0.2,0.1,0.1,0.1,0.4,0.2,0.1,0.0,0.2,0.5,0.3,0.1,0.3,0.0,0.0,0.1,0.0,0.0,0.0,0.1,0.2,0.3,0.5,0.0,0.4,0.2,0.5]
+var ITIs = [0.0,0.408,0.408,0.0,0.0,0.136,0.544,0.136,0.0,0.0,0.0,0.408,0.408,0.0,0.272,0.0,0.272,0.272,0.272,0.136,0.272,0.272,0.136,0.0,0.272,0.544,0.272,0.136,0.0,0.0,0.0,0.0,0.272,0.0,0.0,0.0,0.0,0.136,0.0,0.0,0.0,0.0,0.272,0.136,0.272,0.0,0.136,0.136,0.0,0.136,0.136,0.136,0.408,0.272,0.0,0.68,0.0,0.272,0.0,0.0,0.0,0.0,0.272,0.816,0.0,0.136,0.136,0.272,0.136,0.136,0.544,0.136,0.0,0.272,0.136,0.136,0.0,0.136,0.0,0.0,0.0,0.136,0.0,0.0,0.136,0.136,0.0,0.272,0.0,0.136,0.0,0.0,0.136,0.272,0.136,0.272,0.68,0.272,0.272,0.0,0.272,0.136,0.0,0.136,0.0,0.136,0.272,0.0,0.136,0.408,0.0,0.952,0.136,0.136,0.272,0.0,0.0,0.0,0.68,0.272,0.272,0.0,0.272,0.0,0.136]
 var get_ITI = function() {
   return 2250 + ITIs.shift()*1000
  }
@@ -152,14 +152,16 @@ var correct_responses = jsPsych.randomization.shuffle([possible_responses[0], po
 	possible_responses[1], possible_responses[1]
 ])
 
-var tab = '&nbsp&nbsp&nbsp&nbsp'
 
-var prompt_text = '<ul list-text><li><img class = prompt_stim src = ' + images[0] + '></img>' + tab +
-	correct_responses[0][0] + '</li><li><img class = prompt_stim src = ' + images[1] + '></img>' + tab +
-	correct_responses[1][0] + ' </li><li><img class = prompt_stim src = ' + images[2] + '></img>   ' +
-	tab + correct_responses[2][0] +
-	' </li><li><img class = prompt_stim src = ' + images[3] + '></img>' + tab + correct_responses[3][0] +
-	' </li></ul>'
+var prompt_text = '<ul list-text>' + 
+					'<li><div class = prompt_container><img class = prompt_stim src = ' + 
+					images[0] + '></img>' + correct_responses[0][0] + '</div></li>' +
+					'</li><li><div class = prompt_container><img class = prompt_stim src = ' +
+					images[1] + '></img>'  + correct_responses[1][0] + '</div></li>' +
+					' </li><li><div class = prompt_container><img class = prompt_stim src = ' 
+					+ images[2] + '></img>' + correct_responses[2][0] + '</div></li>' +
+					' </li><li><div class = prompt_container><img class = prompt_stim src = ' +
+					images[3] + '></img>' + correct_responses[3][0] + '</div></li></ul>'
 
 /* Global task variables */
 var current_trial = 0
@@ -204,7 +206,7 @@ var stims = [{
 }]
 
 // set up stim order based on optimized trial sequence
-var stim_index = [1,0,1,0,0,1,1,1,0,1,1,0,0,1,1,0,0,1,0,0,1,0,1,1,1,0,1,0,0,1,1,1,0,1,0,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,0,0,1,0,1,0,0,1,1,1,0,1,0,0,1,0,0,1,1,1,1,0,1,1,0,1,0,0,1,1,0,1,1,1,1,1,0,0,1,0,1,0,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,0,0,0,0,1,1,1,1,1,0,0]
+var stim_index = [1,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,1,0,1,1,1,0,0,0,0,0,1,1,0,1,1,1,0,0,1,0,0,0,0,1,0,1,1,0,0,1,0,0,0,0,0,1,0,0,1,1,0,0,1,0,0,0,0,1,1,0,1,0,0,0,1,0,1,1,1,0,1,0,0,1,0,0,1,1,1,1,0,1,0,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,1,1,0,1,0,0,0,1,0,1,1,0,0,0,0,1,1,0]
 var trials = []
 var go_stims = jsPsych.randomization.repeat(stims, exp_len*0.6 / 4)
 var stop_stims = jsPsych.randomization.repeat(stims, exp_len*0.4 / 4)
@@ -358,10 +360,10 @@ var practice_loop = {
 /* ************************************ */
 
 var stop_signal_experiment = []
-stop_signal_experiment.push(task_setup_block);
-stop_signal_experiment.push(instructions_block);
-stop_signal_experiment.push(practice_loop);
-setup_fmri_intro(stop_signal_experiment, choices)
+//stop_signal_experiment.push(task_setup_block);
+//stop_signal_experiment.push(instructions_block);
+//stop_signal_experiment.push(practice_loop);
+//setup_fmri_intro(stop_signal_experiment, choices)
 
 /* Test blocks */
 // Loop through each trial within the block

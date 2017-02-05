@@ -1,7 +1,7 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
-var ITIs = [0.2,0.0,0.9,0.1,0.1,0.5,0.3,0.8,0.3,0.2,0.0,0.3,0.2,0.0,0.0,0.2,0.1,0.6,0.2,0.4,0.0,0.3,0.2,0.9,0.1,0.1,0.3,0.0,0.5,0.1,0.7,0.1,0.3,0.0,0.0,0.0,0.3,0.0,0.1,0.0,0.1,0.5,0.3,0.3,0.3,0.0,0.0,0.7,1.5,0.0,0.3,0.0,0.0,0.1,0.2,0.4,0.1,0.0,0.2,0.4,0.2,0.1,0.0,0.2,0.0,0.1,0.0,0.5,0.1,0.1,0.1,0.4,0.2,0.1,0.0,0.1,0.3,0.1,0.4,0.2,0.0,0.2,0.5,0.0,0.0,0.4,0.1,0.2,0.2,0.1,0.2,0.0,0.3,0.0,0.0,0.1,0.3,0.1,0.2,0.0,0.1,0.0,0.1,0.3,0.2,0.5,0.1,0.0,0.0,0.1,0.3,1.0,0.3,0.1,0.4,0.2,0.0,0.0,0.3,0.8,0.0,0.0,0.0,0.0,0.4,0.2,0.1,0.6,0.0,0.1,0.2,0.0,0.1,0.0,0.4,0.6,0.1,0.3,0.0,0.7,0.0,1.0,0.0,0.4,0.2,0.1,0.5,0.1,0.3,0.3,0.4,0.3,0.5,0.8,0.1,0.2,0.1,0.1,0.2,0.2,0.0,0.0,0.1,0.0,0.0,0.2,0.4,0.0,0.2,0.1,0.2,0.5,0.0,0.0,0.5,0.0,0.0,0.4,1.0,0.2,0.1,0.0,0.0,0.0,0.2,0.0,0.0,0.1,0.0,0.3,0.3,0.1]
+var ITIs = [0.816,0.136,0.0,0.272,0.0,0.0,0.136,0.816,0.136,0.0,0.136,0.136,0.136,0.0,0.136,0.136,0.136,0.136,0.272,0.136,0.68,0.544,0.408,0.272,0.0,0.952,0.272,0.136,0.136,0.0,0.0,0.136,0.0,0.0,0.136,0.0,0.272,0.68,0.136,0.0,0.136,0.0,0.136,0.272,0.272,0.272,0.0,0.0,0.544,0.816,0.408,0.0,0.408,0.0,0.136,0.0,0.0,0.136,0.0,0.408,0.408,0.0,0.408,0.0,0.408,0.272,0.0,0.136,0.272,0.0,0.816,0.0,0.0,0.0,0.272,0.544,0.0,0.544,0.408,0.0,0.816,0.136,0.0,0.136,0.0,0.0,0.136,0.272,0.136,0.0,0.136,0.0,0.0,0.0,0.136,0.408,0.136,0.0,0.272,0.0,0.68,0.0,0.544,0.136,0.136,0.136,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.224,0.0,0.272,0.0,0.136,0.136,0.136,0.0,0.0,0.408,0.0,0.0,0.136,0.68,0.68]
 var get_ITI = function() {
   return 2100 + ITIs.shift()
  }
@@ -10,9 +10,8 @@ var getPracticeTrials = function() {
 	var practice_stim = jsPsych.randomization.repeat($.extend(true, [], base_practice_stim), 1, true)
 	var practice_trials = []
 	for (i=0; i<practice_length; i++) {
-		practice_trials.push(no_cue)
-		if (practice_stim.data[i].cue == 'nocue') {
-			
+		if (practice_stim.data[i].cue == 'double') {
+			practice_trials.push(double_cue)
 		} else if (practice_stim.data[i].cue == 'center') {
 			practice_trials.push(center_cue)
 		} else {
@@ -72,7 +71,7 @@ var practice_repeats = 0
 // task specific variables
 var practice_length = 12
 var num_blocks = 2
-var block_length = 96
+var block_length = 64
 
 var current_trial = 0
 var exp_stage = 'practice'
@@ -88,7 +87,7 @@ var base_practice_stim = []
 var base_test_stim = [[],[],[],[],[],[]]
 var test_stim = [[],[],[],[],[],[]] // track each cue/condition separately
 var locations = ['up', 'down']
-var cues = ['nocue', 'center', 'spatial']
+var cues = ['double', 'spatial']
 var directions = ['left', 'right']
 var conditions = ['congruent', 'incongruent']
 
@@ -130,7 +129,7 @@ for (var i=0; i<test_stim.length; i++) {
 	test_stim[i] = jsPsych.randomization.repeat(base_test_stim[i], block_length*num_blocks/24)
 }
 // set up stim order based on optimized trial sequence
-var stim_index = [3,5,4,2,3,1,1,0,1,3,5,5,3,2,2,5,1,4,5,3,0,2,0,3,3,1,5,3,4,4,0,2,4,1,2,1,1,0,1,5,3,2,4,5,0,0,2,5,2,0,2,1,5,3,4,1,0,2,2,3,2,5,4,2,0,4,3,5,1,3,5,0,4,4,4,5,5,2,3,1,4,0,1,2,2,0,5,4,4,1,4,2,3,1,0,1,5,2,1,1,3,5,1,4,0,4,1,2,5,3,1,2,4,0,4,0,4,3,2,1,5,5,5,3,0,0,0,0,5,2,4,4,2,3,0,4,5,1,3,1,2,4,5,2,4,0,2,0,1,1,4,0,0,3,3,4,1,2,1,0,2,4,4,3,3,0,1,1,1,0,4,5,0,4,5,5,2,4,3,5,5,5,2,3,0,3,0,1,1,2,0,1]
+var stim_index = [2,1,1,3,0,1,0,1,3,2,3,0,0,1,1,0,3,1,2,2,2,3,2,2,1,0,2,0,2,1,3,1,0,0,2,2,0,1,2,3,3,3,1,3,3,2,0,3,0,3,2,1,0,0,0,3,3,0,2,3,1,1,1,2,1,1,3,0,1,0,1,3,2,3,0,0,1,1,0,3,1,2,2,2,3,2,2,1,0,2,0,2,1,3,1,0,0,2,2,0,1,2,3,3,3,1,3,3,2,0,3,0,3,2,0,2,0,0,3,3,0,2,3,1,1,1,2,1]
 var ordered_stim = []
 for (var i=0; i<stim_index.length; i++) {
 	var stim = test_stim[stim_index[i]].shift()
@@ -226,13 +225,13 @@ var fixation = {
 	}
 }
 
-var no_cue = {
+var double_cue = {
 	type: 'poldrack-single-stim',
-	stimulus: '<div class = centerbox><div class = ANT_text>+</div></div>',
+	stimulus: '<div class = centerbox><div class = ANT_text>+</div></div><div class = ANT_down><div class = ANT_text>*</div></div><div class = ANT_up><div class = ANT_text>*</div><div></div>',
 	is_html: true,
 	choices: 'none',
 	data: {
-		trial_id: 'nocue'
+		trial_id: 'doublecue'
 	},
 	timing_post_trial: 0,
 	timing_stim: 100,
@@ -244,24 +243,6 @@ var no_cue = {
 	}
 }
 
-var center_cue = {
-	type: 'poldrack-single-stim',
-	stimulus: '<div class = centerbox><div class = ANT_centercue_text>*</div></div>',
-	is_html: true,
-	choices: 'none',
-	data: {
-		trial_id: 'centercue'
-	},
-	timing_post_trial: 0,
-	timing_stim: 100,
-	timing_response: 100,
-	on_finish: function() {
-		jsPsych.data.addDataToLastTrial({
-			exp_stage: exp_stage
-		})
-	}
-
-}
 
 /* Set up practice trials */
 var practice_trials = getPracticeTrials()
@@ -302,10 +283,8 @@ for (b = 0; b < blocks.length; b++) {
 	var block = blocks[b]
 	for (i = 0; i < block.length; i++) {
 
-		if (block[i].data.cue == 'nocue') {
-			attention_network_task_experiment.push(no_cue)
-		} else if (block[i].data.cue == 'center') {
-			attention_network_task_experiment.push(center_cue)
+		if (block[i].data.cue == 'double') {
+			attention_network_task_experiment.push(double_cue)
 		} else {
 			var spatial_cue = {
 				type: 'poldrack-single-stim',
