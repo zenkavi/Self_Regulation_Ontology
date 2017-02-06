@@ -1,29 +1,9 @@
 /* ************************************ */
 /* Helper Functions                     */
 /* ************************************ */
+var ITIs = [0.204,0.204,0.272,0.204,0.408,0.136,0.272,0.34,0.136,0.34,0.068,0.0,0.204,1.02,0.0,0.0,0.068,0.476,0.136,0.068,0.0,0.0,0.204,0.204,0.272,0.136,0.204,0.272,0.272,0.34,0.204,0.068,0.0,0.408,0.204,0.136,0.34,0.068,0.34,0.136,0.068,0.068,0.068,0.136,0.0,0.136,0.34,0.408,0.136,0.136,0.0,0.068,0.0,0.0,0.136,0.136,0.476,0.204,0.068,0.068,0.34,0.476,0.272,0.884,0.136,0.136,0.068,0.068,0.612,0.476,0.0,0.068,0.204,0.272,0.068,0.272,0.748,0.068,0.0,0.204,0.068,0.068,0.34,0.0,0.0,0.272,0.204,0.0]
 var get_ITI = function() {
-  // ref: https://gist.github.com/nicolashery/5885280
-  function randomExponential(rate, randomUniform) {
-    // http://en.wikipedia.org/wiki/Exponential_distribution#Generating_exponential_variates
-    rate = rate || 1;
-
-    // Allow to pass a random uniform value or function
-    // Default to Math.random()
-    var U = randomUniform;
-    if (typeof randomUniform === 'function') U = randomUniform();
-    if (!U) U = Math.random();
-
-    return -Math.log(U) / rate;
-  }
-  gap = randomExponential(1/2)*200
-  if (gap > 6000) {
-    gap = 6000
-  } else if (gap < 0) {
-  	gap = 0
-  } else {
-  	gap = Math.round(gap/1000)*1000
-  }
-  return 2250 + gap //500 (minimum ITI)
+  return 2250 + ITIs.shift()*1000
  }
 
 function getRandomInt(min, max) {
