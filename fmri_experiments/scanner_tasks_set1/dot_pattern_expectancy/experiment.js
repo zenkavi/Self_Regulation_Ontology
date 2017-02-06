@@ -13,6 +13,14 @@ var randomDraw = function(lst) {
   return lst[index]
 }
 
+var getValidProbe = function() {
+  return prefix + path + valid_probe + postfix
+}
+
+var getValidCue = function() {
+  return prefix + path + valid_cue + postfix
+}
+
 var getInvalidCue = function() {
   return prefix + path + randomDraw(cues) + postfix
 }
@@ -45,6 +53,13 @@ var getFeedback = function() {
   return feedback_text
 }
 
+var getInstructions = function() {
+  var text = '<div class = centerbox><p style = "font-size:40px" class = center-block-text>Target Pair (press index finger):</p><p class = center-block-text><img src = "/static/experiments/dot_pattern_expectancy/images/' +
+    valid_cue +
+    '" ></img>&nbsp&nbsp&nbsp...followed by...&nbsp&nbsp&nbsp<img src = "/static/experiments/dot_pattern_expectancy/images/' +
+    valid_probe + '" ></img><br></br></p><p style = "font-size:40px" class = center-block-text>Otherwise press middle finger</div>'
+    return text
+}
 
 var getPracticeTrials = function() {
   ITIs = jsPsych.randomization.shuffle([0,1,.2,0,.6,0,0,.4,0,.8])
@@ -99,14 +114,14 @@ var exp_stage = 'practice'
 var path = '/static/experiments/dot_pattern_expectancy/images/'
 var prefix = '<div class = centerbox><div class = img-container><img src = "'
 var postfix = '"</img></div></div>'
-var cues = jsPsych.randomization.shuffle(['cue1.png', 'cue2.png', 'cue3.png', 'cue4.png',
+var cues = ['cue1.png', 'cue2.png', 'cue3.png', 'cue4.png',
   'cue5.png', 'cue6.png'
-])
-var probes = jsPsych.randomization.shuffle(['probe1.png', 'probe2.png', 'probe3.png', 'probe4.png',
+]
+var probes = ['probe1.png', 'probe2.png', 'probe3.png', 'probe4.png',
   'probe5.png', 'probe6.png'
-])
-var valid_cue = cues.pop()
-var valid_probe = probes.pop()
+]
+var valid_cue = ''
+var valid_probe = ''
 
 //preload images
 var images = []
@@ -144,6 +159,26 @@ for (b = 0; b < num_blocks; b++) {
 /* ************************************ */
 /* Set up jsPsych blocks */
 /* ************************************ */
+var task_setup_block = {
+  type: 'survey-text',
+  data: {
+    trial_id: "task_setup"
+  },
+  questions: [
+    [
+      "<p class = center-block-text>Experimenter C Setup</p>"
+    ],
+    [
+      "<p class = center-block-text>Experimenter P Setup</p>"
+    ]
+  ], on_finish: function(data) {
+    cue_index = parseInt(data.responses.slice(7, 8))
+    probe_index = parseInt(data.responses.slice(16, 17))
+    valid_cue = cues.splice(cue_index-1,1)[0]
+    valid_probe = probes.splice(probe_index-1,1)[0]
+  }
+}
+
 var start_test_block = {
   type: 'poldrack-single-stim',
   stimulus: '<div class = centerbox><div class = center-text>Get ready!</p></div>',
@@ -180,10 +215,7 @@ var start_test_block = {
 
  var instructions_block = {
   type: 'poldrack-single-stim',
-  stimulus: '<div class = centerbox><p style = "font-size:40px" class = center-block-text>Target Pair (press index finger):</p><p class = center-block-text><img src = "/static/experiments/dot_pattern_expectancy/images/' +
-    valid_cue +
-    '" ></img>&nbsp&nbsp&nbsp...followed by...&nbsp&nbsp&nbsp<img src = "/static/experiments/dot_pattern_expectancy/images/' +
-    valid_probe + '" ></img><br></br></p><p style = "font-size:40px" class = center-block-text>Otherwise press middle finger</div>',
+  stimulus: getInstructions,
   is_html: true,
   choices: 'none',
   timing_stim: 14500, 
@@ -244,7 +276,7 @@ var feedback_block = {
 /* define test block cues and probes*/
 var A_cue = {
   type: 'poldrack-single-stim',
-  stimulus: prefix + path + valid_cue + postfix,
+  stimulus: getValidCue,
   is_html: true,
   choices: 'none',
   data: {
@@ -283,7 +315,7 @@ var other_cue = {
 
 var X_probe = {
   type: 'poldrack-single-stim',
-  stimulus: prefix + path + valid_probe + postfix,
+  stimulus: getValidProbe,
   is_html: true,
   choices: choices,
   data: {
@@ -378,6 +410,7 @@ var practice_loop = {
 /* ************************************ */
 
 var dot_pattern_expectancy_experiment = []
+dot_pattern_expectancy_experiment.push(task_setup_block)
 dot_pattern_expectancy_experiment.push(instructions_block);
 dot_pattern_expectancy_experiment.push(practice_loop);
 setup_fmri_intro(dot_pattern_expectancy_experiment, choices)

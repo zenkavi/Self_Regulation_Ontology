@@ -444,7 +444,7 @@ var practice_block = {
   },
   timing_feedback_duration: 500,
   show_stim_with_feedback: false,
-  timing_response: 1500,
+  timing_response: 2000,
   timing_stim: 1000,
   timing_post_trial: 0,
   prompt: '<div class = promptbox>' + prompt_task_list + '</div>',
