@@ -107,6 +107,8 @@ var probes = jsPsych.randomization.shuffle(['probe1.png', 'probe2.png', 'probe3.
 ])
 var valid_cue = cues.pop()
 var valid_probe = probes.pop()
+console.log('Valid Cue:' + valid_cue)
+console.log('Valid Probe:' + valid_probe)
 
 //preload images
 var images = []
@@ -117,10 +119,10 @@ for (var i = 0; i < cues.length; i++) {
 jsPsych.pluginAPI.preloadImages(images)
 
 // set up blocks
-var num_blocks = 4
-var block_length = 40
+var num_blocks = 1
+var block_length = 30
 
-var stim_index = [0,0,0,3,0,0,0,0,1,0,0,0,0,2,0,3,2,1,2,1,3,0,1,0,1,0,0,0,0,3,0,3,0,0,2,2,0,1,0,0,1,0,0,3,0,2,0,0,0,0,0,2,3,3,2,0,0,2,0,3,0,0,0,0,0,2,3,0,0,0,2,2,0,2,0,0,3,0,1,0,0,1,1,2,0,2,3,3,0,3,0,2,0,0,0,3,0,3,0,0,1,0,0,0,0,2,3,0,0,1,1,2,2,1,0,3,0,1,0,0,0,0,1,1,0,0,0,1,3,3,0,2,0,2,1,0,3,0,0,3,0,1,0,0,3,3,0,0,3,1,1,1,3,2,0,0,0,0,2,0]
+var stim_index = [0,0,0,3,2,2,1,0,0,3,3,0,0,3,0,0,0,3,3,0,1,0,0,0,0,3,0,2,1,0]
 
 var trial_proportions = []
 for (var i=0; i<stim_index.length;i++) {
@@ -174,9 +176,12 @@ var start_test_block = {
     trial_id: "end",
     exp_id: 'dot_pattern_expectancy'
   },
-  timing_post_trial: 0
+  timing_post_trial: 0,
+  on_finish: function() {
+    console.log('Valid Cue:' + valid_cue)
+    console.log('Valid Probe:' + valid_probe)
+  }
 };
-
 
  var instructions_block = {
   type: 'poldrack-single-stim',
@@ -190,6 +195,8 @@ var start_test_block = {
   timing_response: 14500,
   data: {
     trial_id: "instructions",
+    valid_cue: value_cue,
+    valid_probe: valid_probe
   },
   timing_post_trial: 500
 };
