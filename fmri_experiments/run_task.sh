@@ -1,3 +1,4 @@
+#!/bin/sh
 function usage {
     echo "usage: $0 "
     echo "  -i      subid, mandatory"
