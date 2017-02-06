@@ -1,6 +1,26 @@
-subid=$1
-tasks=$2
+function usage {
+    echo "usage: $0 "
+    echo "  -i      subid, mandatory"
+    echo "  -s      scanner, integer: 1-4, mandatory"
+    echo "  -t      task"
+    exit 1
+}
+
+while getopts hi:s:t: option
+do
+        case "${option}"
+        in
+        		h) usage;;
+                i) subid=${OPTARG};;
+                s) scanner_set=${OPTARG};;
+                t) task=${OPTARG};;
+        esac
+done
+
+echo Subid: $subid
+echo Scanner Set: $scanner_set
+echo Task: $task
 
 echo "Creating battery for subject: $subid"
-echo "Tasks: $tasks"
-expfactory --run --folder scanner_tasks/ --battery expfactory-battery/ --experiments $tasks --subid $subid
+echo "Task: $task"
+expfactory --run --folder scanner_tasks_set$scanner_set/ --battery expfactory-battery/ --experiments $task --subid $subid
