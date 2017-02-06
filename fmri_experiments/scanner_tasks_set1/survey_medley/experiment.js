@@ -87,18 +87,18 @@ var upps_codings = ['forward', 'forward', 'forward', 'forward', 'forward', 'forw
 var survey_items = [grit_items, brief_items, future_time_items, impulse_venture_items, upps_items]
 var responses = [grit_responses, brief_responses, future_time_responses, impulse_venture_responses, upps_responses]
 var surveys = ['grit', 'brief', 'future_time', 'impulsive_venture', 'upps']
-var survey_choices = [[66,89,71,82,77],[66,89,71,82,77],[66,89,71,82,77],[66,89,71,82,77],[89,71,82,77]]
+var survey_choices = [[66,89,71,82,77],[66,89,71,82,77],[66,89,71,82,77],[89,71],[89,71,82,77]]
 var item_codings = [grit_codings, brief_codings, future_time_codings, impulse_venture_codings, upps_codings]
 var stims = []
 for (var si=0; si<survey_items.length; si++) {
 	var items = survey_items[si]
 	for (var i=0; i<items.length; i++) {
-		var item_text = '<div class = centerbox><p class=item-text>' + items[i] + '</p><div class=response-text><div class=response-item>' + responses[si].join('</div><div class=response-item>') + '</div></div></div>'
+		var item_text = '<div class = centerbox><p class=item-text>' + items[i] + '</p></div><div class=response-text><div class=response-item>' + responses[si].join('</div><div class=response-item>') + '</div></div>'
 		var item_coding = item_codings[si][i]
 		var item_data = {'survey': surveys[si], 
 						'item_coding': item_coding,
 						'item_text': items[i],
-						'possible_responses': responses[si]}
+						'options': responses[si]}
 		var item_choice = survey_choices[si]
 		stims.push({'stimulus': item_text, 'data': item_data, 'choices': item_choice})
 	}
