@@ -34,11 +34,16 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-v',"--verbose", help="increase output verbosity",
                         default=0, action='count')
+    parser.add_argument('-c',"--classifier", help="classifier",
+                            default='lasso')
+    
     parser.add_argument("--report_features", help="print features",
                         action='store_true')
     parser.add_argument("--print_report", help="print report at the end",
                         action='store_true')
     parser.add_argument('-s',"--shuffle", help="shuffle target variable",
+                        action='store_true')
+    parser.add_argument("--no_baseline_regress", help="don't regress out baseline",
                         action='store_true')
     parser.add_argument('-d',"--dataset", help="dataset for prediction",
                             required=True)
@@ -66,9 +71,17 @@ if __name__=='__main__':
         os.makedirs(output_dir)
 
     assert args.dataset in ['survey','mirt','task','all','baseline']
-
-    # set up classifier
-    clf=LassoCV()
+    assert args.classifier in ['lasso','rf']
+    # don't regress out baseline vars for baseline model
+    if args.dataset=='baseline' or args.no_baseline_regress:
+        preregress=False
+        if args.verbose:
+            print("turning off pre-regression by baseline vars")
+    else:
+        preregress=True
+        if args.verbose:
+            print("turning on pre-regression by baseline vars")
+    
 
     # skip RetirementPercentStocks because it crashes the estimation tool
     bp=behavpredict.BehavPredict(verbose=args.verbose,
@@ -77,6 +90,7 @@ if __name__=='__main__':
     bp.load_demog_data()
     bp.get_demogdata_vartypes()
     bp.load_behav_data(args.dataset)
+
     if args.shuffle:
         tmp=bp.demogdata.values.copy()
         numpy.random.shuffle(tmp)
@@ -99,7 +113,9 @@ if __name__=='__main__':
             print('skipping due to low freq:',v,numpy.mean(bp.demogdata[v]>0))
             continue
         try:
-            bp.scores[v],bp.importances[v]=bp.run_crossvalidation(v)
+            bp.scores[v],bp.importances[v]=bp.run_crossvalidation(v,
+                     classifier=args.classifier,
+                     preregress_baseline_vars=preregress)
             if args.report_features and numpy.mean(bp.scores[v])>0.65:
                 print('')
                 meanimp=numpy.mean(bp.importances[v],0)
@@ -109,15 +125,17 @@ if __name__=='__main__':
                 for i in meanimp_sortidx[:3][::-1]:
                     print(bp.behavdata.columns[i],meanimp[i])
         except:
-            e = sys.exc_info()[0]
+            e = sys.exc_info()
             print('error on',v,':',e)
 
         h='%08x'%random.getrandbits(32)
         shuffle_flag='shuffle_' if args.shuffle else ''
         varflag='%s_'%v
-        outfile='prediction_%s_%s%s%s.pkl'%(args.dataset,shuffle_flag,varflag,h)
+        outfile='prediction_%s_%s_%s%s%s.pkl'%(args.dataset,args.classifier,shuffle_flag,varflag,h)
         if not os.path.exists(output_dir):
             os.mkdir(output_dir)
+        if args.verbose:
+            print('saving to',os.path.join(output_dir,outfile))
         pickle.dump((bp.scores[v],bp.importances[v]),open(os.path.join(output_dir,outfile),'wb'))
 
     # print a report

@@ -22,14 +22,15 @@ import sys,os
 import random
 import pickle
 import warnings
+import ipdb
 
 import numpy,pandas
 import importlib
 
-from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.ensemble import ExtraTreesClassifier,ExtraTreesRegressor
 from sklearn.model_selection import cross_val_score,StratifiedKFold,ShuffleSplit,GridSearchCV
 from sklearn.metrics import roc_auc_score,r2_score
-from sklearn.linear_model import LassoCV
+from sklearn.linear_model import LassoCV,LinearRegression,LogisticRegressionCV
 from sklearn.preprocessing import StandardScaler
 
 import fancyimpute
@@ -47,8 +48,8 @@ class BehavPredict:
                     drop_na_thresh=50,
                     n_jobs=1,
                     categorical_vars=None,
-                    n_outer_splits=4,
-                    use_smote=True,smote_cutoff=0.1,
+                    n_outer_splits=8,
+                    use_smote=True,smote_cutoff=0.3,
                     baseline_vars=['Age','Sex'],
                     skip_vars=[]):
         # set up arguments
@@ -126,7 +127,9 @@ class BehavPredict:
             for l in lines:
                 self.data_models[l[0]]=l[1]
 
-    def load_behav_data(self,datasubset='all'):
+
+    def load_behav_data(self,datasubset='all',
+                        add_baseline_vars=False):
         self.behavdata=get_behav_data(self.dataset,
                                 'meaningful_variables_clean.csv',
                                 full_dataset=self.use_full_dataset)
@@ -136,15 +139,17 @@ class BehavPredict:
                     del self.behavdata[v]
                     if self.verbose>1:
                         print('dropping non-survey var:',v)
+
         if datasubset=='task':
             for v in self.behavdata.columns:
                 if v.find('survey')>-1 and not v.find('cognitive_reflection')>-1:
                     del self.behavdata[v]
                     if self.verbose>1:
                         print('dropping non-task var:',v)
+
         if datasubset=='baseline':
             self.behavdata=self.demogdata[self.baseline_vars].copy()
-        else:
+        elif add_baseline_vars:
             for v in self.baseline_vars:
                 self.behavdata[v]=self.demogdata[v].copy()
 
@@ -193,31 +198,42 @@ class BehavPredict:
                     self.demogdata[v]=(self.demogdata[v]>c).astype('int')
 
 
-    def run_crossvalidation(self,v,clf=None,outer_cv=None,
+    def run_crossvalidation(self,v,classifier=None,outer_cv=None,
                             imputer=fancyimpute.SimpleFill,
-                            shuffle=False,scoring='roc_auc'):
+                            shuffle=False,scoring='roc_auc',
+                            preregress_baseline_vars=True):
         """
         v is the variable on which to run crosvalidation
         """
 
         if self.data_models[v]=='binary':
-            return self.run_crossvalidation_binary(v,LassoCV(),outer_cv,
-                                                imputer,shuffle,scoring)
+            return self.run_crossvalidation_binary(v,classifier,outer_cv,
+                                                imputer,shuffle,scoring,
+                                                preregress_baseline_vars)
         else:
-            return self.run_crossvalidation_regression(v,clf,outer_cv,
-                                                imputer,shuffle,scoring='r2')
+            if scoring=='roc_auc':
+                scoring='r2'
+            return self.run_crossvalidation_regression(v,classifier,outer_cv,
+                                                imputer,shuffle,scoring,
+                                                preregress_baseline_vars)
 
 
-    def run_crossvalidation_binary(self,v,clf=None,outer_cv=None,
-                            imputer=fancyimpute.SimpleFill,
-                            shuffle=False,scoring='roc_auc'):
+    def run_crossvalidation_binary(self,v,classifier,outer_cv=None,
+                            imputer=fancyimpute.SoftImpute,
+                            shuffle=False,scoring='roc_auc',
+                            preregress_baseline_vars=True):
         """
         run CV for binary data
         """
 
+        if classifier=='rf':
+            clf=ExtraTreesClassifier()
+        elif classifier=='lasso':
+            clf=LogisticRegressionCV(Cs=100)
+            
         if self.verbose:
             print('classifying',v,numpy.mean(self.demogdata[v]))
-
+            print('using classifier:',classifier)
         # set up crossvalidation
         if not outer_cv:
             outer_cv=StratifiedKFold(n_splits=self.n_outer_splits,shuffle=True)
@@ -240,11 +256,20 @@ class BehavPredict:
                 Xtrain=imputer().complete(Xdata[train,:])
             if numpy.sum(numpy.isnan(Xtest))>0:
                 Xtest=imputer().complete(Xdata[test,:])
+            if preregress_baseline_vars:
+                if self.verbose:
+                    print('residualizing vs baseline vars:',self.baseline_vars)
+                lm=LinearRegression()
+                lm.fit(self.demogdata[self.baseline_vars].iloc[train,:],Xtrain)
+                Xtrain=Xtrain - lm.predict(self.demogdata[self.baseline_vars].iloc[train,:])
+                Xtest=Xtest - lm.predict(self.demogdata[self.baseline_vars].iloc[test,:])
+
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", message="Data with input dtype int64 was converted to float64 by StandardScaler.")
                 Xtrain=scale.fit_transform(Xtrain)
                 Xtest=scale.transform(Xtest)
             Ytrain=Ydata[train]
+
             if numpy.abs(numpy.mean(Ytrain)-0.5)>self.smote_cutoff and self.use_smote:
                 if self.verbose>1:
                     print("using SMOTE to oversample")
@@ -274,19 +299,25 @@ class BehavPredict:
             imp=None
         return scores,imp
 
-    def run_crossvalidation_regression(self,v,clf=None,outer_cv=None,
-                            imputer=fancyimpute.SimpleFill,
-                            shuffle=False,scoring='r2'):
+    def run_crossvalidation_regression(self,v,classifier,outer_cv=None,
+                            imputer=fancyimpute.SoftImpute,
+                            shuffle=False,scoring='r2',
+                            preregress_baseline_vars=True):
         """
         run CV for binary data
         """
+        
         if self.verbose:
             print('%s regression on'%self.data_models[v],v,numpy.mean(self.demogdata[v]>0))
-        if not self.data_models[v]=='gaussian':
-            print('using R to fit model...')
-            clf=prediction_utils.RModel(self.data_models[v],self.n_jobs)
-        else:
-            clf=LassoCV()
+            print('using classifier:',classifier)
+        if classifier=='rf':
+            clf=ExtraTreesRegressor()
+        elif classifier=='lasso':
+            if not self.data_models[v]=='gaussian':
+                print('using R to fit model...')
+                clf=prediction_utils.RModel(self.data_models[v],self.n_jobs)
+            else:
+                clf=LassoCV()
 
         # set up crossvalidation
         if not outer_cv:
@@ -310,6 +341,14 @@ class BehavPredict:
                 Xtrain=imputer().complete(Xdata[train,:])
             if numpy.sum(numpy.isnan(Xtest))>0:
                 Xtest=imputer().complete(Xdata[test,:])
+            if preregress_baseline_vars:
+                if self.verbose:
+                    print('residualizing vs baseline vars:',self.baseline_vars)
+                lm=LinearRegression()
+                lm.fit(self.demogdata[self.baseline_vars].iloc[train,:],Xtrain)
+                Xtrain=Xtrain - lm.predict(self.demogdata[self.baseline_vars].iloc[train,:])
+                Xtest=Xtest - lm.predict(self.demogdata[self.baseline_vars].iloc[test,:])
+                
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", message="Data with input dtype int64 was converted to float64 by StandardScaler.")
                 Xtrain=scale.fit_transform(Xtrain)
