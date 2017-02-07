@@ -26,6 +26,7 @@
   left:50%;
   margin-right:-50%;
   transform: translate(-50%, 60%);
+  text-align: center;
 }
 
 .stim-text {

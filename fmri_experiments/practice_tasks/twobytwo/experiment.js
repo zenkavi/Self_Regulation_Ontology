@@ -145,6 +145,11 @@ var response_keys_color = jsPsych.randomization.repeat([{
   key: 40,
   key_name: 'Down Arrow'
 }], 1, true)
+var color_order = 1
+if (response_keys_color.key[1]==37) {
+  color_order = 2
+}
+
 var response_keys_mag = jsPsych.randomization.repeat([{
   key: 37,
   key_name: 'Left Arrow'
@@ -152,6 +157,10 @@ var response_keys_mag = jsPsych.randomization.repeat([{
   key: 40,
   key_name: 'Down Arrow'
 }], 1, true)
+var mag_order = 1
+if (response_keys_mag.key[1]==37) {
+  mag_order = 2
+}
 
 var choices = response_keys_color.key
 var practice_length = 16
@@ -251,7 +260,11 @@ var instructions_block = {
   data: {
     trial_id: "instructions",
   },
-  timing_post_trial: 0
+  timing_post_trial: 0,
+  on_finish: function() {
+    console.log('Color Order: ' + color_order)
+    console.log('Mag Order: ' + mag_order)
+  }
 };
 
  var end_block = {
@@ -265,7 +278,11 @@ var instructions_block = {
     trial_id: "end",
     exp_id: 'twobytwo'
   },
-  timing_post_trial: 0
+  timing_post_trial: 0,
+  on_finish: function() {
+    console.log('Color Order: ' + color_order)
+    console.log('Mag Order: ' + mag_order)
+  }
 };
 
 
