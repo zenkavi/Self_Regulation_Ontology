@@ -18,10 +18,6 @@ do
         esac
 done
 
-echo Subid: $subid
-echo Scanner Set: $scanner_set
-echo Task: $task
-
 echo "Creating battery for subject: $subid"
 echo "Task: $task"
 expfactory --run --folder scanner_tasks_set$scanner_set/ --battery expfactory-battery/ --experiments $task --subid $subid
