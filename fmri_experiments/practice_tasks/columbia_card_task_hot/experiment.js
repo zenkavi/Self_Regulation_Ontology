@@ -253,9 +253,10 @@ var instructions_block = {
   type: 'poldrack-single-stim',
   stimulus: '<div class = centerbox><div class = center-text>Try to get as many points as possible<br><br>The loss amount, the gain amount, and the number of loss cards may change each trial<br><br>Left Arrow: Take Another Card<br>Down Arrow: End The Round</div></div>',
   is_html: true,
-  choices: 'none',
-  timing_stim: 5000, 
-  timing_response: 5000,
+  timing_stim: -1, 
+  timing_response: -1,
+  response_ends_trial: true,
+  choices: [32],
   data: {
     trial_id: "instructions",
   },

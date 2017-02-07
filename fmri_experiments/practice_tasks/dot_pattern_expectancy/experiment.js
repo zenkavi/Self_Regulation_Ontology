@@ -190,9 +190,10 @@ var start_test_block = {
     '" ></img>&nbsp&nbsp&nbsp...followed by...&nbsp&nbsp&nbsp<img src = "/static/experiments/dot_pattern_expectancy/images/' +
     valid_probe + '" ></img><br></br></p><p style = "font-size:40px" class = center-block-text>Otherwise press down arrow</div>',
   is_html: true,
-  choices: 'none',
-  timing_stim: 14500, 
-  timing_response: 14500,
+  timing_stim: -1, 
+  timing_response: -1,
+  response_ends_trial: true,
+  choices: [32],
   data: {
     trial_id: "instructions",
     valid_cue: value_cue,

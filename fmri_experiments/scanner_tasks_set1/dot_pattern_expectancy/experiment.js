@@ -217,9 +217,10 @@ var start_test_block = {
   type: 'poldrack-single-stim',
   stimulus: getInstructions,
   is_html: true,
-  choices: 'none',
-  timing_stim: 14500, 
-  timing_response: 14500,
+  timing_stim: -1, 
+  timing_response: -1,
+  response_ends_trial: true,
+  choices: [32],
   data: {
     trial_id: "instructions",
   },

@@ -1,9 +1,11 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
+ITIs = [0.204,0.204,0.272,0.204,0.408,0.136,0.272,0.34,0.136,0.34,0.068,0.0,0.204,1.02,0.0,0.0,0.068,0.476,0.136,0.068,0.0,0.0,0.204,0.204,0.272,0.136,0.204,0.272,0.272,0.34,0.204,0.068,0.0,0.408,0.204,0.136,0.34,0.068,0.34,0.136,0.068,0.068,0.068,0.136,0.0,0.136,0.34,0.408,0.136,0.136,0.0,0.068,0.0,0.0,0.136,0.136,0.476,0.204,0.068,0.068,0.34,0.476,0.272,0.884,0.136,0.136,0.068,0.068,0.612,0.476,0.0,0.068,0.204,0.272,0.068,0.272,0.748,0.068,0.0,0.204,0.068,0.068,0.34,0.0,0.0,0.272,0.204,0.0]
+
 var get_ITI = function() {
-  return 500 // + ITIs.shift()
- }
+  return 500 + ITIs.shift()
+}
 
 /* ************************************ */
 /* Define experimental variables */
@@ -120,9 +122,10 @@ var instructions_block = {
   type: 'poldrack-single-stim',
   stimulus: '<div class = centerbox><div class = center-text>Respond to the questions!</div></div>',
   is_html: true,
-  choices: 'none',
-  timing_stim: 5000, 
-  timing_response: 5000,
+  timing_stim: -1, 
+  timing_response: -1,
+  response_ends_trial: true,
+  choices: [32],
   data: {
     trial_id: "instructions",
   },
@@ -165,8 +168,8 @@ var test_block = {
 	timeline: stims,
 	type: 'poldrack-single-stim',
 	is_html: true,
-	timing_response: -1,
-	timing_stim: -1,
+	timing_response: getITI,
+	timing_stim: 8500,
 	response_ends_trial: true,
 	timing_post_trial: get_ITI,
 	on_finish: function(data) {

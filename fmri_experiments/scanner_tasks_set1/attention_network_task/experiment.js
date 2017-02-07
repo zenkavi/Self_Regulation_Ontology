@@ -198,9 +198,10 @@ var rest_block = {
 	type: 'poldrack-single-stim',
 	stimulus: '<div class = centerbox><div class = center-text>Indicate which direction the center arrow is pointing using your index (left) and middle (right) fingers.</div>',
 	is_html: true,
-	choices: 'none',
-	timing_stim: 9500, 
-	timing_response: 9500,
+	timing_stim: -1, 
+    timing_response: -1,
+    response_ends_trial: true,
+    choices: [32],
 	data: {
 		trial_id: "instructions",
 	},
