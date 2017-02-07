@@ -134,8 +134,8 @@ var practice_repeats = 0
 // task specific variables
 // Define and load images
 var prefix = '/static/experiments/stop_signal/images/'
-var images = [prefix + 'moon.png', prefix + 'oval.png', prefix + 'rectangle.png', prefix +
-	'trapezoid.png'
+var images = [prefix + 'hourglass.png', prefix + 'pentagon.png', prefix + 'square.png', prefix +
+	'tear.png'
 ]
 jsPsych.pluginAPI.preloadImages(images);
 /* Stop signal delay in ms */

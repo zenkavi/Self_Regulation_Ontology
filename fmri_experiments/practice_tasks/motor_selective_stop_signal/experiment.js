@@ -151,8 +151,8 @@ var practice_repeats = 0
 // task specific variables
 // Define and load images
 var prefix = '/static/experiments/motor_selective_stop_signal/images/'
-var images = [prefix + 'circle.png', prefix + 'rhombus.png', prefix + 'Lshape.png', prefix +
-  'triangle.png'
+var images = [prefix + 'hourglass.png', prefix + 'pentagon.png', prefix + 'square.png', prefix +
+	'tear.png'
 ]
 jsPsych.pluginAPI.preloadImages(images);
 images = jsPsych.randomization.shuffle(images)
@@ -193,7 +193,7 @@ var stop_response = possible_responses[0]
 var ignore_response = possible_responses[1]
 var practice_len = 12
 var test_block_data = [] // records the data in the current block to calculate feedback
-var test_block_len = 30
+var test_block_len = 40
 var num_blocks = 1
 var test_len = test_block_len*num_blocks
 

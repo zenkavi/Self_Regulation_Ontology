@@ -129,8 +129,8 @@ for (i = 0; i < options.small_amt.length; i++) {
     exp_stage: "test"
   },
   stimulus:trials[i].stimulus,
-  timing_stim: -1,
-  timing_response: -1,  
+  timing_stim: 5000,
+  timing_response: get_ITI,  
   data: trials[i].data,
   is_html: true,
   choices: choices,
