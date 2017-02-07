@@ -154,7 +154,7 @@ var congruent_stim = jsPsych.randomization.repeat(congruent_stim, (exp_len/2)/3)
 var incongruent_stim = jsPsych.randomization.repeat(incongruent_stim, (exp_len/2)/6)
 
 // set up stim order based on optimized trial sequence
-var stim_index = [1,0,1,1,0,0,0,0,0,1,1,1,1,0,1,0,0,0,0,1,1,1,0,1,1,1,0,0,1,0,0,1,0,1,1,1,0,0,1,0,0,1,1,0,1,1,1,1,0,1,0,0,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1,0,0,1,1,1,1,0,0,0,0,0,1,0,1,1,1,0,1,1,1,0,0,1,0,1,0,0,1,0]
+var stim_index = [1,0,1,1,0,0,0,0,0,1,1,1,1,0,1,0,0,0,0,1,1,1,0,1,1,1,0,0,1,0,0,1,0,1,1,1,0,0,1,0,0,1,1,0,1,1,1,1,0,1,0,0,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1,0,0,1,1,1,1,0,0,0,0,0,1,0,1,1,1,0,1,0,0,1,1,1,0,0,1,0,1,0]
 var test_stims = []
 for (var i=0; i<exp_len; i++) {
 	if (stim_index[i] == 0) {

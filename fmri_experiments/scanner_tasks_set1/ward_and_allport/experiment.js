@@ -5,7 +5,7 @@
 //random ITIs for practice
 var practice_ITIs = [0.5,0.1,0.2,0.0]
 //optimized ITIs for test
-var test_ITIs = [0.816,0.544,1.904,0.816,0.408,0.136,1.088,0.272,3.944,2.176,2.176,2.312,2.176,0.0,0.272,0.272,0.544,0.544,1.36,3.4,0.68,2.176,0.272,0.272,0.408,0.68,0.272,0.544,0.136,0.0,1.496,0.0,0.136,0.272,0.408,0.408,0.408,0.544,0.136,0.408,0.544,1.36,0.136,0.136,0.952,0.816,0.952,0.408]
+var test_ITIs = [1.088,0.0,0.0,0.0,0.544,0.272,2.04,0.272,0.136,0.0,0.0,0.408,1.768,0.68,1.224,1.36,0.0,0.408,0.136,3.128,0.136,3.264,2.04,0.136,0.408,0.68,2.72,1.224,0.272,1.632,0.408,0.0,0.0,0.0,0.408,0.816,2.176,1.36,0.0,0.408,0.816,1.088,0.136,5.168,0.816,0.952,0.136,0.68]
 var get_ITI = function() {
   return 2000 + ITIs.shift()*1000
  }
@@ -304,7 +304,7 @@ for (var c=0; c<2; c++) {
 var with_problems = jsPsych.randomization.shuffle(test_problems.slice(0,12).concat(test_problems.slice(0,12)))
 var without_problems = jsPsych.randomization.shuffle(test_problems.slice(12).concat(test_problems.slice(12)))
 // set up stim order based on optimized trial sequence
-var stim_index = [1,0,1,0,1,1,0,0,0,0,0,1,0,0,1,1,1,1,0,1,1,0,0,0,1,0,1,1,1,1,0,1,1,0,0,0,0,1,1,0,1,0,0,0,1,0,1,1]
+var stim_index = [1,0,1,1,0,1,0,0,0,0,0,1,0,0,1,1,1,1,0,1,1,1,0,0,0,1,0,1,1,0,1,1,0,0,0,1,0,0,0,1,0,1,1,1,1,0,0,1]
 var test_problems = []
 for (var i=0; i<stim_index.length; i++) {
   if (stim_index[i] == 0) {
