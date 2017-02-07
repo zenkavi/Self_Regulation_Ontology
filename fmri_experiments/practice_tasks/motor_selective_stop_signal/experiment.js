@@ -7,10 +7,27 @@ var get_ITI = function() {
   return 2250 + ITIs.shift()*1000
  }
 
-
 var randomDraw = function(lst) {
 	var index = Math.floor(Math.random() * (lst.length))
 	return lst[index]
+}
+
+var permute = function(input) {
+    var permArr = [],
+        usedChars = [];
+    return (function main() {
+        for (var i = 0; i < input.length; i++) {
+            var ch = input.splice(i, 1)[0];
+            usedChars.push(ch);
+            if (input.length == 0) {
+                permArr.push(usedChars.slice());
+            }
+            main();
+            input.splice(i, 0, ch);
+            usedChars.pop();
+        }
+        return permArr;
+    })();
 }
 
 /* After each test block let the subject know their average RT and accuracy. If they succeed or fail on too many stop signal trials, give them a reminder */
@@ -151,11 +168,18 @@ var practice_repeats = 0
 // task specific variables
 // Define and load images
 var prefix = '/static/experiments/motor_selective_stop_signal/images/'
-var images = [prefix + 'hourglass.png', prefix + 'pentagon.png', prefix + 'square.png', prefix +
-	'tear.png'
+var images = [prefix + 'circle.png', prefix + 'Lshape.png', prefix + 'rhombus.png', prefix +
+	'triangle.png'
 ]
+var permutations = permute([0,1,2,3])
+var permutation_index = randomDraw([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24])
+var permutation = permutations[permutation_index]
+images = [images[permutation[0]], images[permutation[1]], 
+		images[permutation[2]], images[permutation[3]]]
 jsPsych.pluginAPI.preloadImages(images);
-images = jsPsych.randomization.shuffle(images)
+
+jsPsych.pluginAPI.preloadImages(images);
+
 /* Stop signal delay in ms */
 var SSD = 250
 var stop_signal =
@@ -163,8 +187,8 @@ var stop_signal =
 
 /* Instruction Prompt */
 var possible_responses = jsPsych.randomization.shuffle([
-	["left arrow", 37],
-	["down arrow", 40]
+	["Index Finger", 37],
+	["Middle Finger", 40]
 ])
 
 var choices = [possible_responses[0][1], possible_responses[1][1]]
@@ -258,20 +282,6 @@ for (var i=0; i<stim_index.length; i++) {
 /* Set up jsPsych blocks */
 /* ************************************ */
 /* define static blocks */
-var task_setup_block = {
-	type: 'survey-text',
-	data: {
-		trial_id: "task_setup"
-	},
-	questions: [
-		[
-			"<p class = center-block-text>Experimenter Setup</p>"
-		]
-	], on_finish: function(data) {
-		SSD = parseInt(data.responses.slice(7, 10))
-	}
-}
-
 var start_test_block = {
   type: 'poldrack-single-stim',
   stimulus: '<div class = centerbox><div class = center-text>Get ready!</p></div>',
@@ -299,13 +309,16 @@ var start_test_block = {
 		trial_id: "end",
 		exp_id: 'motor_selective_stop_signal'
 	},
-	timing_post_trial: 0
+	timing_post_trial: 0,
+	on_finish: function() {
+		console.log('Permutation Index: ' + permutation_index)
+	}
 };
 
  var instructions_block = {
   type: 'poldrack-single-stim',
-  stimulus: '<div class = centerbox><p class = block-text>Only one key is correct for each shape. The correct keys are as follows:' + prompt_text +
-		'</p><p class = block-text>Do not respond if you see the red star if your response was going to be the ' + stop_response[0] + '!</p><br><p class = block-text>We will start with practice</p></div>',
+  stimulus: '<div class = instructbox><p class = instruct-text>Only one key is correct for each shape. The correct keys are as follows:' + prompt_text +
+		'</p><p class = instruct-text><strong>Do not respond if you see the red star if your response was going to be your ' + stop_response[0] + '!</strong></p><p class = instruct-text>We will start with practice</p></div>',
   is_html: true,
   timing_stim: -1, 
   timing_response: -1,
@@ -395,7 +408,6 @@ var practice_loop = {
 /* ************************************ */
 
 var motor_selective_stop_signal_experiment = []
-motor_selective_stop_signal_experiment.push(task_setup_block);
 motor_selective_stop_signal_experiment.push(instructions_block);
 motor_selective_stop_signal_experiment.push(practice_loop);
 

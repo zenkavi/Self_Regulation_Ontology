@@ -82,8 +82,20 @@ var possible_responses = [
 	["index finger", 89],
 	["middle finger", 71]
 ]
+
+// set up responses
 var choices = [possible_responses[0][1], possible_responses[1][1]]
-var correct_responses = jsPsych.randomization.shuffle([possible_responses[0], possible_responses[0],
+var response_permutations = [[0,0,1,1], [0,0,1,1], [0,0,1,1],
+							[0,0,1,1], [0,0,1,1], [0,0,1,1]]
+var permutation_index = 0
+var permutation = response_permutations[permutation_index]
+var correct_responses = []
+for (var i=0; i<4; i++) {
+	correct_responses.push(possible_responses[permutation[i]])
+}
+
+
+jsPsych.randomization.shuffle([possible_responses[0], possible_responses[0],
 	possible_responses[1], possible_responses[1]
 ])
 
@@ -219,8 +231,8 @@ var start_test_block = {
 
  var instructions_block = {
   type: 'poldrack-single-stim',
-  stimulus: '<div class = centerbox><p class = block-text>Only one key is correct for each shape. The correct keys are as follows:' + prompt_text +
-		'</p><p class = block-text>Do not respond if you see the red star!</p><br><p class = block-text>We will start with practice</p></div>',
+  stimulus: '<div class = instructbox><p class = instruct-text>Only one key is correct for each shape. The correct keys are as follows:' + prompt_text +
+		'</p><p class = instruct-text><strong>Do not respond if you see the red star!</strong></p><p class = instruct-text>We will start with practice</p></div>',
   is_html: true,
   timing_stim: -1, 
   timing_response: -1,

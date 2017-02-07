@@ -7,10 +7,27 @@ var get_ITI = function() {
   return 2250 + ITIs.shift()*1000
  }
 
-
 var randomDraw = function(lst) {
 	var index = Math.floor(Math.random() * (lst.length))
 	return lst[index]
+}
+
+var permute = function(input) {
+    var permArr = [],
+        usedChars = [];
+    return (function main() {
+        for (var i = 0; i < input.length; i++) {
+            var ch = input.splice(i, 1)[0];
+            usedChars.push(ch);
+            if (input.length == 0) {
+                permArr.push(usedChars.slice());
+            }
+            main();
+            input.splice(i, 0, ch);
+            usedChars.pop();
+        }
+        return permArr;
+    })();
 }
 
 /* Staircase procedure. After each successful stop, make the stop signal delay longer (making stopping harder) */
@@ -72,7 +89,15 @@ var prefix = '/static/experiments/motor_selective_stop_signal/images/'
 var images = [prefix + 'circle.png', prefix + 'rhombus.png', prefix + 'Lshape.png', prefix +
   'triangle.png'
 ]
+var permutations = permute([0,1,2,3])
+var permutation_index = 0
+var permutation = permutations[permutation_index]
+images = [images[permutation[0]], images[permutation[1]], 
+		images[permutation[2]], images[permutation[3]]]
 jsPsych.pluginAPI.preloadImages(images);
+
+
+
 images = jsPsych.randomization.shuffle(images)
 /* Stop signal delay in ms */
 var SSD = 250
@@ -222,8 +247,8 @@ var start_test_block = {
 
  var instructions_block = {
   type: 'poldrack-single-stim',
-  stimulus: '<div class = centerbox><p class = block-text>Only one key is correct for each shape. The correct keys are as follows:' + prompt_text +
-		'</p><p class = block-text>Do not respond if you see the red star if your response was going to be your ' + stop_response[0] + '!</p><br><p class = block-text>We will start with practice</p></div>',
+  stimulus: '<div class = instructbox><p class = instruct-text>Only one key is correct for each shape. The correct keys are as follows:' + prompt_text +
+		'</p><p class = instruct-text><strong>Do not respond if you see the red star if your response was going to be your ' + stop_response[0] + '!</strong></p><p class = instruct-text>We will start with practice</p></div>',
   is_html: true,
   timing_stim: -1, 
   timing_response: -1,

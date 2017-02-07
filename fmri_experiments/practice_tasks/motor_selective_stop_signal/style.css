@@ -155,6 +155,29 @@
          -o-transform: rotate(60deg);
 }
 
+.instructbox {
+  width: 50vw;
+  height: 60vh;
+  position:absolute;
+  top:45%;
+  left:50%;
+  margin-right:-50%;
+  transform: translate(-50%,-50%);
+  text-align: center;
+}
+
+.instruct-text {
+  width:100%;
+  height 100vw;
+  text-align: center;
+  margin: 0 auto;
+  margin-bottom: 1em;
+  font-size: 30px;
+  line-height: 120%;
+}
+
 ul {
   list-style-type: none;
+  text-align: center;
+  display: inline-block;
 }
