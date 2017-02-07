@@ -419,7 +419,7 @@ var prompt_fixation_block = {
     exp_stage: "practice"
   },
   timing_post_trial: 0,
-  timing_response: -1,
+  timing_response: 500,
   prompt: get_prompt
 }
 
