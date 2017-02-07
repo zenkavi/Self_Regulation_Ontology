@@ -534,9 +534,9 @@ var task_node = {
 
 /* create experiment definition array */
 var ward_and_allport_experiment = [];
-
+test_keys(ward_and_allport, choices)
 ward_and_allport_experiment.push(instructions_block);
-setup_fmri_intro(ward_and_allport_experiment, choices)
+setup_fmri_intro(ward_and_allport_experiment)
 ward_and_allport_experiment.push(start_practice_block);
 ward_and_allport_experiment.push(task_node)
 ward_and_allport_experiment.push(start_test_block);

@@ -373,8 +373,9 @@ var payoutTrial = {
 
 /* create experiment definition array */
 var columbia_card_task_cold_experiment = [];
+test_keys(columbia_card_task_cold, choices)
 columbia_card_task_cold_experiment.push(instructions_block);
-setup_fmri_intro(columbia_card_task_cold_experiment, choices)
+setup_fmri_intro(columbia_card_task_cold_experiment)
 columbia_card_task_cold_experiment.push(start_test_block);
 columbia_card_task_cold_experiment.push(test_node)
 columbia_card_task_cold_experiment.push(payoutTrial);

@@ -27,71 +27,6 @@ var getSSD = function() {
 	return SSD
 }
 
-/* After each test block let the subject know their average RT and accuracy. If they succeed or fail on too many stop signal trials, give them a reminder */
-var getTestFeedback = function() {
-	var data = test_block_data
-	var rt_array = [];
-	var sum_correct = 0;
-	var go_length = 0;
-	var stop_length = 0;
-	var num_responses = 0;
-	var successful_stops = 0;
-	for (var i = 0; i < data.length; i++) {
-		if (data[i].SS_trial_type == "go") {
-			go_length += 1
-			if (data[i].rt != -1) {
-				num_responses += 1
-				rt_array.push(data[i].rt);
-				if (data[i].key_press == data[i].correct_response) {
-					sum_correct += 1
-				}
-			}
-		} else {
-			stop_length += 1
-			if (data[i].rt == -1) {
-				successful_stops += 1
-			}
-		}
-	}
-	var average_rt = -1;
-    if (rt_array.length !== 0) {
-      average_rt = math.median(rt_array);
-      rtMedians.push(average_rt)
-    }
-	var rt_diff = 0
-	if (rtMedians.length !== 0) {
-		rt_diff = (average_rt - rtMedians.slice(-1)[0])
-	}
-	var GoCorrect_percent = sum_correct / go_length;
-	var missed_responses = (go_length - num_responses) / go_length
-	var StopCorrect_percent = successful_stops / stop_length
-	stopAccMeans.push(StopCorrect_percent)
-	var stopAverage = math.mean(stopAccMeans)
-
-	test_feedback_text = "<br>Done with a test block. Please take this time to read your feedback and to take a short break!"
-	test_feedback_text += "</p><p class = block-text><strong>Average reaction time:  " + Math.round(average_rt) + " ms. Accuracy for non-star trials: " + Math.round(GoCorrect_percent * 100)+ "%</strong>" 
-	if (average_rt > RT_thresh || rt_diff > rt_diff_thresh) {
-		test_feedback_text +=
-			'</p><p class = block-text>You have been responding too slowly, please respond to each shape as quickly and as accurately as possible.'
-	}
-	if (missed_responses >= missed_response_thresh) {
-		test_feedback_text +=
-			'</p><p class = block-text><strong>We have detected a number of trials that required a response, where no response was made.  Please ensure that you are responding to each shape, unless a star appears.</strong>'
-	}
-	if (GoCorrect_percent < accuracy_thresh) {
-		test_feedback_text += '</p><p class = block-text>Your accuracy is too low. Remember, the correct keys are as follows: ' + prompt_text
-	}
-	if (StopCorrect_percent < (0.5-stop_thresh) || stopAverage < 0.45){
-			 	test_feedback_text +=
-			 		'</p><p class = block-text><strong>Remember to try and withhold your response when you see a stop signal.</strong>'	
-	} else if (StopCorrect_percent > (0.5+stop_thresh) || stopAverage > 0.55){
-	 	test_feedback_text +=
-	 		'</p><p class = block-text><strong>Remember, do not slow your responses to the shape to see if a star will appear before you respond.  Please respond to each shape as quickly and as accurately as possible.</strong>'
-	}
-
-	return '<div class = centerbox><p class = block-text>' + test_feedback_text + '</p></div>'
-}
-
 var getPracticeTrials = function() {
 	var practice = []
 	var trials = jsPsych.randomization.repeat(stims, practice_len/4)
@@ -296,6 +231,17 @@ var start_test_block = {
   timing_post_trial: 0
 };
 
+var rest_block = {
+  type: 'poldrack-single-stim',
+  stimulus: '<div class = centerbox><div class = center-text>Take a break!<br>Next run will start in a moment</div></div>',
+  is_html: true,
+  choices: 'none',
+  timing_response: 7500,
+  data: {
+    trial_id: "rest_block"
+  },
+  timing_post_trial: 1000
+};
 
 var fixation_block = {
 	type: 'poldrack-single-stim',
@@ -360,10 +306,11 @@ var practice_loop = {
 /* ************************************ */
 
 var stop_signal_experiment = []
+test_keys(stop_signal, choices)
 stop_signal_experiment.push(task_setup_block);
 stop_signal_experiment.push(instructions_block);
 stop_signal_experiment.push(practice_loop);
-setup_fmri_intro(stop_signal_experiment, choices)
+setup_fmri_intro(stop_signal_experiment)
 
 /* Test blocks */
 // Loop through each trial within the block
@@ -401,7 +348,7 @@ for (b = 0; b < num_blocks; b++) {
 	}
 	stop_signal_experiment.push(stop_signal_block)
 	if ((b+1)<num_blocks) {
-		stop_signal_experiment.push(test_feedback_block)
+		stop_signal_experiment.push(rest_block
 	}
 }
 

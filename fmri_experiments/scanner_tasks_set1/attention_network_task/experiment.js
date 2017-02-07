@@ -272,9 +272,10 @@ var practice_loop = {
 
 /* set up ANT experiment */
 var attention_network_task_experiment = [];
+test_keys(attention_network_task_experiment, choices)
 attention_network_task_experiment.push(instructions_block);
 attention_network_task_experiment.push(practice_loop)
-setup_fmri_intro(attention_network_task_experiment, choices)
+setup_fmri_intro(attention_network_task_experiment)
 
 /* Set up test trials */
 var trial_num = 0

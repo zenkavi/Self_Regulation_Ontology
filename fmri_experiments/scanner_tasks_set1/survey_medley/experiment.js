@@ -181,7 +181,8 @@ var test_block = {
 
 /* create experiment definition array */
 survey_medley_experiment = []
+test_keys(survey_medley, choices)
 survey_medley_experiment.push(instructions_block)
-setup_fmri_intro(survey_medley_experiment, choices)
+setup_fmri_intro(survey_medley_experiment)
 survey_medley_experiment.push(test_block)
 survey_medley_experiment.push(end_block)

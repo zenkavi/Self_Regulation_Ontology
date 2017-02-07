@@ -410,10 +410,11 @@ var practice_loop = {
 /* ************************************ */
 
 var dot_pattern_expectancy_experiment = []
+test_keys(dot_pattern_expectancy,choices)
 dot_pattern_expectancy_experiment.push(task_setup_block)
 dot_pattern_expectancy_experiment.push(instructions_block);
 dot_pattern_expectancy_experiment.push(practice_loop);
-setup_fmri_intro(dot_pattern_expectancy_experiment, choices)
+setup_fmri_intro(dot_pattern_expectancy_experiment)
 
 for (b = 0; b < num_blocks; b++) {
   dot_pattern_expectancy_experiment.push(start_test_block);

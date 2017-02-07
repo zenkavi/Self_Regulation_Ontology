@@ -305,9 +305,10 @@ var test_block = {
 
 /* create experiment definition array */
 stroop_experiment = []
+test_keys(stroop, choices)
 stroop_experiment.push(instructions_block)
 stroop_experiment.push(practice_loop)
-setup_fmri_intro(stroop_experiment, choices)
+setup_fmri_intro(stroop_experiment)
 stroop_experiment.push(start_test_block)
 stroop_experiment.push(fixation_block)
 stroop_experiment.push(test_block)

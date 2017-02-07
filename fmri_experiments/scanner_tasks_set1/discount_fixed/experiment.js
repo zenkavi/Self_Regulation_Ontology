@@ -2,6 +2,10 @@
 /* Define helper functions */
 /* ************************************ */
 
+var get_ITI = function() {
+  return 5500 + ITIs.shift()*1000
+ }
+
 /* ************************************ */
 /* Define experimental variables */
 /* ************************************ */
@@ -123,6 +127,7 @@ var end_block = {
 
 //Set up experiment
 var discount_fixed_experiment = []
+test_keys(discount_fixed_experiment,choices)
 discount_fixed_experiment.push(instructions_block);
 discount_fixed_experiment.push(practice_block);
 setup_fmri_intro(discount_fixed_experiment, choices)
@@ -136,10 +141,13 @@ for (i = 0; i < options.small_amt.length; i++) {
     exp_stage: "test"
   },
   stimulus:trials[i].stimulus,
+  timing_stim: 5000,
+  timing_response: getITI,  
   data: trials[i].data,
   is_html: true,
   choices: choices,
   response_ends_trial: true,
+  timing_post_trial: 0,
   on_finish: function(data) {
     var choice = false;
     if (data.key_press == 89) {
