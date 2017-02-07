@@ -98,7 +98,7 @@ var getTestFeedback = function() {
 /* Staircase procedure. After each successful stop, make the stop signal delay longer (making stopping harder) */
 var updateSSD = function(data) {
 	if (data.condition == 'stop') {
-		if (data.rt == -1 && SSD < 850) {
+		if (data.rt == -1 && SSD < 1000) {
 			SSD = SSD + 50
 		} else if (data.rt != -1 && SSD > 0) {
 			SSD = SSD - 50
@@ -233,13 +233,13 @@ var ignore_stims = jsPsych.randomization.repeat(stimuli.slice(2,4), test_len*0.2
 for (var i=0; i<stim_index.length; i++) {
 	var stim = {}
 	if (stim_index[i] == 0) {
-		stim.stim = go_stims.shift()
+		stim.stim = jQuery.extend({}, go_stims.shift())
 		stim.type = 'go'
 	} else if (stim_index[i] == 1) {
-		stim.stim = stop_stims.shift()
+		stim.stim = jQuery.extend({},stop_stims.shift())
 		stim.type = 'stop'
 	} else {
-		stim.stim = ignore_stims.shift()
+		stim.stim = jQuery.extend({},ignore_stims.shift())
 		stim.type = 'ignore'
 	}
 	test_stims.push(stim)
@@ -408,13 +408,15 @@ for (b = 0; b < num_blocks; b++) {
 	stop_signal_exp_block.push(start_test_block)
 	stop_signal_exp_block.push(fixation_block)
 	for (i = 0; i < test_block_len; i++) {
-		var current_stim = test_stims.pop()
-		var stop_trial = current_stim.type
+		var current_stim = test_stims.shift()
 		var trial_stim = current_stim.stim.stimulus
 		var trial_data = current_stim.stim.data
-
 	    trial_data = $.extend({}, trial_data)
-	    trial_data.condition = stop_trial
+	    trial_data.condition = current_stim.type
+	    var stop_trial = 'stop'
+	    if (current_stim.type == 'go') {
+	    	stop_trial = 'go'
+	    }
 		var stop_signal_block = {
 			type: 'stop-signal',
 			stimulus: trial_stim,

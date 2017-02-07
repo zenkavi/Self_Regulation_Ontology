@@ -15,7 +15,7 @@ var get_ITI = function() {
 /* Staircase procedure. After each successful stop, make the stop signal delay longer (making stopping harder) */
 var updateSSD = function(data) {
 	if (data.SS_trial_type == 'stop') {
-		if (data.rt == -1 && SSD < 850) {
+		if (data.rt == -1 && SSD < 1000) {
 			SSD = SSD + 50
 		} else if (data.rt != -1 && SSD > 0) {
 			SSD = SSD - 50
@@ -213,10 +213,10 @@ var stop_stims = jsPsych.randomization.repeat(stims, exp_len*0.4 / 4)
 for (var i=0; i<stim_index.length; i++) {
 	var stim = {}
 	if (stim_index[i] == 0) {
-		stim = go_stims.shift()
+		stim = jQuery.extend({},go_stims.shift())
 		stim['SS_trial_type'] = 'go'
 	} else {
-		stim = stop_stims.shift()
+		stim = jQuery.extend({},stop_stims.shift())
 		stim['SS_trial_type'] = 'stop'
 	} 
 	trials.push(stim)

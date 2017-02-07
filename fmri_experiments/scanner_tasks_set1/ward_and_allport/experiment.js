@@ -380,7 +380,10 @@ var instructions_block = {
   data: {
     trial_id: "instructions",
   },
-  timing_post_trial: 0
+  timing_post_trial: 0,
+  on_finish: function() {
+    start_time = new Date()
+  }
 };
 
 var start_test_block = {
