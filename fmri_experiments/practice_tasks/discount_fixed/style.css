@@ -1,7 +1,7 @@
 .dd-stim {
-  text-align: center;
-  font-size: 80px;
-  position: absolute;
+	text-align: center;
+	font-size: 80px;
+	position: absolute;
   transform: translate(-50%, -50%);
   background: black;
   width: 50vw;

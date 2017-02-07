@@ -4,7 +4,7 @@
 ITIs = [0.204,0.204,0.272,0.204,0.408,0.136,0.272,0.34,0.136,0.34,0.068,0.0,0.204,1.02,0.0,0.0,0.068,0.476,0.136,0.068,0.0,0.0,0.204,0.204,0.272,0.136,0.204,0.272,0.272,0.34,0.204,0.068,0.0,0.408,0.204,0.136,0.34,0.068,0.34,0.136,0.068,0.068,0.068,0.136,0.0,0.136,0.34,0.408,0.136,0.136,0.0,0.068,0.0,0.0,0.136,0.136,0.476,0.204,0.068,0.068,0.34,0.476,0.272,0.884,0.136,0.136,0.068,0.068,0.612,0.476,0.0,0.068,0.204,0.272,0.068,0.272,0.748,0.068,0.0,0.204,0.068,0.068,0.34,0.0,0.0,0.272,0.204,0.0]
 
 var get_ITI = function() {
-  return 500 + ITIs.shift()
+  return 500 + ITIs.shift()*1000
 }
 
 /* ************************************ */
@@ -170,8 +170,7 @@ var test_block = {
 	is_html: true,
 	timing_response: get_ITI,
 	timing_stim: 8500,
-	response_ends_trial: true,
-	timing_post_trial: get_ITI,
+	timing_post_trial: 0,
 	on_finish: function(data) {
 		var response = data.possible_responses.indexOf(data.key_press)+1
 		var coded_response = response
@@ -184,7 +183,7 @@ var test_block = {
 
 /* create experiment definition array */
 survey_medley_experiment = []
-test_keys(survey_medley, choices)
+test_keys(survey_medley_experiment, choices)
 survey_medley_experiment.push(instructions_block)
 setup_fmri_intro(survey_medley_experiment)
 survey_medley_experiment.push(test_block)
