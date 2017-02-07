@@ -484,7 +484,7 @@ var practice_loop = {
 
 /* create experiment definition array */
 var twobytwo_experiment = [];
-test_keys(twobytwo, choices)
+test_keys(twobytwo_experiment, choices)
 twobytwo_experiment.push(instructions_block);
 twobytwo_experiment.push(practice_loop);
 setup_fmri_intro(twobytwo_experiment)

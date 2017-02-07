@@ -22,4 +22,4 @@ json.dump(tasks, open('temp_tasklist.json','w'))
 for task in tasks:
 	print('***************************************************************')
 	subprocess.call("bash run_task.sh -i %s -s %s -t %s &" % (subid,scanner_set,task), shell=True)
-	time.sleep(60)
+	time.sleep(20)

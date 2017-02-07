@@ -168,7 +168,7 @@ var test_block = {
 	timeline: stims,
 	type: 'poldrack-single-stim',
 	is_html: true,
-	timing_response: getITI,
+	timing_response: get_ITI,
 	timing_stim: 8500,
 	response_ends_trial: true,
 	timing_post_trial: get_ITI,
