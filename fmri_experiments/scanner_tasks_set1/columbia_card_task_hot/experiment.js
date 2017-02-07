@@ -1,29 +1,9 @@
 /* ************************************ */
 /* Helper Functions                     */
 /* ************************************ */
+var ITIs = [0.204,0.204,0.272,0.204,0.408,0.136,0.272,0.34,0.136,0.34,0.068,0.0,0.204,1.02,0.0,0.0,0.068,0.476,0.136,0.068,0.0,0.0,0.204,0.204,0.272,0.136,0.204,0.272,0.272,0.34,0.204,0.068,0.0,0.408,0.204,0.136,0.34,0.068,0.34,0.136,0.068,0.068,0.068,0.136,0.0,0.136,0.34,0.408,0.136,0.136,0.0,0.068,0.0,0.0,0.136,0.136,0.476,0.204,0.068,0.068,0.34,0.476,0.272,0.884,0.136,0.136,0.068,0.068,0.612,0.476,0.0,0.068,0.204,0.272,0.068,0.272,0.748,0.068,0.0,0.204,0.068,0.068,0.34,0.0,0.0,0.272,0.204,0.0]
 var get_ITI = function() {
-  // ref: https://gist.github.com/nicolashery/5885280
-  function randomExponential(rate, randomUniform) {
-    // http://en.wikipedia.org/wiki/Exponential_distribution#Generating_exponential_variates
-    rate = rate || 1;
-
-    // Allow to pass a random uniform value or function
-    // Default to Math.random()
-    var U = randomUniform;
-    if (typeof randomUniform === 'function') U = randomUniform();
-    if (!U) U = Math.random();
-
-    return -Math.log(U) / rate;
-  }
-  gap = randomExponential(1/2)*200
-  if (gap > 6000) {
-    gap = 6000
-  } else if (gap < 0) {
-  	gap = 0
-  } else {
-  	gap = Math.round(gap/1000)*1000
-  }
-  return 2250 + gap //500 (minimum ITI)
+  return 2250 + ITIs.shift()*1000
  }
 
 function getRandomInt(min, max) {
@@ -72,8 +52,7 @@ var getCardArray = function(nCards){
 
 var getText = function() {
 	return '<div class = centerbox><p class = block-text>Overall, you earned ' + totalPoints + ' points. These are the points used for your bonus from three randomly picked trials:  ' +
-		'<ul list-text><li>' + prize1 + '</li><li>' + prize2 + '</li><li>' + prize3 + '</li></ul>' +
-		'</p><p class = block-text>Press <strong>enter</strong> to continue.</p></div>'
+		'<ul list-text><li>' + prize1 + '</li><li>' + prize2 + '</li><li>' + prize3 + '</li></ul>' + '</div>'
 }
 
 var appendPayoutData = function(){
@@ -278,13 +257,17 @@ var instructions_block = {
   type: 'poldrack-single-stim',
   stimulus: '<div class = centerbox><div class = center-text>Try to get as many points as possible<br><br>The loss amount, the gain amount, and the number of loss cards may change each trial<br><br>Index Finger: Take Another Card<br>Middle Finger: End The Round</div></div>',
   is_html: true,
-  choices: 'none',
-  timing_stim: 5000, 
-  timing_response: 5000,
+  timing_stim: -1, 
+  timing_response: -1,
+  response_ends_trial: true,
+  choices: [32],
   data: {
     trial_id: "instructions",
   },
-  timing_post_trial: 500
+  timing_post_trial: 500,
+  on_finish: function() {
+  	start_time = new Date()
+  }
 };
 
 var start_test_block = {
@@ -424,7 +407,7 @@ var payout_text = {
 	data: {
 		trial_id: 'reward'
 	},
-	cont_key: [13],
+	cont_key: [32],
 	timing_post_trial: 1000,
 	on_finish: appendPayoutData,
 };
@@ -446,8 +429,9 @@ var payoutTrial = {
 
 /* create experiment definition array */
 var columbia_card_task_hot_experiment = [];
+test_keys(columbia_card_task_hot_experiment, choices)
 columbia_card_task_hot_experiment.push(instructions_block)
-setup_fmri_intro(columbia_card_task_hot_experiment, choices)
+setup_fmri_intro(columbia_card_task_hot_experiment)
 columbia_card_task_hot_experiment.push(start_test_block);
 columbia_card_task_hot_experiment.push(test_node)
 columbia_card_task_hot_experiment.push(payoutTrial);

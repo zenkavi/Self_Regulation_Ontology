@@ -1,7 +1,7 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
-var ITIs = [0.2,1.0,0.7,0.1,0.1,0.1,0.1,0.0,0.0,0.1,0.3,0.2,0.0,0.0,0.0,0.2,0.3,0.2,0.1,0.0,0.2,0.3,0.0,0.0,0.0,0.4,0.1,0.1,0.1,0.0,0.0,0.2,0.0,0.1,0.0,0.1,0.1,0.1,0.0,0.1,0.1,0.0,0.3,0.6,0.0,0.5,0.0,0.0,0.0,0.0,0.0,0.1,0.1,0.1,0.3,0.1,0.3,0.0,0.5,0.5,0.2,0.4,0.7,0.1,0.0,0.0,0.1,0.0,0.0,0.0,0.1,0.5,0.0,0.3,0.2,0.1,0.5,0.0,0.5,0.2,0.0,0.1,0.0,0.2,0.1,0.4,0.3,0.0,0.0,0.0,0.0,0.1,0.0,0.1,0.2,0.1]
+var ITIs = [0.0,0.0,0.272,0.0,0.136,0.0,0.136,0.0,0.0,0.0,0.272,0.0,0.136,0.408,0.272,0.68,0.0,0.408,0.136,0.68,0.0,0.136,0.952,0.0,0.272,0.0,0.0,0.0,0.0,0.136,0.0,0.0,0.136,0.0,0.0,0.136,0.136,0.272,0.68,0.0,0.0,0.272,0.0,0.0,0.0,0.0,0.0,0.0,0.272,0.0,0.408,0.0,0.136,0.0,0.0,0.0,0.272,0.0,0.272,0.272,0.0,0.68,0.0,0.272,0.0,0.0,0.272,0.136,0.544,0.408,0.0,0.0,0.0,0.544,0.136,0.0,0.0,0.272,0.0,0.0,0.136,0.0,0.272,0.136,0.408,0.0,0.0,0.816,0.0,0.0,0.136,0.0,0.0,0.0,0.0,0.0]
 
 var get_ITI = function() {
   return 2000 + ITIs.shift()*1000
@@ -154,7 +154,7 @@ var congruent_stim = jsPsych.randomization.repeat(congruent_stim, (exp_len/2)/3)
 var incongruent_stim = jsPsych.randomization.repeat(incongruent_stim, (exp_len/2)/6)
 
 // set up stim order based on optimized trial sequence
-var stim_index = [0,1,1,0,1,0,1,0,0,0,1,1,0,1,0,1,1,1,0,1,1,0,0,0,0,1,0,1,1,0,1,1,0,0,0,0,0,1,0,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,0,1,0,0,1,1,0,0,1,0,0,0,1,1,0,1,1,1,1,0,0,0,0,0,1,1,1,1,1,0,0,1,0,0,0,1,0,1,1,0,1,0]
+var stim_index = [1,0,1,1,0,0,0,0,0,1,1,1,1,0,1,0,0,0,0,1,1,1,0,1,1,1,0,0,1,0,0,1,0,1,1,1,0,0,1,0,0,1,1,0,1,1,1,1,0,1,0,0,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1,0,0,1,1,1,1,0,0,0,0,0,1,0,1,1,1,0,1,0,0,1,1,1,0,0,1,0,1,0]
 var test_stims = []
 for (var i=0; i<exp_len; i++) {
 	if (stim_index[i] == 0) {
@@ -183,9 +183,10 @@ var instructions_block = {
   type: 'poldrack-single-stim',
   stimulus: '<div class = centerbox><div class = center-text>Respond to the <strong>ink color</strong> of the word!<br><br><span style = "color:red;padding-left:30px">WORD</span>: Index<br><span style = "color:#1F45FC;padding-left:65px">WORD</span>: Middle<br><span style = "color:#4FE829;">WORD</span>: Ring<br><br>We will start with practice</div></div>',
   is_html: true,
-  choices: 'none',
-  timing_stim: 9500, 
-  timing_response: 9500,
+  timing_stim: -1, 
+  timing_response: -1,
+  response_ends_trial: true,
+  choices: [32],
   data: {
     trial_id: "instructions",
   },
@@ -305,9 +306,10 @@ var test_block = {
 
 /* create experiment definition array */
 stroop_experiment = []
+test_keys(stroop_experiment, choices)
 stroop_experiment.push(instructions_block)
 stroop_experiment.push(practice_loop)
-setup_fmri_intro(stroop_experiment, choices)
+setup_fmri_intro(stroop_experiment)
 stroop_experiment.push(start_test_block)
 stroop_experiment.push(fixation_block)
 stroop_experiment.push(test_block)

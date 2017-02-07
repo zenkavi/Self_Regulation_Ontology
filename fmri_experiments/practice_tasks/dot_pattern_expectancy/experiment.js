@@ -1,29 +1,10 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
+
+var test_ITIs = [0.136,0.408,0.136,0.136,0.68,0.136,0.136,0.816,0.952,0.136,2.312,0.408,0.408,0.408,1.632,0.136,0.544,0.68,0.0,0.0,0.68,0.136,1.088,0.0,0.136,0.0,0.0,0.136,0.0,0.136,0.136,0.0,0.136,0.544,0.136,0.136,0.272,0.136,0.272,0.0,0.408,0.0,0.0,0.0,0.408,0.0,0.68,0.0,0.408,0.136,0.0,0.272,0.0,0.0,0.136,0.408,0.68,0.0,0.136,0.272,0.408,0.0,2.176,0.952,0.272,0.68,0.0,0.0,0.68,0.136,0.0,0.0,0.68,0.0,0.0,0.544,0.0,0.136,0.272,1.224,0.0,0.0,0.272,0.408,0.0,0.408,0.136,0.136,0.0,0.136,1.088,0.0,0.544,0.68,0.272,0.0,0.136,0.0,0.544,0.136,0.952,0.68,0.272,0.0,0.0,0.0,0.408,0.0,0.68,0.272,0.0,0.68,0.272,0.272,0.272,0.544,0.136,0.816,0.272,0.408,1.224,0.136,1.088,0.272,0.0,0.0,0.272,0.952,0.272,0.136,0.272,0.272,1.36,0.68,0.0,0.136,1.088,0.0,0.0,0.272,1.224,0.136,0.0,0.0,0.0,0.0,0.0,0.544,0.136,1.496,0.0,1.224,0.272,0.0,1.088,0.408,0.0,0.68,0.0,0.0]
 var get_ITI = function() {
-  // ref: https://gist.github.com/nicolashery/5885280
-  function randomExponential(rate, randomUniform) {
-    // http://en.wikipedia.org/wiki/Exponential_distribution#Generating_exponential_variates
-    rate = rate || 1;
-
-    // Allow to pass a random uniform value or function
-    // Default to Math.random()
-    var U = randomUniform;
-    if (typeof randomUniform === 'function') U = randomUniform();
-    if (!U) U = Math.random();
-
-    return -Math.log(U) / rate;
-  }
-  gap = randomExponential(1/2)*400
-  if (gap > 10000) {
-    gap = 10000
-  } else if (gap < 0) {
-    gap = 0
-  } else {
-    gap = Math.round(gap/1000)*1000
-  }
-  return 1500 + gap //500 (stim time) + 1000 (minimum ITI)
+  return 1500 + ITIs.shift()*1000
  }
 
 
@@ -66,6 +47,7 @@ var getFeedback = function() {
 
 
 var getPracticeTrials = function() {
+  ITIs = jsPsych.randomization.shuffle([0,1,.2,0,.6,0,0,.4,0,.8])
   var practice_proportions = ['AX','AX','AX','AX','AY','BX','BY','AY','BX','BY']
   var practice_block = jsPsych.randomization.repeat(practice_proportions, 1)
   var practice = []
@@ -109,13 +91,10 @@ var getPracticeTrials = function() {
 /* Define experimental variables */
 /* ************************************ */
 var practice_repeats = 0
+var ITIs = []
 // task specific variables
 var current_trial = 0
-var choices = [37,40]
-var correct_responses = [
-  ["left button", 89],
-  ["right button",71]
-]
+var choices = [37, 40]
 var exp_stage = 'practice'
 var path = '/static/experiments/dot_pattern_expectancy/images/'
 var prefix = '<div class = centerbox><div class = img-container><img src = "'
@@ -128,6 +107,8 @@ var probes = jsPsych.randomization.shuffle(['probe1.png', 'probe2.png', 'probe3.
 ])
 var valid_cue = cues.pop()
 var valid_probe = probes.pop()
+console.log('Valid Cue:' + valid_cue)
+console.log('Valid Probe:' + valid_probe)
 
 //preload images
 var images = []
@@ -139,13 +120,26 @@ jsPsych.pluginAPI.preloadImages(images)
 
 // set up blocks
 var num_blocks = 1
-var block_length = 40
+var block_length = 30
 
-var trial_proportions = ["AX", "AX", "AX", "AX", "AX", "AX", "AX", "AX", "AX", "AX", "AX", "BX",
-  "BX", "BX", "AY", "AY", "AY", "BY", "BY", "BY"]
+var stim_index = [0,0,0,3,2,2,1,0,0,3,3,0,0,3,0,0,0,3,3,0,1,0,0,0,0,3,0,2,1,0]
+
+var trial_proportions = []
+for (var i=0; i<stim_index.length;i++) {
+  if (stim_index[i] == 0) {
+    trial_proportions.push('AX')
+  } else if (stim_index[i] == 1) {
+    trial_proportions.push('AY')
+  } else if (stim_index[i] == 2) {
+    trial_proportions.push('BX')
+  } else {
+    trial_proportions.push('BY')
+  }
+}
+
 var blocks = []
 for (b = 0; b < num_blocks; b++) {
-  blocks.push(jsPsych.randomization.repeat(trial_proportions, block_length/trial_proportions.length))
+  blocks.push(trial_proportions.slice(b*block_length,(b+1)*block_length))
 }
 
 
@@ -165,6 +159,7 @@ var start_test_block = {
   timing_post_trial: 500,
   on_finish: function() {
       exp_stage = 'test'
+      ITIs = test_ITIs
       current_trial = 0
   }
 };
@@ -181,22 +176,28 @@ var start_test_block = {
     trial_id: "end",
     exp_id: 'dot_pattern_expectancy'
   },
-  timing_post_trial: 0
+  timing_post_trial: 0,
+  on_finish: function() {
+    console.log('Valid Cue:' + valid_cue)
+    console.log('Valid Probe:' + valid_probe)
+  }
 };
-
 
  var instructions_block = {
   type: 'poldrack-single-stim',
-  stimulus: '<div class = centerbox><p style = "font-size:40px" class = center-block-text>Target Pair (press index finger):</p><p class = center-block-text><img src = "/static/experiments/dot_pattern_expectancy/images/' +
+  stimulus: '<div class = centerbox><p style = "font-size:40px" class = center-block-text>Target Pair (left arrow):</p><p class = center-block-text><img src = "/static/experiments/dot_pattern_expectancy/images/' +
     valid_cue +
     '" ></img>&nbsp&nbsp&nbsp...followed by...&nbsp&nbsp&nbsp<img src = "/static/experiments/dot_pattern_expectancy/images/' +
-    valid_probe + '" ></img><br></br></p><p style = "font-size:40px" class = center-block-text>Otherwise press middle finger</div>',
+    valid_probe + '" ></img><br></br></p><p style = "font-size:40px" class = center-block-text>Otherwise press down arrow</div>',
   is_html: true,
-  choices: 'none',
-  timing_stim: 14500, 
-  timing_response: 14500,
+  timing_stim: -1, 
+  timing_response: -1,
+  response_ends_trial: true,
+  choices: [32],
   data: {
     trial_id: "instructions",
+    valid_cue: value_cue,
+    valid_probe: valid_probe
   },
   timing_post_trial: 500
 };

@@ -5,7 +5,7 @@
   top:50%;
   left:50%;
   margin-right:-50%;
-  transform: translate(-47%,-300%);
+  transform: translate(-50%,-200%);
 }
 
 .ANT_down {
@@ -15,7 +15,7 @@
   top:50%;
   left:50%;
   margin-right:-50%;
-  transform: translate(-47%,200%);
+  transform: translate(-50%,100%);
 }
 
 .ANT_text {
@@ -42,7 +42,11 @@
 }
 */
 
+.first {
+  padding-left:9% !important;
+}
+
 .ANT_img {
-  max-width: 16%;
-  padding: 0px 4% 0px 0px;
+  max-width: 14%;
+  padding-left:3%;
 }

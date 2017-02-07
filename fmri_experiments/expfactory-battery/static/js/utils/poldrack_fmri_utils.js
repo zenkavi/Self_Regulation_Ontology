@@ -103,11 +103,14 @@ var create_key_test_block = function(choice) {
 	return key_test_block
 }
 
+var test_keys = function(lst, choices = []) {
+	for (var i=0; i < choices.length; i++) {
+		lst.push(create_key_test_block(choices[i]))
+	}
+}
+
 // setup function
-var setup_fmri_intro = function(lst, choices = [], num_ignore = 16, trigger = 84) {
-	//for (var i=0; i < choices.length; i++) {
-	//	lst.push(create_key_test_block(choices[i]))
-	//}
+var setup_fmri_intro = function(lst, num_ignore = 16, trigger = 84) {
 	lst.push(fmri_scanner_wait_block)
 	for (var j = 0; j < num_ignore; j++) {
 		lst.push(create_trigger_block(trigger))

@@ -26,10 +26,7 @@
   left:50%;
   margin-right:-50%;
   transform: translate(-50%, 60%);
-}
-
-.responded {
-  visibility: hidden;
+  text-align: center;
 }
 
 .stim-text {

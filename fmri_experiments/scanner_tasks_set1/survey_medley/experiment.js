@@ -1,9 +1,11 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
+ITIs = [0.204,0.204,0.272,0.204,0.408,0.136,0.272,0.34,0.136,0.34,0.068,0.0,0.204,1.02,0.0,0.0,0.068,0.476,0.136,0.068,0.0,0.0,0.204,0.204,0.272,0.136,0.204,0.272,0.272,0.34,0.204,0.068,0.0,0.408,0.204,0.136,0.34,0.068,0.34,0.136,0.068,0.068,0.068,0.136,0.0,0.136,0.34,0.408,0.136,0.136,0.0,0.068,0.0,0.0,0.136,0.136,0.476,0.204,0.068,0.068,0.34,0.476,0.272,0.884,0.136,0.136,0.068,0.068,0.612,0.476,0.0,0.068,0.204,0.272,0.068,0.272,0.748,0.068,0.0,0.204,0.068,0.068,0.34,0.0,0.0,0.272,0.204,0.0]
+
 var get_ITI = function() {
-  return 500 // + ITIs.shift()
- }
+  return 9000 + ITIs.shift()*1000 //500 minimum ITI
+}
 
 /* ************************************ */
 /* Define experimental variables */
@@ -87,19 +89,30 @@ var upps_codings = ['forward', 'forward', 'forward', 'forward', 'forward', 'forw
 var survey_items = [grit_items, brief_items, future_time_items, impulse_venture_items, upps_items]
 var responses = [grit_responses, brief_responses, future_time_responses, impulse_venture_responses, upps_responses]
 var surveys = ['grit', 'brief', 'future_time', 'impulsive_venture', 'upps']
-var survey_choices = [[66,89,71,82,77],[66,89,71,82,77],[66,89,71,82,77],[66,89,71,82,77],[89,71,82,77]]
+var survey_choices = [[66,89,71,82,77],[66,89,71,82,77],[66,89,71,82,77],[89,71],[89,71,82,77]]
 var item_codings = [grit_codings, brief_codings, future_time_codings, impulse_venture_codings, upps_codings]
 var stims = []
 for (var si=0; si<survey_items.length; si++) {
 	var items = survey_items[si]
 	for (var i=0; i<items.length; i++) {
-		var item_text = '<div class = centerbox><p class=item-text>' + items[i] + '</p><div class=response-text><div class=response-item>' + responses[si].join('</div><div class=response-item>') + '</div></div></div>'
+		var item_text = '<div class = centerbox><p class=item-text>' + items[i] + '</p></div><div class=response-text><div class=response-item>' + responses[si].join('</div><div class=response-item>') + '</div></div>'
 		var item_coding = item_codings[si][i]
-		var item_data = {'survey': surveys[si], 'item_coding': item_coding}
+		var item_data = {'survey': surveys[si], 
+						'item_coding': item_coding,
+						'item_text': items[i],
+						'options': responses[si]}
 		var item_choice = survey_choices[si]
 		stims.push({'stimulus': item_text, 'data': item_data, 'choices': item_choice})
 	}
 }
+var stim_index = [16,34,8,0,29,13,5,26,15,39,6,4,30,23,25,14,24,27,18,11,21,10,2,33,37,3,17,28,20,9,38,1,12,35,32,36,7,19,22,31]
+stim_reorder = []
+for (var i=0; i<stim_index.length; i++) {
+	stim_reorder.push(stims[stim_index[i]])
+}
+stims = stim_reorder
+
+
 
 /* ************************************ */
 /* Set up jsPsych blocks */
@@ -107,11 +120,12 @@ for (var si=0; si<survey_items.length; si++) {
 /* define static blocks */
 var instructions_block = {
   type: 'poldrack-single-stim',
-  stimulus: '<div class = center-text>Response to the questions!</div>',
+  stimulus: '<div class = centerbox><div class = center-text>Respond to the questions!</div></div>',
   is_html: true,
-  choices: 'none',
-  timing_stim: 5000, 
-  timing_response: 5000,
+  timing_stim: -1, 
+  timing_response: -1,
+  response_ends_trial: true,
+  choices: [32],
   data: {
     trial_id: "instructions",
   },
@@ -154,10 +168,9 @@ var test_block = {
 	timeline: stims,
 	type: 'poldrack-single-stim',
 	is_html: true,
-	timing_response: -1,
-	timing_stim: -1,
-	response_ends_trial: true,
-	timing_post_trial: get_ITI,
+	timing_response: get_ITI,
+	timing_stim: 8500,
+	timing_post_trial: 0,
 	on_finish: function(data) {
 		var response = data.possible_responses.indexOf(data.key_press)+1
 		var coded_response = response
@@ -170,7 +183,8 @@ var test_block = {
 
 /* create experiment definition array */
 survey_medley_experiment = []
+test_keys(survey_medley_experiment, choices)
 survey_medley_experiment.push(instructions_block)
-setup_fmri_intro(survey_medley_experiment, choices)
+setup_fmri_intro(survey_medley_experiment)
 survey_medley_experiment.push(test_block)
 survey_medley_experiment.push(end_block)

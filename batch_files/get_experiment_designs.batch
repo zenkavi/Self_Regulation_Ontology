@@ -2,7 +2,7 @@
 #SBATCH --job-name=get_experiment_designs_{EXP_ID}_{INDEX}
 #SBATCH --output=.out/get_experiment_designs_{EXP_ID}_{INDEX}.job.out
 #SBATCH --error=.err/get_experiment_designs_{EXP_ID}_{INDEX}.job.err
-#SBATCH --time=40:00:00
+#SBATCH --time=60:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=4
