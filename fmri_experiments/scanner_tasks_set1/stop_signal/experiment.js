@@ -257,24 +257,6 @@ var fixation_block = {
 	timing_response: 500
 }
 
-
-/* set up feedback blocks */
-var test_feedback_block = {
-  type: 'poldrack-single-stim',
-  stimulus: getTestFeedback,
-  is_html: true,
-  choices: 'none',
-  timing_stim: 13500, 
-  timing_response: 13500,
-  data: {
-    trial_id: "test_feedback"
-  },
-  timing_post_trial: 1000,
-  on_finish: function() {
-  	test_block_data = []
-  }
-};
-
 // set up practice trials
 var practice_trials = getPracticeTrials()
 var practice_loop = {
@@ -307,7 +289,7 @@ var practice_loop = {
 /* ************************************ */
 
 var stop_signal_experiment = []
-test_keys(stop_signal, choices)
+test_keys(stop_signal_experiment, choices)
 stop_signal_experiment.push(task_setup_block);
 stop_signal_experiment.push(instructions_block);
 stop_signal_experiment.push(practice_loop);

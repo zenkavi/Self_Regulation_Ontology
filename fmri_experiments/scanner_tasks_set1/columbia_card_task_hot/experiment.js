@@ -407,7 +407,7 @@ var payout_text = {
 	data: {
 		trial_id: 'reward'
 	},
-	cont_key: [13],
+	cont_key: [32],
 	timing_post_trial: 1000,
 	on_finish: appendPayoutData,
 };
@@ -429,7 +429,7 @@ var payoutTrial = {
 
 /* create experiment definition array */
 var columbia_card_task_hot_experiment = [];
-test_keys(columbia_card_task_hot, choices)
+test_keys(columbia_card_task_hot_experiment, choices)
 columbia_card_task_hot_experiment.push(instructions_block)
 setup_fmri_intro(columbia_card_task_hot_experiment)
 columbia_card_task_hot_experiment.push(start_test_block);

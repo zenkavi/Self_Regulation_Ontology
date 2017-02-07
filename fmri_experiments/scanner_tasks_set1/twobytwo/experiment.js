@@ -269,7 +269,6 @@ var task_setup_block = {
   }
 }
 
-
 var instructions_block = {
   type: 'poldrack-single-stim',
   stimulus: get_instructions,

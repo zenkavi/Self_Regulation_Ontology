@@ -281,7 +281,7 @@ var reminder_node = {
 
 var instructions_block = {
   type: 'poldrack-single-stim',
-  stimulus: "<div class = centerbox><div class = center-text>Solve the Tower Tasks!<br>Plan ahead first and work swiftly!<br><br>We'll start with some practice.</div></div>",
+  stimulus: "<div class = centerbox><div class = center-text>Solve the Tower Tasks!<br><br>Plan ahead first and work swiftly!<br><br>We'll start with some practice.</div></div>",
   is_html: true,
   timing_stim: -1, 
   timing_response: -1,

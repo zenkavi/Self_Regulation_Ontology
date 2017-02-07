@@ -411,7 +411,7 @@ var practice_loop = {
 /* ************************************ */
 
 var dot_pattern_expectancy_experiment = []
-test_keys(dot_pattern_expectancy,choices)
+test_keys(dot_pattern_expectancy_experiment,choices)
 dot_pattern_expectancy_experiment.push(task_setup_block)
 dot_pattern_expectancy_experiment.push(instructions_block);
 dot_pattern_expectancy_experiment.push(practice_loop);

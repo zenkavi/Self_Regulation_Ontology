@@ -350,7 +350,7 @@ var payout_text = {
 	data: {
 		trial_id: 'reward'
 	},
-	cont_key: [13],
+	cont_key: [32],
 	timing_post_trial: 1000,
 	on_finish: appendPayoutData,
 };
