@@ -215,7 +215,7 @@ var turnOneCard = function(whichCard, win) {
 /* ************************************ */
 // task specific variables
 //round params: # cards, # loss cards, loss amount, gain amount
-ParamsArray = [[6,1,-70,12],[12,1,-70,12],[12,3,-70,12],[8,2,-50,20],[10,1,-40,30]]
+ParamsArray = [[6,1,-70,12],[12,1,-70,12],[12,3,-70,12],[8,2,-50,20],[10,1,-40,30],[8,3,-200,1],[6,1,-40,2]]
 
 //generic params
 var numCards = ParamsArray[0][0]

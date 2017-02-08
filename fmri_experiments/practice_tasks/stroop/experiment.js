@@ -147,7 +147,7 @@ var incongruent_stim = [{
 	},
 	key_answer: choices[2]
 }];
-var exp_len = 10
+var exp_len = 20
 var practice_len = 12
 var stims = congruent_stim.concat(incongruent_stim)
 var congruent_stim = jsPsych.randomization.repeat(congruent_stim, (exp_len/2)/3)
@@ -197,9 +197,10 @@ var start_test_block = {
   type: 'poldrack-single-stim',
   stimulus: '<div class = centerbox><div class = center-text>Get ready!</p></div>',
   is_html: true,
-  choices: 'none',
-  timing_stim: 1500, 
-  timing_response: 1500,
+  choices: [32],
+  timing_stim: -1, 
+  timing_response: -1,
+  response_ends_trial: true,
   data: {
     trial_id: "test_start_block"
   },

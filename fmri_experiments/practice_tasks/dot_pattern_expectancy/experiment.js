@@ -148,19 +148,18 @@ for (b = 0; b < num_blocks; b++) {
 /* ************************************ */
 var start_test_block = {
   type: 'poldrack-single-stim',
-  stimulus: '<div class = centerbox><div class = center-text>Get ready!</p></div>',
+  stimulus: '<div class = centerbox><div class = center-text>Wait for experimenter</div></div>',
   is_html: true,
-  choices: 'none',
-  timing_stim: 1500, 
-  timing_response: 1500,
+  choices: [32],
+  timing_stim: -1, 
+  timing_response: -1,
+  response_ends_trial: true,
   data: {
     trial_id: "test_start_block"
   },
   timing_post_trial: 500,
   on_finish: function() {
-      exp_stage = 'test'
-      ITIs = test_ITIs
-      current_trial = 0
+    exp_stage = 'test'
   }
 };
 
