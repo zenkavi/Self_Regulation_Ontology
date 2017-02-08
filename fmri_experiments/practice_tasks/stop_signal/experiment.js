@@ -149,8 +149,8 @@ var possible_responses = [
 	["Middle Finger", 40]
 ]
 var choices = [possible_responses[0][1], possible_responses[1][1]]
-var response_permutations = [[0,0,1,1], [0,0,1,1], [0,0,1,1],
-							[0,0,1,1], [0,0,1,1], [0,0,1,1]]
+var response_permutations = [[0,0,1,1], [0,1,0,1], [0,1,1,0],
+							[1,1,0,0], [1,0,1,0], [1,0,0,1]]
 var permutation_index = randomDraw([0,1,2,3,4,5])
 var permutation = response_permutations[permutation_index]
 var correct_responses = []

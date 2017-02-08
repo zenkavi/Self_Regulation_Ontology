@@ -85,8 +85,8 @@ var possible_responses = [
 
 // set up responses
 var choices = [possible_responses[0][1], possible_responses[1][1]]
-var response_permutations = [[0,0,1,1], [0,0,1,1], [0,0,1,1],
-							[0,0,1,1], [0,0,1,1], [0,0,1,1]]
+var response_permutations = [[0,0,1,1], [0,1,0,1], [0,1,1,0],
+							[1,1,0,0], [1,0,1,0], [1,0,0,1]]
 var permutation_index = 0
 var permutation = response_permutations[permutation_index]
 var correct_responses = []
