@@ -186,11 +186,17 @@ var stop_signal =
 	'<div class = coverbox></div><div class = stopbox><div class = centered-shape id = stop-signal></div><div class = centered-shape id = stop-signal-inner></div></div>'
 
 /* Instruction Prompt */
-var possible_responses = jsPsych.randomization.shuffle([
-	["Index Finger", 37],
-	["Middle Finger", 40]
-])
-
+var choice_order = randomDraw([0,1])
+var possible_responses = [
+	["index finger", 89],
+	["middle finger", 71]
+]
+if (choice_order == 1) {
+	possible_responses = [
+		["middle finger", 71],
+		["index finger", 89]
+	]
+}
 var choices = [possible_responses[0][1], possible_responses[1][1]]
 
 var prompt_text = '<ul list-text>' + 
@@ -313,6 +319,7 @@ var start_test_block = {
 	timing_post_trial: 0,
 	on_finish: function() {
 		console.log('Permutation Index: ' + permutation_index)
+		console.log('Choice Order: ' + choice_order)
 	}
 };
 

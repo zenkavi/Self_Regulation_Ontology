@@ -133,7 +133,7 @@ var discount_fixed_experiment = []
 test_keys(discount_fixed_experiment,choices)
 discount_fixed_experiment.push(instructions_block);
 discount_fixed_experiment.push(practice_block);
-setup_fmri_intro(discount_fixed_experiment, choices)
+setup_fmri_intro(discount_fixed_experiment)
 discount_fixed_experiment.push(start_test_block);
 for (i = 0; i < options.small_amt.length; i++) {
   discount_fixed_experiment.push(fixation_block)
