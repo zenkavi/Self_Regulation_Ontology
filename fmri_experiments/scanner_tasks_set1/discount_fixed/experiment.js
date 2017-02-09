@@ -18,26 +18,29 @@ var bonus_list = [] //keeps track of choices for bonus
 //hard coded options 
 var options = {
   small_amt: [20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20],
-  large_amt: [23.25,20.25,21.75,23.75,25,25.75,22.75,21.5,22,22.25,23,26,27.25,22.75,23,23.25,21.75,21,22.5,21.25,26.5,26,28,21.5,28.25,23,22.5,25,22.5,25.75,30,20.75,29.75,27.5,27.75,22.25,24.75,37,23,23.5,22.5,21.5,23.25,35,23.25,34.75,39.25,40.25,28.25,43,42.25,38.5,38.5,51.5,50.5,47.75,53.25,28.5,23.25,33.5,36.25,21.25,40.25,49.25,35.25,50.5,34.25,31,24.25,71,59.75,49.5,63.75,75,54.75,71.5,88.25,82.75,88.25,78.75,28.25,59,34.75,93,55.5,56,65.75,21.75,94.5,80.25,123.25,129,121.5,119.75,88.5,122.25,104.25,103.75,108,55,27,188.25,63.25,71,194.25,101.25,131.75,32.5,141.75,218.5,156.5,223,255.75,22.25,291.25,142.75,108.25,172.25,183,216],
-  later_del: [80,4,38,84,105,118,53,27,35,40,51,100,116,42,43,46,23,11,31,13,79,71,91,16,87,30,24,47,22,50,86,6,77,57,58,15,32,113,19,21,14,8,18,81,17,74,93,95,37,101,94,75,73,120,112,98,114,28,10,41,48,3,56,78,39,76,34,25,9,110,83,59,85,103,63,90,115,102,107,89,12,55,20,96,45,44,54,2,82,64,106,108,97,92,61,88,70,67,68,26,5,117,29,33,109,49,65,7,66,104,69,99,111,1,119,52,36,60,62,72]
+  large_amt: [77,50,43,71,75,36,36,50,73,33,69,63,39,66,23,41,45,39,44,80,30,23,24,40,25,57,49,78,67,25,27,44,54,28,45,71,32,31,43,78,67,79,66,22,54,77,24,80,77,23,55,28,83,29,58,32,33,23,55,22,27,58,28,65,25,74,74,56,41,65,62,71,23,48,64,81,58,60,66,25,35,29,32,45,30,27,76,23,67,56,58,72,34,28,43,41,34,65,82,52,39,24,61,31,54,24,67,45,29,50,41,33,70,42,25,85,58,24,75,49],
+  later_del: [161, 59, 38,176, 60,114,140, 41, 44, 78,172, 37, 95, 58, 61,129,157,161,143,145, 36,134, 87,159,141, 89,140,108, 74,108, 91, 92, 23, 59,107, 88,111, 76,120,129, 41, 92,145, 21, 22,142,139, 39, 24,110,163,132,105, 44, 72, 57,103, 42,107, 27,142, 36,163,156,176, 52,121,172, 55,137,180, 76,176,128, 89, 58, 55,124, 71, 70,171, 75, 74, 72, 23,130,161, 77,103, 93, 53, 95,176,123, 19,174, 43,159, 74,139,104, 38,141, 74,126,125, 23, 26, 58,129, 27,163,108,145, 74,129, 73, 89, 41,172]
 }
 
 var stim_html = []
 
+var stim_index = [37,94,77,60,79,31,110,74,27,19,95,113,5,76,75,36,24,106,0,50,23,86,73,12,52,40,67,93,109,14,41,102,2,42,84,55,30,38,4,92,101,98,90,32,68,45,29,111,81,16,103,47,43,99,104,72,22,6,80,96,66,34,48,17,70,46,54,89,107,57,7,64,44,53,117,87,85,21,58,18,49,63,59,1,115,13,119,8,116,71,28,108,100,56,9,65,51,33,62,82,25,112,91,20,15,39,35,97,105,61,11,118,83,114,69,26,88,10,78,3]
 //loop through each option to create html
-for (var i = 0; i < options.small_amt.length; i++) {
+for (var i = 0; i < stim_index.length; i++) {
+  var index = stim_index[i]
   stim_html[i] =
-      '<div class = dd-stim><div class = amtbox style = "color:white">$'+options.large_amt[i]+'</div><br><br>'+
-      '<div class = delbox style = "color:white">'+ options.later_del[i]+' days</div></div>'
+      '<div class = dd-stim><div class = amtbox style = "color:white">$'+options.large_amt[index]+'</div><br><br>'+
+      '<div class = delbox style = "color:white">'+ options.later_del[index]+' days</div></div>'
 }
 
 data_prop = []
 
-for (var i = 0; i < options.small_amt.length; i++) {
+for (var i = 0; i < stim_index.length; i++) {
+  var index = stim_index[i]
   data_prop.push({
-    small_amount: options.small_amt[i],
-    large_amount: options.large_amt[i],
-    later_delay: options.later_del[i]
+    small_amount: options.small_amt[index],
+    large_amount: options.large_amt[index],
+    later_delay: options.later_del[index]
   });
 }
 
@@ -128,6 +131,18 @@ var end_block = {
   timing_post_trial: 0
 };
 
+var rest_block = {
+  type: 'poldrack-single-stim',
+  stimulus: '<div class = centerbox><div class = center-text>In this next block of trials<br><strong>Index:</strong> Accept option on screen (reject $20 today). <br><strong>Middle:</strong> Reject option on screen (accept $20 today)<br>Next run will start in a moment</div></div>',
+  is_html: true,
+  choices: 'none',
+  timing_response: 7500,
+  data: {
+    trial_id: "rest_block"
+  },
+  timing_post_trial: 1000
+};
+
 //Set up experiment
 var discount_fixed_experiment = []
 test_keys(discount_fixed_experiment,choices)
@@ -135,7 +150,9 @@ discount_fixed_experiment.push(instructions_block);
 discount_fixed_experiment.push(practice_block);
 setup_fmri_intro(discount_fixed_experiment)
 discount_fixed_experiment.push(start_test_block);
-for (i = 0; i < options.small_amt.length; i++) {
+
+
+for (i = 0; i < stim_index.length; i++) {
   discount_fixed_experiment.push(fixation_block)
   var test_block = {
   type: 'poldrack-single-stim',
@@ -167,5 +184,8 @@ for (i = 0; i < options.small_amt.length; i++) {
 };
 
   discount_fixed_experiment.push(test_block)
+    if (i%30 == true) {
+    discount_fixed_experiment.push(rest_block)
+  }
 }
 discount_fixed_experiment.push(end_block);
