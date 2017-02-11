@@ -149,8 +149,8 @@ var possible_responses = [
 	["Middle Finger", 40]
 ]
 var choices = [possible_responses[0][1], possible_responses[1][1]]
-var response_permutations = [[0,0,1,1], [0,0,1,1], [0,0,1,1],
-							[0,0,1,1], [0,0,1,1], [0,0,1,1]]
+var response_permutations = [[0,0,1,1], [0,1,0,1], [0,1,1,0],
+							[1,1,0,0], [1,0,1,0], [1,0,0,1]]
 var permutation_index = randomDraw([0,1,2,3,4,5])
 var permutation = response_permutations[permutation_index]
 var correct_responses = []
@@ -180,7 +180,7 @@ var accuracy_thresh = 0.8
 var stop_thresh = 0.2	
 var practice_len = 12
 var exp_len = 20
-var num_blocks = 1
+var num_blocks = 2
 var block_len = exp_len/num_blocks
 var test_block_data = []
 
@@ -212,7 +212,7 @@ var stims = [{
 }]
 
 // set up stim order based on optimized trial sequence
-var stim_index = [0,0,1,0,1,0,0,1,0,1,1,0,0,1,0,0,1,1,1,0]
+var stim_index = [0,0,1,0,1,0,0,1,0,1,1,0,0,1,0,0,1,1,1,0,1,0,0,0,1,0,0,1,1,0,1,0,0,1,0,1,0,1,1,0]
 var trials = []
 var go_stims = jsPsych.randomization.repeat(stims, exp_len*0.6 / 4)
 var stop_stims = jsPsych.randomization.repeat(stims, exp_len*0.4 / 4)
@@ -248,9 +248,10 @@ var start_test_block = {
   type: 'poldrack-single-stim',
   stimulus: '<div class = centerbox><div class = center-text>Get ready!</p></div>',
   is_html: true,
-  choices: 'none',
-  timing_stim: 1500, 
-  timing_response: 1500,
+  choices: [32],
+  timing_stim: -1, 
+  timing_response: -1,
+  response_ends_trial: true,
   data: {
     trial_id: "test_start_block"
   },

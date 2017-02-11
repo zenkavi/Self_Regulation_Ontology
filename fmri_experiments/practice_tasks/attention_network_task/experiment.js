@@ -72,7 +72,7 @@ var practice_repeats = 0
 // task specific variables
 var practice_length = 12
 var num_blocks = 1
-var block_length = 12
+var block_length = 20
 
 var current_trial = 0
 var exp_stage = 'practice'
@@ -130,7 +130,7 @@ for (var i=0; i<test_stim.length; i++) {
 	test_stim[i] = jsPsych.randomization.repeat(base_test_stim[i], block_length*num_blocks/24)
 }
 // set up stim order based on optimized trial sequence
-var stim_index = [0,1,2,3,2,1,3,4]
+var stim_index = [0,1,2,3,2,1,3,4,0,0,4,3,2,2,0,1,1,4,3,4]
 var ordered_stim = []
 for (var i=0; i<stim_index.length; i++) {
 	var stim = test_stim[stim_index[i]].shift()
@@ -155,11 +155,12 @@ for (b = 0; b < num_blocks; b++) {
 /* define static blocks */
  var test_intro_block = {
 	type: 'poldrack-single-stim',
-	stimulus: '<div class = centerbox><div class = center-text>Get ready!</div></div>',
+	stimulus: '<div class = centerbox><div class = center-text>Wait for experimenter</div></div>',
 	is_html: true,
-	choices: 'none',
-	timing_stim: 1500, 
-	timing_response: 1500,
+	choices: [32],
+	timing_stim: -1, 
+	timing_response: -1,
+	response_ends_trial: true,
 	data: {
 		trial_id: "test_start_block"
 	},

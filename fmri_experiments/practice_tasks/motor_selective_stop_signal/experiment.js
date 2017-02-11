@@ -186,11 +186,17 @@ var stop_signal =
 	'<div class = coverbox></div><div class = stopbox><div class = centered-shape id = stop-signal></div><div class = centered-shape id = stop-signal-inner></div></div>'
 
 /* Instruction Prompt */
-var possible_responses = jsPsych.randomization.shuffle([
-	["Index Finger", 37],
-	["Middle Finger", 40]
-])
-
+var choice_order = randomDraw([0,1])
+var possible_responses = [
+	["index finger", 89],
+	["middle finger", 71]
+]
+if (choice_order == 1) {
+	possible_responses = [
+		["middle finger", 71],
+		["index finger", 89]
+	]
+}
 var choices = [possible_responses[0][1], possible_responses[1][1]]
 
 var prompt_text = '<ul list-text>' + 
@@ -217,8 +223,8 @@ var stop_response = possible_responses[0]
 var ignore_response = possible_responses[1]
 var practice_len = 12
 var test_block_data = [] // records the data in the current block to calculate feedback
-var test_block_len = 40
-var num_blocks = 1
+var test_block_len = 30
+var num_blocks = 2
 var test_len = test_block_len*num_blocks
 
 /* Define Stims */
@@ -286,9 +292,10 @@ var start_test_block = {
   type: 'poldrack-single-stim',
   stimulus: '<div class = centerbox><div class = center-text>Get ready!</p></div>',
   is_html: true,
-  choices: 'none',
-  timing_stim: 1500, 
-  timing_response: 1500,
+  choices: [32],
+  timing_stim: -1, 
+  timing_response: -1,
+  response_ends_trial: true,
   data: {
     trial_id: "test_start_block"
   },
@@ -312,6 +319,7 @@ var start_test_block = {
 	timing_post_trial: 0,
 	on_finish: function() {
 		console.log('Permutation Index: ' + permutation_index)
+		console.log('Choice Order: ' + choice_order)
 	}
 };
 
