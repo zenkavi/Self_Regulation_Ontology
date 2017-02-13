@@ -8,6 +8,11 @@ var get_ITI = function() {
   return 5500 + ITIs.shift()*1000 // 500 minimum ITI
  }
 
+ var randomDraw = function(lst) {
+  var index = Math.floor(Math.random() * (lst.length))
+  return lst[index]
+}
+
 /* ************************************ */
 /* Define experimental variables */
 /* ************************************ */
@@ -128,7 +133,11 @@ var end_block = {
     trial_id: "end",
     exp_id: 'discount_fixed'
   },
-  timing_post_trial: 0
+  timing_post_trial: 0,
+  on_finish: function() {
+    var bonus = randomDraw(bonus_list)
+    jsPsych.data.addDataToLastTrial({'bonus': bonus})
+  }
 };
 
 var rest_block = {

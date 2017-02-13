@@ -8,12 +8,17 @@ var get_ITI = function() {
   return 5500 + ITIs.shift()*1000
  }
 
+ var randomDraw = function(lst) {
+  var index = Math.floor(Math.random() * (lst.length))
+  return lst[index]
+}
+
 /* ************************************ */
 /* Define experimental variables */
 /* ************************************ */
 
 // task specific variables
-var choices = [89, 71]
+var choices = [37, 40]
 var bonus_list = [] //keeps track of choices for bonus
 //hard coded options 
 var options = {
@@ -113,7 +118,11 @@ var end_block = {
     trial_id: "end",
     exp_id: 'discount_fixed'
   },
-  timing_post_trial: 0
+  timing_post_trial: 0,
+  on_finish: function() {
+    var bonus = randomDraw(bonus_list)
+    jsPsych.data.addDataToLastTrial({'bonus': bonus})
+  }
 };
 
 //Set up experiment
@@ -138,10 +147,10 @@ for (i = 0; i < options.small_amt.length; i++) {
   timing_post_trial: 0,
   on_finish: function(data) {
     var choice = false;
-    if (data.key_press == 89) {
+    if (data.key_press == 37) {
       choice = 'larger_later';
       bonus_list.push({'amount': data.large_amount, 'delay': data.later_delay})
-    } else if (data.key_press == 71) {
+    } else if (data.key_press == 40) {
       choice = 'smaller_sooner';
       bonus_list.push({'amount': data.small_amount, 'delay': 0})
     }
