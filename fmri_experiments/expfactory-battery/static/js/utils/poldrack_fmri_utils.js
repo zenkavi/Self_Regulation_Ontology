@@ -38,7 +38,7 @@ function addID(exp_id) {
 
 var fmri_scanner_wait_block = {
 	type: 'poldrack-text',
-	text: "<div class = centerbox><div  class = center-text>Scanner calibration<br><strong>Please don't move!</strong></div></div>",
+	text: "<div class = centerbox><div  class = center-text>Scanner calibration<br><strong>Please close your eyes and don't move!</strong></div></div>",
 	cont_key: [32],
 	data: {
 		trial_id: "fmri_scanner_wait"

@@ -5,7 +5,7 @@
 ITIs = [0,0.136,0.136,0.612]
 
 var get_ITI = function() {
-  return 5500 + ITIs.shift()*1000
+  return 4000 + ITIs.shift()*1000
  }
 
  var randomDraw = function(lst) {
@@ -138,7 +138,7 @@ for (i = 0; i < options.small_amt.length; i++) {
     exp_stage: "test"
   },
   stimulus:trials[i].stimulus,
-  timing_stim: 5000,
+  timing_stim: 4000,
   timing_response: get_ITI,  
   data: trials[i].data,
   is_html: true,
