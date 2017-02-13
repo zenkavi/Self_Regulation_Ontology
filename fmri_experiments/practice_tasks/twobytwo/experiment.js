@@ -163,9 +163,9 @@ if (response_keys_mag.key[1]==37) {
 }
 
 var choices = response_keys_color.key
-var practice_length = 16
+var practice_length = 32
 var num_blocks = 1
-var block_length = 40
+var block_length = 16
 var test_length = num_blocks * block_length
 
 //set up block stim. correct_responses indexed by [block][stim][type]

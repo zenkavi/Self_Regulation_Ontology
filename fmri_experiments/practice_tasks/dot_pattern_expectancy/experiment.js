@@ -195,7 +195,7 @@ var start_test_block = {
   choices: [32],
   data: {
     trial_id: "instructions",
-    valid_cue: value_cue,
+    valid_cue: valid_cue,
     valid_probe: valid_probe
   },
   timing_post_trial: 500
