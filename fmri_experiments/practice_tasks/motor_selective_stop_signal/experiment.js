@@ -188,13 +188,13 @@ var stop_signal =
 /* Instruction Prompt */
 var choice_order = randomDraw([0,1])
 var possible_responses = [
-	["index finger", 89],
-	["middle finger", 71]
+	["index finger", 37],
+	["middle finger", 40]
 ]
 if (choice_order == 1) {
 	possible_responses = [
-		["middle finger", 71],
-		["index finger", 89]
+		["middle finger", 40],
+		["index finger", 37]
 	]
 }
 var choices = [possible_responses[0][1], possible_responses[1][1]]
