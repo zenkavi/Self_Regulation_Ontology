@@ -133,7 +133,6 @@ var getPracticeTrials = function() {
 	for (i=0; i<trials.length; i++) {
 		trials[i]['key_answer'] = trials[i].data.correct_response
 	}
-	practice.push(fixation_block)
 	var practice_block = {
 		type: 'poldrack-categorize',
 		timeline: trials, 
@@ -339,52 +338,6 @@ var start_test_block = {
   timing_post_trial: 0
 };
 
-var fixation_block = {
-	type: 'poldrack-single-stim',
-	stimulus: '<div class = centerbox><div class = fixation>+</div></div>',
-	is_html: true,
-	choices: 'none',
-	data: {
-		trial_id: "fixation",
-		exp_stage: "test"
-	},
-	timing_post_trial: 0,
-	timing_response: 500
-}
-
-/* prompt blocks are used during practice to show the instructions */
-
-var prompt_fixation_block = {
-	type: 'poldrack-single-stim',
-	stimulus: '<div class = shapebox><div class = fixation>+</div></div>',
-	is_html: true,
-	choices: 'none',
-	data: {
-		trial_id: "fixation",
-		exp_stage: "practice"
-	},
-	timing_post_trial: 0,
-	timing_response: 500,
-	prompt: prompt_text
-}
-
-/* set up feedback blocks */
-var test_feedback_block = {
-  type: 'poldrack-single-stim',
-  stimulus: getTestFeedback,
-  is_html: true,
-  choices: 'none',
-  timing_stim: 13500, 
-  timing_response: 13500,
-  data: {
-    trial_id: "test_feedback"
-  },
-  timing_post_trial: 1000,
-  on_finish: function() {
-  	test_block_data = []
-  }
-};
-
 // set up practice trials
 var practice_trials = getPracticeTrials()
 var practice_loop = {
@@ -428,7 +381,6 @@ for (b = 0; b < num_blocks; b++) {
 
 	// Loop through each trial within the block
 	stop_signal_exp_block.push(start_test_block)
-	stop_signal_exp_block.push(fixation_block)
 	for (i = 0; i < test_block_len; i++) {
 		var current_stim = test_stims.shift()
 		var trial_stim = current_stim.stim.stimulus
@@ -474,9 +426,7 @@ for (b = 0; b < num_blocks; b++) {
 
 	motor_selective_stop_signal_experiment = motor_selective_stop_signal_experiment.concat(
 		stop_signal_exp_block)
-	if ((b+1)<num_blocks) {
-		motor_selective_stop_signal_experiment.push(test_feedback_block)
-	}
+
 }
 
 motor_selective_stop_signal_experiment.push(end_block)
