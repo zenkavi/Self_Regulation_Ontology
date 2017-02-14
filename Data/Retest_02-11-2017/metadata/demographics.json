@@ -6,6 +6,15 @@
     "ArrestedChargedLifeCount": {
         "Description": "How many times in your life have you been arrested and/or charged with illegal activities?",
         "Levels": {
+            "0": "0",
+            "1": "1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5-10",
+            "6": ">10"
+        },
+        "LevelsOrig": {
             "1": "0",
             "2": "1",
             "3": "2",
@@ -26,6 +35,17 @@
     "CarDebt": {
         "Description": "How much car-related debt do you have?",
         "Levels": {
+            "1": "<$500",
+            "2": "$500-$2500",
+            "3": "$2500-$10000",
+            "4": "$10000-$25000",
+            "5": "$25000-$50000",
+            "6": "$50000-$100000",
+            "7": "$100000-$200000",
+            "8": ">$200000",
+            "n/a": " Prefer Not To Say"
+        },
+        "LevelsOrig": {
             " 0": " Prefer Not To Say",
             "1": "<$500",
             "2": "$500-$2500",
@@ -40,6 +60,15 @@
     "ChildrenNumber": {
         "Description": "How many children do you have?",
         "Levels": {
+            "0": "0",
+            "1": "1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5-10",
+            "6": ">10"
+        },
+        "LevelsOrig": {
             "1": "0",
             "2": "1",
             "3": "2",
@@ -56,6 +85,17 @@
     "CreditCardDebt": {
         "Description": "How much credit card debt do you have?",
         "Levels": {
+            "1": "<$500",
+            "2": "$500-$2500",
+            "3": "$2500-$10000",
+            "4": "$10000-$25000",
+            "5": "$25000-$50000",
+            "6": "$50000-$100000",
+            "7": "$100000-$200000",
+            "8": ">$200000",
+            "n/a": " Prefer Not To Say"
+        },
+        "LevelsOrig": {
             " 0": " Prefer Not To Say",
             "1": "<$500",
             "2": "$500-$2500",
@@ -82,6 +122,17 @@
     "EducationDebt": {
         "Description": "How much education debt do you have?",
         "Levels": {
+            "1": "<$500",
+            "2": "$500-$2500",
+            "3": "$2500-$10000",
+            "4": "$10000-$25000",
+            "5": "$25000-$50000",
+            "6": "$50000-$100000",
+            "7": "$100000-$200000",
+            "8": ">$200000",
+            "n/a": " Prefer Not To Say"
+        },
+        "LevelsOrig": {
             " 0": " Prefer Not To Say",
             "1": "<$500",
             "2": "$500-$2500",
@@ -140,6 +191,17 @@
     "MortgageDebt": {
         "Description": "How much mortgage debt do you have?",
         "Levels": {
+            "1": "<$500",
+            "2": "$500-$2500",
+            "3": "$2500-$10000",
+            "4": "$10000-$25000",
+            "5": "$25000-$50000",
+            "6": "$50000-$100000",
+            "7": "$100000-$200000",
+            "8": ">$200000",
+            "n/a": " Prefer Not To Say"
+        },
+        "LevelsOrig": {
             " 0": " Prefer Not To Say",
             "1": "<$500",
             "2": "$500-$2500",
@@ -169,6 +231,17 @@
     "OtherDebtAmount": {
         "Description": "If you listed any other sources of debt, how much debt do you have?",
         "Levels": {
+            "1": "<$500",
+            "2": "$500-$2500",
+            "3": "$2500-$10000",
+            "4": "$10000-$25000",
+            "5": "$25000-$50000",
+            "6": "$50000-$100000",
+            "7": "$100000-$200000",
+            "8": ">$200000",
+            "n/a": " Prefer Not To Say"
+        },
+        "LevelsOrig": {
             "0": " Prefer Not To Say",
             "1": "<$500",
             "2": "$500-$2500",
@@ -213,6 +286,15 @@
     "RelationshipNumber": {
         "Description": "How many romantic relationships have you had?",
         "Levels": {
+            "0": "0",
+            "1": "1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5-10",
+            "6": ">10"
+        },
+        "LevelsOrig": {
             "1": "0",
             "2": "1",
             "3": "2",
@@ -234,6 +316,10 @@
     "RentOwn": {
         "Description": "Do you rent or own your home/apartment?",
         "Levels": {
+            "0": "Rent",
+            "1": " Own"
+        },
+        "LevelsOrig": {
             "1": "Rent",
             "2": " Own"
         },
@@ -242,6 +328,10 @@
     "RetirementAccount": {
         "Description": "Do you have a retirement account?",
         "Levels": {
+            "0": "No",
+            "1": "Yes"
+        },
+        "LevelsOrig": {
             "1": "Yes",
             "2": "No"
         }
@@ -265,6 +355,15 @@
     "TrafficAccidentsLifeCount": {
         "Description": "How many traffic accidents have you been in over your life?",
         "Levels": {
+            "0": "0",
+            "1": "1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5-10",
+            "6": ">10"
+        },
+        "LevelsOrig": {
             "1": "0",
             "2": "1",
             "3": "2",
@@ -277,6 +376,15 @@
     "TrafficTicketsLastYearCount": {
         "Description": "How many traffic tickets have you gotten in the last year?",
         "Levels": {
+            "0": "0",
+            "1": "1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5-10",
+            "6": ">10"
+        },
+        "LevelsOrig": {
             "1": "0",
             "2": "1",
             "3": "2",
