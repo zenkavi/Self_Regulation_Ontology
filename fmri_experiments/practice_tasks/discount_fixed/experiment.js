@@ -5,7 +5,7 @@
 ITIs = [0,0.136,0.136,0.612]
 
 var get_ITI = function() {
-  return 4000 + ITIs.shift()*1000
+  return 4500 + ITIs.shift()*1000
  }
 
  var randomDraw = function(lst) {
