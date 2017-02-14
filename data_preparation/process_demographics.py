@@ -76,8 +76,6 @@ def get_metadata(demog_items):
             demog_dict[itemid]['Nominal']=True
         levelctr=0
         if itemoptions is not None:
-#            try: 
-#                iter(itemoptions)
                 for i in itemoptions:
                     if not 'value' in i:
                         value=levelctr
@@ -85,9 +83,6 @@ def get_metadata(demog_items):
                     else:
                         value=i['value']
                     demog_dict[itemid]['Levels'][value]=i['text']
-#            except:
-#               continue 
-#        demog_dict[itemid]['Levels'][value]=i['text']
     #rename according to more useful names
     demog_dict_renamed={}
     for k in demog_dict.keys():

@@ -225,7 +225,7 @@ readme_lines += ["Individual Measures: directory containing gzip compressed file
 label = 'retest'
 DVs = pd.read_json(path.join(data_dir,'Local/mturk_' + label + '_DV.json'))
 DVs_valence = pd.read_json(path.join(data_dir,'Local/mturk_' + label + '_DV_valence.json'))
-data = pd.read_json(path.join(data_dir,'mturk_' + label + '_data_manual_post.json')).reset_index(drop = True)
+data = pd.read_json(path.join(data_dir,'Local/mturk_' + label + '_data_manual_post.json')).reset_index(drop = True)
 
 DV_df = DVs
 valence_df = DVs_valence
