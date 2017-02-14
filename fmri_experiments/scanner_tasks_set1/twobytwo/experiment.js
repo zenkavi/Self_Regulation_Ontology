@@ -2,7 +2,7 @@
 /* Define helper functions */
 /* ************************************ */
 
-var ITIs = [0.4,0.2,0.0,0.2,0.0,0.0,0.0,0.0,0.2,0.0,0.0,0.5,0.4,0.1,0.2,0.0,0.0,0.5,0.1,0.0,0.4,0.8,0.2,0.4,0.2,0.0,0.2,0.1,0.3,0.2,0.1,0.1,0.1,0.0,0.0,0.2,0.2,0.1,0.4,0.6,0.1,0.0,0.0,0.3,0.0,0.2,0.6,0.0,0.2,0.1,0.0,0.0,0.0,0.0,0.4,0.0,0.0,0.3,0.0,0.6,0.6,0.1,0.0,0.1,0.0,0.4,0.2,0.0,0.2,0.7,0.5,0.1,0.1,0.1,0.6,0.3,0.0,0.0,0.2,0.2,0.0,0.3,0.0,0.1,0.4,0.4,0.0,0.6,0.4,0.1,0.0,0.0,0.3,0.1,0.1,0.1,0.5,0.0,0.3,0.2,1.2,0.4,0.3,0.1,0.4,0.0,0.0,0.1,0.0,0.3,0.4,0.8,0.1,0.0,0.0,0.0,0.1,0.1,0.3,0.7,0.0,0.1,0.2,0.0,0.1,0.3,0.0,0.2,0.0,0.2,0.0,0.0,0.0,0.2,0.5,0.2,0.1,0.2,0.2,0.8,0.2,0.2,0.2,0.3,1.2,0.4,0.0,0.0,0.3,0.1,0.1,0.2,0.1,0.3,0.0,0.0,0.5,0.1,0.0,0.8,0.3,0.0,0.3,0.2,0.1,0.3,0.0,0.1,0.0,0.1,0.2,0.0,0.1,0.2,0.0,0.2,0.1,0.0,0.2,0.1,0.3,0.2,1.5,1.0,0.6,0.2,0.0,0.0,0.0,0.3,0.2,0.0,0.0,0.2,0.1,0.0,0.5,0.3,0.4,0.5,0.2,0.1,0.1,0.0,0.0,0.3,0.4,0.0,0.0,0.0,0.2,0.1,0.3,0.6,0.5,0.5,0.6,0.3,0.2,0.3,0.2,0.2,0.0,0.0,0.2,0.2,0.3,0.4,0.0,0.1,0.2,0.0,0.2,0.2,0.4,0.0,0.2,0.1,0.2,0.0]
+var ITIs = [1.224,0.408,0.816,0.408,0.136,0.136,0.0,0.0,0.272,0.408,0.0,0.136,0.0,0.408,0.272,0.0,0.272,0.0,0.0,0.272,0.136,0.0,0.0,0.0,0.0,0.0,0.136,0.0,0.0,0.136,0.0,0.136,0.68,0.272,0.136,0.0,0.136,0.68,0.272,0.0,0.0,0.136,0.0,0.0,0.0,0.272,0.408,0.0,0.0,0.0,0.272,0.136,0.0,0.544,0.272,0.272,0.0,0.0,0.136,0.0,0.136,0.272,0.136,0.272,0.0,0.816,0.408,0.0,0.544,0.136,0.0,0.0,0.136,0.136,0.272,1.224,0.0,0.0,0.272,0.136,0.0,0.0,0.0,0.68,0.0,0.272,0.0,0.272,0.952,0.0,0.0,0.0,0.0,0.136,0.0,0.0,0.0,0.272,0.136,0.0,0.136,0.816,0.408,0.0,0.136,0.136,0.136,0.544,0.136,0.0,0.0,0.0,0.0,0.136,0.0,0.0,0.0,0.136,0.136,0.136,0.136,0.68,0.544,0.272,0.272,0.408,0.136,0.272,0.0,0.136,0.272,0.0,0.68,0.0,0.0,0.0,0.272,0.0,0.0,0.0,0.68,0.0,0.136,0.408,0.136,0.0,0.0,0.544,0.136,0.544,0.68,0.0,0.272,1.088,0.0,0.136,0.136,0.0,0.272,0.0,0.136,0.136,0.544,0.0,0.136,0.136,0.136,0.0,0.136,0.0,0.136,0.816,0.136,0.0,0.0,0.272,0.0,0.0,0.0,0.408,0.272,0.136,0.0,0.0,0.136,0.0,0.136,0.408,0.136,0.0,0.136,0.272,0.0,0.408,0.0,0.136,0.408,0.136,0.408,0.136,0.0,0.272,0.0,0.272,0.272,0.952,0.68,0.136,0.272,0.272,0.136,0.408,0.136,0.136,0.0,0.0,0.0,0.0,0.0,0.272,0.408,0.0,0.136,0.0,0.136,0.544,0.68,1.088,0.136,0.544,0.0,0.136,0.0,0.408,0.0,0.0,0.0,0.68,0.272,0.408]
 var get_ITI = function() {
   return 2000 + ITIs.shift()*1000
 }
@@ -82,6 +82,24 @@ var getStim = function() {
   return stim_html
 }
 
+get_instructions = function() {
+  return '<div class = centerbox><div class = center-text style="font-size:40px">' + prompt_task_list + '</div></div>'
+}
+
+get_prompt = function() {
+  return '<div class = promptbox>' + prompt_task_list + '</div>'
+}
+
+getResponses = function(order) {
+  var response_keys = {key: [89,71], key_name: ["Index Finger", "Middle Finger"]}
+  if (order == 2) {
+    response_keys= {key: [71,89], key_name: ["Middle Finger", "Index Finger"]}
+  }
+  return response_keys
+}
+
+
+
 //Returns the key corresponding to the correct response for the current
 // task and stim
 var getResponse = function() {
@@ -138,22 +156,10 @@ var getPracticeTrials = function() {
 /* ************************************ */
 var practice_repeats = 0
 // task specific variables
-var response_keys_color = jsPsych.randomization.repeat([{
-  key: 89,
-  key_name: 'Index Finger'
-}, {
-  key: 71,
-  key_name: 'Middle finger'
-}], 1, true)
-var response_keys_mag = jsPsych.randomization.repeat([{
-  key: 89,
-  key_name: 'Index Finger'
-}, {
-  key: 71,
-  key_name: 'Middle finger'
-}], 1, true)
+var response_keys_color = {}
+var response_keys_mag = {}
 
-var choices = response_keys_color.key
+var choices = [89,71]
 var practice_length = 16
 var num_blocks = 3
 var block_length = 80
@@ -193,7 +199,7 @@ var cue_stay_trials = jsPsych.randomization.repeat(base_task_switches.slice(0,2)
 var cue_switch_trials = jsPsych.randomization.repeat(base_task_switches.slice(2,4), test_length/4)
 
 // set up stim order based on optimized trial sequence
-var stim_index = [1,1,0,1,1,2,1,0,2,1,0,1,1,1,1,2,1,0,2,1,1,0,1,0,2,1,2,0,0,0,0,0,1,1,1,2,0,0,1,0,2,2,2,1,1,1,2,0,1,2,2,2,2,2,1,1,1,1,1,2,2,1,2,2,1,1,1,1,2,1,1,0,1,1,1,1,2,1,1,0,1,2,1,1,1,0,0,1,1,0,2,2,2,0,1,0,1,2,1,0,1,1,0,2,1,1,1,0,2,0,1,1,1,0,2,0,1,1,1,1,1,2,1,0,1,1,2,1,1,1,1,2,2,2,0,0,0,0,1,2,0,1,2,1,2,1,1,0,1,1,2,1,1,2,1,1,1,0,0,1,1,1,2,0,1,1,1,0,1,2,0,0,2,0,0,1,2,2,1,2,0,0,2,2,1,2,0,0,1,0,1,0,0,1,0,1,2,1,1,1,1,0,1,1,1,2,2,2,1,1,1,1,0,1,0,2,1,1,1,1,0,0,2,1,2,0,2,1,1,2,1,2,2,1,0,1,1,0,0,1]
+var stim_index = [1,0,0,0,0,1,2,2,0,0,0,2,0,0,2,0,2,0,0,1,0,0,1,0,2,1,0,1,0,2,2,0,0,1,1,0,0,0,0,2,0,1,1,1,2,0,0,1,1,0,0,1,0,2,0,1,2,1,0,0,2,0,0,1,0,1,2,1,1,0,0,1,2,1,0,2,2,0,0,0,2,1,1,1,0,0,0,2,2,0,2,0,1,2,0,0,2,0,0,0,0,0,2,0,0,1,2,0,0,0,0,1,0,0,2,2,1,0,0,1,0,1,2,2,2,0,1,0,2,2,1,0,0,2,0,1,0,0,0,0,1,1,0,2,1,1,0,0,1,1,0,2,0,0,0,1,0,1,2,0,0,0,1,0,1,0,0,0,0,1,2,0,1,1,0,1,0,0,0,0,1,0,2,0,0,0,0,1,0,0,0,1,0,0,2,0,0,0,0,0,2,1,0,0,2,2,1,1,1,2,0,2,2,2,2,1,2,2,2,2,2,1,0,2,0,0,0,2,2,2,2,0,0,0,2,1,0,1,2,1]
 var test_task_switches = []
 for (var i=0; i<test_length; i++) {
   if (stim_index[i] == 0) {
@@ -225,7 +231,7 @@ var curr_stim = 'na' //object that holds the current stim, set by setStims()
 var current_trial = 0
 var CTI = 0 //cue-target-interval
 var exp_stage = 'practice' // defines the exp_stage, switched by start_test_block
-
+var prompt_task_list = ''
 
 
 
@@ -235,18 +241,42 @@ var exp_stage = 'practice' // defines the exp_stage, switched by start_test_bloc
 /* ************************************ */
 /* Set up jsPsych blocks */
 /* ************************************ */
-var prompt_task_list = '<strong>Color</strong> or <strong>Orange-Blue</strong>: ' +
-  response_keys_color.key_name[0] + ' if orange and ' + response_keys_color.key_name[1] + ' if blue.' +
-  '<br><br><strong>Magnitude</strong> or <strong>High-Low</strong>: ' + response_keys_mag.key_name[0] +
-  ' if >5 and ' + response_keys_mag.key_name[1] + ' if <5.'
+var task_setup_block = {
+  type: 'survey-text',
+  data: {
+    trial_id: "task_setup"
+  },
+  questions: [
+    [
+      "<p class = center-block-text>Experimenter C Setup</p>"
+    ],
+    [
+      "<p class = center-block-text>Experimenter M Setup</p>"
+    ]
+  ], on_finish: function(data) {
+    color_order = parseInt(data.responses.slice(7, 8))
+    mag_order = parseInt(data.responses.slice(16, 17))
+    response_keys_color = getResponses(color_order)
+    response_keys_mag = getResponses(mag_order)
+
+
+    prompt_task_list = '<strong>Color</strong> or <strong>Orange-Blue</strong>: ' +
+    response_keys_color.key_name[0] + ' if orange and ' + 
+    response_keys_color.key_name[1] + ' if blue.' +
+    '<br><br><strong>Magnitude</strong> or <strong>High-Low</strong>: ' + 
+    response_keys_mag.key_name[0] + ' if >5 and ' + 
+    response_keys_mag.key_name[1] + ' if <5.'
+  }
+}
 
 var instructions_block = {
   type: 'poldrack-single-stim',
-  stimulus: '<div class = centerbox><div class = center-text style="font-size:40px">' + prompt_task_list + '</div></div>',
+  stimulus: get_instructions,
   is_html: true,
-  choices: 'none',
-  timing_stim: 20000, 
-  timing_response: 20000,
+  timing_stim: -1, 
+  timing_response: -1,
+  response_ends_trial: true,
+  choices: [32],
   data: {
     trial_id: "instructions",
   },
@@ -390,7 +420,7 @@ var prompt_fixation_block = {
   },
   timing_post_trial: 0,
   timing_response: 500,
-  prompt: '<div class = promptbox>' + prompt_task_list + '</div>'
+  prompt: get_prompt
 }
 
 var gap_block = {
@@ -405,7 +435,7 @@ var gap_block = {
   timing_response: 500,
   timing_stim: 0,
   timing_post_trial: 0,
-  prompt: '<div class = promptbox>' + prompt_task_list + '</div>'
+  prompt: get_prompt
 };
 
 var prompt_cue_block = {
@@ -420,7 +450,7 @@ var prompt_cue_block = {
   timing_response: getCTI,
   timing_stim: getCTI,
   timing_post_trial: 0,
-  prompt: '<div class = promptbox>' + prompt_task_list + '</div>',
+  prompt: get_prompt,
   on_finish: function() {
     appendData()
   }
@@ -431,12 +461,9 @@ var practice_block = {
   stimulus: getStim,
   is_html: true,
   key_answer: getResponse,
-  correct_text: '<div class = centerbox><div style="color:#4FE829"; class = center-text>Correct!</p></div><div class = promptbox>' +
-    prompt_task_list + '</div>',
-  incorrect_text: '<div class = centerbox><div style="color:red"; class = center-text>Incorrect</p></div><div class = promptbox>' +
-    prompt_task_list + '</div>',
-  timeout_message: '<div class = centerbox><div class = center-text>Too Slow</div></div><div class = promptbox>' +
-    prompt_task_list + '</div>',
+  correct_text: '<div class = centerbox><div style="color:#4FE829"; class = center-text>Correct!</p></div>',
+  incorrect_text: '<div class = centerbox><div style="color:red"; class = center-text>Incorrect</p></div>',
+  timeout_message: '<div class = centerbox><div class = center-text>Too Slow</div></div>',
   choices: choices,
   data: {
     trial_id: 'stim',
@@ -444,10 +471,10 @@ var practice_block = {
   },
   timing_feedback_duration: 500,
   show_stim_with_feedback: false,
-  timing_response: 1500,
+  timing_response: 2000,
   timing_stim: 1000,
   timing_post_trial: 0,
-  prompt: '<div class = promptbox>' + prompt_task_list + '</div>',
+  prompt: get_prompt,
   on_finish: function(data) {
     appendData()
     console.log('Trial: ' + current_trial +
@@ -483,9 +510,11 @@ var practice_loop = {
 
 /* create experiment definition array */
 var twobytwo_experiment = [];
+test_keys(twobytwo_experiment, choices)
+twobytwo_experiment.push(task_setup_block)
 twobytwo_experiment.push(instructions_block);
 twobytwo_experiment.push(practice_loop);
-setup_fmri_intro(twobytwo_experiment, choices)
+setup_fmri_intro(twobytwo_experiment)
 for (var b = 0; b < num_blocks; b++) {
 	twobytwo_experiment.push(start_test_block)
   twobytwo_experiment.push(fixation_block)

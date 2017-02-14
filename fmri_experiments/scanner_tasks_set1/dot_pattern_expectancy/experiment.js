@@ -2,7 +2,7 @@
 /* Define helper functions */
 /* ************************************ */
 
-var test_ITIs = [0.5,0.4,2.0,0.5,0.1,0.2,0.0,0.0,0.2,1.1,0.0,0.1,0.4,0.3,0.0,0.5,0.0,0.5,1.1,1.9,0.3,1.1,0.2,0.4,0.7,0.2,0.1,0.5,0.1,0.0,0.3,0.7,0.4,0.4,0.4,0.2,0.2,0.1,0.6,0.2,1.5,0.0,0.3,0.0,0.5,0.3,0.3,0.2,0.0,0.0,0.0,0.1,0.0,0.2,0.0,0.2,0.2,0.0,0.0,0.0,0.0,0.1,0.2,0.5,0.2,0.3,0.7,0.3,0.2,0.2,0.5,0.0,0.1,0.8,0.8,0.6,0.1,0.0,0.0,0.6,0.2,0.0,0.2,0.9,1.0,0.7,0.2,0.4,0.0,1.7,0.1,0.1,0.3,0.0,0.4,0.7,0.4,0.5,0.2,0.3,0.2,1.3,0.1,0.3,0.1,0.0,0.2,0.2,0.1,0.1,0.1,0.0,0.0,0.2,0.4,0.0,0.3,0.0,2.0,0.3,0.3,0.5,0.8,0.2,0.3,0.0,0.1,0.8,0.4,0.1,0.4,0.3,0.1,1.1,0.0,0.5,0.5,0.3,0.0,0.7,0.5,0.6,0.4,0.1,0.0,0.1,0.4,0.5,0.2,0.8,0.1,0.0,0.0,1.7,0.1,0.0,0.6,0.1,0.3,0.3]
+var test_ITIs = [0.136,0.0,0.544,0.272,0.136,0.136,0.0,0.0,0.544,0.952,0.408,0.0,0.408,0.68,0.0,0.408,0.816,0.816,0.136,0.0,0.408,0.0,0.816,0.0,1.224,0.0,0.136,0.136,0.272,0.272,0.0,0.952,0.136,0.136,0.0,0.0,0.816,0.544,2.448,0.136,0.136,0.136,0.0,0.0,0.408,0.136,0.544,0.272,0.0,0.68,0.0,2.176,0.136,0.136,0.0,0.408,0.136,0.0,0.408,0.68,0.272,0.0,0.0,0.544,1.36,0.0,0.272,0.272,1.36,0.272,0.136,0.952,0.136,0.0,0.136,0.136,0.68,0.0,0.136,0.136,0.68,0.816,0.136,0.408,2.04,0.136,0.0,0.0,0.272,0.952,0.408,0.136,0.0,0.136,0.136,0.952,0.0,0.0,0.136,0.136,0.136,0.0,0.0,0.272,0.68,0.272,0.0,0.0,0.136,0.68,0.816,0.136,0.68,0.544,0.272,0.0,0.68,0.952,0.136,0.408,0.272,0.0,0.952,0.272,0.408,0.408,1.088,0.0,0.0,0.0,0.136,0.544,0.272,1.088,0.0,0.952,0.136,0.136,0.0,0.136,0.0,0.68,0.0,0.408,0.136,0.136,0.136,0.0,0.544,0.68,0.136,0.272,0.0,0.408,0.544,0.136,0.272,0.136,0.272,0.0]
 var get_ITI = function() {
   return 1500 + ITIs.shift()*1000
  }
@@ -11,6 +11,14 @@ var get_ITI = function() {
 var randomDraw = function(lst) {
   var index = Math.floor(Math.random() * (lst.length))
   return lst[index]
+}
+
+var getValidProbe = function() {
+  return prefix + path + valid_probe + postfix
+}
+
+var getValidCue = function() {
+  return prefix + path + valid_cue + postfix
 }
 
 var getInvalidCue = function() {
@@ -45,6 +53,13 @@ var getFeedback = function() {
   return feedback_text
 }
 
+var getInstructions = function() {
+  var text = '<div class = centerbox><p style = "font-size:40px" class = center-block-text>Target Pair (press index finger):</p><p class = center-block-text><img src = "/static/experiments/dot_pattern_expectancy/images/' +
+    valid_cue +
+    '" ></img>&nbsp&nbsp&nbsp...followed by...&nbsp&nbsp&nbsp<img src = "/static/experiments/dot_pattern_expectancy/images/' +
+    valid_probe + '" ></img><br></br></p><p style = "font-size:40px" class = center-block-text>Otherwise press middle finger</div>'
+    return text
+}
 
 var getPracticeTrials = function() {
   ITIs = jsPsych.randomization.shuffle([0,1,.2,0,.6,0,0,.4,0,.8])
@@ -95,22 +110,18 @@ var ITIs = []
 // task specific variables
 var current_trial = 0
 var choices = [89, 71]
-var correct_responses = [
-  ["left button", 89],
-  ["right button",71]
-]
 var exp_stage = 'practice'
 var path = '/static/experiments/dot_pattern_expectancy/images/'
 var prefix = '<div class = centerbox><div class = img-container><img src = "'
 var postfix = '"</img></div></div>'
-var cues = jsPsych.randomization.shuffle(['cue1.png', 'cue2.png', 'cue3.png', 'cue4.png',
+var cues = ['cue1.png', 'cue2.png', 'cue3.png', 'cue4.png',
   'cue5.png', 'cue6.png'
-])
-var probes = jsPsych.randomization.shuffle(['probe1.png', 'probe2.png', 'probe3.png', 'probe4.png',
+]
+var probes = ['probe1.png', 'probe2.png', 'probe3.png', 'probe4.png',
   'probe5.png', 'probe6.png'
-])
-var valid_cue = cues.pop()
-var valid_probe = probes.pop()
+]
+var valid_cue = ''
+var valid_probe = ''
 
 //preload images
 var images = []
@@ -124,7 +135,7 @@ jsPsych.pluginAPI.preloadImages(images)
 var num_blocks = 4
 var block_length = 40
 
-var stim_index = [1,0,3,3,0,0,0,0,2,0,0,3,0,1,0,0,0,0,1,0,3,0,0,3,0,0,1,0,0,3,0,0,0,1,0,3,0,0,2,0,0,0,0,3,0,2,0,2,0,0,0,0,3,2,2,1,1,0,2,1,1,0,0,2,0,3,2,0,2,3,0,1,0,0,0,2,3,1,0,2,0,0,0,2,1,2,2,1,1,0,0,1,2,0,0,2,0,0,0,0,0,3,0,0,3,3,0,0,2,0,2,2,0,0,1,3,3,0,3,3,2,0,0,1,0,0,0,0,0,1,3,0,0,1,1,1,3,3,0,0,2,2,0,3,3,0,0,0,2,2,0,0,0,0,0,1,0,0,1,0]
+var stim_index = [3,1,0,3,2,0,0,0,1,0,0,0,0,2,0,3,2,1,2,1,3,0,1,0,1,0,0,0,0,3,0,3,0,0,2,2,0,1,0,0,1,0,0,0,0,2,0,0,0,0,0,2,3,3,2,0,0,2,0,3,0,0,0,0,0,2,3,0,0,0,2,2,0,2,0,0,3,0,1,0,0,1,1,2,0,2,3,0,0,3,0,2,0,0,0,3,0,3,0,0,1,0,0,0,0,2,3,0,0,1,1,2,2,1,0,0,0,1,0,0,0,0,1,1,0,0,0,1,3,3,0,2,0,2,1,0,3,0,0,3,0,1,0,0,3,3,0,0,3,1,1,1,3,2,0,0,0,0,2,0]
 
 var trial_proportions = []
 for (var i=0; i<stim_index.length;i++) {
@@ -148,6 +159,26 @@ for (b = 0; b < num_blocks; b++) {
 /* ************************************ */
 /* Set up jsPsych blocks */
 /* ************************************ */
+var task_setup_block = {
+  type: 'survey-text',
+  data: {
+    trial_id: "task_setup"
+  },
+  questions: [
+    [
+      "<p class = center-block-text>Experimenter C Setup</p>"
+    ],
+    [
+      "<p class = center-block-text>Experimenter P Setup</p>"
+    ]
+  ], on_finish: function(data) {
+    cue_index = parseInt(data.responses.slice(7, 8))
+    probe_index = parseInt(data.responses.slice(16, 17))
+    valid_cue = cues.splice(cue_index-1,1)[0]
+    valid_probe = probes.splice(probe_index-1,1)[0]
+  }
+}
+
 var start_test_block = {
   type: 'poldrack-single-stim',
   stimulus: '<div class = centerbox><div class = center-text>Get ready!</p></div>',
@@ -184,14 +215,12 @@ var start_test_block = {
 
  var instructions_block = {
   type: 'poldrack-single-stim',
-  stimulus: '<div class = centerbox><p style = "font-size:40px" class = center-block-text>Target Pair (press index finger):</p><p class = center-block-text><img src = "/static/experiments/dot_pattern_expectancy/images/' +
-    valid_cue +
-    '" ></img>&nbsp&nbsp&nbsp...followed by...&nbsp&nbsp&nbsp<img src = "/static/experiments/dot_pattern_expectancy/images/' +
-    valid_probe + '" ></img><br></br></p><p style = "font-size:40px" class = center-block-text>Otherwise press middle finger</div>',
+  stimulus: getInstructions,
   is_html: true,
-  choices: 'none',
-  timing_stim: 14500, 
-  timing_response: 14500,
+  timing_stim: -1, 
+  timing_response: -1,
+  response_ends_trial: true,
+  choices: [32],
   data: {
     trial_id: "instructions",
   },
@@ -248,7 +277,7 @@ var feedback_block = {
 /* define test block cues and probes*/
 var A_cue = {
   type: 'poldrack-single-stim',
-  stimulus: prefix + path + valid_cue + postfix,
+  stimulus: getValidCue,
   is_html: true,
   choices: 'none',
   data: {
@@ -287,7 +316,7 @@ var other_cue = {
 
 var X_probe = {
   type: 'poldrack-single-stim',
-  stimulus: prefix + path + valid_probe + postfix,
+  stimulus: getValidProbe,
   is_html: true,
   choices: choices,
   data: {
@@ -382,9 +411,11 @@ var practice_loop = {
 /* ************************************ */
 
 var dot_pattern_expectancy_experiment = []
+test_keys(dot_pattern_expectancy_experiment,choices)
+dot_pattern_expectancy_experiment.push(task_setup_block)
 dot_pattern_expectancy_experiment.push(instructions_block);
 dot_pattern_expectancy_experiment.push(practice_loop);
-setup_fmri_intro(dot_pattern_expectancy_experiment, choices)
+setup_fmri_intro(dot_pattern_expectancy_experiment)
 
 for (b = 0; b < num_blocks; b++) {
   dot_pattern_expectancy_experiment.push(start_test_block);

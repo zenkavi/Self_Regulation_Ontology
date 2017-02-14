@@ -10,10 +10,10 @@
 
 .item-text {
   width:100%;
-  height: 30%;
   height 100vw;
   text-align: center;
   margin: 0 auto;
+  margin-top: 5em;
   margin-bottom: 1em;
   font-size: 50px;
   line-height: 120%;
@@ -24,7 +24,7 @@
   height 100vw;
   text-align: center;
   margin: 0 auto;
-  margin-top: 12em;
+  margin-top: 40em;
 }
 
 .response-item {

@@ -38,7 +38,7 @@ function addID(exp_id) {
 
 var fmri_scanner_wait_block = {
 	type: 'poldrack-text',
-	text: "<div class = centerbox><div style = 'font-size: 50px', class = center-text>Scan will start after scanner calibration</p></div>",
+	text: "<div class = centerbox><div  class = center-text>Scanner calibration<br><strong>Please close your eyes and don't move!</strong></div></div>",
 	cont_key: [32],
 	data: {
 		trial_id: "fmri_scanner_wait"
@@ -65,7 +65,7 @@ var fmri_buffer_block = {
 var create_trigger_block = function(trigger) {
 	var fMRI_wait_block = {
 		type: 'poldrack-text',
-		text: "<div class = centerbox><div  class = center-text>Scanner calibration<br><strong>Please don't move!</strong></div></div>",
+		text: "<div class = centerbox><div  class = center-text>Task about to start!</div></div>",
 		cont_key: [trigger],
 		data: {
 			trial_id: "fmri_trigger_wait"
@@ -103,11 +103,14 @@ var create_key_test_block = function(choice) {
 	return key_test_block
 }
 
+var test_keys = function(lst, choices = []) {
+	for (var i=0; i < choices.length; i++) {
+		lst.push(create_key_test_block(choices[i]))
+	}
+}
+
 // setup function
-var setup_fmri_intro = function(lst, choices = [], num_ignore = 16, trigger = 84) {
-	//for (var i=0; i < choices.length; i++) {
-	//	lst.push(create_key_test_block(choices[i]))
-	//}
+var setup_fmri_intro = function(lst, num_ignore = 16, trigger = 84) {
 	lst.push(fmri_scanner_wait_block)
 	for (var j = 0; j < num_ignore; j++) {
 		lst.push(create_trigger_block(trigger))

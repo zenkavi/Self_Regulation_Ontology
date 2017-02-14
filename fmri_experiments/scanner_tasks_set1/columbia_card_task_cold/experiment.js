@@ -107,8 +107,7 @@ var getBoard = function(nCards) {
 
 var getText = function() {
 	return '<div class = centerbox><p class = block-text>Overall, you earned ' + totalPoints + ' points. These are the points used for your bonus from three randomly picked trials:  ' +
-		'<ul list-text><li>' + prize1 + '</li><li>' + prize2 + '</li><li>' + prize3 + '</li></ul>' +
-		'</p><p class = block-text>Press <strong>enter</strong> to continue.</p></div>'
+		'<ul list-text><li>' + prize1 + '</li><li>' + prize2 + '</li><li>' + prize3 + '</li></ul>' + '</div>'
 }
 
 var turnOneCard = function(whichCard, win) {
@@ -247,9 +246,10 @@ var instructions_block = {
   type: 'poldrack-single-stim',
   stimulus: '<div class = centerbox><div class = center-text>Try to get as many points as possible!<br><br>Select the number of cards you want by pressing the finger corresponding to the buttons on the screen<br><br>The loss amount, the gain amount, and the number of loss cards may change each trial</div></div>',
   is_html: true,
-  choices: 'none',
-  timing_stim: 10000, 
-  timing_response: 10000,
+  timing_stim: -1, 
+  timing_response: -1,
+  response_ends_trial: true,
+  choices: [32],
   data: {
     trial_id: "instructions",
   },
@@ -350,7 +350,7 @@ var payout_text = {
 	data: {
 		trial_id: 'reward'
 	},
-	cont_key: [13],
+	cont_key: [32],
 	timing_post_trial: 1000,
 	on_finish: appendPayoutData,
 };
@@ -374,8 +374,9 @@ var payoutTrial = {
 
 /* create experiment definition array */
 var columbia_card_task_cold_experiment = [];
+test_keys(columbia_card_task_cold, choices)
 columbia_card_task_cold_experiment.push(instructions_block);
-setup_fmri_intro(columbia_card_task_cold_experiment, choices)
+setup_fmri_intro(columbia_card_task_cold_experiment)
 columbia_card_task_cold_experiment.push(start_test_block);
 columbia_card_task_cold_experiment.push(test_node)
 columbia_card_task_cold_experiment.push(payoutTrial);

@@ -5,7 +5,7 @@
 //random ITIs for practice
 var practice_ITIs = [0.5,0.1,0.2,0.0]
 //optimized ITIs for test
-var test_ITIs = [0.3,0.0,0.2,1.8,5.0,0.1,0.9,0.3,0.1,0.0,1.3,0.3,0.0,0.5,0.3,0.9,1.7,4.5,0.3,0.0,0.1,0.3,0.3,0.8,1.2,0.6,0.0,0.6,2.2,0.0,0.1,1.2,0.3,0.0,0.0,2.2,3.0,0.8,0.4,0.0,0.0,0.0,1.3,0.3,0.0,2.9,0.2,3.0]
+var test_ITIs = [1.088,0.0,0.0,0.0,0.544,0.272,2.04,0.272,0.136,0.0,0.0,0.408,1.768,0.68,1.224,1.36,0.0,0.408,0.136,3.128,0.136,3.264,2.04,0.136,0.408,0.68,2.72,1.224,0.272,1.632,0.408,0.0,0.0,0.0,0.408,0.816,2.176,1.36,0.0,0.408,0.816,1.088,0.136,5.168,0.816,0.952,0.136,0.68]
 var get_ITI = function() {
   return 2000 + ITIs.shift()*1000
  }
@@ -304,7 +304,7 @@ for (var c=0; c<2; c++) {
 var with_problems = jsPsych.randomization.shuffle(test_problems.slice(0,12).concat(test_problems.slice(0,12)))
 var without_problems = jsPsych.randomization.shuffle(test_problems.slice(12).concat(test_problems.slice(12)))
 // set up stim order based on optimized trial sequence
-var stim_index = [0,1,1,0,1,0,0,0,1,1,0,1,1,1,1,0,1,0,0,0,0,1,1,0,0,0,0,1,0,1,1,0,1,1,0,0,0,1,1,1,1,1,0,0,1,0,1,0]
+var stim_index = [1,0,1,1,0,1,0,0,0,0,0,1,0,0,1,1,1,1,0,1,1,1,0,0,0,1,0,1,1,0,1,1,0,0,0,1,0,0,0,1,0,1,1,1,1,0,0,1]
 var test_problems = []
 for (var i=0; i<stim_index.length; i++) {
   if (stim_index[i] == 0) {
@@ -372,15 +372,19 @@ var reminder_node = {
 
 var instructions_block = {
   type: 'poldrack-single-stim',
-  stimulus: "<div class = centerbox><div class = center-text>Solve the Tower Tasks!<br>Plan ahead first and work swiftly!<br><br>We'll start with some practice.</div></div>",
+  stimulus: "<div class = centerbox><div class = center-text>Solve the Tower Tasks!<br><br>Plan ahead first and work swiftly!<br><br>We'll start with some practice.</div></div>",
   is_html: true,
-  choices: 'none',
-  timing_stim: 5000, 
-  timing_response: 5000,
+  timing_stim: -1, 
+  timing_response: -1,
+  response_ends_trial: true,
+  choices: [32],
   data: {
     trial_id: "instructions",
   },
-  timing_post_trial: 0
+  timing_post_trial: 0,
+  on_finish: function() {
+    start_time = new Date()
+  }
 };
 
 var start_test_block = {
@@ -531,9 +535,9 @@ var task_node = {
 
 /* create experiment definition array */
 var ward_and_allport_experiment = [];
-
+test_keys(ward_and_allport_experiment, choices)
 ward_and_allport_experiment.push(instructions_block);
-setup_fmri_intro(ward_and_allport_experiment, choices)
+setup_fmri_intro(ward_and_allport_experiment)
 ward_and_allport_experiment.push(start_practice_block);
 ward_and_allport_experiment.push(task_node)
 ward_and_allport_experiment.push(start_test_block);

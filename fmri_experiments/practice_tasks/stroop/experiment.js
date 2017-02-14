@@ -1,29 +1,10 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
+var ITIs = [0.0,0.136,0.272,0.0,0.952,0.0,0.272,0.408,0.0,0.408,0.136,0.136,0.272,0.0,0.0,0.952,0.272,0.408,0.0,0.272]
+
 var get_ITI = function() {
-  // ref: https://gist.github.com/nicolashery/5885280
-  function randomExponential(rate, randomUniform) {
-    // http://en.wikipedia.org/wiki/Exponential_distribution#Generating_exponential_variates
-    rate = rate || 1;
-
-    // Allow to pass a random uniform value or function
-    // Default to Math.random()
-    var U = randomUniform;
-    if (typeof randomUniform === 'function') U = randomUniform();
-    if (!U) U = Math.random();
-
-    return -Math.log(U) / rate;
-  }
-  gap = randomExponential(1/2)*200
-  if (gap > 10000) {
-    gap = 10000
-  } else if (gap < 0) {
-  	gap = 0
-  } else {
-  	gap = Math.round(gap/1000)*1000
-  }
-  return 2000 + gap //1500 (stim time) + 500 (minimum ITI)
+  return 2000 + ITIs.shift()*1000
  }
 
 var getPracticeTrials = function() {
@@ -166,11 +147,29 @@ var incongruent_stim = [{
 	},
 	key_answer: choices[2]
 }];
-
-var stims = [].concat(congruent_stim, congruent_stim, incongruent_stim)
-var exp_len = 12
+var exp_len = 20
 var practice_len = 12
-var test_stims = jsPsych.randomization.repeat(stims, exp_len / 12)
+var stims = congruent_stim.concat(incongruent_stim)
+var congruent_stim = jsPsych.randomization.repeat(congruent_stim, (exp_len/2)/3)
+var incongruent_stim = jsPsych.randomization.repeat(incongruent_stim, (exp_len/2)/6)
+
+// set up stim order based on optimized trial sequence
+var stim_index = [0,0,1,0,0,1,1,0,0,1,1,0,0,0,0,1,0,1,0,1]
+var test_stims = []
+for (var i=0; i<exp_len; i++) {
+	if (stim_index[i] == 0) {
+		test_stims.push(congruent_stim.shift())
+	} else {
+		test_stims.push(incongruent_stim.shift())
+	}
+	if (congruent_stim.length == 0) {
+		congruent_stim = jsPsych.randomization.repeat(congruent_stim, (exp_len/2)/3)
+	}
+	if (incongruent_stim.length == 0) {
+		incongruent_stim = jsPsych.randomization.repeat(incongruent_stim, (exp_len/2)/6)
+	}
+}
+
 var exp_stage = 'practice'
 var current_trial = 1
 
@@ -184,9 +183,10 @@ var instructions_block = {
   type: 'poldrack-single-stim',
   stimulus: '<div class = centerbox><div class = center-text>Respond to the <strong>ink color</strong> of the word!<br><br><span style = "color:red;padding-left:30px">WORD</span>: Index<br><span style = "color:#1F45FC;padding-left:65px">WORD</span>: Middle<br><span style = "color:#4FE829;">WORD</span>: Ring<br><br>We will start with practice</div></div>',
   is_html: true,
-  choices: 'none',
-  timing_stim: 9500, 
-  timing_response: 9500,
+  timing_stim: -1, 
+  timing_response: -1,
+  response_ends_trial: true,
+  choices: [32],
   data: {
     trial_id: "instructions",
   },
@@ -197,9 +197,10 @@ var start_test_block = {
   type: 'poldrack-single-stim',
   stimulus: '<div class = centerbox><div class = center-text>Get ready!</p></div>',
   is_html: true,
-  choices: 'none',
-  timing_stim: 1500, 
-  timing_response: 1500,
+  choices: [32],
+  timing_stim: -1, 
+  timing_response: -1,
+  response_ends_trial: true,
   data: {
     trial_id: "test_start_block"
   },
