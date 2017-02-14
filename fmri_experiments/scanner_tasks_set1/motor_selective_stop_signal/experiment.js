@@ -95,9 +95,6 @@ images = [images[permutation[0]], images[permutation[1]],
 		images[permutation[2]], images[permutation[3]]]
 jsPsych.pluginAPI.preloadImages(images);
 
-
-
-images = jsPsych.randomization.shuffle(images)
 /* Stop signal delay in ms */
 var SSD = 250
 var stop_signal =
