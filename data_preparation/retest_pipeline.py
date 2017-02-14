@@ -161,8 +161,8 @@ data_dir = data_dir=path.join('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Se
 from selfregulation.utils.data_preparation_utils import save_task_data
 save_task_data(data_dir, data)
 
-#metadata/ - done
-#references/ - done
+#metadata/
+#references/
 meta_dir = path.join(data_dir,'metadata')
 reference_dir = path.join(data_dir,'references')
 from os import makedirs
@@ -171,21 +171,23 @@ if not path.exists(meta_dir):
 if not path.exists(reference_dir):
     makedirs(reference_dir)
 
-#demographics.csv - done
-#demographics_ordinal.csv - done
+#demographics.csv
+#demographics_ordinal.csv
 demog_data = extract_experiment(data,'demographics_survey')
 from process_demographics import process_demographics
 demog_data = process_demographics(demog_data, data_dir, meta_dir)
 
-#alcohol_drugs.csv - done
-#alcohol_drugs_ordinal.csv - done
+#alcohol_drugs.csv
+#alcohol_drugs_ordinal.csv
 alcohol_drug_data = extract_experiment(data,'alcohol_drugs_survey')
 from process_alcohol_drug import process_alcohol_drug
+alcohol_drug_data = process_alcohol_drug(alcohol_drug_data, data_dir, meta_dir)
 
-#health.csv - done
-#health_ordinal.csv - done
+#health.csv 
+#health_ordinal.csv
 health_data = extract_experiment(data,'k6_survey')
 from process_health import process_health
+health_data = health_data.where((pd.notnull(health_data)), None)
 health_data = process_health(health_data, data_dir, meta_dir)
 
 #demographic_health.csv - done
@@ -221,8 +223,8 @@ readme_lines += ["Individual Measures: directory containing gzip compressed file
 
 #Read in DVs and valence
 label = 'retest'
-DVs = pd.read_json(path.join(data_dir,'mturk_' + label + '_DV.json'))
-DVs_valence = pd.read_json(path.join(data_dir,'mturk_' + label + '_DV_valence.json'))
+DVs = pd.read_json(path.join(data_dir,'Local/mturk_' + label + '_DV.json'))
+DVs_valence = pd.read_json(path.join(data_dir,'Local/mturk_' + label + '_DV_valence.json'))
 data = pd.read_json(path.join(data_dir,'mturk_' + label + '_data_manual_post.json')).reset_index(drop = True)
 
 DV_df = DVs
