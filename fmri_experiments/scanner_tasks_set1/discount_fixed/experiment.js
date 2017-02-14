@@ -193,7 +193,7 @@ for (i = 0; i < stim_index.length; i++) {
 };
 
   discount_fixed_experiment.push(test_block)
-    if (i%60 == true) {
+    if (i%60 == 0) {
     discount_fixed_experiment.push(rest_block)
   }
 }
