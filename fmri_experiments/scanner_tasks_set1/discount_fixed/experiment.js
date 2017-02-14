@@ -106,22 +106,6 @@ var start_test_block = {
   }
 };
 
-var fixation_block = {
-  type: 'poldrack-single-stim',
-  stimulus: '<div class = black-centerbox><div class = fixation style = "color:white">+</div></div>',
-  is_html: true,
-  choices: 'none',
-  data: {
-    trial_id: "fixation"
-  },
-  timing_post_trial: 500,
-  timing_stim: 500,
-  timing_response: 500,
-  on_finish: function() {
-    jsPsych.data.addDataToLastTrial({'exp_stage': 'test'})
-  },
-}
-
 var end_block = {
   type: 'poldrack-single-stim',
   stimulus: '<div class = centerbox><div class = center-text><i>Fin</i></div></div>',
@@ -162,7 +146,6 @@ discount_fixed_experiment.push(start_test_block);
 
 
 for (i = 0; i < stim_index.length; i++) {
-  discount_fixed_experiment.push(fixation_block)
   var test_block = {
   type: 'poldrack-single-stim',
   data: {
@@ -193,7 +176,7 @@ for (i = 0; i < stim_index.length; i++) {
 };
 
   discount_fixed_experiment.push(test_block)
-    if (i%60 == 0) {
+    if ((i%60 == 0) && (i > 0)) {
     discount_fixed_experiment.push(rest_block)
   }
 }
