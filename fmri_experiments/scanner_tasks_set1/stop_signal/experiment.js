@@ -33,7 +33,6 @@ var getPracticeTrials = function() {
 	for (i=0; i<trials.length; i++) {
 		trials[i]['key_answer'] = trials[i].data.correct_response
 	}
-	practice.push(fixation_block)
 	var practice_block = {
 		type: 'poldrack-categorize',
 		timeline: trials, 
@@ -256,19 +255,6 @@ var rest_block = {
   timing_post_trial: 1000
 };
 
-var fixation_block = {
-	type: 'poldrack-single-stim',
-	stimulus: '<div class = centerbox><div class = fixation>+</div></div>',
-	is_html: true,
-	choices: 'none',
-	data: {
-		trial_id: "fixation",
-		exp_stage: "test"
-	},
-	timing_post_trial: 0,
-	timing_response: 500
-}
-
 // set up practice trials
 var practice_trials = getPracticeTrials()
 var practice_loop = {
@@ -311,7 +297,6 @@ setup_fmri_intro(stop_signal_experiment)
 // Loop through each trial within the block
 for (b = 0; b < num_blocks; b++) {
 	stop_signal_experiment.push(start_test_block)
-	stop_signal_experiment.push(fixation_block)
 	var stop_signal_block = {
 		type: 'stop-signal',
 		timeline: blocks[b], 
