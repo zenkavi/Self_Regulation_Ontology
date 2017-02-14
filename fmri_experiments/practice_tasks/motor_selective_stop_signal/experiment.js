@@ -188,13 +188,13 @@ var stop_signal =
 /* Instruction Prompt */
 var choice_order = randomDraw([0,1])
 var possible_responses = [
-	["index finger", 89],
-	["middle finger", 71]
+	["index finger", 37],
+	["middle finger", 40]
 ]
 if (choice_order == 1) {
 	possible_responses = [
-		["middle finger", 71],
-		["index finger", 89]
+		["middle finger", 40],
+		["index finger", 37]
 	]
 }
 var choices = [possible_responses[0][1], possible_responses[1][1]]
@@ -221,7 +221,7 @@ var stop_thresh = 0.2
 var motor_thresh = 0.6
 var stop_response = possible_responses[0]
 var ignore_response = possible_responses[1]
-var practice_len = 12
+var practice_len = 20
 var test_block_data = [] // records the data in the current block to calculate feedback
 var test_block_len = 30
 var num_blocks = 2
@@ -255,7 +255,8 @@ var stimuli = [{
 }]
 
 // set up stim order based on optimized trial sequence
-var stim_index = [0,0,2,1,0,1,0,0,2,2,2,2,0,0,0,1,1,2,0,0,1,0,0,1,0,0,0,0,0,2]
+var stim_index = [0,0,2,1,0,1,0,0,2,2,2,2,0,0,0,1,1,2,0,0,1,0,0,1,0,0,0,0,0,2,
+				1,0,2,1,0,1,0,0,2,0,2,2,0,2,0,0,1,2,0,0,1,0,0,1,0,0,0,0,0,2]
 var test_stims = []
 var go_stims = jsPsych.randomization.repeat(stimuli, test_len*0.6 / 4)
 var stop_stims = jsPsych.randomization.repeat(stimuli.slice(0,2), test_len*0.2 / 2)

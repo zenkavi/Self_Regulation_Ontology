@@ -5,15 +5,20 @@
 ITIs = [0,0.136,0.136,0.612]
 
 var get_ITI = function() {
-  return 5500 + ITIs.shift()*1000
+  return 4500 + ITIs.shift()*1000
  }
+
+ var randomDraw = function(lst) {
+  var index = Math.floor(Math.random() * (lst.length))
+  return lst[index]
+}
 
 /* ************************************ */
 /* Define experimental variables */
 /* ************************************ */
 
 // task specific variables
-var choices = [89, 71]
+var choices = [37, 40]
 var bonus_list = [] //keeps track of choices for bonus
 //hard coded options 
 var options = {
@@ -86,22 +91,6 @@ var start_test_block = {
   }
 };
 
-var fixation_block = {
-  type: 'poldrack-single-stim',
-  stimulus: '<div class = black-centerbox><div class = fixation style = "color:white">+</div></div>',
-  is_html: true,
-  choices: 'none',
-  data: {
-    trial_id: "fixation"
-  },
-  timing_post_trial: 500,
-  timing_stim: 500,
-  timing_response: 500,
-  on_finish: function() {
-    jsPsych.data.addDataToLastTrial({'exp_stage': 'test'})
-  },
-}
-
 var end_block = {
   type: 'poldrack-single-stim',
   stimulus: '<div class = centerbox><div class = center-text><i>Fin</i></div></div>',
@@ -113,7 +102,11 @@ var end_block = {
     trial_id: "end",
     exp_id: 'discount_fixed'
   },
-  timing_post_trial: 0
+  timing_post_trial: 0,
+  on_finish: function() {
+    var bonus = randomDraw(bonus_list)
+    jsPsych.data.addDataToLastTrial({'bonus': bonus})
+  }
 };
 
 //Set up experiment
@@ -121,7 +114,6 @@ var discount_fixed_experiment = []
 discount_fixed_experiment.push(instructions_block);
 discount_fixed_experiment.push(start_test_block);
 for (i = 0; i < options.small_amt.length; i++) {
-  discount_fixed_experiment.push(fixation_block)
   var test_block = {
   type: 'poldrack-single-stim',
   data: {
@@ -129,7 +121,7 @@ for (i = 0; i < options.small_amt.length; i++) {
     exp_stage: "test"
   },
   stimulus:trials[i].stimulus,
-  timing_stim: 5000,
+  timing_stim: 4000,
   timing_response: get_ITI,  
   data: trials[i].data,
   is_html: true,
@@ -138,10 +130,10 @@ for (i = 0; i < options.small_amt.length; i++) {
   timing_post_trial: 0,
   on_finish: function(data) {
     var choice = false;
-    if (data.key_press == 89) {
+    if (data.key_press == 37) {
       choice = 'larger_later';
       bonus_list.push({'amount': data.large_amount, 'delay': data.later_delay})
-    } else if (data.key_press == 71) {
+    } else if (data.key_press == 40) {
       choice = 'smaller_sooner';
       bonus_list.push({'amount': data.small_amount, 'delay': 0})
     }

@@ -5,8 +5,13 @@
 ITIs = [0.816,0.068,0.136,0.408,0.0,0.476,0.408,0.068,0.0,1.7,0.204,0.544,0.544,0.68,0.476,0.272,0.272,0.68,0.68,0.748,0.068,0.0,0.408,0.068,1.7,0.408,0.748,0.544,0.136,0.204,0.136,0.068,0.068,0.408,0.34,0.748,0.272,1.496,1.088,0.068,0.612,1.156,0.068,0.272,0.544,0.34,0.68,0.544,0.476,0.476,0.816,0.0,0.544,0.204,0.34,2.244,0.0,0.068,0.204,0.408,0.068,0.272,0.136,0.068,0.952,0.884,0.068,1.768,1.02,0.068,0.136,0.136,0.612,0.816,0.068,0.068,0.068,0.34,0.0,1.156,0.408,0.136,0.0,0.0,0.612,1.632,0.34,0.068,0.204,1.36,0.136,0.816,0.476,0.068,1.02,1.088,1.292,0.068,0.612,0.0,0.34,0.068,0.884,0.544,0.204,0.408,0.408,0.34,0.612,0.612,0.204,0.34,0.34,2.38,0.068,0.272,2.516,0.204,0.68,0.544]
 
 var get_ITI = function() {
-  return 5500 + ITIs.shift()*1000 // 500 minimum ITI
+  return 4500 + ITIs.shift()*1000 // 500 minimum ITI
  }
+
+ var randomDraw = function(lst) {
+  var index = Math.floor(Math.random() * (lst.length))
+  return lst[index]
+}
 
 /* ************************************ */
 /* Define experimental variables */
@@ -101,22 +106,6 @@ var start_test_block = {
   }
 };
 
-var fixation_block = {
-  type: 'poldrack-single-stim',
-  stimulus: '<div class = black-centerbox><div class = fixation style = "color:white">+</div></div>',
-  is_html: true,
-  choices: 'none',
-  data: {
-    trial_id: "fixation"
-  },
-  timing_post_trial: 500,
-  timing_stim: 500,
-  timing_response: 500,
-  on_finish: function() {
-    jsPsych.data.addDataToLastTrial({'exp_stage': 'test'})
-  },
-}
-
 var end_block = {
   type: 'poldrack-single-stim',
   stimulus: '<div class = centerbox><div class = center-text><i>Fin</i></div></div>',
@@ -128,7 +117,11 @@ var end_block = {
     trial_id: "end",
     exp_id: 'discount_fixed'
   },
-  timing_post_trial: 0
+  timing_post_trial: 0,
+  on_finish: function() {
+    var bonus = randomDraw(bonus_list)
+    jsPsych.data.addDataToLastTrial({'bonus': bonus})
+  }
 };
 
 var rest_block = {
@@ -153,7 +146,6 @@ discount_fixed_experiment.push(start_test_block);
 
 
 for (i = 0; i < stim_index.length; i++) {
-  discount_fixed_experiment.push(fixation_block)
   var test_block = {
   type: 'poldrack-single-stim',
   data: {
@@ -161,7 +153,7 @@ for (i = 0; i < stim_index.length; i++) {
     exp_stage: "test"
   },
   stimulus:trials[i].stimulus,
-  timing_stim: 5000,
+  timing_stim: 4000,
   timing_response: get_ITI,  
   data: trials[i].data,
   is_html: true,
@@ -184,7 +176,7 @@ for (i = 0; i < stim_index.length; i++) {
 };
 
   discount_fixed_experiment.push(test_block)
-    if (i%30 == true) {
+    if ((i%60 == 0) && (i > 0)) {
     discount_fixed_experiment.push(rest_block)
   }
 }

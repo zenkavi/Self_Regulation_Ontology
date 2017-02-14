@@ -1,8 +1,9 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
+ITIs = [0.272, 0.8]
 var get_ITI = function() {
-  return 9000 + ITIs.shift() //500 minimum ITI
+  return 9000 + ITIs.shift()*1000 //500 minimum ITI
 }
 
 /* ************************************ */
@@ -38,12 +39,12 @@ var stims = []
 for (var si=0; si<survey_items.length; si++) {
 	var items = survey_items[si]
 	for (var i=0; i<items.length; i++) {
-		var item_text = '<div class = centerbox><p class=item-text>' + items[i] + '</p><div class=response-text><div class=response-item>' + responses[si].join('</div><div class=response-item>') + '</div></div></div>'
+		var item_text = '<div class = centerbox><p class=item-text>' + items[i] + '</p></div><div class=response-text><div class=response-item>' + responses[si].join('</div><div class=response-item>') + '</div></div></div>'
 		var item_coding = item_codings[si][i]
 		var item_data = {'survey': surveys[si], 
 						'item_coding': item_coding,
 						'item_text': items[i],
-						'possible_responses': responses[si]}
+						'options': responses[si]}
 		var item_choice = survey_choices[si]
 		stims.push({'stimulus': item_text, 'data': item_data, 'choices': item_choice})
 	}
@@ -104,10 +105,9 @@ var test_block = {
 	timeline: stims,
 	type: 'poldrack-single-stim',
 	is_html: true,
-	timing_response: getITI,
+	timing_response: get_ITI,
 	timing_stim: 8500,
-	response_ends_trial: true,
-	timing_post_trial: get_ITI,
+	timing_post_trial: 0,
 	on_finish: function(data) {
 		var response = data.possible_responses.indexOf(data.key_press)+1
 		var coded_response = response

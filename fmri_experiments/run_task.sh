@@ -1,8 +1,8 @@
 #!/bin/sh
 function usage {
     echo "usage: $0 "
-    echo "  -i      subid, mandatory"
-    echo "  -s      scanner, integer: 1-4, mandatory"
+    echo "  -i      subid (mandatory)"
+    echo "  -s      scanner set (integer: 1-4, mandatory)"
     echo "  -t      task"
     exit 1
 }
