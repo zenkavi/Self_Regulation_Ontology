@@ -1,4 +1,0 @@
-#!/bin/bash
-python /corral-repl/utexas/poldracklab/users/zenkavi/Self_Regulation_Ontology/data_preparation/download_retest_data_tacc_newapi.py "Self Regulation Retest Battery" "http://www.expfactory.org/new_api/results/62/?page=250" "http://www.expfactory.org/new_api/results/62/?page=255" "51"
-python /corral-repl/utexas/poldracklab/users/zenkavi/Self_Regulation_Ontology/data_preparation/download_retest_data_tacc_newapi.py "Self Regulation Retest Battery" "http://www.expfactory.org/new_api/results/62/?page=255" "http://www.expfactory.org/new_api/results/62/?page=260" "52"
-python /corral-repl/utexas/poldracklab/users/zenkavi/Self_Regulation_Ontology/data_preparation/download_retest_data_tacc_newapi.py "Self Regulation Retest Battery" "http://www.expfactory.org/new_api/results/62/?page=260" "http://www.expfactory.org/new_api/results/62/?page=265" "53"
