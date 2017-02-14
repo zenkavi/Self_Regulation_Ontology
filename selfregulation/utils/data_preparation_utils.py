@@ -417,9 +417,6 @@ def quality_check(data):
                     passed_response = np.logical_and(passed_response1,passed_response2)
                 elif exp == 'writing_task':
                     passed_response = df.query('trial_id == "write"').groupby('worker_id').final_text.agg(lambda x: len(x[0]) > 100)
-#                    passed_acc = pd.Series([True] * len(passed_response), index = passed_rt.index)
-#                    passed_rt = pd.Series([True] * len(passed_response), index = passed_rt.index)
-#                    passed_miss = pd.Series([True] * len(passed_response), index = passed_rt.index)
                     passed_acc = pd.Series([True] * len(passed_response), index = passed_response.index)
                     passed_rt = pd.Series([True] * len(passed_response), index = passed_response.index)
                     passed_miss = pd.Series([True] * len(passed_response), index = passed_response.index)
