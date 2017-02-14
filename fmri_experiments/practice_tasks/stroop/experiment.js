@@ -1,7 +1,7 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
-var ITIs = [0.0,0.136,0.272,0.0,0.952,0.0,0.272,0.408,0.0,0.408]
+var ITIs = [0.0,0.136,0.272,0.0,0.952,0.0,0.272,0.408,0.0,0.408,0.136,0.136,0.272,0.0,0.0,0.952,0.272,0.408,0.0,0.272]
 
 var get_ITI = function() {
   return 2000 + ITIs.shift()*1000
@@ -154,7 +154,7 @@ var congruent_stim = jsPsych.randomization.repeat(congruent_stim, (exp_len/2)/3)
 var incongruent_stim = jsPsych.randomization.repeat(incongruent_stim, (exp_len/2)/6)
 
 // set up stim order based on optimized trial sequence
-var stim_index = [0,0,1,0,0,1,1,0,0,1]
+var stim_index = [0,0,1,0,0,1,1,0,0,1,1,0,0,0,0,1,0,1,0,1]
 var test_stims = []
 for (var i=0; i<exp_len; i++) {
 	if (stim_index[i] == 0) {

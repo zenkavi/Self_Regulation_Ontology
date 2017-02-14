@@ -99,7 +99,6 @@ var getPracticeTrials = function() {
 	for (i=0; i<trials.length; i++) {
 		trials[i]['key_answer'] = trials[i].data.correct_response
 	}
-	practice.push(fixation_block)
 	var practice_block = {
 		type: 'poldrack-categorize',
 		timeline: trials, 
@@ -178,7 +177,7 @@ var rt_diff_thresh = 75
 var missed_response_thresh = 0.1
 var accuracy_thresh = 0.8
 var stop_thresh = 0.2	
-var practice_len = 12
+var practice_len = 20
 var exp_len = 20
 var num_blocks = 2
 var block_len = exp_len/num_blocks
@@ -293,21 +292,6 @@ var start_test_block = {
   timing_post_trial: 0
 };
 
-
-var fixation_block = {
-	type: 'poldrack-single-stim',
-	stimulus: '<div class = centerbox><div class = fixation>+</div></div>',
-	is_html: true,
-	choices: 'none',
-	data: {
-		trial_id: "fixation",
-		exp_stage: "test"
-	},
-	timing_post_trial: 0,
-	timing_response: 500
-}
-
-
 /* set up feedback blocks */
 var test_feedback_block = {
   type: 'poldrack-single-stim',
@@ -364,7 +348,6 @@ stop_signal_experiment.push(practice_loop);
 // Loop through each trial within the block
 for (b = 0; b < num_blocks; b++) {
 	stop_signal_experiment.push(start_test_block)
-	stop_signal_experiment.push(fixation_block)
 	var stop_signal_block = {
 		type: 'stop-signal',
 		timeline: blocks[b], 

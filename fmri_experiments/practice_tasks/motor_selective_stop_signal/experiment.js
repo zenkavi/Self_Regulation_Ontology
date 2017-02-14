@@ -133,7 +133,6 @@ var getPracticeTrials = function() {
 	for (i=0; i<trials.length; i++) {
 		trials[i]['key_answer'] = trials[i].data.correct_response
 	}
-	practice.push(fixation_block)
 	var practice_block = {
 		type: 'poldrack-categorize',
 		timeline: trials, 
@@ -188,13 +187,13 @@ var stop_signal =
 /* Instruction Prompt */
 var choice_order = randomDraw([0,1])
 var possible_responses = [
-	["index finger", 89],
-	["middle finger", 71]
+	["index finger", 37],
+	["middle finger", 40]
 ]
 if (choice_order == 1) {
 	possible_responses = [
-		["middle finger", 71],
-		["index finger", 89]
+		["middle finger", 40],
+		["index finger", 37]
 	]
 }
 var choices = [possible_responses[0][1], possible_responses[1][1]]
@@ -221,7 +220,7 @@ var stop_thresh = 0.2
 var motor_thresh = 0.6
 var stop_response = possible_responses[0]
 var ignore_response = possible_responses[1]
-var practice_len = 12
+var practice_len = 20
 var test_block_data = [] // records the data in the current block to calculate feedback
 var test_block_len = 30
 var num_blocks = 2
@@ -255,7 +254,8 @@ var stimuli = [{
 }]
 
 // set up stim order based on optimized trial sequence
-var stim_index = [0,0,2,1,0,1,0,0,2,2,2,2,0,0,0,1,1,2,0,0,1,0,0,1,0,0,0,0,0,2]
+var stim_index = [0,0,2,1,0,1,0,0,2,2,2,2,0,0,0,1,1,2,0,0,1,0,0,1,0,0,0,0,0,2,
+				1,0,2,1,0,1,0,0,2,0,2,2,0,2,0,0,1,2,0,0,1,0,0,1,0,0,0,0,0,2]
 var test_stims = []
 var go_stims = jsPsych.randomization.repeat(stimuli, test_len*0.6 / 4)
 var stop_stims = jsPsych.randomization.repeat(stimuli.slice(0,2), test_len*0.2 / 2)
@@ -338,52 +338,6 @@ var start_test_block = {
   timing_post_trial: 0
 };
 
-var fixation_block = {
-	type: 'poldrack-single-stim',
-	stimulus: '<div class = centerbox><div class = fixation>+</div></div>',
-	is_html: true,
-	choices: 'none',
-	data: {
-		trial_id: "fixation",
-		exp_stage: "test"
-	},
-	timing_post_trial: 0,
-	timing_response: 500
-}
-
-/* prompt blocks are used during practice to show the instructions */
-
-var prompt_fixation_block = {
-	type: 'poldrack-single-stim',
-	stimulus: '<div class = shapebox><div class = fixation>+</div></div>',
-	is_html: true,
-	choices: 'none',
-	data: {
-		trial_id: "fixation",
-		exp_stage: "practice"
-	},
-	timing_post_trial: 0,
-	timing_response: 500,
-	prompt: prompt_text
-}
-
-/* set up feedback blocks */
-var test_feedback_block = {
-  type: 'poldrack-single-stim',
-  stimulus: getTestFeedback,
-  is_html: true,
-  choices: 'none',
-  timing_stim: 13500, 
-  timing_response: 13500,
-  data: {
-    trial_id: "test_feedback"
-  },
-  timing_post_trial: 1000,
-  on_finish: function() {
-  	test_block_data = []
-  }
-};
-
 // set up practice trials
 var practice_trials = getPracticeTrials()
 var practice_loop = {
@@ -427,7 +381,6 @@ for (b = 0; b < num_blocks; b++) {
 
 	// Loop through each trial within the block
 	stop_signal_exp_block.push(start_test_block)
-	stop_signal_exp_block.push(fixation_block)
 	for (i = 0; i < test_block_len; i++) {
 		var current_stim = test_stims.shift()
 		var trial_stim = current_stim.stim.stimulus
@@ -473,9 +426,7 @@ for (b = 0; b < num_blocks; b++) {
 
 	motor_selective_stop_signal_experiment = motor_selective_stop_signal_experiment.concat(
 		stop_signal_exp_block)
-	if ((b+1)<num_blocks) {
-		motor_selective_stop_signal_experiment.push(test_feedback_block)
-	}
+
 }
 
 motor_selective_stop_signal_experiment.push(end_block)
