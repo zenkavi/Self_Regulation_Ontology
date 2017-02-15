@@ -65,17 +65,17 @@ def get_metadata(demog_items):
     demog_dict={"MeasurementToolMetadata": {"Description": 'Demographics',
             "TermURL": ''}}
     for i in demog_items:
-            r=demog_items[i]
-            itemoptions=r.options
-            itemid='_'.join(r['id'].split('_')[:3])
-            assert itemid not in demog_dict  # check for duplicates
-            demog_dict[itemid]={}
-            demog_dict[itemid]['Description']=r.text
-            demog_dict[itemid]['Levels']={}
-            if itemid in nominalvars:
-                demog_dict[itemid]['Nominal']=True
-            levelctr=0
-            if itemoptions is not None:
+        r=demog_items[i]
+        itemoptions=r.options
+        itemid='_'.join(r['id'].split('_')[:3])
+        assert itemid not in demog_dict  # check for duplicates
+        demog_dict[itemid]={}
+        demog_dict[itemid]['Description']=r.text
+        demog_dict[itemid]['Levels']={}
+        if itemid in nominalvars:
+            demog_dict[itemid]['Nominal']=True
+        levelctr=0
+        if itemoptions is not None:
                 for i in itemoptions:
                     if not 'value' in i:
                         value=levelctr

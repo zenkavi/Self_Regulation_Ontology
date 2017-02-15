@@ -1,4 +1,8 @@
 Data/Local
+Data/Retest_Data_NewApi
+Data/Retest_02-11-2017/Local
+Data/Retest_02-11-2017/batch_output
+data_preparation/old
 Plots
 .fuse*
 *.pyl
