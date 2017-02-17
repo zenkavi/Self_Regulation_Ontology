@@ -271,6 +271,7 @@ def get_items(data):
                              'response_text': responses_text, 'options': options}, dtype = float)
     items_df.loc[:,'item_num'] = [str(i).zfill(2) for i in item_nums]
     items_df.loc[:,'item_ID'] = items_df['survey'] + '.' + items_df['item_num'].astype(str)
+    items_df=items_df[['worker','item_ID','coded_response','item_text','response_text','options','survey','item_num']]
     return items_df
     
     
