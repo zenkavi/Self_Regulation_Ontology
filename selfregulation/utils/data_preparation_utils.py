@@ -38,9 +38,13 @@ def calc_bonuses(data):
                          'columbia_card_task_hot', 'columbia_card_task_cold', 'hierarchical_rule',
                          'kirby','discount_titrate','bickel_titrator']
     bonuses = []
-    for i,row in data.iterrows():
-        if row['experiment_exp_id'] in bonus_experiments:
-            df = extract_row(row, clean = False)
+    for row in data.iterrows():
+        if row[1]['experiment_exp_id'] in bonus_experiments:
+            try:
+                df = extract_row(row[1], clean = False)
+            except TypeError:
+                bonuses.append(np.nan)
+                continue
             bonus = df.iloc[-1].get('performance_var','error')
             if pd.isnull(bonus):
                 bonus = df.iloc[-5].get('performance_var','error')
@@ -143,10 +147,10 @@ def convert_var_names(to_convert):
             return  [inverse_lookup.loc[c] if c in inverse_lookup.index else c for c in to_convert]
             
     
-def download_data(data_loc, access_token = None, filters = None, battery = None, save = True, url = None):
+def download_data(data_loc, access_token = None, filters = None, battery = None, save = True, url = None, last_url = None, file_name=None):
     start_time = time()
     #Load Results from Database
-    results = Result(access_token, filters = filters, url = url)
+    results = Result(access_token, filters = filters, url = url, last_url = last_url)
     data = results.data
     if battery:
         data = result_filter(data, battery = battery)
@@ -160,7 +164,9 @@ def download_data(data_loc, access_token = None, filters = None, battery = None,
     
     # if saving, save the data and the lookup file for anonymized workers
     if save == True:
-        data.to_json(data_loc + 'mturk_data.json')
+        if file_name == None:
+            file_name = 'mturk_data.json'
+        data.to_json(data_loc + file_name)
         print('Finished saving')
     
     finish_time = (time() - start_time)/60
@@ -411,9 +417,9 @@ def quality_check(data):
                     passed_response = np.logical_and(passed_response1,passed_response2)
                 elif exp == 'writing_task':
                     passed_response = df.query('trial_id == "write"').groupby('worker_id').final_text.agg(lambda x: len(x[0]) > 100)
-                    passed_acc = pd.Series([True] * len(passed_response), index = passed_rt.index)
-                    passed_rt = pd.Series([True] * len(passed_response), index = passed_rt.index)
-                    passed_miss = pd.Series([True] * len(passed_response), index = passed_rt.index)
+                    passed_acc = pd.Series([True] * len(passed_response), index = passed_response.index)
+                    passed_rt = pd.Series([True] * len(passed_response), index = passed_response.index)
+                    passed_miss = pd.Series([True] * len(passed_response), index = passed_response.index)
                 # everything else
                 else:
                     passed_rt = df.query('rt != -1').groupby('worker_id').rt.median() >= rt_thresh
