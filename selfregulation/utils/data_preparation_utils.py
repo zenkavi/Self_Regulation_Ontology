@@ -147,11 +147,13 @@ def convert_var_names(to_convert):
             return  [inverse_lookup.loc[c] if c in inverse_lookup.index else c for c in to_convert]
             
     
-def download_data(data_loc, access_token = None, filters = None, battery = None, save = True, url = None, last_url = None, file_name=None):
+def download_data(data_loc, access_token = None, filters = None, battery = None, save = True, url = None, file_name=None):
     start_time = time()
     #Load Results from Database
-    results = Result(access_token, filters = filters, url = url, last_url = last_url)
+    results = Result(access_token, filters = filters, url = url)
     data = results.data
+    if 'experiment_exp_id' not in data.columns:
+        data.loc[:,'experiment_exp_id'] = [x['exp_id'] for x in data['experiment']]
     if battery:
         data = result_filter(data, battery = battery)
 
