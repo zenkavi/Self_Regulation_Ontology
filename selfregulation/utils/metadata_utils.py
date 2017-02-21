@@ -1,11 +1,7 @@
 """
 utilities for fixing metadata
 """
-<<<<<<< HEAD
 import os,json,sys
-=======
-import os,json
->>>>>>> 1d6d4b04b9a5c0ca54ecddc0160c7ec6014f4f47
 
 from selfregulation.utils.utils import get_info
 
