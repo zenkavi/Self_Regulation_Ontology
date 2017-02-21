@@ -12,6 +12,7 @@ from selfregulation.utils.data_preparation_utils import remove_correlated_task_v
 from selfregulation.utils.data_preparation_utils import transform_remove_skew
 from selfregulation.utils.utils import get_info
 from selfregulation.utils.r_to_py_utils import missForest
+from selfregulation.utils.reference_utils import gen_reference_item_text
 
 #******************************
 #*** Save Data *********
@@ -75,9 +76,6 @@ for data,directory, DV_df, valence_df in datasets:
     # concatenate targets
     target_data = pd.concat([demog_data, alcohol_drug_data, health_data], axis = 1)
     target_data.to_csv(path.join(directory,'demographic_health.csv'))
-    # save demographic targets reference
-    if 'Discovery' in directory:
-        np.savetxt(path.join(reference_dir,'demographic_health_reference.csv'), target_data.columns, fmt = '%s', delimiter=",")
     # save items
     items_df = get_items(data)
     print('Saving items...')
@@ -92,6 +90,10 @@ for data,directory, DV_df, valence_df in datasets:
         "Found column names longer than 8 characters in short version"
     # save Individual Measures
     save_task_data(directory, data)
+    if 'Discovery' in directory:
+        # save demographic targets reference
+        np.savetxt(path.join(reference_dir,'demographic_health_reference.csv'), target_data.columns, fmt = '%s', delimiter=",")
+        gen_reference_item_text(items_df)
 
     readme_lines += ["demographics_survey.csv: demographic information from expfactory-surveys\n\n"]
     readme_lines += ["alcohol_drug_survey.csv: alcohol, smoking, marijuana and other drugs from expfactory-surveys\n\n"]
