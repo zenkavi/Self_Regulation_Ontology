@@ -20,7 +20,7 @@ else:
 
 #discovery
 #load Data
-dataset = pd.read_json(path.join(data_dir,'mturk_' + data + '_data_post.json'))
+dataset = pd.read_json(path.join(data_dir, data + '_data_post.json'))
 
 #calculate DVs
 DV_df, valence_df, description = get_exp_DVs(dataset, exp_id, use_group_fun = True)

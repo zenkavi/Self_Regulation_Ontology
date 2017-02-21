@@ -154,6 +154,8 @@ def download_data(data_loc, access_token = None, filters = None, battery = None,
     data = results.data
     if 'experiment_exp_id' not in data.columns:
         data.loc[:,'experiment_exp_id'] = [x['exp_id'] for x in data['experiment']]
+    if 'experiment_template' not in data.columns:
+        data.loc[:,'experiment_template'] = [x['template'] for x in data['experiment']]
     if battery:
         data = result_filter(data, battery = battery)
 

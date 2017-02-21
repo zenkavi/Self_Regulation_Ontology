@@ -9,4 +9,4 @@
 #SBATCH --mem=16000
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ieisenbe@stanford.edu
-python calculate_exp_DVs.py {EXP_ID} discovery output
+python calculate_exp_DVs.py {EXP_ID} mturk_discovery output
