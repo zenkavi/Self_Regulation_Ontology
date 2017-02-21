@@ -12,7 +12,7 @@ def gen_reference_item_text(items_df):
     item_text = [item_text_lookup[i] if i in item_text_lookup.keys() else np.nan for i in ref['Variable Name']]
     # add response text
     response_text_lookup = items_df.groupby('item_ID').response_text.unique().apply(lambda x: ', '.join(x))
-    response_text = [response_text_lookup[i] if i in response_text_lookup.keys() else np.nan for i in ref['Variable Name']]
+    response_text = [response_text_lookup[i].replace('\n','') if i in response_text_lookup.keys() else np.nan for i in ref['Variable Name']]
     ref.loc[:,'Question'] = item_text
     ref.loc[:,'Responses'] = response_text
     ref.to_csv(reference_location, index = False)
