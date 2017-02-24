@@ -5,7 +5,9 @@ import json
 import numpy as np
 from os import path
 import pandas as pd
-from selfregulation.utils.data_preparation_utils import anonymize_data, calc_trial_order, convert_date, download_data, get_bonuses, get_pay,  remove_failed_subjects
+from selfregulation.utils.data_preparation_utils import anonymize_data, \
+    calc_trial_order, convert_date, download_data, get_bonuses, get_fmri_pay, \
+    remove_failed_subjects
 from selfregulation.utils.utils import get_info
 
 # Fix Python 2.x.
@@ -68,7 +70,7 @@ calc_trial_order(data)
 data.to_json(path.join(data_dir, 'fmri_followup_data_extras.json'))
 
 # calculate pay
-pay = get_pay(data)
+pay = get_fmri_pay(data)
 pay.to_json(path.join(data_dir, 'fmri_followup_worker_pay.json'))
 print('Finished saving worker pay')
 
