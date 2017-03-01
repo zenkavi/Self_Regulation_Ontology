@@ -31,16 +31,16 @@ if not path.exists(local_dir):
     makedirs(local_dir)
 
 # read preprocessed data
-data_labels = ['discovery', 'validation']
+data_labels = ['mturk_discovery', 'mturk_validation']
 datasets = []
 for label in data_labels:
-    directory = path.join(data_dir,label.title() + '_' + date)
+    directory = path.join(data_dir,label.lstrip('mturk_').title() + '_' + date)
     if not path.exists(directory):
         makedirs(directory)
-    data = pd.read_json(path.join(local_dir,'mturk_' + label + '_data_post.json')).reset_index(drop = True)
+    data = pd.read_json(path.join(local_dir,label + '_data_post.json')).reset_index(drop = True)
     try:
-        DVs = pd.read_json(path.join(local_dir,'mturk_' + label + '_DV.json'))
-        DVs_valence = pd.read_json(path.join(local_dir,'mturk_' + label + '_DV_valence.json'))
+        DVs = pd.read_json(path.join(local_dir,label + '_DV.json'))
+        DVs_valence = pd.read_json(path.join(local_dir,label + '_DV_valence.json'))
     except ValueError:
         print("Couldn't find %s DV datasets" % label)
         DVs = []

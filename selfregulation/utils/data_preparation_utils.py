@@ -154,6 +154,8 @@ def download_data(data_loc, access_token = None, filters = None, battery = None,
     data = results.data
     if 'experiment_exp_id' not in data.columns:
         data.loc[:,'experiment_exp_id'] = [x['exp_id'] for x in data['experiment']]
+    if 'experiment_template' not in data.columns:
+        data.loc[:,'experiment_template'] = [x['template'] for x in data['experiment']]
     if battery:
         data = result_filter(data, battery = battery)
 
@@ -168,7 +170,7 @@ def download_data(data_loc, access_token = None, filters = None, battery = None,
     if save == True:
         if file_name == None:
             file_name = 'mturk_data.json'
-        data.to_json(data_loc + file_name)
+        data.to_json(os.path.join(data_loc,file_name))
         print('Finished saving')
     
     finish_time = (time() - start_time)/60
@@ -216,7 +218,7 @@ def drop_vars(data, drop_vars = [], saved_vars = []):
         final_data = data.drop(data.filter(regex=drop_vars).columns, axis = 1)
     return final_data
     
-def get_bonuses(data):
+def get_bonuses(data, mean=10, range=10):
     if 'bonus_zscore' not in data.columns:
         calc_bonuses(data)
     workers_finished = data.groupby('worker_id').count().finishtime==63
@@ -227,7 +229,7 @@ def get_bonuses(data):
     max_score = tmp_bonuses.max()
     num_tasks_bonused = data.groupby('worker_id').bonus_zscore.count()
     bonuses = data.groupby('worker_id').bonus_zscore.sum()
-    bonuses = (bonuses-min_score)/(max_score-min_score)*10+5
+    bonuses = (bonuses-min_score)/(max_score-min_score)*10+range/2
     bonuses = bonuses.map(lambda x: round(x,1))*num_tasks_bonused/8
     print('Finished getting bonuses')
     return bonuses
@@ -302,7 +304,29 @@ def get_pay(data):
     pay['bonuses'] = get_bonuses(data)
     pay['total'] = pay.sum(axis = 1)
     return pay
-    
+
+def get_fmri_pay(data):
+    assert 'ontask_time' in data.columns, \
+        'Task time not found. Must run "calc_time_taken" first.' 
+    all_exps = data.experiment_exp_id.unique()
+    exps_completed = data.groupby('worker_id').experiment_exp_id.unique()
+    exps_not_completed = exps_completed.map(lambda x: list(set(all_exps) - set(x) - set(['selection_optimization_compensation'])))
+    completed = exps_completed[exps_completed.map(lambda x: len(x)>=63)]
+    not_completed = exps_not_completed[exps_not_completed.map(lambda x: len(x)>0)]
+    # remove stray completions
+    not_completed.loc[[i for i in not_completed.index if 's0' not in i]]
+    # calculate time taken
+    task_time = data.groupby('experiment_exp_id').ontask_time.mean()/60+2 # +2 for generic instruction time
+    time_missed = exps_not_completed.map(lambda x: np.sum([task_time[i] if task_time[i]==task_time[i] else 3 for i in x])/60)
+    # calculate pay
+    completed_pay = pd.Series(data = 100, index = completed.index)
+    prorate_pay = 100-time_missed[not_completed.index]*10
+    #remove anyone who was double counted
+    pay= pd.concat([completed_pay, prorate_pay]).map(lambda x: round(x,1)).to_frame(name = 'base')
+    pay['bonuses'] = get_bonuses(data, 10, 10)
+    pay['total'] = pay.sum(axis = 1)
+    return pay
+
 def get_worker_demographics(worker_id, data):
     df = data[(data['worker_id'] == worker_id) & (data['experiment_exp_id'] == 'demographics_survey')]
     if len(df) == 1:
@@ -504,7 +528,7 @@ def transform_remove_skew(data, threshold=1):
     # log transform for positive skew
     positive_subset = np.log(positive_subset)
     successful_transforms = positive_subset.loc[:,abs(positive_subset.skew())<threshold]
-    dropped_vars = set(negative_subset)-set(successful_transforms)
+    dropped_vars = set(positive_subset)-set(successful_transforms)
     # replace transformed variables
     data.drop(positive_subset, axis=1, inplace = True)
     successful_transforms.columns = [i + '.logTr' for i in successful_transforms]
