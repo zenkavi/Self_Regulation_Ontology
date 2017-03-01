@@ -170,7 +170,7 @@ def download_data(data_loc, access_token = None, filters = None, battery = None,
     if save == True:
         if file_name == None:
             file_name = 'mturk_data.json'
-        data.to_json(os.path.join(data_locfile_name))
+        data.to_json(os.path.join(data_loc,file_name))
         print('Finished saving')
     
     finish_time = (time() - start_time)/60
@@ -528,7 +528,7 @@ def transform_remove_skew(data, threshold=1):
     # log transform for positive skew
     positive_subset = np.log(positive_subset)
     successful_transforms = positive_subset.loc[:,abs(positive_subset.skew())<threshold]
-    dropped_vars = set(negative_subset)-set(successful_transforms)
+    dropped_vars = set(positive_subset)-set(successful_transforms)
     # replace transformed variables
     data.drop(positive_subset, axis=1, inplace = True)
     successful_transforms.columns = [i + '.logTr' for i in successful_transforms]
