@@ -265,7 +265,7 @@ def get_items(data):
             except ValueError:
                 continue
             items += list(survey.text)
-            responses_text += list(survey.response_text)
+            responses_text += [str(i) for i in list(survey.response_text)]
             options += list(survey.options)
             workers += list(survey.worker_id)
             item_nums += list(survey.question_num)
