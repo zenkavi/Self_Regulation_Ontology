@@ -265,7 +265,7 @@ def get_items(data):
             except ValueError:
                 continue
             items += list(survey.text)
-            responses_text += list(survey.response_text)
+            responses_text += [str(i) for i in list(survey.response_text)]
             options += list(survey.options)
             workers += list(survey.worker_id)
             item_nums += list(survey.question_num)
@@ -528,7 +528,7 @@ def transform_remove_skew(data, threshold=1):
     # log transform for positive skew
     positive_subset = np.log(positive_subset)
     successful_transforms = positive_subset.loc[:,abs(positive_subset.skew())<threshold]
-    dropped_vars = set(negative_subset)-set(successful_transforms)
+    dropped_vars = set(positive_subset)-set(successful_transforms)
     # replace transformed variables
     data.drop(positive_subset, axis=1, inplace = True)
     successful_transforms.columns = [i + '.logTr' for i in successful_transforms]
