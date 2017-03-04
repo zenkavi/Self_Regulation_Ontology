@@ -170,7 +170,7 @@ def download_data(data_loc, access_token = None, filters = None, battery = None,
     if save == True:
         if file_name == None:
             file_name = 'mturk_data.json'
-        data.to_json(os.path.join(data_locfile_name))
+        data.to_json(os.path.join(data_loc,file_name))
         print('Finished saving')
     
     finish_time = (time() - start_time)/60
