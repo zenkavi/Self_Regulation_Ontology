@@ -32,7 +32,7 @@ def anonymize_data(data):
             new_ids.append(worker)
     data.replace(workers, new_ids,inplace = True)
     return {x:y for x,y in zip(new_ids, workers)}
-    
+
 def calc_bonuses(data):
     bonus_experiments = ['angling_risk_task_always_sunny', 'two_stage_decision',
                          'columbia_card_task_hot', 'columbia_card_task_cold', 'hierarchical_rule',
@@ -79,7 +79,11 @@ def check_timing(df):
 def convert_date(data):
     new_date = data.loc[:,'finishtime'].map(lambda date: datetime.strptime(date[:-8],'%Y-%m-%dT%H:%M:%S'))
     data.loc[:,'finishtime'] = new_date
-    
+
+def convert_fmri_ids(data):
+    conversion_lookup = json.load(open('samples/fmri_followup_expfactory_id_conversion.json','r'))
+    data.worker_id.replace(conversion_lookup, inplace = True)
+
 def convert_item_names(to_convert):
     '''Convert array of variable names or columns/index of a dataframe. Assumes that all values either
     come from short of long variable names. If a dataframe is passed, variable conversion
@@ -218,7 +222,7 @@ def drop_vars(data, drop_vars = [], saved_vars = []):
         final_data = data.drop(data.filter(regex=drop_vars).columns, axis = 1)
     return final_data
     
-def get_bonuses(data, mean=10, range=10):
+def get_bonuses(data, mean=10, limit=10):
     if 'bonus_zscore' not in data.columns:
         calc_bonuses(data)
     workers_finished = data.groupby('worker_id').count().finishtime==63
@@ -229,8 +233,8 @@ def get_bonuses(data, mean=10, range=10):
     max_score = tmp_bonuses.max()
     num_tasks_bonused = data.groupby('worker_id').bonus_zscore.count()
     bonuses = data.groupby('worker_id').bonus_zscore.sum()
-    bonuses = (bonuses-min_score)/(max_score-min_score)*10+range/2
-    bonuses = bonuses.map(lambda x: round(x,1))*num_tasks_bonused/8
+    bonuses = (bonuses-min_score)/(max_score-min_score)*limit+(mean-limit/2)
+    bonuses = bonuses.map(lambda x: round(x,1))*num_tasks_bonused/7
     print('Finished getting bonuses')
     return bonuses
 
@@ -323,7 +327,7 @@ def get_fmri_pay(data):
     prorate_pay = 100-time_missed[not_completed.index]*10
     #remove anyone who was double counted
     pay= pd.concat([completed_pay, prorate_pay]).map(lambda x: round(x,1)).to_frame(name = 'base')
-    pay['bonuses'] = get_bonuses(data, 10, 10)
+    pay['bonuses'] = get_bonuses(data, 15, 10)
     pay['total'] = pay.sum(axis = 1)
     return pay
 
