@@ -9,20 +9,13 @@ from selfregulation.utils.data_preparation_utils import calc_trial_order, \
     convert_date, convert_fmri_ids, download_data, get_bonuses, get_fmri_pay
 from selfregulation.utils.utils import get_info
 
-# Fix Python 2.x.
-try: input = raw_input
-except NameError: pass
-    
-# get options
-sample = ['discovery', 'validation', 'incomplete']
-
 #load Data
 token = get_info('expfactory_token')
 try:
     data_dir=get_info('data_directory')
 except Exception:
     data_dir=path.join(get_info('base_directory'),'Data')
-
+base_dir = get_info('base_directory')
 #***************************************************
 # ********* Load Data **********************
 #**************************************************        
@@ -55,7 +48,7 @@ data.reset_index(drop = True, inplace = True)
 convert_fmri_ids(data)
 
 # record subject completion statistics
-(data.groupby('worker_id').count().finishtime).to_json(path.join(data_dir, 'fmri_followup_worker_counts.json'))
+(data.groupby('worker_id').count().finishtime).to_json(path.join(base_dir, 'Data', 'admin', 'fmri_followup_worker_counts.json'))
 
 # add a few extras
 convert_date(data)
@@ -69,7 +62,7 @@ data.to_json(path.join(data_dir, 'fmri_followup_data_extras.json'))
 
 # calculate pay
 pay = get_fmri_pay(data)
-pay.to_json(path.join(data_dir, 'fmri_followup_worker_pay.json'))
+pay.to_json(path.join(base_dir, 'Data', 'admin', 'fmri_followup_worker_pay.json'))
 print('Finished saving worker pay')
 
 #***************************************************
