@@ -411,6 +411,7 @@ def quality_check(data):
                 elif exp == 'go_nogo':
                     passed_rt = df.query('rt != -1').groupby('worker_id').rt.median() >= rt_thresh
                     passed_miss = df.groupby('worker_id').rt.agg(lambda x: np.mean(x == -1)) < missed_thresh
+                    df.correct = pd.to_numeric(df.correct)
                     passed_acc = df.groupby('worker_id').correct.mean() >= acc_thresh
                     passed_response = np.logical_not(df.groupby('worker_id').key_press.agg(
                                                             lambda x: np.any(pd.value_counts(x) > pd.value_counts(x).sum()*response_thresh)))
@@ -456,6 +457,7 @@ def quality_check(data):
                     passed_rt = df.query('rt != -1').groupby('worker_id').rt.median() >= rt_thresh
                     passed_miss = df.groupby('worker_id').rt.agg(lambda x: np.mean(x == -1)) < missed_thresh
                     if 'correct' in df.columns:
+                        df.correct = pd.to_numeric(df.correct)
                         passed_acc = df.query('rt != -1').groupby('worker_id').correct.mean() >= acc_thresh
                     else:
                         passed_acc = pd.Series([True] * len(passed_rt), index = passed_rt.index)
