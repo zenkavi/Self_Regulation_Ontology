@@ -75,7 +75,8 @@ def get_metadata(demog_items):
         if itemid in nominalvars:
             demog_dict[itemid]['Nominal']=True
         levelctr=0
-        if itemoptions is not None:
+#        if itemoptions is not None:
+        if isinstance(itemoptions, list):
                 for i in itemoptions:
                     if not 'value' in i:
                         value=levelctr
