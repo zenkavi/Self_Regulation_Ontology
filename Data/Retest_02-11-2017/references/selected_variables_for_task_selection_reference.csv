@@ -171,7 +171,8 @@ tower_of_london.num_extra_moves,Neg
 tower_of_london.num_optimal_solutions,Pos
 tower_of_london.planning_time,NA
 two_stage_decision.model_based,Pos
-two_stage_decision.model_free,Pos
+two_stage_decision.model_free,NA
+two_stage_decision.perseverance,Neg
 upps_impulsivity_survey.lack_of_perseverance,Neg
 upps_impulsivity_survey.lack_of_premeditation,Neg
 upps_impulsivity_survey.negative_urgency,Neg

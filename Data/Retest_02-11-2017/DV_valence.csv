@@ -657,6 +657,7 @@ two_stage_decision.avg_rt,-1.0
 two_stage_decision.missed_percent,-1.0
 two_stage_decision.model_based,1.0
 two_stage_decision.model_free,1.0
+two_stage_decision.perseverance,-1.0
 upps_impulsivity_survey.lack_of_perseverance,-1.0
 upps_impulsivity_survey.lack_of_premeditation,-1.0
 upps_impulsivity_survey.negative_urgency,-1.0

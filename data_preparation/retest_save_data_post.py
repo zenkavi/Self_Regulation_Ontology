@@ -1,16 +1,37 @@
+import sys
+sys.path.append('/Users/zeynepenkavi/Dropbox/PoldrackLab/expfactory-analysis')
+sys.path.append('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/data_preparation')
+import json
+import numpy as np
+from os import path
+import pandas as pd
+from glob import glob
+from selfregulation.utils.data_preparation_utils import convert_var_names, drop_failed_QC_vars, drop_vars, remove_correlated_task_variables, remove_outliers, transform_remove_skew
+from selfregulation.utils.r_to_py_utils import missForest
+
+try: 
+    release_date
+except NameError:
+    release_date = input('Enter release_ date:')
+    
+
+data_dir = data_dir=path.join('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Data/','Retest_'+release_date)
+
+meta_dir = path.join(data_dir,'metadata')
+reference_dir = path.join(data_dir,'references')
+if not path.exists(meta_dir):
+    makedirs(meta_dir)
+if not path.exists(reference_dir):
+    makedirs(reference_dir)
+
 #Read in DVs and valence
 label = 'retest'
-DVs = pd.read_json(path.join(data_dir,'Local/mturk_' + label + '_DV.json'))
-DVs_valence = pd.read_json(path.join(data_dir,'Local/mturk_' + label + '_DV_valence.json'))
+DV_df = pd.read_json(path.join(data_dir,'Local/mturk_' + label + '_DV.json'))
+valence_df = pd.read_json(path.join(data_dir,'Local/mturk_' + label + '_DV_valence.json'))
+#data = pd.read_json(path.join(data_dir,'Local/mturk_' + label + '_data_post.json')).reset_index(drop = True)
 data = pd.read_json(path.join(data_dir,'Local/mturk_' + label + '_data_manual_post.json')).reset_index(drop = True)
 
-DV_df = DVs
-valence_df = DVs_valence
-
-del DVs, DVs_valence
-
 # drop failed QC vars
-from selfregulation.utils.data_preparation_utils import drop_failed_QC_vars
 drop_failed_QC_vars(DV_df,data)
 
 #save valence
@@ -22,6 +43,8 @@ def get_flip_list(valence_df):
         return flip_df, valence_df
 flip_df, valence_df = get_flip_list(valence_df)
 flip_df.to_csv(path.join(data_dir, 'DV_valence.csv'))
+
+readme_lines = []
 readme_lines += ["DV_valence.csv: Subjective assessment of whether each variable's 'natural' direction implies 'better' self regulation\n\n"]
 
 #variables_exhaustive.csv
@@ -31,7 +54,6 @@ DV_df.to_csv(path.join(data_dir, 'variables_exhaustive.csv'))
 readme_lines += ["variables_exhaustive.csv: all variables calculated for each measure\n\n"]
 
 # drop other columns of no interest
-from selfregulation.utils.data_preparation_utils import drop_vars
 subset = drop_vars(DV_df, saved_vars = ['simple_reaction_time.avg_rt', 'shift_task.acc'])
 
 #meaningful_variables_noDDM.csv
@@ -61,7 +83,6 @@ readme_lines += ["meaningful_variables.csv: Same as meaningful_variables_hddm.cs
 
 #meaningful_variables_clean.csv
 # clean data
-from selfregulation.utils.data_preparation_utils import remove_correlated_task_variables, remove_outliers, transform_remove_skew
 selected_variables_clean = remove_outliers(selected_variables) #getting some warning
 selected_variables_clean = remove_correlated_task_variables(selected_variables_clean)
 selected_variables_clean = transform_remove_skew(selected_variables_clean)
@@ -74,7 +95,6 @@ selected_variables_reference.loc[selected_variables.columns].to_csv(path.join(re
 
 #meaningful_variables_imputed.csv
 # imputed data
-from selfregulation.utils.r_to_py_utils import missForest
 selected_variables_imputed, error = missForest(selected_variables_clean)
 selected_variables_imputed.to_csv(path.join(data_dir, 'meaningful_variables_imputed.csv'))
 readme_lines += ["meaningful_variables_imputed.csv: meaningful_variables_clean.csv after imputation with missForest\n\n"]
@@ -117,7 +137,7 @@ selected_variables_reference.loc[task_selection_data.columns].to_csv(path.join(r
 #short_taskdata_imputed.csv
 #short_taskdata_imputed_for_task_selection.csv
 #short_variables_exhaustive.csv
-from glob import glob
+
 files = glob(path.join(data_dir,'*csv'))
 files = [f for f in files if not any(i in f for i in ['demographic','health','alcohol_drug'])]
 from selfregulation.utils.data_preparation_utils import convert_var_names
