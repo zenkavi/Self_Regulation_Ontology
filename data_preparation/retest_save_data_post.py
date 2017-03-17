@@ -87,7 +87,7 @@ readme_lines += ["meaningful_variables.csv: Same as meaningful_variables_hddm.cs
 #selected_variables_clean = remove_correlated_task_variables(selected_variables_clean)
 #selected_variables_clean = transform_remove_skew(selected_variables_clean)
 #selected_variables_clean.to_csv(path.join(data_dir, 'meaningful_variables_clean.csv'))
-readme_lines += ["meaningful_variables_clean.csv: same as meaningful_variables.csv with outliers defined as greater than 2.5 IQR from median removed from each column\n\n"]
+#readme_lines += ["meaningful_variables_clean.csv: same as meaningful_variables.csv with outliers defined as greater than 2.5 IQR from median removed from each column\n\n"]
 
 # Retest meaningful_variables_clean.csv mimicking the test one
 # Instead of cleaning on this sample get variables resulting from test cleaning procedures
@@ -99,6 +99,9 @@ transformed_variables = pd.DataFrame({'var': transformed_variables, 'signs': sig
 del(signs)
 transformed_variables['var'] = [x.replace('.logTr','').replace('.ReflogTr','') for x in transformed_variables['var']]
 #first transform the subset for retest
+for col in selected_variables.columns:
+    if col in transformed_variables['var']:
+        sign = 
 
 #then drop the columns that are not in meaningful_variables_clean_test
 #save to csv
