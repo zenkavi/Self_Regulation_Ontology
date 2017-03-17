@@ -83,11 +83,25 @@ readme_lines += ["meaningful_variables.csv: Same as meaningful_variables_hddm.cs
 
 #meaningful_variables_clean.csv
 # clean data
-selected_variables_clean = remove_outliers(selected_variables) #getting some warning
-selected_variables_clean = remove_correlated_task_variables(selected_variables_clean)
-selected_variables_clean = transform_remove_skew(selected_variables_clean)
-selected_variables_clean.to_csv(path.join(data_dir, 'meaningful_variables_clean.csv'))
+#selected_variables_clean = remove_outliers(selected_variables) #getting some warning
+#selected_variables_clean = remove_correlated_task_variables(selected_variables_clean)
+#selected_variables_clean = transform_remove_skew(selected_variables_clean)
+#selected_variables_clean.to_csv(path.join(data_dir, 'meaningful_variables_clean.csv'))
 readme_lines += ["meaningful_variables_clean.csv: same as meaningful_variables.csv with outliers defined as greater than 2.5 IQR from median removed from each column\n\n"]
+
+# Retest meaningful_variables_clean.csv mimicking the test one
+# Instead of cleaning on this sample get variables resulting from test cleaning procedures
+# DO NOT remove outliers from this sample and transform based on what was done for test data
+meaningful_variables_clean_test = pd.read_csv('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Data/Complete_01-31-2017/meaningful_variables_clean.csv')
+transformed_variables = [col for col in meaningful_variables_clean_test.columns if 'logTr' in col]
+signs = ['negative' if 'ReflogTr' in x else 'positive' for x in transformed_variables]
+transformed_variables = pd.DataFrame({'var': transformed_variables, 'signs': signs})
+del(signs)
+transformed_variables['var'] = [x.replace('.logTr','').replace('.ReflogTr','') for x in transformed_variables['var']]
+#first transform the subset for retest
+
+#then drop the columns that are not in meaningful_variables_clean_test
+#save to csv
 
 #save selected variables
 selected_variables_reference = valence_df
