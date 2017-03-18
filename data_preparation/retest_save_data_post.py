@@ -93,18 +93,36 @@ readme_lines += ["meaningful_variables.csv: Same as meaningful_variables_hddm.cs
 # Instead of cleaning on this sample get variables resulting from test cleaning procedures
 # DO NOT remove outliers from this sample and transform based on what was done for test data
 meaningful_variables_clean_test = pd.read_csv('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Data/Complete_01-31-2017/meaningful_variables_clean.csv')
+
 transformed_variables = [col for col in meaningful_variables_clean_test.columns if 'logTr' in col]
+
 signs = ['negative' if 'ReflogTr' in x else 'positive' for x in transformed_variables]
+
 transformed_variables = pd.DataFrame({'var': transformed_variables, 'signs': signs})
+
 del(signs)
+
 transformed_variables['var'] = [x.replace('.logTr','').replace('.ReflogTr','') for x in transformed_variables['var']]
+
+selected_variables_clean = selected_variables
 #first transform the subset for retest
-for col in selected_variables.columns:
-    if col in transformed_variables['var']:
-        sign = 
+for col in list(selected_variables_clean.columns):
+    if col in list(transformed_variables['var']):
+        sign = list(transformed_variables[transformed_variables['var'] == col]['signs'])
+        if sign == ['positive']:
+            selected_variables_clean[col] = np.log(selected_variables_clean[col])
+            selected_variables_clean.rename(columns = {col:col+'.logTr'}, inplace=True)
+        elif sign == ['negative']:
+            selected_variables_clean[col] = np.log(selected_variables_clean[col].max()+1-selected_variables_clean[col])
+            selected_variables_clean.rename(columns = {col:col+'.ReflogTr'}, inplace=True)
+            
 
 #then drop the columns that are not in meaningful_variables_clean_test
+selected_variables_clean = drop_vars(selected_variables, drop_vars = list(set(selected_variables.columns) - set(meaningful_variables_clean_test.columns)))
+
 #save to csv
+selected_variables_clean.to_csv(path.join(data_dir, 'meaningful_variables_clean.csv'))
+readme_lines += ["meaningful_variables_clean.csv: includes variables for meaningful_variables_clean.csv for the t1 data transformed in the same way as it way for the full sample. no other outlier removal or variables dropping was done\n\n"]
 
 #save selected variables
 selected_variables_reference = valence_df
@@ -157,7 +175,6 @@ selected_variables_reference.loc[task_selection_data.columns].to_csv(path.join(r
 
 files = glob(path.join(data_dir,'*csv'))
 files = [f for f in files if not any(i in f for i in ['demographic','health','alcohol_drug'])]
-from selfregulation.utils.data_preparation_utils import convert_var_names
 for f in files:
     name = f.split('/')[-1]
     df = pd.DataFrame.from_csv(f)
