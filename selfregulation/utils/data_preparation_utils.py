@@ -5,13 +5,12 @@ from datetime import datetime
 from expanalysis.experiments.processing import extract_row, extract_experiment
 from expanalysis.results import Result
 from expanalysis.experiments.utils import remove_duplicates, result_filter
+from selfregulation.utils.utils import get_info
 import json
 import numpy as np
 import os
 import pandas as pd
 from time import time
-
-
 
 
 #***************************************************
@@ -228,13 +227,13 @@ def get_bonuses(data, mean=10, limit=10):
     workers_finished = data.groupby('worker_id').count().finishtime==63
     index = list(workers_finished[workers_finished].index)
     tmp_data = data.query('worker_id in %s' % index)
-    tmp_bonuses = tmp_data.groupby('worker_id').bonus_zscore.sum()
+    tmp_bonuses = tmp_data.groupby('worker_id').bonus_zscore.mean()
     min_score = tmp_bonuses.min()
     max_score = tmp_bonuses.max()
     num_tasks_bonused = data.groupby('worker_id').bonus_zscore.count()
-    bonuses = data.groupby('worker_id').bonus_zscore.sum()
+    bonuses = data.groupby('worker_id').bonus_zscore.mean()
     bonuses = (bonuses-min_score)/(max_score-min_score)*limit+(mean-limit/2)
-    bonuses = bonuses.map(lambda x: round(x,1))*num_tasks_bonused/7
+    bonuses = bonuses.map(lambda x: round(x,1))*num_tasks_bonused/8
     print('Finished getting bonuses')
     return bonuses
 
@@ -320,8 +319,10 @@ def get_fmri_pay(data):
     # remove stray completions
     not_completed.loc[[i for i in not_completed.index if 's0' not in i]]
     # calculate time taken
-    task_time = data.groupby('experiment_exp_id').ontask_time.mean()/60+2 # +2 for generic instruction time
-    time_missed = exps_not_completed.map(lambda x: np.sum([task_time[i] if task_time[i]==task_time[i] else 3 for i in x])/60)
+    # get time taken for each task from previous mturk sample
+    time_path = os.path.join(get_info('base_directory'),'references','experiment_time.json')
+    task_time = json.load(open(time_path))
+    time_missed = exps_not_completed.map(lambda x: np.sum([task_time[i] if task_time[i] is not None else 3 for i in x])/60)
     # calculate pay
     completed_pay = pd.Series(data = 100, index = completed.index)
     prorate_pay = 100-time_missed[not_completed.index]*10
