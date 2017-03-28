@@ -316,11 +316,9 @@ def get_fmri_pay(data):
     exps_not_completed = exps_completed.map(lambda x: list(set(all_exps) - set(x) - set(['selection_optimization_compensation'])))
     completed = exps_completed[exps_completed.map(lambda x: len(x)>=63)]
     not_completed = exps_not_completed[exps_not_completed.map(lambda x: len(x)>0)]
-    # remove stray completions
-    not_completed.loc[[i for i in not_completed.index if 's0' not in i]]
     # calculate time taken
     # get time taken for each task from previous mturk sample
-    time_path = os.path.join(get_info('base_directory'),'references','experiment_time.json')
+    time_path = os.path.join(get_info('base_directory'),'references','experiment_lengths.json')
     task_time = json.load(open(time_path))
     time_missed = exps_not_completed.map(lambda x: np.sum([task_time[i] if task_time[i] is not None else 3 for i in x])/60)
     # calculate pay
