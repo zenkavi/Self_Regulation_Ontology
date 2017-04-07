@@ -15,7 +15,9 @@ from selfregulation.utils.data_preparation_utils import get_items
 from selfregulation.utils.data_preparation_utils import convert_var_names
 
 
-if release_date is None:
+try: 
+    release_date
+except NameError:
     release_date = input('Enter release_ date:')
 
 data_dir = data_dir=path.join('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Data/','Retest_'+release_date)
