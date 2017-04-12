@@ -30,3 +30,5 @@ taskdata*.csv: taskdata are the same as meaningful_variables excluded surveys. N
 
 short*.csv: short versions are the same as long versions with variable names shortened using variable_name_lookup.csv
 
+hddm_refits_exhaustive.csv: all variables for hddm's for retest subjects' t1 data
+
