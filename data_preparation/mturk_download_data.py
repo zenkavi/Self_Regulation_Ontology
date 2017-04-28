@@ -1,11 +1,13 @@
 from expanalysis.experiments.jspsych import calc_time_taken, get_post_task_responses
-from expanalysis.experiments.processing import post_process_data, extract_DVs
+from expanalysis.experiments.processing import post_process_data
 from expanalysis.results import get_filters
 import json
 import numpy as np
 from os import path
 import pandas as pd
-from selfregulation.utils.data_preparation_utils import anonymize_data, calc_trial_order, convert_date, download_data, get_bonuses, get_pay,  remove_failed_subjects
+from selfregulation.utils.data_preparation_utils import anonymize_data, \
+    calc_trial_order, convert_date, download_data, get_bonuses, get_pay,  \
+    quality_check_correction, remove_failed_subjects
 from selfregulation.utils.utils import get_info
 
 # Fix Python 2.x.
@@ -114,6 +116,8 @@ if job in ['post', 'all']:
             discovery_data = pd.concat([discovery_data, new_data]).reset_index(drop = True)
             extra_data.drop(new_data.index, inplace = True)
             extra_workers = np.sort(extra_data.worker_id.unique())
+        # correct for bugged stop signal quality correction
+        quality_check_correction(discovery_data)
         discovery_data.to_json(path.join(data_dir,'mturk_discovery_data_post.json'))
         print('Finished saving post-processed discovery data')
         # save raw data
@@ -129,6 +133,8 @@ if job in ['post', 'all']:
         failed_data = pd.concat([failed_data,failures])
         # add extra workers to validation dataset
         validation_data = pd.concat([validation_data, extra_data]).reset_index(drop = True)
+        # correct for bugged stop signal quality correction
+        quality_check_correction(validation_data)
         validation_data.to_json(path.join(data_dir,'mturk_validation_data_post.json'))
         print('Finished saving post-processed validation data')
         # save raw data
@@ -145,6 +151,8 @@ if job in ['post', 'all']:
     
     # save failed data
     failed_data = failed_data.reset_index(drop = True)
+    # correct for bugged stop signal quality correction
+    quality_check_correction(failed_data)
     failed_data.to_json(data_dir + 'mturk_failed_data_post.json')
     print('Finished saving post-processed failed data')
     

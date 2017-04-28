@@ -14,11 +14,11 @@ from selfregulation.utils.utils import get_behav_data
 
 df = get_behav_data(file='demographic_health.csv', full_dataset=True)
 
-failed_dataset = glob.glob('../Data/Failed*')[0]
+failed_dataset = sorted(glob.glob('../Data/Failed*'))[0]
 failed_subjects = get_behav_data(dataset=failed_dataset, file='demographic_health.csv')
 
 
-fmri_dataset = glob.glob('../Data/Fmri*')[0]
+fmri_dataset = sorted(glob.glob('../Data/Fmri*'))[0]
 fmri_subjects = get_behav_data(dataset=fmri_dataset, file='demographic_health.csv')
 fmri_subjects.index = ['fmri_'+i for i in fmri_subjects.index]
 

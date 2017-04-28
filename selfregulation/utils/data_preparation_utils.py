@@ -355,6 +355,16 @@ def print_time(data, time_col = 'ontask_time'):
     return time
                    
 def quality_check(data):
+    """
+    Checks data to make sure each experiment passed some "gut check" measures
+    Used to exclude data on individual tasks or whole subjects if they fail
+    too many tasks.
+    NOTE: This function has an issue such that it inappropriately evaluates
+    stop signal tasks based on the number of missed responses. Rather than 
+    changing the function (which would affect our samples which are already
+    determined) I am leaving it, and introducing a quality check correction
+    that will be performed after subjects are already rejected
+    """
     start_time = time()
     rt_thresh_lookup = {
         'angling_risk_task_always_sunny': 0,
@@ -476,6 +486,30 @@ def quality_check(data):
     finish_time = (time() - start_time)/60
     print('Finished QC. Time taken: ' + str(finish_time))
 
+def quality_check_correction(data):
+    """
+    This function corrects the issues with the stop signal tasks mentioned above
+    """
+    for exp in ['stop_signal','motor_selective_stop_signal',
+                'stim_selective_stop_signal']:
+        df = extract_experiment(data, exp)
+        rt_thresh = 200
+        acc_thresh = .6
+        missed_thresh = .25
+        response_thresh = .95
+        passed_rt = df.query('rt != -1 and SS_trial_type=="go"').groupby('worker_id').rt.median() >= rt_thresh
+        passed_miss = df.query('SS_trial_type=="go"').groupby('worker_id').rt.agg(lambda x: np.mean(x == -1)) < missed_thresh
+        passed_acc = df.query('rt != -1').groupby('worker_id').correct.mean() >= acc_thresh
+        passed_response = np.logical_not(df.query('rt != -1').groupby('worker_id').key_press.agg(
+                                                lambda x: np.any(pd.value_counts(x) > pd.value_counts(x).sum()*response_thresh))) 
+        passed_df = pd.concat([passed_rt,passed_acc,passed_miss,passed_response], axis = 1).fillna(False, inplace = False)
+        passed = passed_df.all(axis = 1)
+        failed = passed[passed == False]
+        for subj in failed.index:
+            data.loc[(data.experiment_exp_id == exp) & (data.worker_id == subj),'passed_QC'] = False
+        for subj in passed.index:
+            data.loc[(data.experiment_exp_id == exp) & (data.worker_id == subj),'passed_QC'] = True
+    
 def remove_failed_subjects(data):
     if 'passed_QC' not in data.columns:
         quality_check(data)
