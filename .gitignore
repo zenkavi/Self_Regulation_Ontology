@@ -4,7 +4,7 @@ Data/Retest_02-11-2017/Local
 Data/Retest_02-11-2017/batch_output
 data_preparation/old
 Plots
-
+.Rhistory
 .fuse*
 *.pyl
 .ipynb_checkpoints

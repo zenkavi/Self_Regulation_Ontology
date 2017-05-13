@@ -64,3 +64,23 @@ def psychICC(df):
     psych = importr('psych')
     rs = psych.ICC(df)
     return rs
+
+def qgraph_cor(data, glasso=False):
+    qgraph = importr('qgraph')
+    cors = qgraph.cor_auto(data)
+    if glasso==True:
+        EBICglasso = qgraph.EBICglasso(cors, data.shape[0],
+                                       returnAllResults=True)
+        # figure out the index for the lowest EBIC
+        best_index = np.argmin(EBICglasso[1])
+        tuning_param = EBICglasso[4][best_index]
+        glasso_cors = np.array(EBICglasso[0][0])[:,:,best_index]
+        glasso_cors_df = pd.DataFrame(np.matrix(glasso_cors), 
+                           index=data.columns, 
+                           columns=data.columns)
+        return glasso_cors_df, tuning_param
+    else:
+        cors_df = pd.DataFrame(np.matrix(cors), 
+                           index=data.columns, 
+                           columns=data.columns)
+        return cors_df
