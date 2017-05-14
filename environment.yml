@@ -1,0 +1,15 @@
+name: py34_SRO
+channels:
+  - pymc
+dependencies:
+  - python=3.4
+  - seaborn
+  - statsmodels
+  - pymc
+  - hddm
+  - pip:
+    - fancyimpute
+
+# rpy2 is a dependency, but fails if installed conda using this file
+
+
