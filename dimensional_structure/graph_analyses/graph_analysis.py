@@ -34,10 +34,10 @@ fig, column_order = dendroheatmap(spearman_connectivity, labels = True)
 # signed spearman graph
 thresholds = get_fully_connected_threshold(spearman_connectivity)
 plot_t = thresholds['proportional']
+spearman_connectivity = threshold_proportional_sign(spearman_connectivity.values, plot_t)
 
 GA = Graph_Analysis()
-GA.setup(data = spearman_connectivity,
-         thresh_func = threshold_proportional_sign,
+GA.setup(adj = spearman_connectivity,
          community_alg = bct.modularity_louvain_und_sign)
 seed = 1337
 gamma = np.arange(0,3,.2)
@@ -73,6 +73,9 @@ subgraph_GA.display()
 # distance graph
 thresholds = get_fully_connected_threshold(spearman_connectivity)
 plot_t = thresholds['proportional']
+spearman_connectivity = threshold(spearman_connectivity,
+                                  threshold_func = threshold_proportional_sign,
+                                  threshold = plot_t)
 
 GA = Graph_Analysis()
 GA.setup(data = spearman_connectivity,

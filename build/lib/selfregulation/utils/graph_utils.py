@@ -7,7 +7,6 @@ import pandas as pd
 from pprint import pprint
 import seaborn as sns
 from scipy.spatial.distance import pdist, squareform
-from selfregulation.utils.r_to_py_utils import qgraph_cor
 from sklearn.metrics.cluster import normalized_mutual_info_score
 
 #work around for spyder bug in python 3
@@ -115,11 +114,6 @@ def calc_connectivity_mat(data, edge_metric = 'pearson'):
         connectivity_matrix = pd.DataFrame(pairwise_MI(data))
     elif edge_metric == 'distance':
         connectivity_matrix = pd.DataFrame(distcorr_mat(data.as_matrix()))
-    elif edge_metric == 'EBICglasso':
-        connectivity_matrix, tuning_param = qgraph_cor(data, True)
-        print('Using tuning param %s for EBICglasso' % tuning_param)
-    elif edge_metric == 'corauto':
-        connectivity_matrix = qgraph_cor(data)
     else:
         *qualifier, edge_metric = edge_metric.split('_')
         if (qualifier or [None])[0] == 'abs':
@@ -138,11 +132,6 @@ def get_fully_connected_threshold(connectivity_matrix):
     abs_threshold = np.min(np.max(threshold_mat, axis = 1))
     proportional_threshold = np.mean(threshold_mat>=(abs_threshold-.001))
     return {'absolute': abs_threshold, 'proportional': proportional_threshold}            
-
-def threshold(adj, threshold_func, threshold):
-    adj_matrix = threshold_func(adj.values,threshold)
-    adj_df = pd.DataFrame(adj_matrix, columns=adj.columns, index=adj.index)
-    return adj_df
 
 def find_intersection(community, reference):
     ref_lists = [[i for i,c in enumerate(reference) if c==C] for C in np.unique(reference)]
@@ -191,18 +180,20 @@ import seaborn as sns
 
 class Graph_Analysis(object):
     def __init__(self):
-        self.adj = None
-        self.plot_adj = None
+        self.data = None
+        self.graph_mat = None
         self.G = None
         self.node_order = []
         self.weight = True
+        self.thresh_func = bct.threshold_proportional
+        self.threshold = 1
         self.community_alg = bct.community_louvain
         self.ref_community = None
         self.visual_style = None
         self.print_options = {}
         self.plot_options = {}
         
-    def setup(self, adj, plot_adj=None, community_alg=None, 
+    def setup(self, adj_df, plot_df=None, community_alg=None, 
               ref_community=None):
         """
         Creates and displays graphs of a data matrix.
@@ -224,13 +215,13 @@ class Graph_Analysis(object):
             if True, creates a weighted graph (vs. a binary)
             
         """
-        assert type(adj) == pd.core.frame.DataFrame
-        self.adj = adj
-        self.plot_adj = plot_adj
+        assert type(adj_df) == pd.core.frame.DataFrame
+        self.adj_df = adj_df
+        self.plot_df = plot_df
         self.community_alg = community_alg
         self.ref_community = ref_community
         # numpy matrix used for graph functions
-        graph_mat = adj.values
+        graph_mat = adj_df.values()
         
         # check if binary
         if set(np.unique(graph_mat))==set([0,1]):
@@ -240,7 +231,7 @@ class Graph_Analysis(object):
             G = igraph.Graph.Weighted_Adjacency(graph_mat.tolist(), mode = 'undirected')
         # label vertices of G
         G.vs['id'] = range(len(G.vs))
-        G.vs['name'] = adj.columns
+        G.vs['name'] = adj_df.columns
         # set class variables
         self.graph_mat = graph_mat
         self.G = G
@@ -374,6 +365,7 @@ class Graph_Analysis(object):
         return visual_style
         
     def display(self, plot=True, verbose=True,  print_options=None, plot_options=None):
+        assert self.visual_style!=None, 'Must first call set_visual_style() !'
         if verbose:
             if print_options==None:
                 print_options = {}
@@ -382,7 +374,6 @@ class Graph_Analysis(object):
             except KeyError:
                 print('Communities not detected! Run calculate_communities() first!')
         if plot:
-            assert self.visual_style!=None, 'Must first call set_visual_style() !'
             if plot_options==None:
                 plot_options = {}
                 self._plot_graph(**plot_options)
@@ -401,7 +392,9 @@ class Graph_Analysis(object):
     def return_subgraph_analysis(self, community = 1):
         subgraph = self.graph_to_dataframe(self.get_subgraph(community))
         subgraph_GA=Graph_Analysis()
-        subgraph_GA.setup(adj=subgraph,
+        subgraph_GA.setup(data=subgraph,
+                          w=self.weight,
+                          thresh_func = self.thresh_func,
                           community_alg=self.community_alg)
         return subgraph_GA
               
