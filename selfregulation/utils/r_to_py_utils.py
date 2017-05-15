@@ -65,12 +65,13 @@ def psychICC(df):
     rs = psych.ICC(df)
     return rs
 
-def qgraph_cor(data, glasso=False):
+def qgraph_cor(data, glasso=False, gamma=.25):
     qgraph = importr('qgraph')
     cors = qgraph.cor_auto(data)
     if glasso==True:
         EBICglasso = qgraph.EBICglasso(cors, data.shape[0],
-                                       returnAllResults=True)
+                                       returnAllResults=True,
+                                       gamma=gamma)
         # figure out the index for the lowest EBIC
         best_index = np.argmin(EBICglasso[1])
         tuning_param = EBICglasso[4][best_index]

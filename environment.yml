@@ -304,3 +304,9 @@ dependencies:
   - testpath==0.3
   - traits==4.6.0
   - xvfbwrapper==0.2.9
+
+# r packages that are necessary for rpy2
+# - psych
+# - missforest
+# - qgraph
+

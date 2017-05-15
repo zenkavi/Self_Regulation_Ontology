@@ -108,15 +108,26 @@ def threshold_proportional_sign(W, threshold):
     return W
         
 # community functions      
-def calc_connectivity_mat(data, edge_metric = 'pearson'):
-    assert edge_metric in ['pearson','spearman','MI','abs_pearson','abs_spearman', 'distance'], \
-        'Invalid edge metric passed. Must use "pearson", "spearman", "distance" or "MI"'
+def calc_connectivity_mat(data, edge_metric = 'pearson', **kwargs):
+    """ 
+    Creates a connectivity matrix from a dataframe using a specified metric.
+    Options:
+        pearson
+        abs_pearson
+        spearman
+        distance (distance correlation)
+        MI (mutual information)
+        EBICglasso (graphical lasso from the qgraph package)
+        corauto (from the qgraph package, based on lavcor from lavaan)
+    """
+    assert edge_metric in ['pearson','spearman','MI','EBICglasso', 'corauto', 'abs_pearson','abs_spearman', 'distance'], \
+        'Invalid edge metric passed. Must use "pearson", "spearman", "distance", "EBICglasso", "curauto" or "MI" '
     if edge_metric == 'MI':
         connectivity_matrix = pd.DataFrame(pairwise_MI(data))
     elif edge_metric == 'distance':
         connectivity_matrix = pd.DataFrame(distcorr_mat(data.as_matrix()))
     elif edge_metric == 'EBICglasso':
-        connectivity_matrix, tuning_param = qgraph_cor(data, True)
+        connectivity_matrix, tuning_param = qgraph_cor(data, True, kwargs.get('gamma',0))
         print('Using tuning param %s for EBICglasso' % tuning_param)
     elif edge_metric == 'corauto':
         connectivity_matrix = qgraph_cor(data)
@@ -225,12 +236,13 @@ class Graph_Analysis(object):
             
         """
         assert type(adj) == pd.core.frame.DataFrame
-        self.adj = adj
-        self.plot_adj = plot_adj
+        self.adj = adj.replace(1,0) # remove self edges
+        if plot_adj is not None:
+            self.plot_adj = plot_adj.replace(1,0) # remove self edges
         self.community_alg = community_alg
         self.ref_community = ref_community
         # numpy matrix used for graph functions
-        graph_mat = adj.values
+        graph_mat = self.adj.values
         
         # check if binary
         if set(np.unique(graph_mat))==set([0,1]):
@@ -340,14 +352,16 @@ class Graph_Analysis(object):
             return vertex_color
         
         def set_edges(visual_style):
+            # normalize edges for weight
+            edges = [w/np.max(G.es['weight']) for w in G.es['weight']]
             if 'weight' in G.es.attribute_names():
-                thresholded_weights = [w if abs(w) > display_threshold else 0 for w in G.es['weight']]
+                thresholded_weights = [w if abs(w) > display_threshold else 0 for w in edges]
                 if layout_graph!=None:
                     if min(layout_graph.es['weight'])>0:
-                        thresholded_weights = [w if w > display_threshold else 0 for w in G.es['weight']]
+                        thresholded_weights = [w if w > display_threshold else 0 for w in edges]
                 visual_style['edge_width'] = [abs(w)**2.5*size/300.0 for w in thresholded_weights]
                 if np.sum([e<0 for e in G.es['weight']]) > 0:
-                    visual_style['edge_color'] = [['#3399FF','#696969','#FF6666'][int(np.sign(w)+1)] for w in G.es['weight']]
+                    visual_style['edge_color'] = [['#3399FF','#696969','#FF6666'][int(np.sign(w)+1)] for w in edges]
                 else:
                     visual_style['edge_color'] = '#696969'
             
@@ -440,7 +454,7 @@ class Graph_Analysis(object):
         self.graph_mat = self._graph_to_matrix(G)
         self.node_order = reorder_index
         
-    def set_visual_style(self, layout ='kk', plot_threshold=None, labels='auto'):
+    def set_visual_style(self, layout ='kk',  labels='auto'):
         """
         layout: str: 'kk', 'circle', 'grid' or other igraph layouts, optional
         Determines how the graph is displayed
@@ -448,7 +462,7 @@ class Graph_Analysis(object):
         if layout=='circle':
             self.reorder()
         layout_graph = None
-        if self.plot_adj:
+        if self.plot_adj is not None:
             # check if binary graph
             if set(np.unique(self.plot_adj.values))==set([0,1]):
                 layout_graph = igraph.Graph.Adjacency(self.plot_adj.values.tolist(), mode = 'undirected')

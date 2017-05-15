@@ -1,6 +1,8 @@
 #get utils
-from selfregulation.utils.graph_utils import calc_connectivity_mat, find_intersection, get_fully_connected_threshold
-from selfregulation.utils.graph_utils import  Graph_Analysis, threshold_proportional_sign
+from selfregulation.utils.graph_utils import calc_connectivity_mat, \
+    find_intersection, get_fully_connected_threshold
+from selfregulation.utils.graph_utils import  Graph_Analysis, threshold, \
+    threshold_proportional_sign
 from selfregulation.utils.plot_utils import dendroheatmap
 from selfregulation.utils.utils import get_behav_data
 
@@ -18,28 +20,76 @@ graph_data = get_behav_data(file = 'taskdata_imputed.csv')
 # ************ Connectivity Matrix *******************
 # ************************************
 
-spearman_connectivity = calc_connectivity_mat(graph_data, edge_metric = 'spearman')
+spearman_connectivity = calc_connectivity_mat(graph_data, 
+                                              edge_metric = 'spearman')
 distance_connectivity = calc_connectivity_mat(graph_data, edge_metric = 'distance')
+gamma = 0
+glasso_connectivity = calc_connectivity_mat(graph_data, 
+                                            edge_metric = 'EBICglasso',
+                                            gamma=gamma)
 
 print('Finished creating connectivity matrices')
+
+# ***************************************************
+# ********* Distribution of Edges *******************
+# ***************************************************
+edge_mats = [{'name': 'spearman', 'vals': spearman_connectivity},
+             {'name': 'distance', 'vals': distance_connectivity},
+             {'name': 'glasso', 'vals': glasso_connectivity}]
+fig = sns.plt.figure(figsize=[12,8])
+fig.suptitle('Distribution of Edge Weights', size='x-large')
+for i,mat in enumerate(edge_mats):
+    sns.plt.subplot(1,3,i+1)
+    sns.plt.hist(mat['vals'].replace(1,0).values.flatten(), bins =100)
+    sns.plt.title(mat['name'])
+sns.plt.tight_layout()
+sns.plt.subplots_adjust(top=0.85)
+
 # ************************************
 # ********* Heatmaps *******************
 # ************************************
 # dendrogram heatmap
-fig, column_order = dendroheatmap(spearman_connectivity, labels = True)
+fig, column_order = dendroheatmap(glasso_connectivity, labels = True)
 
 # ************************************
 # ********* Graphs *******************
 # ************************************
-# signed spearman graph
-thresholds = get_fully_connected_threshold(spearman_connectivity)
+seed = 1337
+# glasso graph
+adj = glasso_connectivity
+thresholds = get_fully_connected_threshold(adj)
 plot_t = thresholds['proportional']
-spearman_connectivity = threshold_proportional_sign(spearman_connectivity.values, plot_t)
+plot_adj = threshold(adj,
+                     threshold_func = threshold_proportional_sign,
+                     threshold = plot_t)
 
 GA = Graph_Analysis()
-GA.setup(adj = spearman_connectivity,
+GA.setup(adj = adj,
          community_alg = bct.modularity_louvain_und_sign)
-seed = 1337
+GA.calculate_communities(seed=seed)
+GA.set_visual_style(layout='circle')
+GA.display()
+
+
+subgraph_GA = GA.return_subgraph_analysis(community=5)
+subgraph_GA.calculate_communities()
+subgraph_GA.set_visual_style(layout='circle')
+subgraph_GA.display()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 gamma = np.arange(0,3,.2)
 mod_scores = []
 layout = None
