@@ -4,30 +4,32 @@ from selfregulation.utils.graph_utils import get_adj, \
 from selfregulation.utils.graph_utils import  Graph_Analysis, threshold, \
     threshold_proportional_sign
 from selfregulation.utils.plot_utils import dendroheatmap
-from selfregulation.utils.utils import get_behav_data
+from selfregulation.utils.utils import get_behav_data, get_info
 
 import bct
 import igraph
 import numpy as np
+from os.path import join, exists
+from os import makedirs
 import pandas as pd
 import seaborn as sns
 
+# generic variables
+save_plots = False
+plot_dir = join(get_info('base_directory'),'dimensional_structure','Plots')
+
 # get dependent variables
-graph_data = get_behav_data(file = 'taskdata_imputed.csv')
-    
+graph_data = get_behav_data(file = 'taskdata_imputed.csv')  
 
-# ************************************
+# ****************************************************
 # ************ Connectivity Matrix *******************
-# ************************************
+# ****************************************************
 
-spearman_connectivity = get_adj(graph_data, 
-                                              edge_metric = 'spearman')
-distance_connectivity = get_adj(graph_data, 
-                                              edge_metric = 'distance')
+spearman_connectivity = get_adj(graph_data, edge_metric = 'spearman')
+distance_connectivity = get_adj(graph_data, edge_metric = 'distance')
 gamma = 0
-glasso_connectivity = get_adj(graph_data, 
-                                            edge_metric = 'EBICglasso',
-                                            gamma=gamma)
+glasso_connectivity = get_adj(graph_data, edge_metric = 'EBICglasso',
+                              gamma=gamma)
 
 print('Finished creating connectivity matrices')
 
@@ -45,22 +47,35 @@ for i,mat in enumerate(edge_mats):
     sns.plt.title(mat['name'])
 sns.plt.tight_layout()
 sns.plt.subplots_adjust(top=0.85)
+if save_plots: fig.savefig(join(plot_dir,'connectivity_distributions.pdf'),
+                           bbox_inches='tight')
 
+# ***************************************
+# ********* Select Connectivity Matrix **
+# ***************************************
+connectivity_matrix = edge_mats[2] # use glasso connectivity
+adj_name = connectivity_matrix['name']
+adj = connectivity_matrix['vals']
+# if saving plots, make sure directory exists
+if save_plots: 
+    makedirs(join(plot_dir,adj_name), exist_ok=True)
+    
 # ************************************
 # ********* Heatmaps *******************
 # ************************************
 # dendrogram heatmap
-fig, column_order = dendroheatmap(glasso_connectivity, labels = True)
+fig, column_order = dendroheatmap(adj, labels = True)
+if save_plots: fig.savefig(join(plot_dir,adj_name,'dendroheatmap.pdf'),
+                           bbox_inches='tight')
 
 # ************************************
 # ********* Graphs *******************
 # ************************************
 seed = 1337
 community_alg = bct.modularity_louvain_und_sign
-adj = glasso_connectivity
 # exclude variables with no correlations with the rest of the graph
 adj = remove_island_variables(adj)
-
+        
 # create graph object
 GA = Graph_Analysis()
 GA.setup(adj = adj,
@@ -83,9 +98,13 @@ for g in gamma:
     reference = GA.G.vs['community']
     communities.append(reference)
 
+# plot modularity index vs gamma
+fig = sns.plt.figure()
 sns.plt.plot(gamma,mod_scores,'o-')
 sns.plt.xlabel('Gamma')
 sns.plt.ylabel('Modularity')
+if save_plots: fig.savefig(join(plot_dir,adj_name,'gamma_vs_modularity.pdf'),
+                           bbox_inches='tight')
 
 # calculate the mean number of nodes in each community for each gamma value
 size_per_gamma = []
@@ -96,21 +115,36 @@ for comm in communities:
     nodes_per_comm = [i for i in nodes_per_comm if i!=1]
     size_per_gamma+=[np.mean(nodes_per_comm)]
      
-                            
+fig = sns.plt.figure()                       
 sns.plt.plot(gamma, [np.max(c) for c in communities], 'o-', 
                      label='# Communities')
 sns.plt.plot(gamma, size_per_gamma, 'o-', 
              label='Mean Size of Communities')
 sns.plt.legend()
+sns.plt.xlabel('Gamma')
+if save_plots: fig.savefig(join(plot_dir,adj_name,'community_stats.pdf'),
+                           bbox_inches='tight')
 
 # use best gamma
 best_gamma = gamma[np.argmax(mod_scores)]
-GA.calculate_communities(gamma=best_gamma, seed=seed)
-GA.set_visual_style(layout='kk',plot_adj=True)
-GA.display()
+GA.calculate_communities(gamma=best_gamma, seed=seed, reorder=True)
+
+# plot communities of graph in dendrohistogram
+fig = sns.plt.figure(figsize=[20,16])
+sns.heatmap(GA.graph_to_dataframe(GA.G),square=True)
+if save_plots: fig.savefig(join(plot_dir,adj_name,'graph_community_heatmap.pdf'),
+                           bbox_inches='tight')
                    
-                   
-                   
+# plot graph
+layout='circle'
+GA.set_visual_style(layout=layout,plot_adj=True)
+if save_plots: GA.display(print_options = {'file': join(plot_dir, adj_name,
+                                                        '%s_%s_graph.txt' % 
+                                                        (best_gamma, layout))}, 
+                          plot_options = {'inline': False, 
+                                          'target': join(plot_dir, adj_name,
+                                                        '%s_%s_graph.pdf' % 
+                                                        (best_gamma, layout))})        
 
 subgraph_GA = GA.return_subgraph_analysis(community=3)
 subgraph_GA.calculate_communities()
