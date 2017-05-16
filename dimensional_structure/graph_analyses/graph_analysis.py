@@ -1,6 +1,6 @@
 #get utils
-from selfregulation.utils.graph_utils import calc_connectivity_mat, \
-    find_intersection, get_fully_connected_threshold
+from selfregulation.utils.graph_utils import get_adj, \
+    find_intersection, get_fully_connected_threshold, remove_island_variables
 from selfregulation.utils.graph_utils import  Graph_Analysis, threshold, \
     threshold_proportional_sign
 from selfregulation.utils.plot_utils import dendroheatmap
@@ -20,11 +20,12 @@ graph_data = get_behav_data(file = 'taskdata_imputed.csv')
 # ************ Connectivity Matrix *******************
 # ************************************
 
-spearman_connectivity = calc_connectivity_mat(graph_data, 
+spearman_connectivity = get_adj(graph_data, 
                                               edge_metric = 'spearman')
-distance_connectivity = calc_connectivity_mat(graph_data, edge_metric = 'distance')
+distance_connectivity = get_adj(graph_data, 
+                                              edge_metric = 'distance')
 gamma = 0
-glasso_connectivity = calc_connectivity_mat(graph_data, 
+glasso_connectivity = get_adj(graph_data, 
                                             edge_metric = 'EBICglasso',
                                             gamma=gamma)
 
@@ -55,42 +56,18 @@ fig, column_order = dendroheatmap(glasso_connectivity, labels = True)
 # ********* Graphs *******************
 # ************************************
 seed = 1337
-# glasso graph
+community_alg = bct.modularity_louvain_und_sign
 adj = glasso_connectivity
-thresholds = get_fully_connected_threshold(adj)
-plot_t = thresholds['proportional']
-plot_adj = threshold(adj,
-                     threshold_func = threshold_proportional_sign,
-                     threshold = plot_t)
+# exclude variables with no correlations with the rest of the graph
+adj = remove_island_variables(adj)
 
+# create graph object
 GA = Graph_Analysis()
 GA.setup(adj = adj,
-         community_alg = bct.modularity_louvain_und_sign)
-GA.calculate_communities(seed=seed)
-GA.set_visual_style(layout='circle')
-GA.display()
+         community_alg = community_alg)
 
-
-subgraph_GA = GA.return_subgraph_analysis(community=5)
-subgraph_GA.calculate_communities()
-subgraph_GA.set_visual_style(layout='circle')
-subgraph_GA.display()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-gamma = np.arange(0,3,.2)
+# search for ideal gamma value
+gamma = np.arange(0,3,.1)
 mod_scores = []
 layout = None
 reference=None
@@ -101,59 +78,55 @@ for g in gamma:
         layout='circle'
     mod = GA.calculate_communities(gamma=g, seed=seed)
     mod_scores.append(mod)
-    #GA.set_visual_style(layout=layout, plot_threshold = plot_t)
-    #GA.display()
     if reference!=None:
         intersections.append(find_intersection(GA.G.vs['community'], reference))
     reference = GA.G.vs['community']
     communities.append(reference)
 
-sns.plt.plot(gamma,mod_scores)
-sns.plt.plot(gamma, [np.max(c) for c in communities])
+sns.plt.plot(gamma,mod_scores,'o-')
+sns.plt.xlabel('Gamma')
+sns.plt.ylabel('Modularity')
 
-subgraph_GA = GA.return_subgraph_analysis()
+# calculate the mean number of nodes in each community for each gamma value
+size_per_gamma = []
+# iterative over communities identified with different gammas
+for comm in communities: 
+    nodes_per_comm=[np.sum(np.equal(c,comm)) for c in range(1,np.max(comm)+1)]
+    # exclude signle communities, following Ashourvan et al. 2017
+    nodes_per_comm = [i for i in nodes_per_comm if i!=1]
+    size_per_gamma+=[np.mean(nodes_per_comm)]
+     
+                            
+sns.plt.plot(gamma, [np.max(c) for c in communities], 'o-', 
+                     label='# Communities')
+sns.plt.plot(gamma, size_per_gamma, 'o-', 
+             label='Mean Size of Communities')
+sns.plt.legend()
+
+# use best gamma
+best_gamma = gamma[np.argmax(mod_scores)]
+GA.calculate_communities(gamma=best_gamma, seed=seed)
+GA.set_visual_style(layout='kk',plot_adj=True)
+GA.display()
+                   
+                   
+                   
+
+subgraph_GA = GA.return_subgraph_analysis(community=3)
 subgraph_GA.calculate_communities()
-subgraph_GA.set_visual_style(layout='circle')
+subgraph_GA.set_visual_style(layout='kk', plot_adj=True)
 subgraph_GA.display()
 
 
 
 
+
+
+
+
+
+
     
-# distance graph
-thresholds = get_fully_connected_threshold(spearman_connectivity)
-plot_t = thresholds['proportional']
-spearman_connectivity = threshold(spearman_connectivity,
-                                  threshold_func = threshold_proportional_sign,
-                                  threshold = plot_t)
-
-GA = Graph_Analysis()
-GA.setup(data = spearman_connectivity,
-         thresh_func = threshold_proportional_sign,
-         community_alg = bct.modularity_louvain_und_sign)
-GA.calculate_communities()
-GA.set_visual_style(layout='circle', plot_threshold = plot_t)
-GA.display()
-
-
-
-# signed graph
-t = 1
-thresholds = get_fully_connected_threshold(spearman_connectivity)
-plot_t = thresholds['proportional']
-t_f = bct.threshold_proportional
-c_a = bct.modularity_louvain_und                                           
-
-# circle layout                                                  
-G_spearman, connectivity_mat, visual_style = Graph_Analysis(spearman_connectivity, community_alg = c_a, thresh_func = t_f,
-                                                     reorder = False, threshold = t,  layout = 'kk', 
-                                                     plot_threshold = plot_t, print_options = {'lookup': {}}, 
-                                                    plot_options = {'inline': False})
-# signed graph
-t = 1
-t_f = threshold_proportional_sign
-c_a = bct.modularity_louvain_und_sign                                               
-
 # circle layout                                                  
 G_spearman, connectivity_mat, visual_style = Graph_Analysis(spearman_connectivity, community_alg = c_a, thresh_func = t_f,
                                                      reorder = True, threshold = t,  layout = 'circle', 
