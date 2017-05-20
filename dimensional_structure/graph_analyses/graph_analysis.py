@@ -21,6 +21,98 @@ plot_dir = join(get_info('base_directory'),'dimensional_structure','Plots')
 # get dependent variables
 graph_data = get_behav_data(file = 'taskdata_imputed.csv')  
 
+
+
+def run_graph_analysis(adj_dict, save_plots=False):
+    """
+    Takes in a dictionary with two keys: "name" and "adj", specifying
+    an adjacency matrix (as a dataframe) and its corresponding name
+    """
+    def plot_name(name):
+        return join(plot_dir,adj_name,name)
+        
+    adj_name = adj_dict['name']
+    adj = adj_dict['adj']
+    # if saving plots, make sure directory exists
+    if save_plots: 
+        makedirs(join(plot_dir,adj_name), exist_ok=True)
+        
+    # ************************************
+    # ********* Heatmaps *******************
+    # ************************************
+    # dendrogram heatmap
+    fig, column_order = dendroheatmap(adj, labels = True)
+    if save_plots: fig.savefig(plot_name('dendroheatmap.pdf'),
+                               bbox_inches='tight')
+    
+    # ************************************
+    # ********* Graphs *******************
+    # ************************************
+    seed = 1337
+    community_alg = bct.modularity_louvain_und_sign
+    # exclude variables with no correlations with the rest of the graph
+    adj = remove_island_variables(adj)
+            
+    # create graph object
+    GA = Graph_Analysis()
+    GA.setup(adj = adj,
+             community_alg = community_alg)
+    
+    # search for ideal gamma value
+    gamma = np.arange(0,3,.1)
+    mod_scores = []
+    layout = None
+    reference=None
+    intersections = []
+    communities = []
+    for g in gamma:
+        if layout==None:
+            layout='circle'
+        mod = GA.calculate_communities(gamma=g, seed=seed)
+        mod_scores.append(mod)
+        if reference!=None:
+            intersections.append(find_intersection(GA.G.vs['community'],
+                                                   reference))
+        reference = GA.G.vs['community']
+        communities.append(reference)
+    
+    # plot modularity index vs gamma
+    fig = sns.plt.figure()
+    sns.plt.plot(gamma,mod_scores,'o-')
+    sns.plt.xlabel('Gamma')
+    sns.plt.ylabel('Modularity')
+    if save_plots: fig.savefig(plot_name('gamma_vs_modularity.pdf'),
+                                bbox_inches='tight')
+    
+    # calculate the mean number of nodes in each community for each gamma value
+    size_per_gamma = []
+    # iterative over communities identified with different gammas
+    for comm in communities: 
+        nodes_per_comm=[np.sum(np.equal(c,comm)) 
+                        for c in range(1,np.max(comm)+1)]
+        # exclude signle communities, following Ashourvan et al. 2017
+        nodes_per_comm = [i for i in nodes_per_comm if i!=1]
+        size_per_gamma+=[np.mean(nodes_per_comm)]
+         
+    fig = sns.plt.figure()                       
+    sns.plt.plot(gamma, [np.max(c) for c in communities], 'o-', 
+                         label='# Communities')
+    sns.plt.plot(gamma, size_per_gamma, 'o-', 
+                 label='Mean Size of Communities')
+    sns.plt.legend()
+    sns.plt.xlabel('Gamma')
+    if save_plots: fig.savefig(plot_name('community_stats.pdf'),
+                               bbox_inches='tight')
+    
+    # use best gamma
+    best_gamma = gamma[np.argmax(mod_scores)]
+    GA.calculate_communities(gamma=best_gamma, seed=seed, reorder=True)
+    
+    # plot communities of graph in dendrohistogram
+    fig = sns.plt.figure(figsize=[20,16])
+    sns.heatmap(GA.graph_to_dataframe(GA.G),square=True)
+    if save_plots: fig.savefig(plot_name('graph_community_heatmap.pdf'),
+                               bbox_inches='tight')
 # ****************************************************
 # ************ Connectivity Matrix *******************
 # ****************************************************
@@ -36,14 +128,14 @@ print('Finished creating connectivity matrices')
 # ***************************************************
 # ********* Distribution of Edges *******************
 # ***************************************************
-edge_mats = [{'name': 'spearman', 'vals': spearman_connectivity},
-             {'name': 'distance', 'vals': distance_connectivity},
-             {'name': 'glasso', 'vals': glasso_connectivity}]
+edge_mats = [{'name': 'spearman', 'adj': spearman_connectivity},
+             {'name': 'distance', 'adj': distance_connectivity},
+             {'name': 'glasso', 'adj': glasso_connectivity}]
 fig = sns.plt.figure(figsize=[12,8])
 fig.suptitle('Distribution of Edge Weights', size='x-large')
 for i,mat in enumerate(edge_mats):
     sns.plt.subplot(1,3,i+1)
-    sns.plt.hist(mat['vals'].replace(1,0).values.flatten(), bins =100)
+    sns.plt.hist(mat['adj'].replace(1,0).values.flatten(), bins =100)
     sns.plt.title(mat['name'])
 sns.plt.tight_layout()
 sns.plt.subplots_adjust(top=0.85)
@@ -53,106 +145,39 @@ if save_plots: fig.savefig(join(plot_dir,'connectivity_distributions.pdf'),
 # ***************************************
 # ********* Select Connectivity Matrix **
 # ***************************************
-connectivity_matrix = edge_mats[2] # use glasso connectivity
-adj_name = connectivity_matrix['name']
-adj = connectivity_matrix['vals']
-# if saving plots, make sure directory exists
-if save_plots: 
-    makedirs(join(plot_dir,adj_name), exist_ok=True)
+for adj_dict in edge_mats:
+    run_graph_analysis(adj_dict, True)
     
-# ************************************
-# ********* Heatmaps *******************
-# ************************************
-# dendrogram heatmap
-fig, column_order = dendroheatmap(adj, labels = True)
-if save_plots: fig.savefig(join(plot_dir,adj_name,'dendroheatmap.pdf'),
-                           bbox_inches='tight')
 
-# ************************************
-# ********* Graphs *******************
-# ************************************
-seed = 1337
-community_alg = bct.modularity_louvain_und_sign
-# exclude variables with no correlations with the rest of the graph
-adj = remove_island_variables(adj)
-        
-# create graph object
-GA = Graph_Analysis()
-GA.setup(adj = adj,
-         community_alg = community_alg)
 
-# search for ideal gamma value
-gamma = np.arange(0,3,.1)
-mod_scores = []
-layout = None
-reference=None
-intersections = []
-communities = []
-for g in gamma:
-    if layout==None:
-        layout='circle'
-    mod = GA.calculate_communities(gamma=g, seed=seed)
-    mod_scores.append(mod)
-    if reference!=None:
-        intersections.append(find_intersection(GA.G.vs['community'], reference))
-    reference = GA.G.vs['community']
-    communities.append(reference)
 
-# plot modularity index vs gamma
-fig = sns.plt.figure()
-sns.plt.plot(gamma,mod_scores,'o-')
-sns.plt.xlabel('Gamma')
-sns.plt.ylabel('Modularity')
-if save_plots: fig.savefig(join(plot_dir,adj_name,'gamma_vs_modularity.pdf'),
-                           bbox_inches='tight')
 
-# calculate the mean number of nodes in each community for each gamma value
-size_per_gamma = []
-# iterative over communities identified with different gammas
-for comm in communities: 
-    nodes_per_comm=[np.sum(np.equal(c,comm)) for c in range(1,np.max(comm)+1)]
-    # exclude signle communities, following Ashourvan et al. 2017
-    nodes_per_comm = [i for i in nodes_per_comm if i!=1]
-    size_per_gamma+=[np.mean(nodes_per_comm)]
-     
-fig = sns.plt.figure()                       
-sns.plt.plot(gamma, [np.max(c) for c in communities], 'o-', 
-                     label='# Communities')
-sns.plt.plot(gamma, size_per_gamma, 'o-', 
-             label='Mean Size of Communities')
-sns.plt.legend()
-sns.plt.xlabel('Gamma')
-if save_plots: fig.savefig(join(plot_dir,adj_name,'community_stats.pdf'),
-                           bbox_inches='tight')
 
-# use best gamma
-best_gamma = gamma[np.argmax(mod_scores)]
-GA.calculate_communities(gamma=best_gamma, seed=seed, reorder=True)
 
-# plot communities of graph in dendrohistogram
-fig = sns.plt.figure(figsize=[20,16])
-sns.heatmap(GA.graph_to_dataframe(GA.G),square=True)
-if save_plots: fig.savefig(join(plot_dir,adj_name,'graph_community_heatmap.pdf'),
-                           bbox_inches='tight')
-                   
+
+
+
+
+
+
+
+
+"""               
 # plot graph
 layout='circle'
 GA.set_visual_style(layout=layout,plot_adj=True)
-if save_plots: GA.display(print_options = {'file': join(plot_dir, adj_name,
-                                                        '%s_%s_graph.txt' % 
-                                                        (best_gamma, layout))}, 
-                          plot_options = {'inline': False, 
-                                          'target': join(plot_dir, adj_name,
-                                                        '%s_%s_graph.pdf' % 
-                                                        (best_gamma, layout))})        
+if save_plots: GA.display(print_options={'file': join(plot_dir, adj_name,
+                                                      'gamma_%s_%s_graph.txt'
+                                                      % (best_gamma, layout))}, 
+                          plot_options={'inline': False, 
+                                        'target': join(plot_dir, adj_name,
+                                                       'gamma_%s_%s_graph.pdf'
+                                                       % (best_gamma, layout))})        
 
 subgraph_GA = GA.return_subgraph_analysis(community=3)
 subgraph_GA.calculate_communities()
 subgraph_GA.set_visual_style(layout='kk', plot_adj=True)
 subgraph_GA.display()
-
-
-
 
 
 
@@ -245,10 +270,7 @@ print_community_members(subgraph)
 subgraph_visual_style = get_visual_style(subgraph, vertex_size = 'eigen_centrality')
 plot_graph(subgraph, visual_style = subgraph_visual_style, layout = 'circle', inline = False)
 
-
-
-
-
+"""
 
 
 
