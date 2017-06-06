@@ -1,3 +1,4 @@
+import argparse
 from expanalysis.experiments.jspsych import calc_time_taken, get_post_task_responses
 from expanalysis.experiments.processing import post_process_data
 from expanalysis.results import get_filters
@@ -10,13 +11,14 @@ from selfregulation.utils.data_preparation_utils import anonymize_data, \
     quality_check_correction, remove_failed_subjects
 from selfregulation.utils.utils import get_info
 
-# Fix Python 2.x.
-try: input = raw_input
-except NameError: pass
-    
+parser = argparse.ArgumentParser(description='fMRI Analysis Entrypoint Script.')
+parser.add_argument('--job', help='Specifies what part of the script to run. Options: download, extras, post, all").', default='post')
+parser.add_argument('--sample', help='Specifies what part of the script to run. Options: download, extras, post, all").', nargs='+', default=['discovery', 'validation', 'incomplete'])
+
 # get options
-job = input('Type "download", "extras", "post", or "all": ')
-sample = ['discovery', 'validation', 'incomplete']
+args = parser.parse_args()
+job = args.job
+sample = args.sample
 
 #load Data
 token = get_info('expfactory_token')
@@ -26,6 +28,7 @@ except Exception:
     data_dir=path.join(get_info('base_directory'),'Data')
 
 if job == 'download' or job == "all":
+	print('Beginning "Download"')
     #***************************************************
     # ********* Load Data **********************
     #**************************************************        
@@ -48,6 +51,7 @@ if job == 'download' or job == "all":
     data.reset_index(drop = True, inplace = True)
     
 if job in ['extras', 'all']:
+	print('Beginning "Extras"')
     #Process Data
     if job == "extras":
         #load Data
@@ -78,6 +82,7 @@ if job in ['extras', 'all']:
     print('Finished saving worker pay')
     
 if job in ['post', 'all']:
+	print('Beginning "Post"')
     #Process Data
     if job == "post":
         data = pd.read_json(path.join(data_dir, 'mturk_data_extras.json'))
@@ -95,6 +100,7 @@ if job in ['post', 'all']:
     # preprocess extras
     # only get extra data
     extra_data = data.query('worker_id in %s' % extra_sample).reset_index(drop = True)
+    print('Post process extra data')
     post_process_data(extra_data)
     failures = remove_failed_subjects(extra_data)
     failed_data = pd.concat([failed_data,failures])
@@ -103,6 +109,7 @@ if job in ['post', 'all']:
     
     # preprocess and save each sample individually
     if 'discovery' in sample:
+    	print('Post process discovery data')
         # only get discovery data
         discovery_data = data.query('worker_id in %s' % discovery_sample).reset_index(drop = True)
         post_process_data(discovery_data)
@@ -126,6 +133,7 @@ if job in ['post', 'all']:
         print('Finished saving raw discovery data')
         
     if 'validation' in sample:
+    	print('Post process validation data')
         # only get validation data
         validation_data = data.query('worker_id in %s' % validation_sample).reset_index(drop = True)
         post_process_data(validation_data)
@@ -143,6 +151,7 @@ if job in ['post', 'all']:
         print('Finished saving raw validation data')
         
     if 'incomplete' in sample:
+    	print('Post process incomplete data')
         # only get incomplete data
         incomplete_data = data.query('worker_id not in %s' % (validation_sample + discovery_sample + extra_sample)).reset_index(drop = True)
         post_process_data(incomplete_data)
