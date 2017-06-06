@@ -28,7 +28,7 @@ except Exception:
     data_dir=path.join(get_info('base_directory'),'Data')
 
 if job == 'download' or job == "all":
-	print('Beginning "Download"')
+    print('Beginning "Download"')
     #***************************************************
     # ********* Load Data **********************
     #**************************************************        
@@ -51,7 +51,7 @@ if job == 'download' or job == "all":
     data.reset_index(drop = True, inplace = True)
     
 if job in ['extras', 'all']:
-	print('Beginning "Extras"')
+    print('Beginning "Extras"')
     #Process Data
     if job == "extras":
         #load Data
@@ -82,7 +82,7 @@ if job in ['extras', 'all']:
     print('Finished saving worker pay')
     
 if job in ['post', 'all']:
-	print('Beginning "Post"')
+    print('Beginning "Post"')
     #Process Data
     if job == "post":
         data = pd.read_json(path.join(data_dir, 'mturk_data_extras.json'))
@@ -109,7 +109,7 @@ if job in ['post', 'all']:
     
     # preprocess and save each sample individually
     if 'discovery' in sample:
-    	print('Post process discovery data')
+        print('Post process discovery data')
         # only get discovery data
         discovery_data = data.query('worker_id in %s' % discovery_sample).reset_index(drop = True)
         post_process_data(discovery_data)
@@ -133,7 +133,7 @@ if job in ['post', 'all']:
         print('Finished saving raw discovery data')
         
     if 'validation' in sample:
-    	print('Post process validation data')
+        print('Post process validation data')
         # only get validation data
         validation_data = data.query('worker_id in %s' % validation_sample).reset_index(drop = True)
         post_process_data(validation_data)
@@ -151,7 +151,7 @@ if job in ['post', 'all']:
         print('Finished saving raw validation data')
         
     if 'incomplete' in sample:
-    	print('Post process incomplete data')
+        print('Post process incomplete data')
         # only get incomplete data
         incomplete_data = data.query('worker_id not in %s' % (validation_sample + discovery_sample + extra_sample)).reset_index(drop = True)
         post_process_data(incomplete_data)
