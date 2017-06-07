@@ -150,7 +150,8 @@ def convert_var_names(to_convert):
             return  [inverse_lookup.loc[c] if c in inverse_lookup.index else c for c in to_convert]
             
     
-def download_data(data_loc, access_token = None, filters = None, battery = None, save = True, url = None, file_name=None):
+def download_data(data_loc, access_token = None, filters = None, 
+                  battery = None, save = True, url = None, file_name=None):
     start_time = time()
     #Load Results from Database
     results = Result(access_token, filters = filters, url = url)
@@ -173,7 +174,10 @@ def download_data(data_loc, access_token = None, filters = None, battery = None,
     if save == True:
         if file_name == None:
             file_name = 'mturk_data.json'
-        data.to_json(os.path.join(data_loc,file_name))
+        if file_name[-4:] == 'json':
+            data.to_json(os.path.join(data_loc,file_name))
+        elif file_name[-3:] == 'pkl':
+            data.to_pickle(os.path.join(data_loc,file_name))
         print('Finished saving')
     
     finish_time = (time() - start_time)/60

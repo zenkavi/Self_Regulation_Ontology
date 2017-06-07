@@ -34,7 +34,7 @@ for label in data_labels:
     directory = path.join(data_dir,label.lstrip('mturk_').title() + '_' + date)
     if not path.exists(directory):
         makedirs(directory)
-    data = pd.read_json(path.join(local_dir,label + '_data_post.json')).reset_index(drop = True)
+    data = pd.read_pickle(path.join(local_dir,label + '_data_post.pkl')).reset_index(drop = True)
     try:
         DVs = pd.read_json(path.join(local_dir,label + '_DV.json'))
         DVs_valence = pd.read_json(path.join(local_dir,label + '_DV_valence.json'))
