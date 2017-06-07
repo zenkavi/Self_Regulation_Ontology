@@ -47,7 +47,8 @@ if job == 'download' or job == "all":
     #load Data
     f = open(token)
     access_token = f.read().strip()  
-    data = download_data(data_dir, access_token, filters = filters,  battery = 'Self Regulation Battery')
+    data = download_data(data_dir, access_token, filters = filters,  
+    	battery = 'Self Regulation Battery', file_name = 'mturk_data.pkl')
     data.reset_index(drop = True, inplace = True)
     
 if job in ['extras', 'all']:
@@ -55,7 +56,7 @@ if job in ['extras', 'all']:
     #Process Data
     if job == "extras":
         #load Data
-        data = pd.read_json(path.join(data_dir, 'mturk_data.json'))
+        data = pd.read_pickle(path.join(data_dir, 'mturk_data.pkl'))
         data.reset_index(drop = True, inplace = True)
         print('Finished loading raw data')
     
@@ -74,7 +75,7 @@ if job in ['extras', 'all']:
     calc_trial_order(data)
     
     # save data
-    data.to_json(path.join(data_dir, 'mturk_data_extras.json'))
+    data.to_pickle(path.join(data_dir, 'mturk_data_extras.pkl'))
     
     # calculate pay
     pay = get_pay(data)
@@ -85,7 +86,7 @@ if job in ['post', 'all']:
     print('Beginning "Post"')
     #Process Data
     if job == "post":
-        data = pd.read_json(path.join(data_dir, 'mturk_data_extras.json'))
+        data = pd.read_pickle(path.join(data_dir, 'mturk_data_extras.pkl'))
         data.reset_index(drop = True, inplace = True)
         print('Finished loading raw data')
     
@@ -125,11 +126,11 @@ if job in ['post', 'all']:
             extra_workers = np.sort(extra_data.worker_id.unique())
         # correct for bugged stop signal quality correction
         quality_check_correction(discovery_data)
-        discovery_data.to_json(path.join(data_dir,'mturk_discovery_data_post.json'))
+        discovery_data.to_pickle(path.join(data_dir,'mturk_discovery_data_post.pkl'))
         print('Finished saving post-processed discovery data')
         # save raw data
         discovery_raw = data.query('worker_id in %s' % list(discovery_data.worker_id.unique())).reset_index(drop = True)
-        discovery_raw.to_json(path.join(data_dir,'mturk_discovery_data_raw.json'))
+        discovery_raw.to_pickle(path.join(data_dir,'mturk_discovery_data_raw.pkl'))
         print('Finished saving raw discovery data')
         
     if 'validation' in sample:
@@ -143,11 +144,11 @@ if job in ['post', 'all']:
         validation_data = pd.concat([validation_data, extra_data]).reset_index(drop = True)
         # correct for bugged stop signal quality correction
         quality_check_correction(validation_data)
-        validation_data.to_json(path.join(data_dir,'mturk_validation_data_post.json'))
+        validation_data.to_pickle(path.join(data_dir,'mturk_validation_data_post.pkl'))
         print('Finished saving post-processed validation data')
         # save raw data
         validation_raw = data.query('worker_id in %s' % list(validation_data.worker_id.unique())).reset_index(drop = True)
-        validation_raw.to_json(path.join(data_dir,'mturk_validation_data_raw.json'))
+        validation_raw.to_pickle(path.join(data_dir,'mturk_validation_data_raw.pkl'))
         print('Finished saving raw validation data')
         
     if 'incomplete' in sample:
@@ -155,13 +156,13 @@ if job in ['post', 'all']:
         # only get incomplete data
         incomplete_data = data.query('worker_id not in %s' % (validation_sample + discovery_sample + extra_sample)).reset_index(drop = True)
         post_process_data(incomplete_data)
-        incomplete_data.to_json(data_dir + 'mturk_incomplete_data_post.json')
+        incomplete_data.to_pickle(data_dir + 'mturk_incomplete_data_post.pkl')
         print('Finished saving post-processed incomplete data')
     
     # save failed data
     failed_data = failed_data.reset_index(drop = True)
     # correct for bugged stop signal quality correction
     quality_check_correction(failed_data)
-    failed_data.to_json(data_dir + 'mturk_failed_data_post.json')
+    failed_data.to_pickle(data_dir + 'mturk_failed_data_post.pkl')
     print('Finished saving post-processed failed data')
     
