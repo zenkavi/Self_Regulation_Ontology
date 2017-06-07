@@ -23,4 +23,7 @@ batch_files/output
 batch_files/hddm*
 batch_files/previous_models
 *.egg-info
-temp*
+temp
+
+build
+dist*
