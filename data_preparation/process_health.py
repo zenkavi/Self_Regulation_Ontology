@@ -56,14 +56,14 @@ def get_metadata(health_items):
             if itemid in nominalvars:
                 health_dict[itemid]['Nominal']=True
             levelctr=0
-            if itemoptions is not None:
-                for i in itemoptions:
-                    if not 'value' in i:
+            if type(itemoptions) in [list,dict]:
+                for ii in itemoptions:
+                    if not 'value' in ii:
                         value=levelctr
                         levelctr+=1
                     else:
-                        value=i['value']
-                    health_dict[itemid]['Levels'][value]=i['text']
+                        value=ii['value']
+                    health_dict[itemid]['Levels'][value]=ii['text']
     #rename according to more useful names
     health_dict_renamed={}
     for k in health_dict.keys():

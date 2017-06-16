@@ -105,8 +105,8 @@ def save_metadata(survey_items,
             survey_dict[itemid]={}
             survey_dict[itemid]['Description']=r.item_text
             survey_dict[itemid]['Levels']={}
-            for i in itemoptions:
-                survey_dict[itemid]['Levels'][i['value']]=i['text']
+            for ii in itemoptions:
+                survey_dict[itemid]['Levels'][ii['value']]=ii['text']
         with open(os.path.join(outdir,'%s.json'%k), 'w') as outfile:
             json.dump(survey_dict, outfile, sort_keys = True, indent = 4,
                   ensure_ascii=False)
