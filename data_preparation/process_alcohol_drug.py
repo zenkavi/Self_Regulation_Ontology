@@ -71,14 +71,14 @@ def get_metadata(alcohol_drug_items):
             if itemid in nominalvars:
                 alcohol_drug_dict[itemid]['Nominal']=True
             levelctr=0
-            if itemoptions is not None:
-                for i in itemoptions:
-                    if not 'value' in i:
+            if type(itemoptions) in [list,dict]:
+                for ii in itemoptions:
+                    if not 'value' in ii:
                         value=levelctr
                         levelctr+=1
                     else:
-                        value=i['value']
-                    alcohol_drug_dict[itemid]['Levels'][value]=i['text']
+                        value=ii['value']
+                    alcohol_drug_dict[itemid]['Levels'][value]=ii['text']
     #rename according to more useful names
     alcohol_drug_dict_renamed={}
     for k in alcohol_drug_dict.keys():

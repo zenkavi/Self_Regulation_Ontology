@@ -15,7 +15,7 @@ from selfregulation.utils.r_to_py_utils import missForest
 from selfregulation.utils.reference_utils import gen_reference_item_text
 
 #******************************
-#*** Save Data *********
+#*** Save Data ****************
 #******************************
 date = datetime.date.today().strftime("%m-%d-%Y")
 
