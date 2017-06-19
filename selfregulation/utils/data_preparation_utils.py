@@ -5,13 +5,12 @@ from datetime import datetime
 from expanalysis.experiments.processing import extract_row, extract_experiment
 from expanalysis.results import Result
 from expanalysis.experiments.utils import remove_duplicates, result_filter
+from selfregulation.utils.utils import get_info
 import json
 import numpy as np
 import os
 import pandas as pd
 from time import time
-
-
 
 
 #***************************************************
@@ -151,7 +150,8 @@ def convert_var_names(to_convert):
             return  [inverse_lookup.loc[c] if c in inverse_lookup.index else c for c in to_convert]
             
     
-def download_data(data_loc, access_token = None, filters = None, battery = None, save = True, url = None, file_name=None):
+def download_data(data_loc, access_token = None, filters = None, 
+                  battery = None, save = True, url = None, file_name=None):
     start_time = time()
     #Load Results from Database
     results = Result(access_token, filters = filters, url = url)
@@ -174,7 +174,10 @@ def download_data(data_loc, access_token = None, filters = None, battery = None,
     if save == True:
         if file_name == None:
             file_name = 'mturk_data.json'
-        data.to_json(os.path.join(data_loc,file_name))
+        if file_name[-4:] == 'json':
+            data.to_json(os.path.join(data_loc,file_name))
+        elif file_name[-3:] == 'pkl':
+            data.to_pickle(os.path.join(data_loc,file_name))
         print('Finished saving')
     
     finish_time = (time() - start_time)/60
@@ -228,13 +231,13 @@ def get_bonuses(data, mean=10, limit=10):
     workers_finished = data.groupby('worker_id').count().finishtime==63
     index = list(workers_finished[workers_finished].index)
     tmp_data = data.query('worker_id in %s' % index)
-    tmp_bonuses = tmp_data.groupby('worker_id').bonus_zscore.sum()
+    tmp_bonuses = tmp_data.groupby('worker_id').bonus_zscore.mean()
     min_score = tmp_bonuses.min()
     max_score = tmp_bonuses.max()
     num_tasks_bonused = data.groupby('worker_id').bonus_zscore.count()
-    bonuses = data.groupby('worker_id').bonus_zscore.sum()
+    bonuses = data.groupby('worker_id').bonus_zscore.mean()
     bonuses = (bonuses-min_score)/(max_score-min_score)*limit+(mean-limit/2)
-    bonuses = bonuses.map(lambda x: round(x,1))*num_tasks_bonused/7
+    bonuses = bonuses.map(lambda x: round(x,1))*num_tasks_bonused/8
     print('Finished getting bonuses')
     return bonuses
 
@@ -317,11 +320,11 @@ def get_fmri_pay(data):
     exps_not_completed = exps_completed.map(lambda x: list(set(all_exps) - set(x) - set(['selection_optimization_compensation'])))
     completed = exps_completed[exps_completed.map(lambda x: len(x)>=63)]
     not_completed = exps_not_completed[exps_not_completed.map(lambda x: len(x)>0)]
-    # remove stray completions
-    not_completed.loc[[i for i in not_completed.index if 's0' not in i]]
     # calculate time taken
-    task_time = data.groupby('experiment_exp_id').ontask_time.mean()/60+2 # +2 for generic instruction time
-    time_missed = exps_not_completed.map(lambda x: np.sum([task_time[i] if task_time[i]==task_time[i] else 3 for i in x])/60)
+    # get time taken for each task from previous mturk sample
+    time_path = os.path.join(get_info('base_directory'),'references','experiment_lengths.json')
+    task_time = json.load(open(time_path))
+    time_missed = exps_not_completed.map(lambda x: np.sum([task_time[i] if task_time[i] is not None else 3 for i in x])/60)
     # calculate pay
     completed_pay = pd.Series(data = 100, index = completed.index)
     prorate_pay = 100-time_missed[not_completed.index]*10
@@ -356,6 +359,16 @@ def print_time(data, time_col = 'ontask_time'):
     return time
                    
 def quality_check(data):
+    """
+    Checks data to make sure each experiment passed some "gut check" measures
+    Used to exclude data on individual tasks or whole subjects if they fail
+    too many tasks.
+    NOTE: This function has an issue such that it inappropriately evaluates
+    stop signal tasks based on the number of missed responses. Rather than 
+    changing the function (which would affect our samples which are already
+    determined) I am leaving it, and introducing a quality check correction
+    that will be performed after subjects are already rejected
+    """
     start_time = time()
     rt_thresh_lookup = {
         'angling_risk_task_always_sunny': 0,
@@ -479,6 +492,30 @@ def quality_check(data):
     finish_time = (time() - start_time)/60
     print('Finished QC. Time taken: ' + str(finish_time))
 
+def quality_check_correction(data):
+    """
+    This function corrects the issues with the stop signal tasks mentioned above
+    """
+    for exp in ['stop_signal','motor_selective_stop_signal',
+                'stim_selective_stop_signal']:
+        df = extract_experiment(data, exp)
+        rt_thresh = 200
+        acc_thresh = .6
+        missed_thresh = .25
+        response_thresh = .95
+        passed_rt = df.query('rt != -1 and SS_trial_type=="go"').groupby('worker_id').rt.median() >= rt_thresh
+        passed_miss = df.query('SS_trial_type=="go"').groupby('worker_id').rt.agg(lambda x: np.mean(x == -1)) < missed_thresh
+        passed_acc = df.query('rt != -1').groupby('worker_id').correct.mean() >= acc_thresh
+        passed_response = np.logical_not(df.query('rt != -1').groupby('worker_id').key_press.agg(
+                                                lambda x: np.any(pd.value_counts(x) > pd.value_counts(x).sum()*response_thresh))) 
+        passed_df = pd.concat([passed_rt,passed_acc,passed_miss,passed_response], axis = 1).fillna(False, inplace = False)
+        passed = passed_df.all(axis = 1)
+        failed = passed[passed == False]
+        for subj in failed.index:
+            data.loc[(data.experiment_exp_id == exp) & (data.worker_id == subj),'passed_QC'] = False
+        for subj in passed.index:
+            data.loc[(data.experiment_exp_id == exp) & (data.worker_id == subj),'passed_QC'] = True
+    
 def remove_failed_subjects(data):
     if 'passed_QC' not in data.columns:
         quality_check(data)

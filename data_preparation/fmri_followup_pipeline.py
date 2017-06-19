@@ -16,6 +16,8 @@ try:
 except Exception:
     data_dir=path.join(get_info('base_directory'),'Data')
 base_dir = get_info('base_directory')
+local_dir = path.join(data_dir,'Local')
+
 #***************************************************
 # ********* Load Data **********************
 #**************************************************        
@@ -34,7 +36,7 @@ for col in drop_columns:
 #load Data
 f = open(token)
 access_token = f.read().strip()  
-data = download_data(data_dir, access_token, filters = filters,  
+data = download_data(local_dir, access_token, filters = filters,  
                      battery = 'Self Regulation fMRI Battery',
                      url = 'http://www.expfactory.org/new_api/results/63/',
                      file_name = 'fmri_followup_data.json')
@@ -58,7 +60,7 @@ get_post_task_responses(data)
 calc_trial_order(data)
 
 # save data
-data.to_json(path.join(data_dir, 'fmri_followup_data_extras.json'))
+data.to_json(path.join(local_dir, 'fmri_followup_data_extras.json'))
 
 # calculate pay
 pay = get_fmri_pay(data)
@@ -70,4 +72,4 @@ print('Finished saving worker pay')
 #************************************************** 
 
 post_process_data(data)
-data.to_json(path.join(data_dir,'fmri_followup_data_post.json'))
+data.to_json(path.join(local_dir,'fmri_followup_data_post.json'))

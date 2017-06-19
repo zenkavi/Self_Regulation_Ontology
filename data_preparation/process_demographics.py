@@ -64,7 +64,7 @@ def get_metadata(demog_items):
     id_to_name,nominalvars=setup_itemid_dict()
     demog_dict={"MeasurementToolMetadata": {"Description": 'Demographics',
             "TermURL": ''}}
-    for i in demog_items:
+    for i in demog_items.keys():
         r=demog_items[i]
         itemoptions=r.options
         itemid='_'.join(r['id'].split('_')[:3])
@@ -76,14 +76,17 @@ def get_metadata(demog_items):
             demog_dict[itemid]['Nominal']=True
         levelctr=0
 #        if itemoptions is not None:
-        if isinstance(itemoptions, list):
-                for i in itemoptions:
-                    if not 'value' in i:
+#        if isinstance(itemoptions, list):
+#                for i in itemoptions:
+#                    if not 'value' in i:
+        if type(itemoptions) in [list,dict]:
+                for ii in itemoptions:
+                    if not 'value' in ii:
                         value=levelctr
                         levelctr+=1
                     else:
-                        value=i['value']
-                    demog_dict[itemid]['Levels'][value]=i['text']
+                        value=ii['value']
+                    demog_dict[itemid]['Levels'][value]=ii['text']
     #rename according to more useful names
     demog_dict_renamed={}
     for k in demog_dict.keys():

@@ -1,20 +1,24 @@
+import argparse
 from expanalysis.experiments.jspsych import calc_time_taken, get_post_task_responses
-from expanalysis.experiments.processing import post_process_data, extract_DVs
+from expanalysis.experiments.processing import post_process_data
 from expanalysis.results import get_filters
 import json
 import numpy as np
 from os import path
 import pandas as pd
-from selfregulation.utils.data_preparation_utils import anonymize_data, calc_trial_order, convert_date, download_data, get_bonuses, get_pay,  remove_failed_subjects
+from selfregulation.utils.data_preparation_utils import anonymize_data, \
+    calc_trial_order, convert_date, download_data, get_bonuses, get_pay,  \
+    quality_check_correction, remove_failed_subjects
 from selfregulation.utils.utils import get_info
 
-# Fix Python 2.x.
-try: input = raw_input
-except NameError: pass
-    
+parser = argparse.ArgumentParser(description='fMRI Analysis Entrypoint Script.')
+parser.add_argument('--job', help='Specifies what part of the script to run. Options: download, extras, post, all").', default='post')
+parser.add_argument('--sample', help='Specifies what sample to run. Options: "discovery", "validation", "incomplete").', nargs='+', default=['discovery', 'validation', 'incomplete'])
+
 # get options
-job = input('Type "download", "extras", "post", or "all": ')
-sample = ['discovery', 'validation', 'incomplete']
+args = parser.parse_args()
+job = args.job
+sample = args.sample
 
 #load Data
 token = get_info('expfactory_token')
@@ -24,6 +28,7 @@ except Exception:
     data_dir=path.join(get_info('base_directory'),'Data')
 
 if job == 'download' or job == "all":
+    print('Beginning "Download"')
     #***************************************************
     # ********* Load Data **********************
     #**************************************************        
@@ -42,14 +47,16 @@ if job == 'download' or job == "all":
     #load Data
     f = open(token)
     access_token = f.read().strip()  
-    data = download_data(data_dir, access_token, filters = filters,  battery = 'Self Regulation Battery')
+    data = download_data(data_dir, access_token, filters = filters,  
+    	battery = 'Self Regulation Battery', file_name = 'mturk_data.pkl')
     data.reset_index(drop = True, inplace = True)
     
 if job in ['extras', 'all']:
+    print('Beginning "Extras"')
     #Process Data
     if job == "extras":
         #load Data
-        data = pd.read_json(path.join(data_dir, 'mturk_data.json'))
+        data = pd.read_pickle(path.join(data_dir, 'mturk_data.pkl'))
         data.reset_index(drop = True, inplace = True)
         print('Finished loading raw data')
     
@@ -68,7 +75,7 @@ if job in ['extras', 'all']:
     calc_trial_order(data)
     
     # save data
-    data.to_json(path.join(data_dir, 'mturk_data_extras.json'))
+    data.to_pickle(path.join(data_dir, 'mturk_data_extras.pkl'))
     
     # calculate pay
     pay = get_pay(data)
@@ -76,9 +83,10 @@ if job in ['extras', 'all']:
     print('Finished saving worker pay')
     
 if job in ['post', 'all']:
+    print('Beginning "Post"')
     #Process Data
     if job == "post":
-        data = pd.read_json(path.join(data_dir, 'mturk_data_extras.json'))
+        data = pd.read_pickle(path.join(data_dir, 'mturk_data_extras.pkl'))
         data.reset_index(drop = True, inplace = True)
         print('Finished loading raw data')
     
@@ -93,6 +101,7 @@ if job in ['post', 'all']:
     # preprocess extras
     # only get extra data
     extra_data = data.query('worker_id in %s' % extra_sample).reset_index(drop = True)
+    print('Post process extra data')
     post_process_data(extra_data)
     failures = remove_failed_subjects(extra_data)
     failed_data = pd.concat([failed_data,failures])
@@ -101,6 +110,7 @@ if job in ['post', 'all']:
     
     # preprocess and save each sample individually
     if 'discovery' in sample:
+        print('Post process discovery data')
         # only get discovery data
         discovery_data = data.query('worker_id in %s' % discovery_sample).reset_index(drop = True)
         post_process_data(discovery_data)
@@ -114,14 +124,17 @@ if job in ['post', 'all']:
             discovery_data = pd.concat([discovery_data, new_data]).reset_index(drop = True)
             extra_data.drop(new_data.index, inplace = True)
             extra_workers = np.sort(extra_data.worker_id.unique())
-        discovery_data.to_json(path.join(data_dir,'mturk_discovery_data_post.json'))
+        # correct for bugged stop signal quality correction
+        quality_check_correction(discovery_data)
+        discovery_data.to_pickle(path.join(data_dir,'mturk_discovery_data_post.pkl'))
         print('Finished saving post-processed discovery data')
         # save raw data
         discovery_raw = data.query('worker_id in %s' % list(discovery_data.worker_id.unique())).reset_index(drop = True)
-        discovery_raw.to_json(path.join(data_dir,'mturk_discovery_data_raw.json'))
+        discovery_raw.to_pickle(path.join(data_dir,'mturk_discovery_data_raw.pkl'))
         print('Finished saving raw discovery data')
         
     if 'validation' in sample:
+        print('Post process validation data')
         # only get validation data
         validation_data = data.query('worker_id in %s' % validation_sample).reset_index(drop = True)
         post_process_data(validation_data)
@@ -129,22 +142,27 @@ if job in ['post', 'all']:
         failed_data = pd.concat([failed_data,failures])
         # add extra workers to validation dataset
         validation_data = pd.concat([validation_data, extra_data]).reset_index(drop = True)
-        validation_data.to_json(path.join(data_dir,'mturk_validation_data_post.json'))
+        # correct for bugged stop signal quality correction
+        quality_check_correction(validation_data)
+        validation_data.to_pickle(path.join(data_dir,'mturk_validation_data_post.pkl'))
         print('Finished saving post-processed validation data')
         # save raw data
         validation_raw = data.query('worker_id in %s' % list(validation_data.worker_id.unique())).reset_index(drop = True)
-        validation_raw.to_json(path.join(data_dir,'mturk_validation_data_raw.json'))
+        validation_raw.to_pickle(path.join(data_dir,'mturk_validation_data_raw.pkl'))
         print('Finished saving raw validation data')
         
     if 'incomplete' in sample:
+        print('Post process incomplete data')
         # only get incomplete data
         incomplete_data = data.query('worker_id not in %s' % (validation_sample + discovery_sample + extra_sample)).reset_index(drop = True)
         post_process_data(incomplete_data)
-        incomplete_data.to_json(data_dir + 'mturk_incomplete_data_post.json')
+        incomplete_data.to_pickle(data_dir + 'mturk_incomplete_data_post.pkl')
         print('Finished saving post-processed incomplete data')
     
     # save failed data
     failed_data = failed_data.reset_index(drop = True)
-    failed_data.to_json(data_dir + 'mturk_failed_data_post.json')
+    # correct for bugged stop signal quality correction
+    quality_check_correction(failed_data)
+    failed_data.to_pickle(data_dir + 'mturk_failed_data_post.pkl')
     print('Finished saving post-processed failed data')
     

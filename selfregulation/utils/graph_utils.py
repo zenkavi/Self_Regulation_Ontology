@@ -7,6 +7,7 @@ import pandas as pd
 from pprint import pprint
 import seaborn as sns
 from scipy.spatial.distance import pdist, squareform
+from selfregulation.utils.r_to_py_utils import qgraph_cor
 from sklearn.metrics.cluster import normalized_mutual_info_score
 
 #work around for spyder bug in python 3
@@ -107,38 +108,38 @@ def threshold_proportional_sign(W, threshold):
     return W
         
 # community functions      
-def calc_connectivity_mat(data, edge_metric = 'pearson'):
-    assert edge_metric in ['pearson','spearman','MI','abs_pearson','abs_spearman', 'distance'], \
-        'Invalid edge metric passed. Must use "pearson", "spearman", "distance" or "MI"'
+def get_adj(data, edge_metric = 'pearson', **kwargs):
+    """ 
+    Creates a connectivity matrix from a dataframe using a specified metric.
+    Options:
+        pearson
+        abs_pearson
+        spearman
+        distance (distance correlation)
+        MI (mutual information)
+        EBICglasso (graphical lasso from the qgraph package)
+        corauto (from the qgraph package, based on lavcor from lavaan)
+    """
+    assert edge_metric in ['pearson','spearman','MI','EBICglasso', 'corauto', 'abs_pearson','abs_spearman', 'distance'], \
+        'Invalid edge metric passed. Must use "pearson", "spearman", "distance", "EBICglasso", "curauto" or "MI" '
     if edge_metric == 'MI':
-        connectivity_matrix = pd.DataFrame(pairwise_MI(data))
+        adj = pd.DataFrame(pairwise_MI(data))
     elif edge_metric == 'distance':
-        connectivity_matrix = pd.DataFrame(distcorr_mat(data.as_matrix()))
+        adj = pd.DataFrame(distcorr_mat(data.as_matrix()))
+    elif edge_metric == 'EBICglasso':
+        adj, tuning_param = qgraph_cor(data, True, kwargs.get('gamma',0))
+        print('Using tuning param %s for EBICglasso' % tuning_param)
+    elif edge_metric == 'corauto':
+        adj = qgraph_cor(data)
     else:
         *qualifier, edge_metric = edge_metric.split('_')
         if (qualifier or [None])[0] == 'abs':
-            connectivity_matrix = abs(data.corr(method = edge_metric))
+            adj = abs(data.corr(method = edge_metric))
         else:
-            connectivity_matrix = data.corr(method = edge_metric)
-    connectivity_matrix.columns = data.columns
-    connectivity_matrix.index = data.columns
-    return connectivity_matrix
-    
-def get_fully_connected_threshold(connectivity_matrix):
-    '''Get a threshold above the initial value such that the graph is fully connected
-    '''
-    threshold_mat = connectivity_matrix.values.copy()
-    np.fill_diagonal(threshold_mat,0)
-    abs_threshold = np.min(np.max(threshold_mat, axis = 1))
-    proportional_threshold = np.mean(threshold_mat>=(abs_threshold-.001))
-    return {'absolute': abs_threshold, 'proportional': proportional_threshold}            
-
-def find_intersection(community, reference):
-    ref_lists = [[i for i,c in enumerate(reference) if c==C] for C in np.unique(reference)]
-    comm_lists = [[i for i,c in enumerate(community) if c==C] for C in np.unique(community)]
-    # each element relates to a community
-    intersection = [[len(set(ref).intersection(comm)) for ref in ref_lists] for comm in comm_lists]
-    return np.array(intersection).T
+            adj = data.corr(method = edge_metric)
+    adj.columns = data.columns
+    adj.index = data.columns
+    return adj
 
 def construct_relational_tree(intersections, proportional=False):
     G = igraph.Graph()
@@ -160,6 +161,36 @@ def construct_relational_tree(intersections, proportional=False):
     igraph.plot(G, layout = 'rt', **{'inline': False, 'vertex_label': range(len(G.vs)), 'edge_width':[w for w in G.es['weight']], 'edge_color': G.es['color'], 'bbox': (1000,1000)})
     #G.write_dot('test.dot')
 
+def find_intersection(community, reference):
+    ref_lists = [[i for i,c in enumerate(reference) if c==C] for C in np.unique(reference)]
+    comm_lists = [[i for i,c in enumerate(community) if c==C] for C in np.unique(community)]
+    # each element relates to a community
+    intersection = [[len(set(ref).intersection(comm)) for ref in ref_lists] for comm in comm_lists]
+    return np.array(intersection).T
+
+def get_fully_connected_threshold(adj):
+    '''Get a threshold above the initial value such that the graph is fully connected
+    '''
+    threshold_mat = adj.values.copy()
+    np.fill_diagonal(threshold_mat,0)
+    abs_threshold = np.min(np.max(threshold_mat, axis = 1))
+    proportional_threshold = np.mean(threshold_mat>=(abs_threshold-.001))
+    return {'absolute': abs_threshold, 'proportional': proportional_threshold}            
+
+def remove_island_variables(adj):
+    """
+    Remove variables with no correlation with any other variable
+    """
+    return adj.loc[(adj.sum()!=1),(adj.sum()!=1)]
+    
+def threshold(adj, threshold_func, threshold):
+    adj_matrix = threshold_func(adj.values,threshold)
+    adj_df = pd.DataFrame(adj_matrix, columns=adj.columns, index=adj.index)
+    return adj_df
+
+
+
+
     
 # Graph Analysis Class Definition
 
@@ -180,20 +211,17 @@ import seaborn as sns
 
 class Graph_Analysis(object):
     def __init__(self):
-        self.data = None
-        self.graph_mat = None
+        self.adj = None
         self.G = None
         self.node_order = []
         self.weight = True
-        self.thresh_func = bct.threshold_proportional
-        self.threshold = 1
         self.community_alg = bct.community_louvain
         self.ref_community = None
         self.visual_style = None
         self.print_options = {}
         self.plot_options = {}
         
-    def setup(self, data=None, w=None, t=None, thresh_func=None, community_alg=None, 
+    def setup(self, adj, community_alg=None, 
               ref_community=None):
         """
         Creates and displays graphs of a data matrix.
@@ -215,37 +243,26 @@ class Graph_Analysis(object):
             if True, creates a weighted graph (vs. a binary)
             
         """
-        if self.data is None:
-            assert type(data) == pd.DataFrame, 'data must be a pandas dataframe'
-        if t!=None:
-            self.threshold = t
-        if w!=None:
-            assert(type(w)==bool), 'w must be a bool'
-            self.weight = w
-        if thresh_func!=None:
-            self.thresh_func = thresh_func
-        if community_alg!=None:
-            self.community_alg = community_alg
-        if ref_community!=None:
-            self.ref_community = ref_community
+        assert type(adj) == pd.core.frame.DataFrame
+        self.adj = adj.replace(1,0) # remove self edges
+        self.community_alg = community_alg
+        self.ref_community = ref_community
+        # numpy matrix used for graph functions
+        graph_mat = self.adj.values
         
-        if data is not None:
-            self.data = data
-            # convert dataframe to matrix to be used for subsequent analyses
-            graph_mat = self.thresh_func(data.values, self.threshold)
-            # make a binary version if not weighted
-            if not self.weight:
-                graph_mat = np.ceil(graph_mat)
-                G = igraph.Graph.Adjacency(graph_mat.tolist(), mode = 'undirected')
-            else:
-                G = igraph.Graph.Weighted_Adjacency(graph_mat.tolist(), mode = 'undirected')
-            # label vertices of G
-            G.vs['id'] = range(len(G.vs))
-            G.vs['name'] = data.columns
-            # set class variables
-            self.graph_mat = graph_mat
-            self.G = G
-            self.node_order = list(range(graph_mat.shape[0]))
+        # check if binary
+        if set(np.unique(graph_mat))==set([0,1]):
+            graph_mat = np.ceil(graph_mat)
+            G = igraph.Graph.Adjacency(graph_mat.tolist(), mode = 'undirected')
+        else:
+            G = igraph.Graph.Weighted_Adjacency(graph_mat.tolist(), mode = 'undirected')
+        # label vertices of G
+        G.vs['id'] = range(len(G.vs))
+        G.vs['name'] = adj.columns
+        # set class variables
+        self.graph_mat = graph_mat
+        self.G = G
+        self.node_order = list(range(graph_mat.shape[0]))
             
     def calculate_communities(self, reorder=False, **kwargs):
         G = self.G
@@ -341,14 +358,16 @@ class Graph_Analysis(object):
             return vertex_color
         
         def set_edges(visual_style):
+            # normalize edges for weight
+            edges = [w/np.max(G.es['weight']) for w in G.es['weight']]
             if 'weight' in G.es.attribute_names():
-                thresholded_weights = [w if abs(w) > display_threshold else 0 for w in G.es['weight']]
+                thresholded_weights = [w if abs(w) > display_threshold else 0 for w in edges]
                 if layout_graph!=None:
                     if min(layout_graph.es['weight'])>0:
-                        thresholded_weights = [w if w > display_threshold else 0 for w in G.es['weight']]
-                visual_style['edge_width'] = [abs(w)**2.5*size/300.0 for w in thresholded_weights]
+                        thresholded_weights = [w if w > display_threshold else 0 for w in edges]
+                visual_style['edge_width'] = [abs(w)**2.5*size/300.0 for w in edges]
                 if np.sum([e<0 for e in G.es['weight']]) > 0:
-                    visual_style['edge_color'] = [['#3399FF','#696969','#FF6666'][int(np.sign(w)+1)] for w in G.es['weight']]
+                    visual_style['edge_color'] = [['#3399FF','#696969','#FF6666'][int(np.sign(w)+1)] for w in edges]
                 else:
                     visual_style['edge_color'] = '#696969'
             
@@ -375,7 +394,6 @@ class Graph_Analysis(object):
         return visual_style
         
     def display(self, plot=True, verbose=True,  print_options=None, plot_options=None):
-        assert self.visual_style!=None, 'Must first call set_visual_style() !'
         if verbose:
             if print_options==None:
                 print_options = {}
@@ -384,6 +402,7 @@ class Graph_Analysis(object):
             except KeyError:
                 print('Communities not detected! Run calculate_communities() first!')
         if plot:
+            assert self.visual_style!=None, 'Must first call set_visual_style() !'
             if plot_options==None:
                 plot_options = {}
                 self._plot_graph(**plot_options)
@@ -402,9 +421,7 @@ class Graph_Analysis(object):
     def return_subgraph_analysis(self, community = 1):
         subgraph = self.graph_to_dataframe(self.get_subgraph(community))
         subgraph_GA=Graph_Analysis()
-        subgraph_GA.setup(data=subgraph,
-                          w=self.weight,
-                          thresh_func = self.thresh_func,
+        subgraph_GA.setup(adj=subgraph,
                           community_alg=self.community_alg)
         return subgraph_GA
               
@@ -417,10 +434,20 @@ class Graph_Analysis(object):
         return graph_dataframe
     
     def reorder(self, reorder_index=None):
+        """
+        Reorders nodes in graph (and corresponding entries of graph_mat)
+        to reflect community assignment
+        """
         G = self.G
+        # if no reorder index given, sort by community then by
+        # centrality within that community
         if reorder_index==None:
             community = G.vs['community']
-            reorder_index = np.argsort(community)
+            subgraph_centrality = G.vs['subgraph_eigen_centrality']
+            sort_list = list(zip(community,subgraph_centrality))
+            reorder_index = sorted(range(len(sort_list)), 
+                                   key=lambda e: (sort_list[e][0],
+                                                  -sort_list[e][1]))
         
         # hold graph attributes:
         attribute_names = G.vs.attributes()
@@ -443,7 +470,8 @@ class Graph_Analysis(object):
         self.graph_mat = self._graph_to_matrix(G)
         self.node_order = reorder_index
         
-    def set_visual_style(self, layout ='kk', plot_threshold=None, labels='auto'):
+    def set_visual_style(self, layout ='kk',  labels='auto', plot_adj=True,
+                         size=6000):
         """
         layout: str: 'kk', 'circle', 'grid' or other igraph layouts, optional
         Determines how the graph is displayed
@@ -451,14 +479,26 @@ class Graph_Analysis(object):
         if layout=='circle':
             self.reorder()
         layout_graph = None
-        if plot_threshold:
-            layout_mat = self.thresh_func(self.data.values, plot_threshold)  
-            layout_graph = igraph.Graph.Weighted_Adjacency(layout_mat.tolist(), mode = 'undirected')
+        # plot_adj removes negative c.onnections and thresholds to
+        # aid layout
+        if plot_adj==True:
+            # remove negative values
+            plot_adj = threshold(self.adj,
+                     threshold_func = bct.threshold_absolute,
+                     threshold = 0)
+            # only allow the top variables to effect the layout
+            plot_adj = threshold(plot_adj,
+                                 threshold_func = bct.threshold_proportional,
+                                 threshold = .2)
+            # check if binary graph
+            if set(np.unique(plot_adj.values))==set([0,1]):
+                layout_graph = igraph.Graph.Adjacency(plot_adj.values.tolist(), mode = 'undirected')
+            else:
+                layout_graph = igraph.Graph.Weighted_Adjacency(plot_adj.values.tolist(), mode = 'undirected')
         if labels=='auto':
             labels = self.G.vs['id']
         self.visual_style = self.create_visual_style(self.G, layout = layout, layout_graph = layout_graph, vertex_size = 'eigen_centrality', labels = labels,
-                                        size = 6000)
-        
+                                        size = size)
   
     def _graph_to_matrix(self, G):
         if 'weight' in G.es.attribute_names():
