@@ -19,21 +19,19 @@ from selfregulation.utils.reference_utils import gen_reference_item_text
 #******************************
 date = datetime.date.today().strftime("%m-%d-%Y")
 
+output_dir=path.join(get_info('base_directory'),'Data')
 #load Data
-try:
-    data_dir=get_info('data_directory')
-except Exception:
-    data_dir=path.join(get_info('base_directory'),'Data')
+data_dir=get_info('data_directory')
 
 
 # read preprocessed data
 data_labels = ['mturk_discovery', 'mturk_validation']
 datasets = []
 for label in data_labels:
-    directory = path.join(data_dir,label.lstrip('mturk_').title() + '_' + date)
+    directory = path.join(output_dir,label.lstrip('mturk_').title() + '_' + date)
     if not path.exists(directory):
         makedirs(directory)
-    data = pd.read_json(path.join(data_dir,label + '_data_post.json')).reset_index(drop = True)
+    data = pd.read_pickle(path.join(data_dir,label + '_data_post.pkl')).reset_index(drop = True)
     try:
         DVs = pd.read_json(path.join(data_dir,label + '_DV.json'))
         DVs_valence = pd.read_json(path.join(data_dir,label + '_DV_valence.json'))
@@ -45,7 +43,7 @@ for label in data_labels:
     
 # create complete dataset
 if len(datasets)>1:
-    directory = path.join(data_dir,'Complete_' + date)
+    directory = path.join(output_dir,'Complete_' + date)
     data = pd.concat([dataset[0] for dataset in datasets])
     DVs = pd.concat([dataset[2] for dataset in datasets])
     DVs_valence = pd.concat([dataset[3] for dataset in datasets])

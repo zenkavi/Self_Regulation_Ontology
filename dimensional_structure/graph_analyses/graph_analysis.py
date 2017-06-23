@@ -1,106 +1,191 @@
 #get utils
-from selfregulation.utils.graph_utils import calc_connectivity_mat, find_intersection, get_fully_connected_threshold
-from selfregulation.utils.graph_utils import  Graph_Analysis, threshold_proportional_sign
+from selfregulation.utils.graph_utils import get_adj, \
+    find_intersection, get_fully_connected_threshold, remove_island_variables
+from selfregulation.utils.graph_utils import  Graph_Analysis, threshold, \
+    threshold_proportional_sign
 from selfregulation.utils.plot_utils import dendroheatmap
-from selfregulation.utils.utils import get_behav_data
+from selfregulation.utils.utils import get_behav_data, get_info
 
 import bct
 import igraph
 import numpy as np
+from os.path import join, exists
+from os import makedirs
 import pandas as pd
 import seaborn as sns
 
+# generic variables
+save_plots = False
+plot_dir = join(get_info('base_directory'),'dimensional_structure','Plots')
+
 # get dependent variables
-graph_data = get_behav_data(file = 'taskdata_imputed.csv')
+graph_data = get_behav_data(file = 'taskdata_imputed.csv')  
+
+
+
+def run_graph_analysis(adj_dict, save_plots=False):
+    """
+    Takes in a dictionary with two keys: "name" and "adj", specifying
+    an adjacency matrix (as a dataframe) and its corresponding name
+    """
+    def plot_name(name):
+        return join(plot_dir,adj_name,name)
+        
+    adj_name = adj_dict['name']
+    adj = adj_dict['adj']
+    # if saving plots, make sure directory exists
+    if save_plots: 
+        makedirs(join(plot_dir,adj_name), exist_ok=True)
+        
+    # ************************************
+    # ********* Heatmaps *******************
+    # ************************************
+    # dendrogram heatmap
+    fig, column_order = dendroheatmap(adj, labels = True)
+    if save_plots: fig.savefig(plot_name('dendroheatmap.pdf'),
+                               bbox_inches='tight')
     
-
-# ************************************
+    # ************************************
+    # ********* Graphs *******************
+    # ************************************
+    seed = 1337
+    community_alg = bct.modularity_louvain_und_sign
+    # exclude variables with no correlations with the rest of the graph
+    adj = remove_island_variables(adj)
+            
+    # create graph object
+    GA = Graph_Analysis()
+    GA.setup(adj = adj,
+             community_alg = community_alg)
+    
+    # search for ideal gamma value
+    gamma = np.arange(0,3,.1)
+    mod_scores = []
+    layout = None
+    reference=None
+    intersections = []
+    communities = []
+    for g in gamma:
+        if layout==None:
+            layout='circle'
+        mod = GA.calculate_communities(gamma=g, seed=seed)
+        mod_scores.append(mod)
+        if reference!=None:
+            intersections.append(find_intersection(GA.G.vs['community'],
+                                                   reference))
+        reference = GA.G.vs['community']
+        communities.append(reference)
+    
+    # plot modularity index vs gamma
+    fig = sns.plt.figure()
+    sns.plt.plot(gamma,mod_scores,'o-')
+    sns.plt.xlabel('Gamma')
+    sns.plt.ylabel('Modularity')
+    if save_plots: fig.savefig(plot_name('gamma_vs_modularity.pdf'),
+                                bbox_inches='tight')
+    
+    # calculate the mean number of nodes in each community for each gamma value
+    size_per_gamma = []
+    # iterative over communities identified with different gammas
+    for comm in communities: 
+        nodes_per_comm=[np.sum(np.equal(c,comm)) 
+                        for c in range(1,np.max(comm)+1)]
+        # exclude signle communities, following Ashourvan et al. 2017
+        nodes_per_comm = [i for i in nodes_per_comm if i!=1]
+        size_per_gamma+=[np.mean(nodes_per_comm)]
+         
+    fig = sns.plt.figure()                       
+    sns.plt.plot(gamma, [np.max(c) for c in communities], 'o-', 
+                         label='# Communities')
+    sns.plt.plot(gamma, size_per_gamma, 'o-', 
+                 label='Mean Size of Communities')
+    sns.plt.legend()
+    sns.plt.xlabel('Gamma')
+    if save_plots: fig.savefig(plot_name('community_stats.pdf'),
+                               bbox_inches='tight')
+    
+    # use best gamma
+    best_gamma = gamma[np.argmax(mod_scores)]
+    GA.calculate_communities(gamma=best_gamma, seed=seed, reorder=True)
+    
+    # plot communities of graph in dendrohistogram
+    fig = sns.plt.figure(figsize=[20,16])
+    sns.heatmap(GA.graph_to_dataframe(GA.G),square=True)
+    if save_plots: fig.savefig(plot_name('graph_community_heatmap.pdf'),
+                               bbox_inches='tight')
+# ****************************************************
 # ************ Connectivity Matrix *******************
-# ************************************
+# ****************************************************
 
-spearman_connectivity = calc_connectivity_mat(graph_data, edge_metric = 'spearman')
-distance_connectivity = calc_connectivity_mat(graph_data, edge_metric = 'distance')
+spearman_connectivity = get_adj(graph_data, edge_metric = 'spearman')
+distance_connectivity = get_adj(graph_data, edge_metric = 'distance')
+gamma = 0
+glasso_connectivity = get_adj(graph_data, edge_metric = 'EBICglasso',
+                              gamma=gamma)
 
 print('Finished creating connectivity matrices')
-# ************************************
-# ********* Heatmaps *******************
-# ************************************
-# dendrogram heatmap
-fig, column_order = dendroheatmap(spearman_connectivity, labels = True)
 
-# ************************************
-# ********* Graphs *******************
-# ************************************
-# signed spearman graph
-thresholds = get_fully_connected_threshold(spearman_connectivity)
-plot_t = thresholds['proportional']
+# ***************************************************
+# ********* Distribution of Edges *******************
+# ***************************************************
+edge_mats = [{'name': 'spearman', 'adj': spearman_connectivity},
+             {'name': 'distance', 'adj': distance_connectivity},
+             {'name': 'glasso', 'adj': glasso_connectivity}]
+fig = sns.plt.figure(figsize=[12,8])
+fig.suptitle('Distribution of Edge Weights', size='x-large')
+for i,mat in enumerate(edge_mats):
+    sns.plt.subplot(1,3,i+1)
+    sns.plt.hist(mat['adj'].replace(1,0).values.flatten(), bins =100)
+    sns.plt.title(mat['name'])
+sns.plt.tight_layout()
+sns.plt.subplots_adjust(top=0.85)
+if save_plots: fig.savefig(join(plot_dir,'connectivity_distributions.pdf'),
+                           bbox_inches='tight')
 
-GA = Graph_Analysis()
-GA.setup(data = spearman_connectivity,
-         thresh_func = threshold_proportional_sign,
-         community_alg = bct.modularity_louvain_und_sign)
-seed = 1337
-gamma = np.arange(0,3,.2)
-mod_scores = []
-layout = None
-reference=None
-intersections = []
-communities = []
-for g in gamma:
-    if layout==None:
-        layout='circle'
-    mod = GA.calculate_communities(gamma=g, seed=seed)
-    mod_scores.append(mod)
-    #GA.set_visual_style(layout=layout, plot_threshold = plot_t)
-    #GA.display()
-    if reference!=None:
-        intersections.append(find_intersection(GA.G.vs['community'], reference))
-    reference = GA.G.vs['community']
-    communities.append(reference)
+# ***************************************
+# ********* Select Connectivity Matrix **
+# ***************************************
+for adj_dict in edge_mats:
+    run_graph_analysis(adj_dict, True)
+    
 
-sns.plt.plot(gamma,mod_scores)
-sns.plt.plot(gamma, [np.max(c) for c in communities])
 
-subgraph_GA = GA.return_subgraph_analysis()
+
+
+
+
+
+
+
+
+
+
+
+
+"""               
+# plot graph
+layout='circle'
+GA.set_visual_style(layout=layout,plot_adj=True)
+if save_plots: GA.display(print_options={'file': join(plot_dir, adj_name,
+                                                      'gamma_%s_%s_graph.txt'
+                                                      % (best_gamma, layout))}, 
+                          plot_options={'inline': False, 
+                                        'target': join(plot_dir, adj_name,
+                                                       'gamma_%s_%s_graph.pdf'
+                                                       % (best_gamma, layout))})        
+
+subgraph_GA = GA.return_subgraph_analysis(community=3)
 subgraph_GA.calculate_communities()
-subgraph_GA.set_visual_style(layout='circle')
+subgraph_GA.set_visual_style(layout='kk', plot_adj=True)
 subgraph_GA.display()
 
 
 
 
+
+
+
     
-# distance graph
-thresholds = get_fully_connected_threshold(spearman_connectivity)
-plot_t = thresholds['proportional']
-
-GA = Graph_Analysis()
-GA.setup(data = spearman_connectivity,
-         thresh_func = threshold_proportional_sign,
-         community_alg = bct.modularity_louvain_und_sign)
-GA.calculate_communities()
-GA.set_visual_style(layout='circle', plot_threshold = plot_t)
-GA.display()
-
-
-
-# signed graph
-t = 1
-thresholds = get_fully_connected_threshold(spearman_connectivity)
-plot_t = thresholds['proportional']
-t_f = bct.threshold_proportional
-c_a = bct.modularity_louvain_und                                           
-
-# circle layout                                                  
-G_spearman, connectivity_mat, visual_style = Graph_Analysis(spearman_connectivity, community_alg = c_a, thresh_func = t_f,
-                                                     reorder = False, threshold = t,  layout = 'kk', 
-                                                     plot_threshold = plot_t, print_options = {'lookup': {}}, 
-                                                    plot_options = {'inline': False})
-# signed graph
-t = 1
-t_f = threshold_proportional_sign
-c_a = bct.modularity_louvain_und_sign                                               
-
 # circle layout                                                  
 G_spearman, connectivity_mat, visual_style = Graph_Analysis(spearman_connectivity, community_alg = c_a, thresh_func = t_f,
                                                      reorder = True, threshold = t,  layout = 'circle', 
@@ -185,10 +270,7 @@ print_community_members(subgraph)
 subgraph_visual_style = get_visual_style(subgraph, vertex_size = 'eigen_centrality')
 plot_graph(subgraph, visual_style = subgraph_visual_style, layout = 'circle', inline = False)
 
-
-
-
-
+"""
 
 
 
