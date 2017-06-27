@@ -88,10 +88,15 @@ def DDM_plot(v,t,a, sigma = .1, n = 10, plot_n = 15, file = None):
 
 def dendroheatmap(df, labels = True, label_fontsize = None):
     """
-    :df: plot hierarchical clustering and heatmap
+    plot hierarchical clustering and heatmap
+    :df: a correlation matrix
     """
+    # ensure this is a similarity matrix of some kind
+    assert (df.shape[0]==df.shape[1] and df.iloc[0,1]==df.iloc[1,0]), \
+            "df must be a correlation matrix"
     #clustering
-    row_clusters = linkage(df.values, method='ward', metric='euclidean')    
+    corr_vec = 1-df.values[np.triu_indices_from(df,k=1)]
+    row_clusters = linkage(corr_vec, method='ward', metric='euclidean')    
     #dendrogram
     row_dendr = dendrogram(row_clusters, labels=df.columns, no_plot = True)
     df_rowclust = df.ix[row_dendr['leaves'],row_dendr['leaves']]
@@ -116,8 +121,12 @@ def dendroheatmap_left(df, labels = True, label_fontsize = 'large'):
     """
     :df: plot hierarchical clustering and heatmap, dendrogram on left
     """
+    # ensure this is a similarity matrix of some kind
+    assert (df.shape[0]==df.shape[1] and df.iloc[0,1]==df.iloc[1,0]), \
+            "df must be a correlation matrix"
     #clustering
-    row_clusters = linkage(df.values, method='ward', metric='euclidean')    
+    corr_vec = 1-df.values[np.triu_indices_from(df,k=1)]
+    row_clusters = linkage(corr_vec, method='ward', metric='euclidean')   
     #dendrogram
     row_dendr = dendrogram(row_clusters, labels=df.columns, no_plot = True)
     df_rowclust = df.ix[row_dendr['leaves'],row_dendr['leaves']]
