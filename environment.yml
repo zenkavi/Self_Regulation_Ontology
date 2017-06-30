@@ -88,6 +88,7 @@ dependencies:
 - readline=6.2=2
 - requests=2.14.2=py34_0
 - rope=0.9.4=py34_1
+- scikit-learn=0.18.1=np111py34_1
 - scipy=0.18.1=np111py34_1
 - seaborn=0.7.1=py34_0
 - setuptools=27.2.0=py34_0
@@ -135,6 +136,8 @@ dependencies:
   - ipython-genutils==0.1.0
   - jupyter-client==4.4.0
   - jupyter-core==4.2.1
+  - nibabel==2.1.0
+  - nilearn==0.3.1
   - prompt-toolkit==1.0.9
   - rope-py3k==0.9.4.post1
 prefix: /home/ian/miniconda3/envs/SRO
