@@ -25,4 +25,12 @@ utils: utilities for loading/saving data and metadata
 other directories are specific to particular analyses - for any analysis you wish to add, please give it a descriptive name along with your initials - e.g. "irt_analyses_RP"
 
 
+### Setting up python environment
 
+Use the environment.yml file with anaconda: conda install -f environment.yml
+
+After doing that, you must install expanalysis in the same environment.
+- Clone expanalysis from: https://github.com/IanEisenberg/expfactory-analysis
+- Enter expanalysis and enter "pip install -e ."
+
+Finally you must install the selfregulation python: python setup.py install
