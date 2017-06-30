@@ -138,6 +138,7 @@ dependencies:
   - jupyter-core==4.2.1
   - nibabel==2.1.0
   - nilearn==0.3.1
+  - nipype==0.13.1
   - prompt-toolkit==1.0.9
   - rope-py3k==0.9.4.post1
 prefix: /home/ian/miniconda3/envs/SRO
