@@ -1,7 +1,7 @@
 name: SRO
 channels:
-- pymc
 - r
+- pymc
 - defaults
 dependencies:
 - alabaster=0.7.10=py35_0
@@ -31,13 +31,16 @@ dependencies:
 - ipykernel=4.6.1=py35_0
 - ipython=6.1.0=py35_0
 - ipython_genutils=0.2.0=py35_0
+- ipywidgets=6.0.0=py35_0
 - isort=4.2.15=py35_0
 - jbig=2.1=0
 - jedi=0.10.2=py35_2
 - jinja2=2.9.6=py35_0
 - jpeg=9b=0
 - jsonschema=2.6.0=py35_0
+- jupyter=1.0.0=py35_3
 - jupyter_client=5.1.0=py35_0
+- jupyter_console=5.1.0=py35_0
 - jupyter_core=4.3.0=py35_0
 - lazy-object-proxy=1.3.1=py35_0
 - libffi=3.2.1=1
@@ -56,6 +59,7 @@ dependencies:
 - nbconvert=5.2.1=py35_0
 - nbformat=4.3.0=py35_0
 - ncurses=5.9=10
+- notebook=5.0.0=py35_0
 - numpy=1.11.3=py35_0
 - numpydoc=0.6.0=py35_0
 - openssl=1.0.2l=0
@@ -104,12 +108,14 @@ dependencies:
 - spyder=3.1.4=py35_0
 - sqlite=3.13.0=0
 - statsmodels=0.8.0=np111py35_0
+- terminado=0.6=py35_0
 - testpath=0.3.1=py35_0
 - tk=8.5.18=0
 - tornado=4.5.1=py35_0
 - traitlets=4.3.2=py35_0
 - wcwidth=0.1.7=py35_0
 - wheel=0.29.0=py35_0
+- widgetsnbextension=2.0.0=py35_0
 - wrapt=1.10.10=py35_0
 - xz=5.2.2=1
 - yaml=0.1.6=0
@@ -139,19 +145,31 @@ dependencies:
 - pip:
   - bctpy==0.5.0
   - click==6.7
+  - climate==0.4.6
+  - cvxcanon==0.1.1
+  - cvxpy==0.4.10
+  - dill==0.2.6
+  - downhill==0.4.0
+  - ecos==2.0.4
+  - fancyimpute==0.2.0
+  - fastcache==1.0.2
   - funcsigs==1.0.2
   - future==0.16.0
   - ipython-genutils==0.2.0
   - isodate==0.5.4
   - jupyter-client==5.1.0
+  - jupyter-console==5.1.0
   - jupyter-core==4.3.0
+  - knnimpute==0.1.0
   - lxml==3.8.0
   - mock==2.0.0
+  - multiprocess==0.70.5
   - networkx==1.11
   - nibabel==2.1.0
   - nilearn==0.3.1
   - nipype==0.13.1
   - pbr==3.1.1
+  - plac==0.9.6
   - prompt-toolkit==1.0.14
   - prov==1.5.0
   - py==1.4.34
@@ -160,7 +178,11 @@ dependencies:
   - python-igraph==0.7.1.post6
   - rdflib==4.2.2
   - rope-py3k==0.9.4.post1
+  - scs==1.2.6
   - simplejson==3.11.1
+  - theano==0.9.0
+  - toolz==0.8.2
   - traits==4.6.0
+  - yapf==0.16.2
 prefix: /home/ian/miniconda3/envs/SRO
 
