@@ -34,3 +34,11 @@ After doing that, you must install expanalysis in the same environment.
 - Enter expanalysis and enter "pip install -e ."
 
 Finally you must install the selfregulation python: python setup.py install
+
+### R setup
+install:
+
+missForest
+psych
+lme4
+qgraph
