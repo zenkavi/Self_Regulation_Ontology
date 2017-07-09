@@ -20,6 +20,7 @@ args = parser.parse_args()
 job = args.job
 sample = args.sample
 
+print('Running Script. Job %s, sample: %s' % (job, sample))
 #load Data
 token = get_info('expfactory_token')
 try:
