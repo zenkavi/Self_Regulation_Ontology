@@ -113,8 +113,7 @@ def dendroheatmap(df, labels = True, label_fontsize = None):
     ax.set_xticklabels(df_rowclust.columns, rotation=-90, rotation_mode = "anchor", ha = 'left')
     ax1 = fig.add_axes([.1,.8,.6,.2])
     plt.axis('off')
-    row_dendr = dendrogram(row_clusters, orientation='top',  
-                           count_sort='ascending', ax = ax1) 
+    row_dendr = dendrogram(row_clusters, orientation='top',  ax = ax1) 
     return fig, row_dendr['leaves']
 
 def dendroheatmap_left(df, labels = True, label_fontsize = 'large'):
@@ -140,8 +139,8 @@ def dendroheatmap_left(df, labels = True, label_fontsize = 'large'):
     ax.set_xticklabels(df_rowclust.columns, rotation=-90, rotation_mode = "anchor", ha = 'left')
     ax1 = fig.add_axes([.01,.3,.15,.62])
     plt.axis('off')
-    row_dendr = dendrogram(row_clusters, orientation='left',  
-                           count_sort='descending', ax = ax1) 
+    row_dendr = dendrogram(row_clusters, orientation='left',  ax = ax1) 
+    ax1.invert_yaxis()
     return fig, row_dendr['leaves']
     
 def heatmap(df):

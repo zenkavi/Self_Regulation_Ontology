@@ -18,6 +18,7 @@ df = df.query('worker_id in %s' % workers)
 
 DV_tests = []
 for repeats in range(100):
+    print(repeats)
     DVs, valence, description = calc_exp_DVs(df)
     DVs.columns = [i + '_run%s' % str(repeats) for i in DVs.columns]
     DV_tests.append(DVs)
