@@ -1,0 +1,14 @@
+#!/bin/bash
+#SBATCH --job-name=mturk_post
+#SBATCH --output=.out/mturk_post.job.out
+#SBATCH --error=.err/mturk_post.job.err
+#SBATCH --time=8:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH -p russpold
+#SBATCH --cpus-per-task=8
+# SBATCH --mem=64000
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=ieisenbe@stanford.edu
+cd ../data_preparation
+python mturk_save_data.py

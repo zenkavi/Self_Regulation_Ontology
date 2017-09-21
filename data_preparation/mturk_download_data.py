@@ -20,6 +20,7 @@ args = parser.parse_args()
 job = args.job
 sample = args.sample
 
+print('Running Script. Job %s, sample: %s' % (job, sample))
 #load Data
 token = get_info('expfactory_token')
 try:
@@ -86,7 +87,10 @@ if job in ['post', 'all']:
     print('Beginning "Post"')
     #Process Data
     if job == "post":
-        data = pd.read_pickle(path.join(data_dir, 'mturk_data_extras.pkl'))
+        try:
+            data = pd.read_pickle(path.join(data_dir, 'mturk_data_extras.pkl'))
+        except FileNotFoundError:
+            data = pd.read_json(path.join(data_dir, 'mturk_data_extras.json'))
         data.reset_index(drop = True, inplace = True)
         print('Finished loading raw data')
     
