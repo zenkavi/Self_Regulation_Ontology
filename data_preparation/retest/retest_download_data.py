@@ -1,6 +1,6 @@
 import sys
-sys.path.append('/Users/zeynepenkavi/Dropbox/PoldrackLab/expfactory-analysis')
-sys.path.append('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/data_preparation')
+sys.path.append('/oak/stanford/groups/russpold/users/zenkavi/expfactory-analysis')
+sys.path.append('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/data_preparation')
 from expanalysis.experiments.jspsych import calc_time_taken, get_post_task_responses
 from expanalysis.experiments.processing import post_process_data, extract_DVs, extract_experiment
 from expanalysis.experiments.utils import remove_duplicates, result_filter
@@ -20,7 +20,7 @@ from selfregulation.utils.retest_data_utils import anonymize_retest_data
 #set token and data directory
 token = get_info('expfactory_token', infile='/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Self_Regulation_Retest_Settings.txt')
 release_date = datetime.date.today().strftime("%m-%d-%Y")
-data_dir=path.join('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Data/','Retest_'+release_date, 'Local')
+data_dir=path.join('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/','Retest_'+release_date, 'Local')
 
 if not path.exists(data_dir):
     makedirs(data_dir)
