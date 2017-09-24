@@ -63,10 +63,10 @@ if job in ['extras', 'all']:
     
     #anonymize data
     worker_lookup = anonymize_data(data)
-    json.dump(worker_lookup, open(path.join(data_dir, 'worker_lookup.json','w')))
+    json.dump(worker_lookup, open(path.join(data_dir, 'admin', 'worker_lookup.json','w')))
     
     # record subject completion statistics
-    (data.groupby('worker_id').count().finishtime).to_json(path.join(data_dir, 'worker_counts.json'))
+    (data.groupby('worker_id').count().finishtime).to_json(path.join(data_dir, 'admin', 'worker_counts.json'))
     
     # add a few extras
     convert_date(data)
@@ -80,7 +80,7 @@ if job in ['extras', 'all']:
     
     # calculate pay
     pay = get_pay(data)
-    pay.to_json(path.join(data_dir, 'worker_pay.json'))
+    pay.to_json(path.join(data_dir, 'admin', 'worker_pay.json'))
     print('Finished saving worker pay')
     
 if job in ['post', 'all']:

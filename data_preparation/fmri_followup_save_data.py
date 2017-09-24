@@ -98,7 +98,7 @@ for data,directory, DV_df, valence_df in datasets:
         valence_df = pd.Series(data = [col.unique()[0] for i,col in valence_df.iteritems()], index = valence_df.columns)
         return flip_df, valence_df
 
-    if len(DV_df > 0):
+    if len(DV_df) > 0:
         # drop failed QC vars
         drop_failed_QC_vars(DV_df,data)
         

@@ -27,7 +27,7 @@ other directories are specific to particular analyses - for any analysis you wis
 
 ### Setting up python environment
 
-Use the environment.yml file with anaconda: conda install -f environment.yml
+Use the environment.yml file with anaconda: conda env create -f environment.yml
 
 After doing that, you must install expanalysis in the same environment.
 - Clone expanalysis from: https://github.com/IanEisenberg/expfactory-analysis
