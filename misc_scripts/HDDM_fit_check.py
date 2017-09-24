@@ -1,5 +1,4 @@
 from expanalysis.experiments.ddm_utils import get_HDDM_fun
-from expanalysis.experiments.jspsych_processing import group_decorate
 from glob import glob
 import hddm
 from kabuki.analyze import gelman_rubin
@@ -64,7 +63,7 @@ for k,v in results.items():
             rename(p, path.join('hddm_output', 'Plots', '%s_condition_%s' % (k,p)))
 
 # save gelman vals
-pickle.dump(gelman_vals, open(path.join('hddm_output', 'gelman_vals.pkl', 'wb')))
+pickle.dump(gelman_vals, open(path.join('hddm_output', 'gelman_vals.pkl'), 'wb'))
 
 # clean up
 for f in glob('*.model'):
