@@ -87,10 +87,7 @@ if job in ['post', 'all']:
     print('Beginning "Post"')
     #Process Data
     if job == "post":
-        try:
-            data = pd.read_pickle(path.join(data_dir, 'mturk_data_extras.pkl'))
-        except FileNotFoundError:
-            data = pd.read_json(path.join(data_dir, 'mturk_data_extras.json'))
+        data = pd.read_pickle(path.join(data_dir, 'mturk_data_extras.pkl'))
         data.reset_index(drop = True, inplace = True)
         print('Finished loading raw data')
     
