@@ -1,84 +1,65 @@
+from expanalysis.experiments.ddm_utils import get_HDDM_fun
+from expanalysis.experiments.jspsych_processing import group_decorate
+from glob import glob
 import hddm
-from os import path
+from kabuki.analyze import gelman_rubin
+from multiprocessing import Pool 
 
-
-
-
+from os import path, rename
 from selfregulation.utils.utils import get_behav_data
-data = get_behav_data(file='Individual_Measures/stroop.csv.gz')
-data = data.query('worker_id in %s' % list(data.worker_id.unique()[0:4]))
-df = data
-condition = 'condition'
-response_col = 'correct'
-fixed= ['t','a']
-estimate_task_vars = True
-outfile='stroop'
-samples = 1000
 
-assert estimate_task_vars or condition != None, "Condition must be defined or estimate_task_vars must be set to true"
-variable_conversion = {'a': ('thresh', 'Pos'), 'v': ('drift', 'Pos'), 't': ('non_decision', 'NA')}
-# set up condition variables
-if condition:
-    condition_vars = [var for var in ['a','v','t'] if var not in fixed]
-    depends_dict = {var: 'condition' for var in condition_vars}
-else:
-    condition_vars = []
-    depends_dict = {}
-# set up data
-data = (df.loc[:,'rt']/1000).astype(float).to_frame()
-data.insert(0, 'response', df[response_col].astype(float))
-if condition:
-    data.insert(0, 'condition', df[condition])
-    conditions = [i for i in data.condition.unique() if i]
+
+samples=100
+hddm_fun_dict = get_HDDM_fun(None, samples)
+hddm_fun_dict.pop('twobytwo')
+
+gelman_vals = {}
+def assess_convergence(task, reps=5):
+    # load data
+    data = get_behav_data(file='Individual_Measures/%s.csv.gz' % task)
+    data = data.query('worker_id in %s' % list(data.worker_id.unique()[0:4]))
+    outputs = []
+    def run_model():
+        # compute DVs (create models)
+        group_dvs = hddm_fun_dict[task](data)
+        # load models
+        base_files = glob('%s*_base.model' % task)
+        m_base = hddm.load(base_files[0])
+        m_condition = None
+        condition_files = glob('%s*_condition.model' % task)
+        if len(condition_files)>0:
+            m_condition = hddm.load(condition_files[0])
+        return (m_base, m_condition)
     
-# add subject ids 
-data.insert(0,'subj_idx', df['worker_id'])
-# remove missed responses and extremely short response
-data = data.query('rt > .05')
-subj_ids = data.subj_idx.unique()
-ids = {subj_ids[i]:int(i) for i in range(len(subj_ids))}
-data.replace(subj_ids, [ids[i] for i in subj_ids],inplace = True)
-if outfile:
-    data.to_csv(outfile + '_data.csv')
-    database = outfile + '_traces.db'
-else:
-    database = 'traces.db'
-# extract dvs pip install -U --no-deps kabuki
-group_dvs = {}
-dvs = {}
-# run if estimating variables for the whole task
-if estimate_task_vars:
-    # run hddm
-    m = hddm.HDDM(data)
-    # find a good starting point which helps with the convergence.
-    m.find_starting_values()
-    # start drawing 10000 samples and discarding 1000 as burn-in
-    m.sample(samples, burn=samples/10, thin = 5)
-    dvs = {var: m.nodes_db.loc[m.nodes_db.index.str.contains(var + '_subj'),'mean'] for var in ['a', 'v', 't']} 
+    for _ in range(reps):
+        output = run_model()
+        outputs.append(output)
+    return {task: outputs}
+        
+# create group maps
+pool = Pool()
+mp_results = pool.map(assess_convergence, hddm_fun_dict.keys())
+pool.close() 
+pool.join()
+
+results = {}
+for d in mp_results:
+    results.update(d)
+
+for k,v in results.items():
+    gelman_vals[k+'_base'] = gelman_rubin([i[0] for i in v])
+    # plot posteriors
+    v[0][0].plot_posteriors(['a', 't', 'v', 'a_std'], save=True)
+    plots = glob('*png')
+    for p in plots:
+        rename(p, path.join('Plots', '%s_base_%s' % (k,p)))
+    
+    if v[0][1] is not None:
+        gelman_vals[k+'_condition'] = gelman_rubin([i[1] for i in v])
+        
+        v[0][1].plot_posteriors(['a', 't', 'v', 'a_std'], save=True)
+        plots = glob('*png')
+        for p in plots:
+            rename(p, path.join('Plots', '%s_condition_%s' % (k,p)))
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-from expanalysis.experiments.jspsych_processing import fit_HDDM
-group_dvs = fit_HDDM(data, condition = 'condition', outfile = 'stroop', samples=1000)
-
-
-
-task = 'stroop'
-directory = '/mnt/Sherlock_Scratch'
-hddm.load(path.join(directory,'%s_base.model' % task))
-hddm.models.
