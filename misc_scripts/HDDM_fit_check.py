@@ -1,26 +1,76 @@
+from expanalysis.experiments.ddm_utils import get_HDDM_fun
+from glob import glob
 import hddm
-from os import path
-
-
-
-
+from kabuki.analyze import gelman_rubin
+from multiprocessing import Pool 
+from os import path, remove, rename
+import pickle
 from selfregulation.utils.utils import get_behav_data
-data = get_behav_data(file='Individual_Measures/stroop.csv.gz')
-data = data.query('worker_id in %s' % list(data.worker_id.unique()[0:3]))
-df = data
-condition = 'condition'
-response_col = 'correct'
-fixed= ['t','a']
-estimate_task_vars = True
-outfile='stroop'
-samples = 1000
-
-from expanalysis.experiments.jspsych_processing import fit_HDDM
-group_dvs = fit_HDDM(data, condition = 'condition', outfile = 'stroop', samples=1000)
 
 
+samples=20000
+hddm_fun_dict = get_HDDM_fun(None, samples)
+hddm_fun_dict.pop('twobytwo')
 
-task = 'stroop'
-directory = '/mnt/Sherlock_Scratch'
-hddm.load(path.join(directory,'%s_base.model' % task))
-hddm.models.
+gelman_vals = {}
+def assess_convergence(task, reps=5):
+    # load data
+    data = get_behav_data(file='Individual_Measures/%s.csv.gz' % task)
+    data = data.query('worker_id in %s' % list(data.worker_id.unique()[0:4]))
+    outputs = []
+    def run_model():
+        # compute DVs (create models)
+        group_dvs = hddm_fun_dict[task](data)
+        # load models
+        base_files = glob('%s*_base.model' % task)
+        m_base = hddm.load(base_files[0])
+        m_condition = None
+        condition_files = glob('%s*_condition.model' % task)
+        if len(condition_files)>0:
+            m_condition = hddm.load(condition_files[0])
+        return (m_base, m_condition)
+    
+    for _ in range(reps):
+        output = run_model()
+        outputs.append(output)
+    return {task: outputs}
+        
+# create group maps
+pool = Pool()
+mp_results = pool.map(assess_convergence, hddm_fun_dict.keys())
+pool.close() 
+pool.join()
+
+results = {}
+for d in mp_results:
+    results.update(d)
+
+# save plots of traces
+for k,v in results.items():
+    gelman_vals[k+'_base'] = gelman_rubin([i[0] for i in v])
+    # plot posteriors
+    v[0][0].plot_posteriors(['a', 't', 'v'], save=True)
+    plots = glob('*png')
+    for p in plots:
+        rename(p, path.join('hddm_output', 'Plots', '%s_base_%s' % (k,p)))
+    
+    if v[0][1] is not None:
+        gelman_vals[k+'_condition'] = gelman_rubin([i[1] for i in v])
+        
+        v[0][1].plot_posteriors(['a', 't', 'v'], save=True)
+        plots = glob('*png')
+        for p in plots:
+            rename(p, path.join('hddm_output', 'Plots', '%s_condition_%s' % (k,p)))
+
+# save gelman vals
+pickle.dump(gelman_vals, open(path.join('hddm_output', 'gelman_vals.pkl'), 'wb'))
+
+# clean up
+for f in glob('*.model'):
+    rename(f, path.join('hddm_output', f))
+    
+for f in glob('*_traces.db'):
+    rename(f, path.join('hddm_output', f))
+    
+for f in glob('*.csv'):
+    remove(f)
