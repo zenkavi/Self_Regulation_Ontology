@@ -46,7 +46,7 @@ if job == 'download' or job == "all":
     data = download_data(data_dir, access_token, filters = filters,  
                          battery = 'Self Regulation fMRI Battery',
                          url = 'http://www.expfactory.org/new_api/results/63/',
-                         file_name = 'fmri_followup_data.json')
+                         file_name = 'fmri_followup_data.pkl')
     
     data.reset_index(drop = True, inplace = True)
     
@@ -55,7 +55,7 @@ if job in ['extras', 'all']:
     #Process Data
     if job == "extras":
         #load Data
-        data = pd.read_pickle(path.join(data_dir, 'mturk_data.pkl'))
+        data = pd.read_pickle(path.join(data_dir, 'fmri_followup_data.pkl'))
         data.reset_index(drop = True, inplace = True)
         print('Finished loading raw data')
         
