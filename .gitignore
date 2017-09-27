@@ -2,8 +2,10 @@ Data/Local
 Data/Retest_Data_NewApi
 Data/Retest_02-11-2017/Local
 Data/Retest_03-21-2017/Local
+Data/Retest_09-27-2017/Local
 Data/Retest_02-11-2017/batch_output
 Data/Retest_03-21-2017/batch_output
+Data/Retest_09-27-2017/batch_output
 data_preparation/old
 Plots
 .Rhistory
