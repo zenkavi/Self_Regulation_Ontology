@@ -18,7 +18,7 @@ from selfregulation.utils.utils import get_info
 from selfregulation.utils.retest_data_utils import anonymize_retest_data
 
 #set token and data directory
-token = get_info('expfactory_token', infile='/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Self_Regulation_Retest_Settings.txt')
+token = get_info('expfactory_token', infile='/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Self_Regulation_Retest_Settings.txt')
 release_date = datetime.date.today().strftime("%m-%d-%Y")
 data_dir=path.join('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/','Retest_'+release_date, 'Local')
 
