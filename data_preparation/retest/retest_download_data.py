@@ -13,7 +13,7 @@ import pandas as pd
 import datetime
 import pickle
 
-from selfregulation.utils.data_preparation_utils import calc_trial_order, convert_date, get_bonuses, get_pay,  remove_failed_subjects
+from selfregulation.utils.data_preparation_utils import calc_trial_order, convert_date, get_bonuses, get_pay, remove_failed_subjects
 from selfregulation.utils.utils import get_info
 from selfregulation.utils.retest_data_utils import anonymize_retest_data
 
