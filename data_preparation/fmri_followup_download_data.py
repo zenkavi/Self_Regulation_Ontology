@@ -10,12 +10,10 @@ from selfregulation.utils.utils import get_info
 
 parser = argparse.ArgumentParser(description='fMRI Analysis Entrypoint Script.')
 parser.add_argument('--job', help='Specifies what part of the script to run. Options: download, extras, post, all").', default='post')
-parser.add_argument('--sample', help='Specifies what sample to run. Options: "discovery", "validation", "incomplete").', nargs='+', default=['discovery', 'validation', 'incomplete'])
 
 # get options
 args = parser.parse_args()
 job = args.job
-sample = args.sample
 
 #load Data
 token = get_info('expfactory_token')
@@ -46,7 +44,7 @@ if job == 'download' or job == "all":
     data = download_data(data_dir, access_token, filters = filters,  
                          battery = 'Self Regulation fMRI Battery',
                          url = 'http://www.expfactory.org/new_api/results/63/',
-                         file_name = 'fmri_followup_data.json')
+                         file_name = 'fmri_followup_data.pkl')
     
     data.reset_index(drop = True, inplace = True)
     
@@ -55,7 +53,7 @@ if job in ['extras', 'all']:
     #Process Data
     if job == "extras":
         #load Data
-        data = pd.read_pickle(path.join(data_dir, 'mturk_data.pkl'))
+        data = pd.read_pickle(path.join(data_dir, 'fmri_followup_data.pkl'))
         data.reset_index(drop = True, inplace = True)
         print('Finished loading raw data')
         
