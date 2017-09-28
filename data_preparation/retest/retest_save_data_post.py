@@ -1,12 +1,11 @@
 import sys
 sys.path.append('/Users/zeynepenkavi/Dropbox/PoldrackLab/expfactory-analysis')
 sys.path.append('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/data_preparation')
-import json
 import numpy as np
 from os import path
 import pandas as pd
 from glob import glob
-from selfregulation.utils.data_preparation_utils import convert_var_names, drop_failed_QC_vars, drop_vars, remove_correlated_task_variables, remove_outliers, transform_remove_skew
+from selfregulation.utils.data_preparation_utils import convert_var_names, drop_failed_QC_vars, drop_vars
 from selfregulation.utils.r_to_py_utils import missForest
 
 try: 
@@ -16,13 +15,6 @@ except NameError:
     
 
 data_dir = data_dir=path.join('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Data/','Retest_'+release_date)
-
-meta_dir = path.join(data_dir,'metadata')
-reference_dir = path.join(data_dir,'references')
-if not path.exists(meta_dir):
-    makedirs(meta_dir)
-if not path.exists(reference_dir):
-    makedirs(reference_dir)
 
 #Read in DVs and valence
 label = 'retest'

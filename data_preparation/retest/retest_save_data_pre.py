@@ -1,7 +1,6 @@
 import sys
 sys.path.append('/Users/zeynepenkavi/Dropbox/PoldrackLab/expfactory-analysis')
 sys.path.append('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/data_preparation')
-import json
 import numpy as np
 from os import path, makedirs, chdir
 import pandas as pd
@@ -20,7 +19,7 @@ try:
 except NameError:
     release_date = input('Enter release_ date:')
 
-data_dir = data_dir=path.join('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Data/','Retest_'+release_date)
+data_dir = path.join('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Data/','Retest_'+release_date)
 
 #load data (in case anything broke)
 data = pd.read_json(path.join(data_dir, 'Local/mturk_retest_data_post.json'))
@@ -53,20 +52,20 @@ health_data = extract_experiment(data,'k6_survey')
 health_data = health_data.where((pd.notnull(health_data)), None)
 health_data = process_health(health_data, data_dir, meta_dir)
 
-#demographic_health.csv - done
+#demographic_health.csv
 target_data = pd.concat([demog_data, alcohol_drug_data, health_data], axis = 1)
 target_data.to_csv(path.join(data_dir,'demographic_health.csv'))
 
-#reference/demographic_health_reference.csv - done
+#reference/demographic_health_reference.csv
 np.savetxt(path.join(reference_dir,'demographic_health_reference.csv'), target_data.columns, fmt = '%s', delimiter=",")
     
-#items.csv.gz - done
+#items.csv.gz
 items_df = get_items(data)
 subjectsxitems = items_df.pivot('worker','item_ID','coded_response')
 assert subjectsxitems.shape[1] == 594, "Wrong number of items found"
 items_df.to_csv(path.join(data_dir, 'items.csv.gz'), compression = 'gzip')
 
-#subject_x_items.csv - done
+#subject_x_items.csv
 subjectsxitems.to_csv(path.join(data_dir, 'subject_x_items.csv'))
 
 chdir('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Data')
