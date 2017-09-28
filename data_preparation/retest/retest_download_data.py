@@ -1,13 +1,12 @@
 import sys
-sys.path.append('/oak/stanford/groups/russpold/users/zenkavi/expfactory-analysis')
-sys.path.append('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/data_preparation')
+sys.path.append('/Users/zeynepenkavi/Dropbox/PoldrackLab/expfactory-analysis')
+sys.path.append('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/data_preparation')
 from expanalysis.experiments.jspsych import calc_time_taken, get_post_task_responses
-from expanalysis.experiments.processing import post_process_data, extract_DVs, extract_experiment
+from expanalysis.experiments.processing import post_process_data
 from expanalysis.experiments.utils import remove_duplicates, result_filter
 from expanalysis.results import get_filters, get_result_fields
 from expanalysis.results import Result
 import json
-import numpy as np
 from os import path, makedirs
 import pandas as pd
 import datetime
