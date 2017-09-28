@@ -49,7 +49,9 @@ if job == 'download' or job == "all":
     f = open(token)
     access_token = f.read().strip()  
     data = download_data(data_dir, access_token, filters = filters,  
-    	battery = 'Self Regulation Battery', file_name = 'mturk_data.pkl')
+    	battery = 'Self Regulation Battery', 
+        url = 'http://www.expfactory.org/new_api/results/48/',
+        file_name = 'mturk_data.pkl')
     data.reset_index(drop = True, inplace = True)
     
 if job in ['extras', 'all']:
@@ -63,7 +65,7 @@ if job in ['extras', 'all']:
     
     #anonymize data
     worker_lookup = anonymize_data(data)
-    json.dump(worker_lookup, open(path.join(data_dir, 'admin', 'worker_lookup.json','w')))
+    json.dump(worker_lookup, open(path.join(data_dir, 'admin', 'worker_lookup.json'),'w'))
     
     # record subject completion statistics
     (data.groupby('worker_id').count().finishtime).to_json(path.join(data_dir, 'admin', 'worker_counts.json'))
