@@ -1,27 +1,31 @@
+from itertools import combinations
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from scipy.cluster.hierarchy import dendrogram, linkage, cut_tree
+from scipy.spatial.distance import pdist, squareform
 from selfregulation.utils.r_to_py_utils import psychFA
+from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
 
 # functions to fit and extract factor analysis solutions
-def find_optimal_components(data, minc=1, maxc=20):
+def find_optimal_components(data, minc=1, maxc=30, metric='BIC'):
     """
     Fit psychFA over a range of components and returns the best c 
     """
-    BICs = {}
+    metrics = {}
     outputs = []
     n_components = range(minc,maxc)
     scaler = StandardScaler()
     scaled_data = scaler.fit_transform(data)
     for c in n_components:
         fa, output = psychFA(scaled_data, c, method='ml')
-        BICs[c] = output['BIC']
+        metrics[c] = output[metric]
         outputs.append(output)
-    best_c = np.argmin(BICs)+1
+    best_c = min(metrics, key=metrics.get)
     print('Best Component: ', best_c)
-    return best_c, BICs
+    return best_c, metrics
 
 def get_loadings(fa_output, labels):
     """
@@ -119,7 +123,9 @@ def visualize_factors(loading_df, groups=None, n_rows=2,
 
 # helper functions
 def reorder_data(data, groups):
-    ordered_cols = [j for i in groups for j in i[1]]
+    ordered_cols = []
+    for i in groups:
+        ordered_cols += i[1]
     new_data = data.reindex_axis(ordered_cols, axis=1)
     return new_data
 
@@ -140,7 +146,7 @@ def create_factor_tree(data, groups=None, component_range=(1,13)):
         corr = abs(pd.concat([higher_dim,lower_dim], axis=1).corr())
         subset = corr.iloc[c:,:c] # rows are former EFA result, cols are current
         max_factors = np.argmax(subset.values, axis=1)
-        remaining = np.sum(range(c))-np.sum(max_factors)
+        remaining = list(set(range(c))-set(max_factors))
         return np.append(max_factors, remaining)
 
     EFA_results = {}
@@ -198,9 +204,32 @@ def plot_factor_tree(factor_tree, groups=None, filename=None):
         f.savefig(filename)
     return f
 
-# helper function
-from scipy.cluster.hierarchy import dendrogram, linkage, cut_tree
-from scipy.spatial.distance import pdist, squareform
+# ****************************************************************************
+# Other helper functions for dealing with factor analytic results
+# ****************************************************************************
+
+def quantify_nesting(higher_dim, lower_dim):
+    lower_n = lower_dim.shape[1]
+    lr = LinearRegression()
+    best_score = -1
+    relationship = []
+    for lower_name, lower_c in lower_dim.iteritems():
+        for higher_c1, higher_c2 in combinations(higher_dim.columns, 2):
+            # combined prediction
+            predict_mat = higher_dim.loc[:,[higher_c1, higher_c2]]
+            lr.fit(predict_mat.values, lower_c.values)
+            score = lr.score(predict_mat.values, lower_c.values)
+            # individual correlation
+            lower_subset = lower_dim.drop(lower_name, axis=1)
+            higher_subset = higher_dim.drop([higher_c1, higher_c2], axis=1)
+            corr = np.corrcoef(lower_subset.T,
+                               higher_subset.T)[lower_n-1:, :lower_n-1]
+            other_cols = np.max(corr,axis=0)**2
+            total_score = np.mean(np.append(other_cols, score))
+            if total_score>best_score:
+                best_score = total_score
+                relationship = (lower_c.name, (higher_c1, higher_c2))
+        return best_score, relationship
 
 def get_hierarchical_groups(loading_df, n_groups=8):
     # helper function
