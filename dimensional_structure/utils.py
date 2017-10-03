@@ -7,6 +7,7 @@ from scipy.cluster.hierarchy import dendrogram, linkage, cut_tree
 from scipy.spatial.distance import pdist, squareform
 from selfregulation.utils.r_to_py_utils import psychFA
 from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score
 from sklearn.preprocessing import StandardScaler
 
 # functions to fit and extract factor analysis solutions
@@ -213,6 +214,8 @@ def quantify_nesting(higher_dim, lower_dim):
     lr = LinearRegression()
     best_score = -1
     relationship = []
+    # quantify how well the higher dimensional solution can reconstruct
+    # the lower dimensional solution using a linear combination of two factors
     for lower_name, lower_c in lower_dim.iteritems():
         for higher_c1, higher_c2 in combinations(higher_dim.columns, 2):
             # combined prediction
@@ -228,8 +231,18 @@ def quantify_nesting(higher_dim, lower_dim):
             total_score = np.mean(np.append(other_cols, score))
             if total_score>best_score:
                 best_score = total_score
-                relationship = (lower_c.name, (higher_c1, higher_c2))
-        return best_score, relationship
+                relationship = {'score': score,
+                                'lower_factor': lower_c.name, 
+                                'higher_factors': (higher_c1, higher_c2), 
+                                'coefficients': lr.coef_}
+    # see how well the lower dimension solution can reconstruct each factor
+    # of the higher dimension
+    lr.fit(lower_dim, higher_dim)
+    reverse_scores = r2_score(lr.predict(lower_dim), 
+                             higher_dim, 
+                             multioutput='raw_values')
+    
+    return relationship, reverse_scores
 
 def get_hierarchical_groups(loading_df, n_groups=8):
     # helper function

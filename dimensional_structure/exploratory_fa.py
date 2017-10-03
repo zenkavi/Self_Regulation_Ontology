@@ -1,7 +1,9 @@
 # imports
 from collections import OrderedDict as odict
-import pickle
+import numpy as np
 from os import makedirs, path
+import pandas as pd
+import pickle
 from selfregulation.utils.utils import get_behav_data
 from selfregulation.utils.r_to_py_utils import get_Rpsych
 from sklearn.decomposition import PCA
@@ -57,7 +59,7 @@ SABIC_c, SABICs = find_optimal_components(results['data'], metric='SABIC')
 results['SABIC_c'] = SABIC_c
 results['SABICs'] = SABICs
 # parallel analysis
-parallel_out = psych.fa_parallel(results['data'], plot=False, fa='fa', fm='ml')
+parallel_out = psych.fa_parallel(results['data'], fa='fa', fm='ml')
 results['parallel_c'] = parallel_out[parallel_out.names.index('nfact')][0]
 
 # perform factor analysis with optimal number of components
@@ -112,7 +114,7 @@ for group_name in ['putative', 'hierarchical']:
 
 # quantify nesting of factor tree:
 nesting_results = odict()
-for c in range(3,20):
+for c in range(3,len(factor_tree)+1):
     out = quantify_nesting(factor_tree[c], factor_tree[c-1])
     nesting_results[(c,c-1)] = out
     results['nesting_tree'] = nesting_results
@@ -124,28 +126,58 @@ pickle.dump(results, open(path.join(output_file, 'EFA_results.pkl'),'wb'))
 # ****************************************************************************
 # Plotting
 # ****************************************************************************
-
-plt.plot(scale(list(results['SABICs'].values())))
-plt.plot(scale(list(results['BICs'].values())))
+sns.set_context('notebook', font_scale=1.4)
 
 with sns.axes_style('dark'):
     x = list(results['BICs'].keys())
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
     ax1.plot(x, list(results['BICs'].values()), c='c', lw=3)
-    ax1.set_ylabel('BIC')
+    ax1.set_ylabel('BIC', fontsize=20)
     BIC_c = results['BIC_c']
-    ax1.plot(BIC_c,results['BICs'][BIC_c],'r.', markersize=30)
+    ax1.plot(BIC_c,results['BICs'][BIC_c],'k.', markersize=30)
     ax2.plot(x, list(results['SABICs'].values()), c='m', lw=3)
-    ax2.set_ylabel('SABIC')
+    ax2.set_ylabel('SABIC', fontsize=20)
     SABIC_c = results['SABIC_c']
-    ax2.plot(SABIC_c,results['SABICs'][SABIC_c],'r.', markersize=30)
-    
-y = [i[0] for i in results['nesting_tree'].values()]    
-f = plt.Figure(figsize=(12,8))
-plt.plot(range(2, len(y)+2), y, lw = 3, c='m')
-plt.xlabel('# Factors')
-plt.ylabel('R^2 for Nested Recovery')
+    ax2.plot(SABIC_c,results['SABICs'][SABIC_c],'k.', markersize=30)
+
+# plot nesting tree across components
+f = plt.figure(figsize=(16,12))
+plt.subplot(3,1,1)
+y = [i[0]['score'] for i in results['nesting_tree'].values()]    
+plt.plot(range(2, len(y)+2), y, 'mo-', lw = 3)
+plt.ylabel('R^2 for Upper Recovery')
+
+plt.subplot(3,1,2)
+f = lambda x: abs(abs(x[0])-abs(x[1]))
+y = [f(i[0]['coefficients']) for i in results['nesting_tree'].values()]    
+plt.plot(range(2, len(y)+2), y, 'mo-', lw = 3)
+plt.ylabel('Difference between contributions')
+
+plt.subplot(3,1,3)
+lower_limit = -2
+df = pd.DataFrame([i[1] for i in results['nesting_tree'].values()],
+                  index=results['nesting_tree'].keys())
+df.insert(0, 'name', df.index)
+df = pd.melt(df, 'name', value_name='Lower Recovery')
+df.loc[df.loc[:,'Lower Recovery']<-2, 'Lower Recovery']=lower_limit
+sns.stripplot('name','Lower Recovery',data=df, size=8, jitter=True)
+plt.hlines(0, -1, len(df.name.unique())+1, linestyles='dashed')
+plt.xlabel('# Higher-Order Factors', fontsize=20)
+plt.xticks(range(len(df.name.unique())), range(2, len(y)+2))
+plt.ylim([lower_limit,1])
+plt.tight_layout()
+
+# plot mini factor tree
+plot_factor_tree({i: results['hierarchical_factor_tree'][i] for i in [1,2]},
+                 groups=results['hierarchical_groups'],
+                 filename = 'hierarchical_mini_tree')
+
+# plot full factor tree
+plot_factor_tree(results['hierarchical_factor_tree'],
+                 groups=results['hierarchical_groups'],
+                 filename = 'hierarchical_full_tree')
+
 
 
 
