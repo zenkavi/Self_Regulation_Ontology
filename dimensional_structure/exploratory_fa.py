@@ -8,9 +8,11 @@ from selfregulation.utils.utils import get_behav_data
 from selfregulation.utils.r_to_py_utils import get_Rpsych
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import scale
-from utils import find_optimal_components, get_loadings, psychFA, reorder_data
-from utils import create_factor_tree, plot_factor_tree, quantify_nesting
-from utils import get_hierarchical_groups
+from dimensional_structure.utils import (
+        create_factor_tree, find_optimal_components,  get_hierarchical_groups,
+        get_loadings, plot_factor_tree, print_top_factors, psychFA,
+        quantify_nesting
+        )
 # plotting
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -46,7 +48,7 @@ def adequacy_test(data):
 
 adequate, adequacy_stats = adequacy_test(results['data'])
 print('Is the data adequate for factor analysis? %s' % ['No', 'Yes'][adequate])
-results['adequacy'] = {'adequate': adequate, 'adequacy_stats': adequacy_stats}
+results['EFA_adequacy'] = {'adequate': adequate, 'adequacy_stats': adequacy_stats}
 
 # ************************* calculate optimal FA ******************************
 
@@ -62,11 +64,6 @@ results['SABICs'] = SABICs
 parallel_out = psych.fa_parallel(results['data'], fa='fa', fm='ml')
 results['parallel_c'] = parallel_out[parallel_out.names.index('nfact')][0]
 
-# perform factor analysis with optimal number of components
-best_metric = 'BIC_c'
-fa, output = psychFA(results['data'], results[best_metric])
-results['optimal_fa'] = (fa,output)
-optimal_loading = get_loadings(output, labels=raw_data.columns)
 
 # *********************** create groups ************************************
 # create putative groups
@@ -97,20 +94,23 @@ for name, group in tmp_groups:
 results['putative_groups'] = putative_groups
 
 # create hierarchical groups
-cluster_reorder_index, groups = get_hierarchical_groups(optimal_loading)
+# perform factor analysis for hierarchical grouping
+grouping_metric = 'BIC_c'
+fa, output = psychFA(results['data'], results[grouping_metric])
+grouping_loading = get_loadings(output, labels=raw_data.columns)
+
+cluster_reorder_index, groups = get_hierarchical_groups(grouping_loading)
 results['hierarchical_groups'] = groups
 
 
 
 # ************************* create factor trees ******************************
-
-for group_name in ['putative', 'hierarchical']:
-    
+run_FA = results.get('factor_tree', [])
+if len(run_FA) < max([SABIC_c, BIC_c])+5:
     # Use Putative groups
-    factor_tree = create_factor_tree(results['data'], 
-                                     results['%s_groups' % group_name], 
-                                     (1,results['BIC_c']+10))
-    results['%s_factor_tree' % group_name] = factor_tree
+    factor_tree = create_factor_tree(results['data'],
+                                     (1,max([SABIC_c, BIC_c])+5))
+    results['factor_tree'] = factor_tree
 
 # quantify nesting of factor tree:
 nesting_results = odict()
@@ -120,7 +120,6 @@ for c in range(3,len(factor_tree)+1):
     results['nesting_tree'] = nesting_results
 
 # saving
-
 pickle.dump(results, open(path.join(output_file, 'EFA_results.pkl'),'wb'))
 
 # ****************************************************************************
@@ -142,25 +141,28 @@ with sns.axes_style('dark'):
     ax2.plot(SABIC_c,results['SABICs'][SABIC_c],'k.', markersize=30)
 
 # plot nesting tree across components
-f = plt.figure(figsize=(16,12))
-plt.subplot(3,1,1)
-y = [i[0]['score'] for i in results['nesting_tree'].values()]    
-plt.plot(range(2, len(y)+2), y, 'mo-', lw = 3)
-plt.ylabel('R^2 for Upper Recovery')
-
-plt.subplot(3,1,2)
-f = lambda x: abs(abs(x[0])-abs(x[1]))
-y = [f(i[0]['coefficients']) for i in results['nesting_tree'].values()]    
-plt.plot(range(2, len(y)+2), y, 'mo-', lw = 3)
-plt.ylabel('Difference between contributions')
-
-plt.subplot(3,1,3)
 lower_limit = -2
 df = pd.DataFrame([i[1] for i in results['nesting_tree'].values()],
                   index=results['nesting_tree'].keys())
 df.insert(0, 'name', df.index)
 df = pd.melt(df, 'name', value_name='Lower Recovery')
 df.loc[df.loc[:,'Lower Recovery']<-2, 'Lower Recovery']=lower_limit
+
+f = plt.figure(figsize=(16,12))
+plt.subplot(3,1,1)
+y = [i[0]['score'] for i in results['nesting_tree'].values()]    
+plt.plot(range(2, len(y)+2), y, 'mo-', lw = 3)
+plt.ylabel('R^2 for Upper Recovery')
+plt.xlim(1, len(y)+2)
+
+plt.subplot(3,1,2)
+f = lambda x: abs(abs(x[0])-abs(x[1]))
+y = [f(i[0]['coefficients']) for i in results['nesting_tree'].values()]    
+plt.plot(range(2, len(y)+2), y, 'mo-', lw = 3)
+plt.ylabel('Difference between contributions')
+plt.xlim(1, len(y)+2)
+
+plt.subplot(3,1,3)
 sns.stripplot('name','Lower Recovery',data=df, size=8, jitter=True)
 plt.hlines(0, -1, len(df.name.unique())+1, linestyles='dashed')
 plt.xlabel('# Higher-Order Factors', fontsize=20)
@@ -169,7 +171,7 @@ plt.ylim([lower_limit,1])
 plt.tight_layout()
 
 # plot mini factor tree
-plot_factor_tree({i: results['hierarchical_factor_tree'][i] for i in [1,2]},
+plot_factor_tree({i: results['factor_tree'][i] for i in [1,2]},
                  groups=results['hierarchical_groups'],
                  filename = 'hierarchical_mini_tree')
 

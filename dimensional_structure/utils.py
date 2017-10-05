@@ -123,14 +123,14 @@ def visualize_factors(loading_df, groups=None, n_rows=2,
         return fig
 
 # helper functions
-def reorder_data(data, groups):
+def reorder_data(data, groups, axis=1):
     ordered_cols = []
     for i in groups:
         ordered_cols += i[1]
-    new_data = data.reindex_axis(ordered_cols, axis=1)
+    new_data = data.reindex_axis(ordered_cols, axis)
     return new_data
 
-def create_factor_tree(data, groups=None, component_range=(1,13)):
+def create_factor_tree(data, component_range=(1,13)):
     """
     Runs "visualize_factors" at multiple dimensionalities and saves them
     to a pdf
@@ -151,9 +151,6 @@ def create_factor_tree(data, groups=None, component_range=(1,13)):
         return np.append(max_factors, remaining)
 
     EFA_results = {}
-    if groups != None:
-        data = reorder_data(data, groups)
-    
     # plot
     for c in range(component_range[0],component_range[1]+1):
         fa, output = psychFA(data, c)
@@ -161,6 +158,7 @@ def create_factor_tree(data, groups=None, component_range=(1,13)):
         if (c-1) in EFA_results.keys():
             reorder_index = get_similarity_order(tmp_loading_df, EFA_results[c-1])
             tmp_loading_df = tmp_loading_df.iloc[:, reorder_index]
+            tmp_loading_df.columns = sorted(tmp_loading_df.columns)
         EFA_results[c] = tmp_loading_df
     return EFA_results
 
@@ -193,6 +191,8 @@ def plot_factor_tree(factor_tree, groups=None, filename=None):
     # plot
     for rowi, c in enumerate(range(min_c,max_c+1)):
         tmp_loading_df = factor_tree[c]
+        if groups:
+            tmp_loading_df = reorder_data(tmp_loading_df, groups, axis=0)
         if rowi == 0:
             visualize_factors(tmp_loading_df, groups, 
                               n_rows=1, input_axes=axes[rowi,0:c], legend=True)
@@ -208,9 +208,23 @@ def plot_factor_tree(factor_tree, groups=None, filename=None):
 # ****************************************************************************
 # Other helper functions for dealing with factor analytic results
 # ****************************************************************************
+def corr_lower_higher(higher_dim, lower_dim, cross_only=True):
+    """
+    Returns a correlation matrix between factors at different dimensionalities
+    cross_only: bool, if True only display the correlations between dimensions
+    """
+    higher_dim = higher_dim.copy()
+    lower_dim = lower_dim.copy()
+    lower_n = lower_dim.shape[1]
+    
+    lower_dim.columns = ['l%s' % i  for i in lower_dim.columns]
+    higher_dim.columns = ['h%s' % i for i in higher_dim.columns]
+    corr = pd.concat([lower_dim, higher_dim], axis=1).corr()
+    if cross_only:
+        corr = corr.iloc[:lower_n, lower_n:]
+    return corr
 
 def quantify_nesting(higher_dim, lower_dim):
-    lower_n = lower_dim.shape[1]
     lr = LinearRegression()
     best_score = -1
     relationship = []
@@ -220,14 +234,17 @@ def quantify_nesting(higher_dim, lower_dim):
         for higher_c1, higher_c2 in combinations(higher_dim.columns, 2):
             # combined prediction
             predict_mat = higher_dim.loc[:,[higher_c1, higher_c2]]
-            lr.fit(predict_mat.values, lower_c.values)
-            score = lr.score(predict_mat.values, lower_c.values)
+            lr.fit(predict_mat, lower_c)
+            score = lr.score(predict_mat, lower_c)
             # individual correlation
             lower_subset = lower_dim.drop(lower_name, axis=1)
             higher_subset = higher_dim.drop([higher_c1, higher_c2], axis=1)
-            corr = np.corrcoef(lower_subset.T,
-                               higher_subset.T)[lower_n-1:, :lower_n-1]
-            other_cols = np.max(corr,axis=0)**2
+            corr = corr_lower_higher(higher_subset, lower_subset)
+            if len(corr)==1:
+                other_cols = [corr.iloc[0,0]]
+            else:
+                other_cols = corr.apply(lambda x: max(x**2)-sorted(x**2)[-2],
+                                        axis=1)
             total_score = np.mean(np.append(other_cols, score))
             if total_score>best_score:
                 best_score = total_score
