@@ -1,3 +1,4 @@
+from collections import OrderedDict as odict
 from itertools import combinations
 from matplotlib import pyplot as plt
 import numpy as np
@@ -50,6 +51,116 @@ def print_top_factors(loading_df, n=4):
         print('\nFACTOR %s' % i)
         print(top_vars)
         
+# ****************************************************************************
+# Other helper functions for dealing with factor analytic results
+# ****************************************************************************
+def corr_lower_higher(higher_dim, lower_dim, cross_only=True):
+    """
+    Returns a correlation matrix between factors at different dimensionalities
+    cross_only: bool, if True only display the correlations between dimensions
+    """
+    # higher dim is the factor solution with fewer factors
+    higher_dim = higher_dim.copy()
+    lower_dim = lower_dim.copy()
+    higher_n = higher_dim.shape[1]
+    
+    lower_dim.columns = ['l%s' % i  for i in lower_dim.columns]
+    higher_dim.columns = ['h%s' % i for i in higher_dim.columns]
+    corr = pd.concat([higher_dim, lower_dim], axis=1).corr()
+    if cross_only:
+        corr = corr.iloc[:higher_n, higher_n:]
+    return corr
+
+def quantify_higher_nesting(higher_dim, lower_dim):
+    """
+    Quantifies how well higher levels of the tree can be reconstructed from 
+    lower levels
+    """
+    lr = LinearRegression()
+    best_score = -1
+    relationship = []
+    # quantify how well the higher dimensional solution can reconstruct
+    # the lower dimensional solution using a linear combination of two factors
+    for higher_name, higher_c in higher_dim.iteritems():
+        for lower_c1, lower_c2 in combinations(lower_dim.columns, 2):
+            # combined prediction
+            predict_mat = higher_dim.loc[:,[lower_c1, lower_c2]]
+            lr.fit(predict_mat, higher_c)
+            score = lr.score(predict_mat, higher_c)
+            # individual correlation
+            lower_subset = lower_dim.drop(higher_name, axis=1)
+            higher_subset = higher_dim.drop([lower_c1, lower_c2], axis=1)
+            corr = corr_lower_higher(higher_subset, lower_subset)
+            if len(corr)==1:
+                other_cols = [corr.iloc[0,0]]
+            else:
+                other_cols = corr.apply(lambda x: max(x**2)-sorted(x**2)[-2],
+                                        axis=1)
+            total_score = np.mean(np.append(other_cols, score))
+            if total_score>best_score:
+                best_score = total_score
+                relationship = {'score': score,
+                                'lower_factor': higher_c.name, 
+                                'higher_factors': (lower_c1, lower_c2), 
+                                'coefficients': lr.coef_}
+    return relationship
+
+def quantify_lower_nesting(factor_tree):
+    """
+    Quantifies how well lower levels of the tree can be reconstruted from
+    higher levels
+    """
+    lr = LinearRegression()
+    relationships = odict()
+    for higher_c, lower_c in combinations(factor_tree.keys(), 2):
+        higher_dim = factor_tree[higher_c]
+        lower_dim = factor_tree[lower_c]
+        lr.fit(higher_dim, lower_dim)
+        reverse_scores = r2_score(lr.predict(higher_dim), 
+                                 lower_dim, 
+                                 multioutput='raw_values')
+        relationship = {'scores': reverse_scores,
+                        'coefs': lr.coef_}
+        relationships[(higher_c,lower_c)] = relationship
+    return relationships
+
+def get_factor_groups(loading_df):
+    index_assignments = np.argmax(abs(loading_df).values,axis=1)
+    factor_groups = []
+    for assignment in np.unique(index_assignments):
+        assignment_vars = [var for i,var in enumerate(loading_df.index) if index_assignments[i] == assignment]
+        factor_groups.append([assignment,assignment_vars])
+    return factor_groups
+
+
+  
+def get_hierarchical_groups(loading_df, n_groups=8):
+    # helper function
+    def remove_adjacent(nums):
+        result = []
+        for num in nums:
+            if len(result) == 0 or num != result[-1]:
+                result.append(num)
+        return result
+
+    # create linkage matrix for variables projected into a component loading
+    row_clusters = linkage(pdist(loading_df, metric='correlation'), method='ward')   
+    # use the dendorgram function to order the leaves appropriately
+    row_dendr = dendrogram(row_clusters, labels=loading_df.T.columns, no_plot = True)
+    cluster_reorder_index = row_dendr['leaves']
+    # cut the linkage graph such that there are only n groups
+    n_groups = n_groups
+    index_assignments = [i[0] for i in cut_tree(row_clusters, n_groups)]
+    # relabel groups such that 0 is the 'left' most in the dendrogram
+    group_order = remove_adjacent([index_assignments[i] for i in cluster_reorder_index])
+    index_assignments = [group_order.index(i) for i in index_assignments]
+    # using the groups and the dendrogram ordering, create a number of groups
+    hierarchical_groups = []
+    for assignment in np.unique(index_assignments):
+        # get variables that are in the correct group
+        assignment_vars = [var for i,var in enumerate(loading_df.index) if index_assignments[i] == assignment]
+        hierarchical_groups.append([assignment,assignment_vars])
+    return cluster_reorder_index, hierarchical_groups
         
 # ****************************************************************************
 # Helper functions for visualization of component loadings
@@ -142,13 +253,11 @@ def create_factor_tree(data, component_range=(1,13)):
     reorder_list: optional. List of index values in an order that will be used
                   to rearrange data
     """
-    def get_similarity_order(higher_dim, lower_dim):
+    def get_similarity_order(lower_dim, higher_dim):
         "Helper function to reorder factors into correspondance between two dimensionalities"
-        corr = abs(pd.concat([higher_dim,lower_dim], axis=1).corr())
-        subset = corr.iloc[c:,:c] # rows are former EFA result, cols are current
-        max_factors = np.argmax(subset.values, axis=1)
-        remaining = list(set(range(c))-set(max_factors))
-        return np.append(max_factors, remaining)
+        subset = corr_lower_higher(higher_dim, lower_dim)
+        max_factors = np.argmax(abs(subset.values), axis=0)
+        return np.argsort(max_factors)
 
     EFA_results = {}
     # plot
@@ -203,88 +312,6 @@ def plot_factor_tree(factor_tree, groups=None, filename=None):
             ax.set_axis_off()
     if filename:
         f.savefig(filename)
-    return f
+    else:
+        return f
 
-# ****************************************************************************
-# Other helper functions for dealing with factor analytic results
-# ****************************************************************************
-def corr_lower_higher(higher_dim, lower_dim, cross_only=True):
-    """
-    Returns a correlation matrix between factors at different dimensionalities
-    cross_only: bool, if True only display the correlations between dimensions
-    """
-    higher_dim = higher_dim.copy()
-    lower_dim = lower_dim.copy()
-    lower_n = lower_dim.shape[1]
-    
-    lower_dim.columns = ['l%s' % i  for i in lower_dim.columns]
-    higher_dim.columns = ['h%s' % i for i in higher_dim.columns]
-    corr = pd.concat([lower_dim, higher_dim], axis=1).corr()
-    if cross_only:
-        corr = corr.iloc[:lower_n, lower_n:]
-    return corr
-
-def quantify_nesting(higher_dim, lower_dim):
-    lr = LinearRegression()
-    best_score = -1
-    relationship = []
-    # quantify how well the higher dimensional solution can reconstruct
-    # the lower dimensional solution using a linear combination of two factors
-    for lower_name, lower_c in lower_dim.iteritems():
-        for higher_c1, higher_c2 in combinations(higher_dim.columns, 2):
-            # combined prediction
-            predict_mat = higher_dim.loc[:,[higher_c1, higher_c2]]
-            lr.fit(predict_mat, lower_c)
-            score = lr.score(predict_mat, lower_c)
-            # individual correlation
-            lower_subset = lower_dim.drop(lower_name, axis=1)
-            higher_subset = higher_dim.drop([higher_c1, higher_c2], axis=1)
-            corr = corr_lower_higher(higher_subset, lower_subset)
-            if len(corr)==1:
-                other_cols = [corr.iloc[0,0]]
-            else:
-                other_cols = corr.apply(lambda x: max(x**2)-sorted(x**2)[-2],
-                                        axis=1)
-            total_score = np.mean(np.append(other_cols, score))
-            if total_score>best_score:
-                best_score = total_score
-                relationship = {'score': score,
-                                'lower_factor': lower_c.name, 
-                                'higher_factors': (higher_c1, higher_c2), 
-                                'coefficients': lr.coef_}
-    # see how well the lower dimension solution can reconstruct each factor
-    # of the higher dimension
-    lr.fit(lower_dim, higher_dim)
-    reverse_scores = r2_score(lr.predict(lower_dim), 
-                             higher_dim, 
-                             multioutput='raw_values')
-    
-    return relationship, reverse_scores
-
-def get_hierarchical_groups(loading_df, n_groups=8):
-    # helper function
-    def remove_adjacent(nums):
-        result = []
-        for num in nums:
-            if len(result) == 0 or num != result[-1]:
-                result.append(num)
-        return result
-
-    # create linkage matrix for variables projected into a component loading
-    row_clusters = linkage(pdist(loading_df), method='ward')   
-    # use the dendorgram function to order the leaves appropriately
-    row_dendr = dendrogram(row_clusters, labels=loading_df.T.columns, no_plot = True)
-    cluster_reorder_index = row_dendr['leaves']
-    # cut the linkage graph such that there are only n groups
-    n_groups = n_groups
-    index_assignments = [i[0] for i in cut_tree(row_clusters, n_groups)]
-    # relabel groups such that 0 is the 'left' most in the dendrogram
-    group_order = remove_adjacent([index_assignments[i] for i in cluster_reorder_index])
-    index_assignments = [group_order.index(i) for i in index_assignments]
-    # using the groups and the dendrogram ordering, create a number of groups
-    hierarchical_groups = []
-    for assignment in np.unique(index_assignments):
-        # get variables that are in the correct group
-        assignment_vars = [var for i,var in enumerate(loading_df.index) if index_assignments[i] == assignment]
-        hierarchical_groups.append([assignment,assignment_vars])
-    return cluster_reorder_index, hierarchical_groups
