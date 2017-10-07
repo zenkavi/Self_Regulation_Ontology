@@ -86,26 +86,33 @@ def DDM_plot(v,t,a, sigma = .1, n = 10, plot_n = 15, file = None):
     return fig, trajectories
 
 
-def dendroheatmap(df, labels=True, label_fontsize=None, pdist_kws=None,
-                  figsize=None, parse=None):
+def dendroheatmap(df, compute_dist=True, labels=True, label_fontsize=None, 
+                  pdist_kws=None, figsize=None, parse=None):
     """
     plot hierarchical clustering and heatmap
     :df: a correlation matrix
     parse_heatmap: int (optional). If defined, devides the columns of the 
                     heatmap based on cutting the dendrogram
     """
-    #clustering
-    if pdist_kws is None:
-        pdist_kws= {'metric': 'correlation'}
     if figsize is None:
         figsize=(16,16)
-    dist_vec = pdist(df, **pdist_kws)
-    dist_df = pd.DataFrame(squareform(dist_vec), 
-                           index=df.index, 
-                           columns=df.index)
+    # if compute_dist = False, assume df is a distance matrix. Otherwise
+    # compute distance on df rows
+    if compute_dist == True:
+        if pdist_kws is None:
+            pdist_kws= {'metric': 'correlation'}
+        dist_vec = pdist(df, **pdist_kws)
+        dist_df = pd.DataFrame(squareform(dist_vec), 
+                               index=df.index, 
+                               columns=df.index)
+    else:
+        assert df.shape[0] == df.shape[1]
+        dist_df = df
+        dist_vec = squareform(df.values)
+    #clustering
     row_clusters = linkage(dist_vec, method='ward')    
     #dendrogram
-    row_dendr = dendrogram(row_clusters, labels=df.columns, no_plot = True)
+    row_dendr = dendrogram(row_clusters, labels=df.index, no_plot = True)
     rowclust_df = dist_df.iloc[row_dendr['leaves'],row_dendr['leaves']]
     #plotting
     if label_fontsize == None:
@@ -145,7 +152,9 @@ def dendroheatmap(df, labels=True, label_fontsize=None, pdist_kws=None,
         separations = (ticks+pad)*len(rowclust_df)
         for c in cuts:
             ax.hlines(separations[c], 0, len(rowclust_df), colors='w')
-    return fig, rowclust_df
+    return fig, {'distance_df': dist_df, 
+                 'linkage': row_clusters, 
+                 'clustered_df': rowclust_df}
 
 
 def heatmap(df):

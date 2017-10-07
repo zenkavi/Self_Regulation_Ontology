@@ -7,25 +7,71 @@ import seaborn as sns
 from scipy.cluster.hierarchy import dendrogram, linkage, cut_tree
 from scipy.spatial.distance import pdist, squareform
 from selfregulation.utils.r_to_py_utils import psychFA
+from sklearn.decomposition import FactorAnalysis
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
+from sklearn.model_selection import cross_val_score
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+
+def distcorr(X, Y, flip=True):
+    """ Compute the distance correlation function
+    
+    >>> a = [1,2,3,4,5]
+    >>> b = np.array([1,2,9,4,4])
+    >>> distcorr(a, b)
+    0.762676242417
+    """
+    X = np.atleast_1d(X)
+    Y = np.atleast_1d(Y)
+    if np.prod(X.shape) == len(X):
+        X = X[:, None]
+    if np.prod(Y.shape) == len(Y):
+        Y = Y[:, None]
+    X = np.atleast_2d(X)
+    Y = np.atleast_2d(Y)
+    n = X.shape[0]
+    if Y.shape[0] != X.shape[0]:
+        raise ValueError('Number of samples must match')
+    a = squareform(pdist(X))
+    b = squareform(pdist(Y))
+    A = a - a.mean(axis=0)[None, :] - a.mean(axis=1)[:, None] + a.mean()
+    B = b - b.mean(axis=0)[None, :] - b.mean(axis=1)[:, None] + b.mean()
+    
+    dcov2_xy = (A * B).sum()/float(n * n)
+    dcov2_xx = (A * A).sum()/float(n * n)
+    dcov2_yy = (B * B).sum()/float(n * n)
+    dcor = np.sqrt(dcov2_xy)/np.sqrt(np.sqrt(dcov2_xx) * np.sqrt(dcov2_yy))
+    if flip == True:
+        dcor = 1-dcor
+    return dcor
 
 # functions to fit and extract factor analysis solutions
 def find_optimal_components(data, minc=1, maxc=30, metric='BIC'):
     """
-    Fit psychFA over a range of components and returns the best c 
+    Fit EFA over a range of components and returns the best c. If metric = CV
+    uses sklearn. Otherwise uses psych
+    metric: str, method to use for optimal components. Options 'BIC', 'SABIC',
+            and 'CV'
     """
     metrics = {}
-    outputs = []
     n_components = range(minc,maxc)
     scaler = StandardScaler()
-    scaled_data = scaler.fit_transform(data)
-    for c in n_components:
-        fa, output = psychFA(scaled_data, c, method='ml')
-        metrics[c] = output[metric]
-        outputs.append(output)
-    best_c = min(metrics, key=metrics.get)
+    if metric != 'CV':
+        scaled_data = scaler.fit_transform(data)
+        for c in n_components:
+            fa, output = psychFA(scaled_data, c, method='ml')
+            metrics[c] = output[metric]
+        best_c = min(metrics, key=metrics.get)
+    else:
+        for c in n_components:
+            fa = FactorAnalysis(c)
+            scaler = StandardScaler()
+            pipe = Pipeline(steps = [('scale', scaler),
+                                     ('fa', fa)])
+            cv = cross_val_score(pipe, data, cv=10)
+            metrics[c] = np.mean(cv)
+        best_c = max(metrics, key=metrics.get)
     print('Best Component: ', best_c)
     return best_c, metrics
 
@@ -142,9 +188,10 @@ def get_hierarchical_groups(loading_df, n_groups=8):
             if len(result) == 0 or num != result[-1]:
                 result.append(num)
         return result
-
+    # distvec
+    dist_vec = pdist(loading_df, metric=distcorr)
     # create linkage matrix for variables projected into a component loading
-    row_clusters = linkage(pdist(loading_df, metric='correlation'), method='ward')   
+    row_clusters = linkage(dist_vec, method='ward')   
     # use the dendorgram function to order the leaves appropriately
     row_dendr = dendrogram(row_clusters, labels=loading_df.T.columns, no_plot = True)
     cluster_reorder_index = row_dendr['leaves']
@@ -215,6 +262,9 @@ def visualize_factors(loading_df, groups=None, n_rows=2,
     """
     numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
     loading_df = loading_df.select_dtypes(include=numerics)
+    if groups:
+        loading_df = reorder_data(loading_df, groups, axis=0)
+            
     n_components = loading_df.shape[1]
     n_cols = int(np.ceil(n_components/n_rows))
     sns.set_style("white")
@@ -228,8 +278,11 @@ def visualize_factors(loading_df, groups=None, n_rows=2,
     for i in range(n_components):
         component_loadings = loading_df.iloc[:,i]
         colors = plot_loadings(axes[i], abs(component_loadings), groups)
+    for j in range(n_components, len(axes)):
+        axes[j].set_visible(False)
     if legend and groups is not None:
-        create_categorical_legend([g[0] for g in groups], colors, axes[-1])
+        create_categorical_legend([g[0] for g in groups], 
+                                  colors, axes[n_components-1])
     if input_axes is None:
         return fig
 
@@ -300,8 +353,6 @@ def plot_factor_tree(factor_tree, groups=None, filename=None):
     # plot
     for rowi, c in enumerate(range(min_c,max_c+1)):
         tmp_loading_df = factor_tree[c]
-        if groups:
-            tmp_loading_df = reorder_data(tmp_loading_df, groups, axis=0)
         if rowi == 0:
             visualize_factors(tmp_loading_df, groups, 
                               n_rows=1, input_axes=axes[rowi,0:c], legend=True)

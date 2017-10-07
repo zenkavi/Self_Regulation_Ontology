@@ -11,7 +11,7 @@ from dimensional_structure.utils import (
         create_factor_tree, find_optimal_components, get_factor_groups,
         get_hierarchical_groups,
         get_loadings, plot_factor_tree, print_top_factors, psychFA,
-        quantify_lower_nesting
+        quantify_lower_nesting, visualize_factors
         )
 # plotting
 import matplotlib.pyplot as plt
@@ -63,6 +63,11 @@ if 'parallel_c' not in results.keys():
     SABIC_c, SABICs = find_optimal_components(results['data'], metric='SABIC')
     results['SABIC_c'] = SABIC_c
     results['SABICs'] = SABICs
+     # using CV
+    CV_c, CVs = find_optimal_components(results['data'], maxc=50, metric='CV')
+    results['CV_c'] = CV_c
+    results['CVs'] = CVs
+    
     # parallel analysis
     parallel_out = psych.fa_parallel(results['data'], fa='fa', fm='ml')
     results['parallel_c'] = parallel_out[parallel_out.names.index('nfact')][0]
@@ -98,21 +103,21 @@ results['putative_groups'] = putative_groups
 
 # create hierarchical groups
 # perform factor analysis for hierarchical grouping
-grouping_metric = 'BIC_c'
+grouping_metric = 'SABIC_c'
 fa, output = psychFA(results['data'], results[grouping_metric])
 grouping_loading = get_loadings(output, labels=raw_data.columns)
 
 cluster_reorder_index, groups = get_hierarchical_groups(grouping_loading,
                                                         n_groups=8)
 # label groups
-groups[0][0] = 'Information Processing'
+groups[0][0] = 'Sensation Seeking'
 groups[1][0] = 'Self Control'
-groups[2][0] = 'Risk Attitude'
+groups[2][0] = 'Information Processing/Proactive Control'
 groups[3][0] = 'Self Awareness'
 groups[4][0] = 'Temporal Discounting'
-groups[5][0] = 'Impulsivity'
+groups[5][0] = 'Memory/Intelligence'
 groups[6][0] = 'Context Setting'
-groups[7][0] = 'Stimulus Processing'
+groups[7][0] = 'Risk Attitude'
 results['hierarchical_groups'] = groups
 
 # create factor groups
@@ -168,38 +173,15 @@ with sns.axes_style('dark'):
     SABIC_c = results['SABIC_c']
     ax2.plot(SABIC_c,results['SABICs'][SABIC_c],'k.', markersize=30)
 
-# plot nesting tree across components
-lower_limit = -2
-df = pd.DataFrame([i[1] for i in results['nesting_tree'].values()],
-                  index=results['nesting_tree'].keys())
-df.insert(0, 'name', df.index)
-df = pd.melt(df, 'name', value_name='Lower Recovery')
-df.loc[df.loc[:,'Lower Recovery']<-2, 'Lower Recovery']=lower_limit
-
-f = plt.figure(figsize=(16,12))
-plt.subplot(3,1,1)
-y = [i[0]['score'] for i in results['nesting_tree'].values()]    
-plt.plot(range(2, len(y)+2), y, 'mo-', lw = 3)
-plt.ylabel('R^2 for Upper Recovery')
-plt.xlim(1, len(y)+2)
-
-plt.subplot(3,1,2)
-f = lambda x: abs(abs(x[0])-abs(x[1]))
-y = [f(i[0]['coefficients']) for i in results['nesting_tree'].values()]    
-plt.plot(range(2, len(y)+2), y, 'mo-', lw = 3)
-plt.ylabel('Difference between contributions')
-plt.xlim(1, len(y)+2)
-
-plt.subplot(3,1,3)
-sns.stripplot('name','Lower Recovery',data=df, size=8, jitter=True)
-plt.hlines(0, -1, len(df.name.unique())+1, linestyles='dashed')
-plt.xlabel('# Higher-Order Factors', fontsize=20)
-plt.xticks(range(len(df.name.unique())), range(2, len(y)+2))
-plt.ylim([lower_limit,1])
-plt.tight_layout()
-
+# plot optimal factor breakdown
+best_c = results['BIC_c']
 groupings = ['hierarchical', 'factor']
 for group in groupings:
+    fig = visualize_factors(results['factor_tree'][best_c], n_rows=3,
+                        groups = results['%s_groups' % group])
+    fig.savefig(path.join(plot_file, '%s_EFA%s_results.png' % (group, best_c)))
+    
+    # plot factor trees
     # plot mini factor tree
     plot_factor_tree({i: results['factor_tree'][i] for i in [1,2]},
                      groups=results['%s_groups' % group],
