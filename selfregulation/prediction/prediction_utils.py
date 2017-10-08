@@ -3,7 +3,7 @@
 import pandas,numpy
 
 import rpy2.robjects as robjects
-import pandas.rpy.common as com
+#import pandas.rpy.common as com
 from rpy2.robjects.packages import importr
 from rpy2.robjects import pandas2ri
 pandas2ri.activate()
