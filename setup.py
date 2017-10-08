@@ -36,7 +36,7 @@ if not os.path.exists('selfregulation/data'):
     os.mkdir('selfregulation/data')
     open('selfregulation/data/__init__.py', 'w').close()
 
-shutil.copy('Self_Regulation_Settings.txt','selfregulation/data/Self_Regulation_Settings.txt')
+shutil.copy(setupfile,'selfregulation/data/Self_Regulation_Settings.txt')
 
 setup(
     name=DISTNAME,
