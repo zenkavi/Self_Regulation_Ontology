@@ -10,38 +10,49 @@ RUN apt-get update && apt-get install -y git
 RUN mkdir /root/.ssh/
 
 # Copy over private key, and set permissions
-ADD id_rsa /root/.ssh/id_rsa
+ADD id_rsa_docker /root/.ssh/id_rsa
 
 # Create known_hosts
 RUN touch /root/.ssh/known_hosts
 # Add bitbuckets key
 RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
 
+WORKDIR /work
 
-RUN apt-get update && apt-get install -y \
-  r-base=3.1.1-1+deb8u1 \
-  r-base-dev=3.1.1-1+deb8u1
+RUN apt-get update && apt-get install -y default-jre gfortran
+
+RUN wget https://cran.r-project.org/src/base/R-3/R-3.4.2.tar.gz
+RUN tar zxf R-3.4.2.tar.gz
+RUN cd R-3.4.2 && ./configure --enable-R-shlib=yes && make && make install
+
+
 RUN pip install \
   numpy==1.13.3 \
   pandas==0.20.3 \
   scikit-learn==0.19.0 \
   imbalanced-learn==0.3.0 \
-  nilearn==0.3.0
+  nilearn==0.3.0 \
+  scipy==0.19.1 \
+  matplotlib==2.1.0 \
+  networkx==2.0 \
+  statsmodels==0.8.0
 
 
 RUN echo 'install.packages(c("mpath","glmnet","foreach","iterators","pscl","numDeriv","doParallel"), repos="http://cran.us.r-project.org", dependencies=TRUE)' > /tmp/packages.R \
       && Rscript /tmp/packages.R
+RUN rm -rf /work/R-3.4.2*
+RUN export LD_LIBRARY_CONFIG=/usr/local/lib/R/lib && export C_INCLUDE_PATH=/usr/local/lib/R/include && pip install rpy2
 
-WORKDIR /work
+RUN pip install jinja2 \
+  ipdb \
+  fancyimpute==0.2.0 \
+  IPython==6.2.1
+
+RUN echo "export LD_LIBRARY_PATH=/usr/local/lib/R/lib" >> /root/.bashrc
 
 # Clone the conf files into the docker container
 #RUN git clone git@github.com:poldrack/Self_Regulation_Ontology.git
 
-#RUN echo $'expfactory_token:/dev/null \n\
-#results_directory:/work/Self_Regulation_Ontology/results \n\
-#base_directory:/work/Self_Regulation_Ontology/ \n\
-#dataset:Complete_07-08-2017' > /work/Self_Regulation_Ontology/Self_Regulation_Settings_docker.txt
-
 #WORKDIR /work/Self_Regulation_Ontology
 
-#RUN python setup.py install --setupfile /work/Self_Regulation_Ontology/Self_Regulation_Settings_docker.txt
+#RUN make setup-docker
