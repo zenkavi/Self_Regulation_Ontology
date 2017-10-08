@@ -18,7 +18,14 @@ URL='http://poldracklab.org'
 DOWNLOAD_URL='https://github.com/poldrack/Self_Regulation_Ontology/'
 VERSION='0.1.0.dev'
 
-if not os.path.exists('Self_Regulation_Settings.txt'):
+if '--setupfile' in sys.argv:
+    index = sys.argv.index('--setupfile')
+    sys.argv.pop(index)  # Removes the '--foo'
+    setupfile = sys.argv.pop(index)  # Returns the element after the '--foo'
+else:
+    setupfile='Self_Regulation_Settings.txt'
+
+if not os.path.exists(setupfile):
     print('you must first create a Self_Regulation_Settings.txt file')
     print('see Self_Regulation_Settings_example.txt for an example')
     sys.exit()
