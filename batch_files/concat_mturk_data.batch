@@ -1,0 +1,14 @@
+#!/bin/bash
+#SBATCH --job-name=mturk_concat
+#SBATCH --output=.out/mturk_concat.job.out
+#SBATCH --error=.err/mturk_concat.job.err
+#SBATCH --time=8:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH -p russpold
+#SBATCH --cpus-per-task=16
+# SBATCH --mem=64000
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=ieisenbe@stanford.edu
+source activate SRO
+python concat_mturk_data.py

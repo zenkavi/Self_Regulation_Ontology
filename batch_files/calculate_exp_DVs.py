@@ -18,10 +18,10 @@ if len(sys.argv) > 3:
 else:
     out_dir = data_dir
 
-#discovery
 #load Data
 dataset = pd.read_pickle(path.join(data_dir, data + '_data_post.pkl'))
 
+print('loaded dataset %s' % data)
 #calculate DVs
 DV_df, valence_df, description = get_exp_DVs(dataset, exp_id, use_group_fun = True)
 if not DV_df is None:

@@ -20,6 +20,7 @@ args = parser.parse_args()
 job = args.job
 sample = args.sample
 
+print('Running Script. Job %s, sample: %s' % (job, sample))
 #load Data
 token = get_info('expfactory_token')
 try:
@@ -48,7 +49,9 @@ if job == 'download' or job == "all":
     f = open(token)
     access_token = f.read().strip()  
     data = download_data(data_dir, access_token, filters = filters,  
-    	battery = 'Self Regulation Battery', file_name = 'mturk_data.pkl')
+    	battery = 'Self Regulation Battery', 
+        url = 'http://www.expfactory.org/new_api/results/48/',
+        file_name = 'mturk_data.pkl')
     data.reset_index(drop = True, inplace = True)
     
 if job in ['extras', 'all']:
@@ -62,10 +65,10 @@ if job in ['extras', 'all']:
     
     #anonymize data
     worker_lookup = anonymize_data(data)
-    json.dump(worker_lookup, open(path.join(data_dir, 'worker_lookup.json','w')))
+    json.dump(worker_lookup, open(path.join(data_dir, 'admin', 'worker_lookup.json'),'w'))
     
     # record subject completion statistics
-    (data.groupby('worker_id').count().finishtime).to_json(path.join(data_dir, 'worker_counts.json'))
+    (data.groupby('worker_id').count().finishtime).to_json(path.join(data_dir, 'admin', 'worker_counts.json'))
     
     # add a few extras
     convert_date(data)
@@ -79,17 +82,14 @@ if job in ['extras', 'all']:
     
     # calculate pay
     pay = get_pay(data)
-    pay.to_json(path.join(data_dir, 'worker_pay.json'))
+    pay.to_json(path.join(data_dir, 'admin', 'worker_pay.json'))
     print('Finished saving worker pay')
     
 if job in ['post', 'all']:
     print('Beginning "Post"')
     #Process Data
     if job == "post":
-        try:
-            data = pd.read_pickle(path.join(data_dir, 'mturk_data_extras.pkl'))
-        except FileNotFoundError:
-            data = pd.read_json(path.join(data_dir, 'mturk_data_extras.json'))
+        data = pd.read_pickle(path.join(data_dir, 'mturk_data_extras.pkl'))
         data.reset_index(drop = True, inplace = True)
         print('Finished loading raw data')
     

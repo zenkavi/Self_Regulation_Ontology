@@ -1,0 +1,14 @@
+#!/bin/bash
+#SBATCH --job-name=fmri_post
+#SBATCH --output=.out/fmri_post.job.out
+#SBATCH --error=.err/fmri_post.job.err
+#SBATCH --time=8:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH -p russpold
+#SBATCH --cpus-per-task=16
+# SBATCH --mem=64000
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=ieisenbe@stanford.edu
+cd ../data_preparation
+python fmri_followup_download_data.py

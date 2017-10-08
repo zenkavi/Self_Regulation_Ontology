@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
-from os import path
 import numpy as np
 import pandas as pd
-from scipy.cluster.hierarchy import dendrogram, fcluster, linkage
+from scipy.cluster.hierarchy import cut_tree, dendrogram, linkage
+from scipy.spatial.distance import pdist, squareform
 import seaborn as sns
 
 #***************************************************
@@ -86,55 +86,77 @@ def DDM_plot(v,t,a, sigma = .1, n = 10, plot_n = 15, file = None):
     return fig, trajectories
 
 
-def dendroheatmap(df, labels = True, label_fontsize = None):
+def dendroheatmap(df, compute_dist=True, labels=True, label_fontsize=None, 
+                  pdist_kws=None, figsize=None, parse=None):
     """
-    :df: plot hierarchical clustering and heatmap
+    plot hierarchical clustering and heatmap
+    :df: a correlation matrix
+    parse_heatmap: int (optional). If defined, devides the columns of the 
+                    heatmap based on cutting the dendrogram
     """
+    if figsize is None:
+        figsize=(16,16)
+    # if compute_dist = False, assume df is a distance matrix. Otherwise
+    # compute distance on df rows
+    if compute_dist == True:
+        if pdist_kws is None:
+            pdist_kws= {'metric': 'correlation'}
+        dist_vec = pdist(df, **pdist_kws)
+        dist_df = pd.DataFrame(squareform(dist_vec), 
+                               index=df.index, 
+                               columns=df.index)
+    else:
+        assert df.shape[0] == df.shape[1]
+        dist_df = df
+        dist_vec = squareform(df.values)
     #clustering
-    row_clusters = linkage(df.values, method='ward', metric='euclidean')    
+    row_clusters = linkage(dist_vec, method='ward')    
     #dendrogram
-    row_dendr = dendrogram(row_clusters, labels=df.columns, no_plot = True)
-    df_rowclust = df.ix[row_dendr['leaves'],row_dendr['leaves']]
+    row_dendr = dendrogram(row_clusters, labels=df.index, no_plot = True)
+    rowclust_df = dist_df.iloc[row_dendr['leaves'],row_dendr['leaves']]
     #plotting
     if label_fontsize == None:
-        label_fontsize = len(df_rowclust)/22
+        label_fontsize = figsize[1]*.27
     sns.set_style("white")
-    fig = plt.figure(figsize = [16,16])
-    ax = fig.add_axes([.1,.2,.6,.6]) 
-    cax = fig.add_axes([0.02,0.3,0.02,0.4]) 
-    sns.heatmap(df_rowclust, ax = ax, cbar_ax = cax, xticklabels = False)
-    ax.yaxis.tick_right()
-    ax.set_yticklabels(df_rowclust.columns[::-1], rotation=0, rotation_mode="anchor", fontsize = label_fontsize, visible = labels)
-    ax.set_xticklabels(df_rowclust.columns, rotation=-90, rotation_mode = "anchor", ha = 'left')
-    ax1 = fig.add_axes([.1,.8,.6,.2])
-    plt.axis('off')
-    row_dendr = dendrogram(row_clusters, orientation='top',  
-                           count_sort='ascending', ax = ax1) 
-    return fig, row_dendr['leaves']
-
-def dendroheatmap_left(df, labels = True, label_fontsize = 'large'):
-    """
-    :df: plot hierarchical clustering and heatmap, dendrogram on left
-    """
-    #clustering
-    row_clusters = linkage(df.values, method='ward', metric='euclidean')    
-    #dendrogram
-    row_dendr = dendrogram(row_clusters, labels=df.columns, no_plot = True)
-    df_rowclust = df.ix[row_dendr['leaves'],row_dendr['leaves']]
-    sns.set_style("white")
-    fig = plt.figure(figsize = [16,16])
+    fig = plt.figure(figsize = figsize)
     ax = fig.add_axes([.16,.3,.62,.62]) 
     cax = fig.add_axes([0.21,0.25,0.5,0.02]) 
-    sns.heatmap(df_rowclust, ax = ax, cbar_ax = cax, cbar_kws = {'orientation': 'horizontal'}, xticklabels = False)
+    sns.heatmap(rowclust_df, ax=ax, xticklabels = False,
+                cbar_ax=cax, 
+                cbar_kws={'orientation': 'horizontal'})
     ax.yaxis.tick_right()
-    ax.set_yticklabels(df_rowclust.columns[::-1], rotation=0, rotation_mode="anchor", fontsize = label_fontsize, visible = labels)
-    ax.set_xticklabels(df_rowclust.columns, rotation=-90, rotation_mode = "anchor", ha = 'left')
+    ax.set_yticklabels(rowclust_df.columns[::-1], rotation=0, 
+                       rotation_mode="anchor", fontsize=label_fontsize, 
+                       visible=labels)
+    ax.set_xticklabels(rowclust_df.columns, rotation=-90, 
+                       rotation_mode = "anchor", ha = 'left')
     ax1 = fig.add_axes([.01,.3,.15,.62])
     plt.axis('off')
-    row_dendr = dendrogram(row_clusters, orientation='left',  
-                           count_sort='descending', ax = ax1) 
-    return fig, row_dendr['leaves']
+    row_dendr = dendrogram(row_clusters, orientation='left',  ax = ax1, 
+                           color_threshold=-1,
+                           above_threshold_color='gray') 
+    ax1.invert_yaxis()
     
+    if parse is not None:
+        groups = cut_tree(row_clusters,parse)[row_dendr['leaves']]
+        groups = [i[0] for i in groups][::-1]
+        cuts = []
+        curr = groups[0]
+        for i,label in enumerate(groups[1:]):
+            if label!=curr:
+                cuts.append(i+1)
+                curr=label
+        y_min, y_max = ax.get_ylim()
+        ticks = [(tick - y_min)/(y_max - y_min) for tick in ax.get_yticks()]
+        pad = (ticks[0]-ticks[1])/2
+        separations = (ticks+pad)*len(rowclust_df)
+        for c in cuts:
+            ax.hlines(separations[c], 0, len(rowclust_df), colors='w')
+    return fig, {'distance_df': dist_df, 
+                 'linkage': row_clusters, 
+                 'clustered_df': rowclust_df}
+
+
 def heatmap(df):
     """
     :df: plot heatmap
