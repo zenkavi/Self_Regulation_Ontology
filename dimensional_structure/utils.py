@@ -1,27 +1,79 @@
+from collections import OrderedDict as odict
+from itertools import combinations
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from scipy.cluster.hierarchy import dendrogram, linkage, cut_tree
+from scipy.spatial.distance import pdist, squareform
 from selfregulation.utils.r_to_py_utils import psychFA
+from sklearn.decomposition import FactorAnalysis
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score
+from sklearn.model_selection import cross_val_score
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
+def distcorr(X, Y, flip=True):
+    """ Compute the distance correlation function
+    
+    >>> a = [1,2,3,4,5]
+    >>> b = np.array([1,2,9,4,4])
+    >>> distcorr(a, b)
+    0.762676242417
+    """
+    X = np.atleast_1d(X)
+    Y = np.atleast_1d(Y)
+    if np.prod(X.shape) == len(X):
+        X = X[:, None]
+    if np.prod(Y.shape) == len(Y):
+        Y = Y[:, None]
+    X = np.atleast_2d(X)
+    Y = np.atleast_2d(Y)
+    n = X.shape[0]
+    if Y.shape[0] != X.shape[0]:
+        raise ValueError('Number of samples must match')
+    a = squareform(pdist(X))
+    b = squareform(pdist(Y))
+    A = a - a.mean(axis=0)[None, :] - a.mean(axis=1)[:, None] + a.mean()
+    B = b - b.mean(axis=0)[None, :] - b.mean(axis=1)[:, None] + b.mean()
+    
+    dcov2_xy = (A * B).sum()/float(n * n)
+    dcov2_xx = (A * A).sum()/float(n * n)
+    dcov2_yy = (B * B).sum()/float(n * n)
+    dcor = np.sqrt(dcov2_xy)/np.sqrt(np.sqrt(dcov2_xx) * np.sqrt(dcov2_yy))
+    if flip == True:
+        dcor = 1-dcor
+    return dcor
+
 # functions to fit and extract factor analysis solutions
-def find_optimal_components(data, minc=1, maxc=20):
+def find_optimal_components(data, minc=1, maxc=30, metric='BIC'):
     """
-    Fit psychFA over a range of components and returns the best c 
+    Fit EFA over a range of components and returns the best c. If metric = CV
+    uses sklearn. Otherwise uses psych
+    metric: str, method to use for optimal components. Options 'BIC', 'SABIC',
+            and 'CV'
     """
-    BICs = {}
-    outputs = []
+    metrics = {}
     n_components = range(minc,maxc)
     scaler = StandardScaler()
-    scaled_data = scaler.fit_transform(data)
-    for c in n_components:
-        fa, output = psychFA(scaled_data, c, method='ml')
-        BICs[c] = output['BIC']
-        outputs.append(output)
-    best_c = np.argmin(BICs)+1
+    if metric != 'CV':
+        scaled_data = scaler.fit_transform(data)
+        for c in n_components:
+            fa, output = psychFA(scaled_data, c, method='ml')
+            metrics[c] = output[metric]
+        best_c = min(metrics, key=metrics.get)
+    else:
+        for c in n_components:
+            fa = FactorAnalysis(c)
+            scaler = StandardScaler()
+            pipe = Pipeline(steps = [('scale', scaler),
+                                     ('fa', fa)])
+            cv = cross_val_score(pipe, data, cv=10)
+            metrics[c] = np.mean(cv)
+        best_c = max(metrics, key=metrics.get)
     print('Best Component: ', best_c)
-    return best_c, BICs
+    return best_c, metrics
 
 def get_loadings(fa_output, labels):
     """
@@ -45,6 +97,117 @@ def print_top_factors(loading_df, n=4):
         print('\nFACTOR %s' % i)
         print(top_vars)
         
+# ****************************************************************************
+# Other helper functions for dealing with factor analytic results
+# ****************************************************************************
+def corr_lower_higher(higher_dim, lower_dim, cross_only=True):
+    """
+    Returns a correlation matrix between factors at different dimensionalities
+    cross_only: bool, if True only display the correlations between dimensions
+    """
+    # higher dim is the factor solution with fewer factors
+    higher_dim = higher_dim.copy()
+    lower_dim = lower_dim.copy()
+    higher_n = higher_dim.shape[1]
+    
+    lower_dim.columns = ['l%s' % i  for i in lower_dim.columns]
+    higher_dim.columns = ['h%s' % i for i in higher_dim.columns]
+    corr = pd.concat([higher_dim, lower_dim], axis=1).corr()
+    if cross_only:
+        corr = corr.iloc[:higher_n, higher_n:]
+    return corr
+
+def quantify_higher_nesting(higher_dim, lower_dim):
+    """
+    Quantifies how well higher levels of the tree can be reconstructed from 
+    lower levels
+    """
+    lr = LinearRegression()
+    best_score = -1
+    relationship = []
+    # quantify how well the higher dimensional solution can reconstruct
+    # the lower dimensional solution using a linear combination of two factors
+    for higher_name, higher_c in higher_dim.iteritems():
+        for lower_c1, lower_c2 in combinations(lower_dim.columns, 2):
+            # combined prediction
+            predict_mat = higher_dim.loc[:,[lower_c1, lower_c2]]
+            lr.fit(predict_mat, higher_c)
+            score = lr.score(predict_mat, higher_c)
+            # individual correlation
+            lower_subset = lower_dim.drop(higher_name, axis=1)
+            higher_subset = higher_dim.drop([lower_c1, lower_c2], axis=1)
+            corr = corr_lower_higher(higher_subset, lower_subset)
+            if len(corr)==1:
+                other_cols = [corr.iloc[0,0]]
+            else:
+                other_cols = corr.apply(lambda x: max(x**2)-sorted(x**2)[-2],
+                                        axis=1)
+            total_score = np.mean(np.append(other_cols, score))
+            if total_score>best_score:
+                best_score = total_score
+                relationship = {'score': score,
+                                'lower_factor': higher_c.name, 
+                                'higher_factors': (lower_c1, lower_c2), 
+                                'coefficients': lr.coef_}
+    return relationship
+
+def quantify_lower_nesting(factor_tree):
+    """
+    Quantifies how well lower levels of the tree can be reconstruted from
+    higher levels
+    """
+    lr = LinearRegression()
+    relationships = odict()
+    for higher_c, lower_c in combinations(factor_tree.keys(), 2):
+        higher_dim = factor_tree[higher_c]
+        lower_dim = factor_tree[lower_c]
+        lr.fit(higher_dim, lower_dim)
+        reverse_scores = r2_score(lr.predict(higher_dim), 
+                                 lower_dim, 
+                                 multioutput='raw_values')
+        relationship = {'scores': reverse_scores,
+                        'coefs': lr.coef_}
+        relationships[(higher_c,lower_c)] = relationship
+    return relationships
+
+def get_factor_groups(loading_df):
+    index_assignments = np.argmax(abs(loading_df).values,axis=1)
+    factor_groups = []
+    for assignment in np.unique(index_assignments):
+        assignment_vars = [var for i,var in enumerate(loading_df.index) if index_assignments[i] == assignment]
+        factor_groups.append([assignment,assignment_vars])
+    return factor_groups
+
+
+  
+def get_hierarchical_groups(loading_df, n_groups=8):
+    # helper function
+    def remove_adjacent(nums):
+        result = []
+        for num in nums:
+            if len(result) == 0 or num != result[-1]:
+                result.append(num)
+        return result
+    # distvec
+    dist_vec = pdist(loading_df, metric=distcorr)
+    # create linkage matrix for variables projected into a component loading
+    row_clusters = linkage(dist_vec, method='ward')   
+    # use the dendorgram function to order the leaves appropriately
+    row_dendr = dendrogram(row_clusters, labels=loading_df.T.columns, no_plot = True)
+    cluster_reorder_index = row_dendr['leaves']
+    # cut the linkage graph such that there are only n groups
+    n_groups = n_groups
+    index_assignments = [i[0] for i in cut_tree(row_clusters, n_groups)]
+    # relabel groups such that 0 is the 'left' most in the dendrogram
+    group_order = remove_adjacent([index_assignments[i] for i in cluster_reorder_index])
+    index_assignments = [group_order.index(i) for i in index_assignments]
+    # using the groups and the dendrogram ordering, create a number of groups
+    hierarchical_groups = []
+    for assignment in np.unique(index_assignments):
+        # get variables that are in the correct group
+        assignment_vars = [var for i,var in enumerate(loading_df.index) if index_assignments[i] == assignment]
+        hierarchical_groups.append([assignment,assignment_vars])
+    return cluster_reorder_index, hierarchical_groups
         
 # ****************************************************************************
 # Helper functions for visualization of component loadings
@@ -99,6 +262,9 @@ def visualize_factors(loading_df, groups=None, n_rows=2,
     """
     numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
     loading_df = loading_df.select_dtypes(include=numerics)
+    if groups:
+        loading_df = reorder_data(loading_df, groups, axis=0)
+            
     n_components = loading_df.shape[1]
     n_cols = int(np.ceil(n_components/n_rows))
     sns.set_style("white")
@@ -112,18 +278,23 @@ def visualize_factors(loading_df, groups=None, n_rows=2,
     for i in range(n_components):
         component_loadings = loading_df.iloc[:,i]
         colors = plot_loadings(axes[i], abs(component_loadings), groups)
+    for j in range(n_components, len(axes)):
+        axes[j].set_visible(False)
     if legend and groups is not None:
-        create_categorical_legend([g[0] for g in groups], colors, axes[-1])
+        create_categorical_legend([g[0] for g in groups], 
+                                  colors, axes[n_components-1])
     if input_axes is None:
         return fig
 
 # helper functions
-def reorder_data(data, groups):
-    ordered_cols = [j for i in groups for j in i[1]]
-    new_data = data.reindex_axis(ordered_cols, axis=1)
+def reorder_data(data, groups, axis=1):
+    ordered_cols = []
+    for i in groups:
+        ordered_cols += i[1]
+    new_data = data.reindex_axis(ordered_cols, axis)
     return new_data
 
-def create_factor_tree(data, groups=None, component_range=(1,13)):
+def create_factor_tree(data, component_range=(1,13)):
     """
     Runs "visualize_factors" at multiple dimensionalities and saves them
     to a pdf
@@ -135,18 +306,13 @@ def create_factor_tree(data, groups=None, component_range=(1,13)):
     reorder_list: optional. List of index values in an order that will be used
                   to rearrange data
     """
-    def get_similarity_order(higher_dim, lower_dim):
+    def get_similarity_order(lower_dim, higher_dim):
         "Helper function to reorder factors into correspondance between two dimensionalities"
-        corr = abs(pd.concat([higher_dim,lower_dim], axis=1).corr())
-        subset = corr.iloc[c:,:c] # rows are former EFA result, cols are current
-        max_factors = np.argmax(subset.values, axis=1)
-        remaining = np.sum(range(c))-np.sum(max_factors)
-        return np.append(max_factors, remaining)
+        subset = corr_lower_higher(higher_dim, lower_dim)
+        max_factors = np.argmax(abs(subset.values), axis=0)
+        return np.argsort(max_factors)
 
     EFA_results = {}
-    if groups != None:
-        data = reorder_data(data, groups)
-    
     # plot
     for c in range(component_range[0],component_range[1]+1):
         fa, output = psychFA(data, c)
@@ -154,6 +320,7 @@ def create_factor_tree(data, groups=None, component_range=(1,13)):
         if (c-1) in EFA_results.keys():
             reorder_index = get_similarity_order(tmp_loading_df, EFA_results[c-1])
             tmp_loading_df = tmp_loading_df.iloc[:, reorder_index]
+            tmp_loading_df.columns = sorted(tmp_loading_df.columns)
         EFA_results[c] = tmp_loading_df
     return EFA_results
 
@@ -196,36 +363,6 @@ def plot_factor_tree(factor_tree, groups=None, filename=None):
             ax.set_axis_off()
     if filename:
         f.savefig(filename)
-    return f
+    else:
+        return f
 
-# helper function
-from scipy.cluster.hierarchy import dendrogram, linkage, cut_tree
-from scipy.spatial.distance import pdist, squareform
-
-def get_hierarchical_groups(loading_df, n_groups=8):
-    # helper function
-    def remove_adjacent(nums):
-        result = []
-        for num in nums:
-            if len(result) == 0 or num != result[-1]:
-                result.append(num)
-        return result
-
-    # create linkage matrix for variables projected into a component loading
-    row_clusters = linkage(pdist(loading_df), method='ward')   
-    # use the dendorgram function to order the leaves appropriately
-    row_dendr = dendrogram(row_clusters, labels=loading_df.T.columns, no_plot = True)
-    cluster_reorder_index = row_dendr['leaves']
-    # cut the linkage graph such that there are only n groups
-    n_groups = n_groups
-    index_assignments = [i[0] for i in cut_tree(row_clusters, n_groups)]
-    # relabel groups such that 0 is the 'left' most in the dendrogram
-    group_order = remove_adjacent([index_assignments[i] for i in cluster_reorder_index])
-    index_assignments = [group_order.index(i) for i in index_assignments]
-    # using the groups and the dendrogram ordering, create a number of groups
-    hierarchical_groups = []
-    for assignment in np.unique(index_assignments):
-        # get variables that are in the correct group
-        assignment_vars = [var for i,var in enumerate(loading_df.index) if index_assignments[i] == assignment]
-        hierarchical_groups.append([assignment,assignment_vars])
-    return cluster_reorder_index, hierarchical_groups

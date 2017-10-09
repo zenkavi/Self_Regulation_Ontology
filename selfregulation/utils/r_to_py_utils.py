@@ -23,7 +23,7 @@ def get_Rpsych():
     psych = importr('psych')
     return psych
 
-def psychFA(data, n_components, return_attrs=['BIC', 'RMSEA'], rotate='oblimin',
+def psychFA(data, n_components, return_attrs=['BIC', 'SABIC', 'RMSEA'], rotate='oblimin',
 	method='ml', verbose=False):
     def get_attr(attr):
         try:
