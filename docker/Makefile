@@ -1,5 +1,5 @@
 docker2singularity:
-	docker run -v /var/run/docker.sock:/var/run/docker.sock -v /Users/poldrack/singularity:/output --privileged -t --rm tacc/docker2singularity poldrack:selfregulation
+	docker run -v /var/run/docker.sock:/var/run/docker.sock -v /Users/poldrack/singularity:/output --privileged -t --rm singularityware/docker2singularity poldrack:selfregulation
 
 docker-build:
 	docker build -t poldrack:selfregulation .
