@@ -17,7 +17,7 @@ RUN touch /root/.ssh/known_hosts
 # Add bitbuckets key
 RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
 
-WORKDIR /work
+WORKDIR /workdir
 
 RUN apt-get update && apt-get install -y default-jre gfortran
 
@@ -40,7 +40,7 @@ RUN pip install \
 
 RUN echo 'install.packages(c("mpath","glmnet","foreach","iterators","pscl","numDeriv","doParallel"), repos="http://cran.us.r-project.org", dependencies=TRUE)' > /tmp/packages.R \
       && Rscript /tmp/packages.R
-RUN rm -rf /work/R-3.4.2*
+RUN rm -rf /workdir/R-3.4.2*
 
 ENV C_INCLUDE_PATH /usr/local/lib/R/include
 ENV LD_LIBRARY_PATH /usr/local/lib/R/lib
@@ -56,6 +56,6 @@ RUN pip install jinja2 \
 # Clone the conf files into the docker container
 RUN git clone git@github.com:poldrack/Self_Regulation_Ontology.git
 RUN mkdir /results
-WORKDIR /work/Self_Regulation_Ontology
+WORKDIR /workdir/Self_Regulation_Ontology
 
 RUN make setup-docker
