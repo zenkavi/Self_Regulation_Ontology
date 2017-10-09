@@ -23,7 +23,7 @@ psych = get_Rpsych()
 # ****************************************************************************
 # Laad Data
 # ****************************************************************************
-datafile = 'Complete_07-08-2017'
+datafile = 'Complete_10-08-2017'
 plot_file = path.join('Plots', datafile)
 output_file = path.join('Output', datafile)
 makedirs(plot_file, exist_ok = True)
@@ -200,9 +200,12 @@ for group in groupings:
                      groups=results['%s_groups' % group],
                      filename = path.join(plot_file, '%s_mini_tree' % group))
 
-sns.plt.figure(figsize=(16,16))
-ax = sns.heatmap(sum_explained, annot=explained_scores.round(2),
+sns.plt.figure(figsize=(30,30))
+ax = sns.heatmap(sum_explained, annot=explained_scores,
+                 fmt='.2f',
                  mask=(explained_scores==-1), square=True,
-                 vmin=.2)
+                 vmin=.2, 
+                 xticklabels = range(1,sum_explained.shape[1]+1),
+                 yticklabels = range(1,sum_explained.shape[0]+1))
 
 

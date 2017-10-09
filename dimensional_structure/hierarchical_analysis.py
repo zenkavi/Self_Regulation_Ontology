@@ -7,7 +7,7 @@ from selfregulation.utils.plot_utils import dendroheatmap
 # ****************************************************************************
 # Laad Data
 # ****************************************************************************
-datafile = 'Complete_07-08-2017'
+datafile = 'Complete_10-08-2017'
 plot_file = path.join('Plots', datafile)
 output_file = path.join('Output', datafile)
 makedirs(plot_file, exist_ok = True)
@@ -28,7 +28,7 @@ loading = results['factor_tree'][best_c]
 fig, output = dendroheatmap(data.T, figsize=(50,50), parse=10,
                             pdist_kws={'metric': distcorr})
 
-fig.savefig(path.join(plot_file,'data_distcorr_dendorgramheatmap.png' % best_c))
+fig.savefig(path.join(plot_file,'data_distcorr_dendorgramheatmap.png'))
 results['distcorr_clustering'] = output
 
 
