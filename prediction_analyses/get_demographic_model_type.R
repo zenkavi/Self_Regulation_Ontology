@@ -1,5 +1,8 @@
+# find the best fitting link function for each variable
+# pick the one with minimum AIC
+
 library(pscl)
-demogdata=read.table('../Data/Derived_Data/Complete_12-15-2016/demogdata_for_prediction.csv',
+demogdata=read.table('../Data/Derived_Data/Complete_07-08-2017/demogdata_for_prediction.csv',
                      sep=',',header=TRUE)
 
 models=c('gaussian','poisson','NB','ZIpoisson','ZINB')
