@@ -8,4 +8,4 @@ export setup
 
 setup-docker:
 	@echo  "$$setup">Self_Regulation_Settings.txt
-	#python setup.py install 
+	python setup.py install 
