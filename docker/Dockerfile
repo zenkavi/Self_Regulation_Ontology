@@ -55,7 +55,7 @@ RUN pip install jinja2 \
 
 # Clone the conf files into the docker container
 RUN git clone git@github.com:poldrack/Self_Regulation_Ontology.git
-
+RUN mkdir /results
 WORKDIR /work/Self_Regulation_Ontology
 
 RUN make setup-docker
