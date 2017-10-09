@@ -41,18 +41,21 @@ RUN pip install \
 RUN echo 'install.packages(c("mpath","glmnet","foreach","iterators","pscl","numDeriv","doParallel"), repos="http://cran.us.r-project.org", dependencies=TRUE)' > /tmp/packages.R \
       && Rscript /tmp/packages.R
 RUN rm -rf /work/R-3.4.2*
-RUN export LD_LIBRARY_CONFIG=/usr/local/lib/R/lib && export C_INCLUDE_PATH=/usr/local/lib/R/include && pip install rpy2
+
+ENV C_INCLUDE_PATH /usr/local/lib/R/include
+ENV LD_LIBRARY_PATH /usr/local/lib/R/lib
+
+RUN pip install rpy2
 
 RUN pip install jinja2 \
   ipdb \
   fancyimpute==0.2.0 \
   IPython==6.2.1
 
-RUN echo "export LD_LIBRARY_PATH=/usr/local/lib/R/lib" >> /root/.bashrc
 
 # Clone the conf files into the docker container
-#RUN git clone git@github.com:poldrack/Self_Regulation_Ontology.git
+RUN git clone git@github.com:poldrack/Self_Regulation_Ontology.git
 
-#WORKDIR /work/Self_Regulation_Ontology
+WORKDIR /work/Self_Regulation_Ontology
 
-#RUN make setup-docker
+RUN make setup-docker
