@@ -4,6 +4,7 @@ import pandas,numpy
 
 import rpy2.robjects as robjects
 #import pandas.rpy.common as com
+
 from rpy2.robjects.packages import importr
 from rpy2.robjects import pandas2ri
 pandas2ri.activate()
@@ -39,8 +40,10 @@ class RModel:
         data=X.copy()
         #data['y']=Y
         if self.modeltype=='poisson':
-            robjects.globalenv['df']=com.convert_to_r_matrix(data)
-            robjects.globalenv['y']=com.convert_to_r_matrix(Y)
+            robjects.globalenv['df']=pandas2ri.py2ri(data)
+            robjects.r('df=data.matrix(df)')
+            robjects.globalenv['y']=pandas2ri.py2ri(Y)
+            robjects.r('y=data.matrix(y)')
             self.model=mpath.cv_glmreg(base.as_symbol('df'),base.as_symbol('y'),
                                     family = 'poisson')
             fit=self.model[self.model.names.index('fit')]
@@ -48,7 +51,7 @@ class RModel:
             self.coef_=numpy.array(fit[fit.names.index('beta')])[:,self.lambda_which-1]
         elif self.modeltype=='NB':
             data['y']=Y.copy()
-            robjects.globalenv['df']=com.convert_to_r_dataframe(data)
+            robjects.globalenv['df']=pandas2ri.py2ri(data)
             self.model=mpath.cv_glmregNB('y~.',base.as_symbol('df'),
                                 n_cores=self.ncores,plot_it=False)
             fit=self.model[self.model.names.index('fit')]
@@ -57,8 +60,8 @@ class RModel:
 
         elif self.modeltype=='ZINB' or self.modeltype=='ZIpoisson' :
             #data['y']=Y.copy()
-            robjects.globalenv['df']=com.convert_to_r_dataframe(data)
-            robjects.globalenv['y']=com.convert_to_r_dataframe(Y)
+            robjects.globalenv['df']=pandas2ri.py2ri(data)
+            robjects.globalenv['y']=pandas2ri.py2ri(Y)
             robjects.r('df$y=y$X0')
             if self.modeltype=='ZINB':
                 family='negbin'
@@ -84,17 +87,21 @@ class RModel:
             newX=pandas.DataFrame(newX,columns=['V%d'%i for i in range(newX.shape[1])])
 
         if self.modeltype=='poisson':
-            robjects.globalenv['newX']=com.convert_to_r_matrix(newX)
+            robjects.globalenv['newX']=pandas2ri.py2ri(newX)
+            robjects.r('newX=data.matrix(newX)')
+
             pred=mpath.predict_glmreg(self.model[self.model.names.index('fit')],
                                 base.as_symbol('newX'),
                                 which=self.lambda_which)
         elif self.modeltype=='NB':
-            robjects.globalenv['newX']=com.convert_to_r_dataframe(newX)
+            robjects.globalenv['newX']=pandas2ri.py2ri(newX)
+            #robjects.r('newX=data.matrix(newX)')
             pred=mpath.predict_glmreg(self.model[self.model.names.index('fit')],
                                 base.as_symbol('newX'),
                                 which=self.lambda_which)
         elif self.modeltype=='ZINB' or self.modeltype=='ZIpoisson' :
-            robjects.globalenv['newX']=com.convert_to_r_dataframe(newX)
+            robjects.globalenv['newX']=pandas2ri.py2ri(newX)
+            #robjects.r('newX=data.matrix(newX)')
             robjects.r('pred=predict(fit$fit,newX,which=fit$lambda.which)')
             pred=robjects.r('pred')
 

@@ -230,7 +230,7 @@ class BehavPredict:
             clf=ExtraTreesClassifier()
         elif classifier=='lasso':
             clf=LogisticRegressionCV(Cs=100)
-            
+
         if self.verbose:
             print('classifying',v,numpy.mean(self.demogdata[v]))
             print('using classifier:',classifier)
@@ -306,7 +306,7 @@ class BehavPredict:
         """
         run CV for binary data
         """
-        
+
         if self.verbose:
             print('%s regression on'%self.data_models[v],v,numpy.mean(self.demogdata[v]>0))
             print('using classifier:',classifier)
@@ -348,14 +348,17 @@ class BehavPredict:
                 lm.fit(self.demogdata[self.baseline_vars].iloc[train,:],Xtrain)
                 Xtrain=Xtrain - lm.predict(self.demogdata[self.baseline_vars].iloc[train,:])
                 Xtest=Xtest - lm.predict(self.demogdata[self.baseline_vars].iloc[test,:])
-                
+
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", message="Data with input dtype int64 was converted to float64 by StandardScaler.")
                 Xtrain=scale.fit_transform(Xtrain)
                 Xtest=scale.transform(Xtest)
             Ytrain=Ydata[train]
             clf.fit(Xtrain,Ytrain)
-            self.pred[test]=clf.predict(Xtest)
+            p=clf.predict(Xtest)
+            if len(p.shape)>1:
+                p=p[:,0]
+            self.pred[test]=p
 
         if numpy.var(self.pred)>0:
             scores=numpy.corrcoef(Ydata,self.pred)[0,1]
