@@ -105,7 +105,7 @@ results['putative_groups'] = putative_groups
 # perform factor analysis for hierarchical grouping
 grouping_metric = 'SABIC_c'
 fa, output = psychFA(results['data'], results[grouping_metric])
-grouping_loading = get_loadings(output, labels=raw_data.columns)
+grouping_loading = get_loadings(output, labels=results['data'].columns)
 
 cluster_reorder_index, groups = get_hierarchical_groups(grouping_loading,
                                                         n_groups=8)
@@ -128,10 +128,11 @@ results['factor_groups'] = factor_groups
 
 # ************************* create factor trees ******************************
 run_FA = results.get('factor_tree', [])
-if len(run_FA) < max([SABIC_c, BIC_c])+5:
+max_factors = max([results['SABIC_c'], results['BIC_c']])+5
+if len(run_FA) < max_factors:
     # Use Putative groups
     factor_tree = create_factor_tree(results['data'],
-                                     (1,max([SABIC_c, BIC_c])+5))
+                                     (1,max_factors))
     results['factor_tree'] = factor_tree
 
 # quantify nesting of factor tree:
@@ -141,6 +142,7 @@ results['lower_nesting'] = quantify_lower_nesting(results['factor_tree'])
 pickle.dump(results, open(path.join(output_file, 'EFA_results.pkl'),'wb'))
 
 # analyze nesting
+factor_tree = results['factor_tree']
 explained_threshold = .5
 explained_scores = -np.ones((len(factor_tree), len(factor_tree)-1))
 sum_explained = np.zeros((len(factor_tree), len(factor_tree)-1))
