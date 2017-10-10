@@ -2,7 +2,7 @@
 # pick the one with minimum AIC
 
 library(pscl)
-demogdata=read.table('../Data/Derived_Data/Complete_07-08-2017/demogdata_for_prediction.csv',
+demogdata=read.table('../Data/Derived_Data/Complete_10-08-2017/demogdata_for_prediction.csv',
                      sep=',',header=TRUE)
 
 models=c('gaussian','poisson','NB','ZIpoisson','ZINB')
