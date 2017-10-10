@@ -1,23 +1,13 @@
 # imports
 from dimensional_structure.utils import distcorr
-import numpy as np
 from os import makedirs, path
-import pandas as pd
 import pickle
 from selfregulation.utils.plot_utils import dendroheatmap
-from selfregulation.utils.utils import get_behav_data
-from selfregulation.utils.r_to_py_utils import get_Rpsych
-# plotting
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-# load the psych R package
-psych = get_Rpsych()
 
 # ****************************************************************************
 # Laad Data
 # ****************************************************************************
-datafile = 'Complete_07-08-2017'
+datafile = 'Complete_10-08-2017'
 plot_file = path.join('Plots', datafile)
 output_file = path.join('Output', datafile)
 makedirs(plot_file, exist_ok = True)
@@ -38,7 +28,7 @@ loading = results['factor_tree'][best_c]
 fig, output = dendroheatmap(data.T, figsize=(50,50), parse=10,
                             pdist_kws={'metric': distcorr})
 
-fig.savefig(path.join(plot_file,'data_distcorr_dendorgramheatmap.png' % best_c))
+fig.savefig(path.join(plot_file,'data_distcorr_dendorgramheatmap.png'))
 results['distcorr_clustering'] = output
 
 
@@ -47,3 +37,4 @@ fig.savefig(path.join(plot_file,'EFA%s_pearson_dendorgramheatmap.png' % best_c))
 
 fig, output = dendroheatmap(data.T, figsize=(50,50), parse=10)
 fig.savefig(path.join(plot_file,'data__pearson_dendorgramheatmap.png'))
+
