@@ -12,7 +12,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, scale
 
 def distcorr(X, Y, flip=True):
     """ Compute the distance correlation function
@@ -86,16 +86,20 @@ def get_loadings(fa_output, labels):
     loading_df.columns = range(loading_df.shape[1])
     return loading_df
 
-def print_top_factors(loading_df, n=4):
+def get_top_factors(loading_df, n=4, verbose=False):
     """
     Takes output of get_loadings and prints the absolute top variables per factor
     """
     # number of variables to display
+    factor_top_vars = {}
     for i,column in loading_df.iteritems():
         sort_index = np.argsort(abs(column))[::-1] # descending order
-        top_vars = column[sort_index][0:n]
-        print('\nFACTOR %s' % i)
-        print(top_vars)
+        top_vars = column[sort_index]
+        factor_top_vars[i] = top_vars
+        if verbose:
+            print('\nFACTOR %s' % i)
+            print(top_vars[0:n])
+    return factor_top_vars
         
 # ****************************************************************************
 # Other helper functions for dealing with factor analytic results
@@ -162,10 +166,10 @@ def quantify_lower_nesting(factor_tree):
         higher_dim = factor_tree[higher_c]
         lower_dim = factor_tree[lower_c]
         lr.fit(higher_dim, lower_dim)
-        reverse_scores = r2_score(lr.predict(higher_dim), 
+        scores = r2_score(lr.predict(higher_dim), 
                                  lower_dim, 
                                  multioutput='raw_values')
-        relationship = {'scores': reverse_scores,
+        relationship = {'scores': scores,
                         'coefs': lr.coef_}
         relationships[(higher_c,lower_c)] = relationship
     return relationships
@@ -178,8 +182,6 @@ def get_factor_groups(loading_df):
         factor_groups.append([assignment,assignment_vars])
     return factor_groups
 
-
-  
 def get_hierarchical_groups(loading_df, n_groups=8):
     # helper function
     def remove_adjacent(nums):
@@ -208,7 +210,34 @@ def get_hierarchical_groups(loading_df, n_groups=8):
         assignment_vars = [var for i,var in enumerate(loading_df.index) if index_assignments[i] == assignment]
         hierarchical_groups.append([assignment,assignment_vars])
     return cluster_reorder_index, hierarchical_groups
-        
+
+def get_scores_from_subset(data, fa_output, task_subset):
+    match_cols = []
+    for i, c in enumerate(data.columns):
+        if np.any([task in c for task in task_subset]):
+            match_cols.append(i)
+
+    weights_subset = fa_output['weights'][match_cols,:]
+    data_subset = scale(data.iloc[:, match_cols])
+    subset_scores = data_subset.dot(weights_subset)
+
+    # concat subset and full scores into one dataframe
+    labels = ['%s_full' % i for i in list(range(fa_output['scores'].shape[1]))]
+    labels+=[i.replace('full','subset') for i in labels]
+    concat_df = pd.DataFrame(np.hstack([fa_output['scores'], subset_scores]),
+                             columns = labels)
+    
+    # calculate variance explained by subset
+    lr = LinearRegression()
+    lr.fit(concat_df.filter(regex='subset'), 
+           concat_df.filter(regex='full'))
+    scores = r2_score(lr.predict(concat_df.filter(regex='subset')), 
+                      concat_df.filter(regex='full'), 
+                      multioutput='raw_values')
+    return concat_df, scores
+
+
+  
 # ****************************************************************************
 # Helper functions for visualization of component loadings
 # ****************************************************************************
@@ -313,6 +342,7 @@ def create_factor_tree(data, component_range=(1,13)):
         return np.argsort(max_factors)
 
     EFA_results = {}
+    full_fa_results = {}
     # plot
     for c in range(component_range[0],component_range[1]+1):
         fa, output = psychFA(data, c)
@@ -322,7 +352,8 @@ def create_factor_tree(data, component_range=(1,13)):
             tmp_loading_df = tmp_loading_df.iloc[:, reorder_index]
             tmp_loading_df.columns = sorted(tmp_loading_df.columns)
         EFA_results[c] = tmp_loading_df
-    return EFA_results
+        full_fa_results[c] = fa
+    return EFA_results, full_fa_results
 
 def plot_factor_tree(factor_tree, groups=None, filename=None):
     """
