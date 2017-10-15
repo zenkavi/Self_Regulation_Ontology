@@ -3,16 +3,19 @@ import numpy,pandas
 import scipy.stats
 import selfregulation.prediction.behavpredict as behavpredict
 
-basedir='/work/01329/poldrack/stampede2/analyses/SRO_prediction/results'
-basedir='/Users/poldrack/Downloads'
+basedir='/scratch/01329/poldrack/SRO'
+#basedir='/Users/poldrack/Downloads'
 
 files=glob.glob(os.path.join(basedir,'prediction_outputs/*pkl'))
+files=[i for i in files if i.find('_rf_')>-1]
 files.sort()
 acc={}
 features={}
 accuracy=pandas.DataFrame()
-
-for f in files:
+if os.path.exists('rf_data.pkl'):
+  acc,features=pickle.load(open('rf_data.pkl','rb'))
+else:
+  for f in files:
     d=pickle.load(open(f,'rb'))
     l_s=os.path.basename(f).replace('.pkl','').split('_')
     if l_s[3]=='shuffle':
@@ -29,6 +32,8 @@ for f in files:
     else:
         acc[l_s[1]][l_s[3]].append(d[0])
         features[l_s[1]][l_s[3]].append(d[1])
+  print('saving data to pickle')
+  pickle.dump((acc,features),open('rf_data.pkl','wb'))
 
 skip_vars=['RetirementPercentStocks',
 'HowOftenFailedActivitiesCannabis',
