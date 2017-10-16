@@ -36,14 +36,15 @@ if __name__=='__main__':
                         default=0, action='count')
     parser.add_argument('-c',"--classifier", help="classifier",
                             default='lasso')
-    
+
     parser.add_argument("--report_features", help="print features",
                         action='store_true')
     parser.add_argument("--print_report", help="print report at the end",
                         action='store_true')
     parser.add_argument('-s',"--shuffle", help="shuffle target variable",
                         action='store_true')
-    parser.add_argument("--no_baseline_regress", help="don't regress out baseline",
+    parser.add_argument("--no_baseline_vars",
+                        help="don't include baseline vars in task/survey model",
                         action='store_true')
     parser.add_argument('-d',"--dataset", help="dataset for prediction",
                             required=True)
@@ -73,15 +74,15 @@ if __name__=='__main__':
     assert args.dataset in ['survey','mirt','task','all','baseline']
     assert args.classifier in ['lasso','rf']
     # don't regress out baseline vars for baseline model
-    if args.dataset=='baseline' or args.no_baseline_regress:
-        preregress=False
+    if args.dataset=='baseline' or args.no_baseline_vars:
+        baselinevars=False
         if args.verbose:
-            print("turning off pre-regression by baseline vars")
+            print("turning off inclusion of baseline vars")
     else:
-        preregress=True
+        baselinevars=True
         if args.verbose:
-            print("turning on pre-regression by baseline vars")
-    
+            print("including baseline vars in survey/task models")
+
 
     # skip RetirementPercentStocks because it crashes the estimation tool
     bp=behavpredict.BehavPredict(verbose=args.verbose,
@@ -115,7 +116,7 @@ if __name__=='__main__':
         try:
             bp.scores[v],bp.importances[v]=bp.run_crossvalidation(v,
                      classifier=args.classifier,
-                     preregress_baseline_vars=preregress)
+                     add_baseline_vars=baselinevars)
             if args.report_features and numpy.mean(bp.scores[v])>0.65:
                 print('')
                 meanimp=numpy.mean(bp.importances[v],0)

@@ -22,7 +22,6 @@ import sys,os
 import random
 import pickle
 import warnings
-import ipdb
 
 import numpy,pandas
 import importlib
@@ -201,7 +200,7 @@ class BehavPredict:
     def run_crossvalidation(self,v,classifier=None,outer_cv=None,
                             imputer=fancyimpute.SimpleFill,
                             shuffle=False,scoring='roc_auc',
-                            preregress_baseline_vars=True):
+                            add_baseline_vars=True):
         """
         v is the variable on which to run crosvalidation
         """
@@ -209,19 +208,19 @@ class BehavPredict:
         if self.data_models[v]=='binary':
             return self.run_crossvalidation_binary(v,classifier,outer_cv,
                                                 imputer,shuffle,scoring,
-                                                preregress_baseline_vars)
+                                                add_baseline_vars)
         else:
             if scoring=='roc_auc':
                 scoring='r2'
             return self.run_crossvalidation_regression(v,classifier,outer_cv,
                                                 imputer,shuffle,scoring,
-                                                preregress_baseline_vars)
+                                                add_baseline_vars)
 
 
     def run_crossvalidation_binary(self,v,classifier,outer_cv=None,
                             imputer=fancyimpute.SoftImpute,
                             shuffle=False,scoring='roc_auc',
-                            preregress_baseline_vars=True):
+                            add_baseline_vars=True):
         """
         run CV for binary data
         """
@@ -239,6 +238,10 @@ class BehavPredict:
             outer_cv=StratifiedKFold(n_splits=self.n_outer_splits,shuffle=True)
         Ydata=self.demogdata[v].dropna().copy()
         Xdata=self.behavdata.loc[Ydata.index,:].copy()
+        if add_baseline_vars:
+            for v in self.baseline_vars:
+                Xdata[v]=self.demogdata[v].dropna().copy()
+
         Ydata=Ydata.values
         if shuffle:
             if self.verbose:
@@ -256,13 +259,6 @@ class BehavPredict:
                 Xtrain=imputer().complete(Xdata[train,:])
             if numpy.sum(numpy.isnan(Xtest))>0:
                 Xtest=imputer().complete(Xdata[test,:])
-            if preregress_baseline_vars:
-                if self.verbose:
-                    print('residualizing vs baseline vars:',self.baseline_vars)
-                lm=LinearRegression()
-                lm.fit(self.demogdata[self.baseline_vars].iloc[train,:],Xtrain)
-                Xtrain=Xtrain - lm.predict(self.demogdata[self.baseline_vars].iloc[train,:])
-                Xtest=Xtest - lm.predict(self.demogdata[self.baseline_vars].iloc[test,:])
 
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", message="Data with input dtype int64 was converted to float64 by StandardScaler.")
@@ -302,7 +298,7 @@ class BehavPredict:
     def run_crossvalidation_regression(self,v,classifier,outer_cv=None,
                             imputer=fancyimpute.SoftImpute,
                             shuffle=False,scoring='r2',
-                            preregress_baseline_vars=True):
+                            add_baseline_vars=True):
         """
         run CV for binary data
         """
@@ -324,6 +320,9 @@ class BehavPredict:
             outer_cv=BalancedKFold()
         Ydata=self.demogdata[v].dropna().copy()
         Xdata=self.behavdata.loc[Ydata.index,:].copy()
+        if add_baseline_vars:
+            for v in self.baseline_vars:
+                Xdata[v]=self.demogdata[v].dropna().copy()
         Ydata=Ydata.values
         if shuffle:
             if self.verbose:
@@ -341,13 +340,6 @@ class BehavPredict:
                 Xtrain=imputer().complete(Xdata[train,:])
             if numpy.sum(numpy.isnan(Xtest))>0:
                 Xtest=imputer().complete(Xdata[test,:])
-            if preregress_baseline_vars:
-                if self.verbose:
-                    print('residualizing vs baseline vars:',self.baseline_vars)
-                lm=LinearRegression()
-                lm.fit(self.demogdata[self.baseline_vars].iloc[train,:],Xtrain)
-                Xtrain=Xtrain - lm.predict(self.demogdata[self.baseline_vars].iloc[train,:])
-                Xtest=Xtest - lm.predict(self.demogdata[self.baseline_vars].iloc[test,:])
 
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", message="Data with input dtype int64 was converted to float64 by StandardScaler.")
