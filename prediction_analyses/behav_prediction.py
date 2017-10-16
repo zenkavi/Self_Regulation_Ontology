@@ -43,6 +43,8 @@ if __name__=='__main__':
                         action='store_true')
     parser.add_argument('-s',"--shuffle", help="shuffle target variable",
                         action='store_true')
+    parser.add_argument('-i',"--icc_threshold", help="threshold for ICC filtering",
+                        type=float,default=0.25)
     parser.add_argument("--no_baseline_vars",
                         help="don't include baseline vars in task/survey model",
                         action='store_true')
@@ -91,6 +93,27 @@ if __name__=='__main__':
     bp.load_demog_data()
     bp.get_demogdata_vartypes()
     bp.load_behav_data(args.dataset)
+    if args.icc_threshold is not None:
+        if args.verbose:
+            print('filtering X variables by ICC > ',args.icc_threshold)
+        bp.load_reliabilities()
+        orig_shape=len(bp.behavdata.columns)
+        for v in bp.behavdata.columns:
+            if v in ['Age','Sex']:
+                continue
+            try:
+                icc=bp.reliabilities.loc[v]
+            except KeyError:
+                print('key', v,'not in ICC data frame - leaving in the list for now')
+                continue
+            if icc<args.icc_threshold:
+                del bp.behavdata[v]
+                if args.verbose and False:
+                    print('removing',v,icc)
+        new_shape=len(bp.behavdata.columns)
+        print('removed %d columns'%int(orig_shape - new_shape))
+
+
 
     if args.shuffle:
         tmp=bp.demogdata.values.copy()

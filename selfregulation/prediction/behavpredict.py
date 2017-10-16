@@ -87,6 +87,7 @@ class BehavPredict:
         self.smote_cutoff=smote_cutoff
         self.data_models={}
         self.pred=None
+        self.reliabilities=None
 
     def load_demog_data(self,cleanup=True,binarize=False,
                         drop_categorical=True):
@@ -126,6 +127,11 @@ class BehavPredict:
             for l in lines:
                 self.data_models[l[0]]=l[1]
 
+    def load_reliabilities(self,infile='boot_df.csv'):
+        basedir=get_info('base_directory')
+        icc_boot=pandas.DataFrame.from_csv(os.path.join(basedir,
+                'retest_analyses',infile))
+        self.reliabilities=icc_boot.groupby('dv').mean().icc
 
     def load_behav_data(self,datasubset='all',
                         add_baseline_vars=False):
@@ -320,6 +326,7 @@ class BehavPredict:
             outer_cv=BalancedKFold()
         Ydata=self.demogdata[v].dropna().copy()
         Xdata=self.behavdata.loc[Ydata.index,:].copy()
+
         if add_baseline_vars:
             for v in self.baseline_vars:
                 Xdata[v]=self.demogdata[v].dropna().copy()
@@ -353,7 +360,7 @@ class BehavPredict:
             self.pred[test]=p
 
         if numpy.var(self.pred)>0:
-            scores=numpy.corrcoef(Ydata,self.pred)[0,1]
+            scores=r2_score(Ydata,self.pred)
         else:
            if self.verbose:
                print(v,'zero variance in predictions')
