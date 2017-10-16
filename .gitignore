@@ -13,8 +13,8 @@ Plots
 *.pyl
 .ipynb_checkpoints
 *.pyc
-
 *.nb.html
+.spyproject/
 
 internal_settings.json
 Self_Regulation_Settings.txt

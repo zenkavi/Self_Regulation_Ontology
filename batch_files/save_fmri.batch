@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=mturk_post
-#SBATCH --output=.out/mturk_post.job.out
-#SBATCH --error=.err/mturk_post.job.err
+#SBATCH --job-name=fmri_post
+#SBATCH --output=.out/fmri_post.job.out
+#SBATCH --error=.err/fmri_post.job.err
 #SBATCH --time=8:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1

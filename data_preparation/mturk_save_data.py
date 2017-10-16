@@ -25,7 +25,8 @@ data_dir=get_info('data_directory')
 
 
 # read preprocessed data
-data_labels = ['mturk_discovery', 'mturk_validation']
+data_labels = ['mturk_complete', 'mturk_discovery', 'mturk_validation', 
+                'mturk_failed', 'mturk_incomplete']
 datasets = []
 for label in data_labels:
     directory = path.join(output_dir,label.lstrip('mturk_').title() + '_' + date)
@@ -41,14 +42,6 @@ for label in data_labels:
         DVs_valence = []
     datasets.append((data,directory, DVs, DVs_valence))
     
-# create complete dataset
-if len(datasets)>1:
-    directory = path.join(output_dir,'Complete_' + date)
-    data = pd.concat([dataset[0] for dataset in datasets])
-    DVs = pd.concat([dataset[2] for dataset in datasets])
-    DVs_valence = pd.concat([dataset[3] for dataset in datasets])
-    datasets.append((data, directory, DVs, DVs_valence))
-
 # calculate DVs
 for data,directory, DV_df, valence_df in datasets:
     readme_lines = []
@@ -84,7 +77,7 @@ for data,directory, DV_df, valence_df in datasets:
         "Found column names longer than 8 characters in short version"
     # save Individual Measures
     save_task_data(directory, data)
-    if 'Discovery' in directory:
+    if 'Complete' in directory:
         # save demographic targets reference
         np.savetxt(path.join(reference_dir,'demographic_health_reference.csv'), target_data.columns, fmt = '%s', delimiter=",")
         gen_reference_item_text(items_df)
