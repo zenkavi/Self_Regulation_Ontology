@@ -325,7 +325,7 @@ for metric in ['BIC', 'SABIC']:
             axes[j].set_visible(False)
         plt.subplots_adjust(hspace=.5, wspace=.5)
         f.savefig(path.join(plot_file,
-                            'factor_distributions_metric-%s_subset-%s.png' % (metric, sublist_name)), 
+                            'factor_DVdistributions_metric-%s_subset-%s.png' % (metric, sublist_name)), 
                   bbox_inches='tight')
 
 # plot entropies
