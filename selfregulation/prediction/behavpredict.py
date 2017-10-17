@@ -28,7 +28,7 @@ import importlib
 
 from sklearn.ensemble import ExtraTreesClassifier,ExtraTreesRegressor
 from sklearn.model_selection import cross_val_score,StratifiedKFold,ShuffleSplit,GridSearchCV
-from sklearn.metrics import roc_auc_score,r2_score
+from sklearn.metrics import roc_auc_score,r2_score,explained_variance_score
 from sklearn.linear_model import LassoCV,LinearRegression,LogisticRegressionCV
 from sklearn.preprocessing import StandardScaler
 
@@ -303,7 +303,7 @@ class BehavPredict:
 
     def run_crossvalidation_regression(self,v,classifier,outer_cv=None,
                             imputer=fancyimpute.SoftImpute,
-                            shuffle=False,scoring='r2',
+                            shuffle=False,scoring='ev',
                             add_baseline_vars=True):
         """
         run CV for binary data
@@ -360,7 +360,7 @@ class BehavPredict:
             self.pred[test]=p
 
         if numpy.var(self.pred)>0:
-            scores=r2_score(Ydata,self.pred)
+            scores=explained_variance_score(Ydata,self.pred)
         else:
            if self.verbose:
                print(v,'zero variance in predictions')
