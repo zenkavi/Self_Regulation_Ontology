@@ -28,7 +28,7 @@ import importlib
 
 from sklearn.ensemble import ExtraTreesClassifier,ExtraTreesRegressor
 from sklearn.model_selection import cross_val_score,StratifiedKFold,ShuffleSplit,GridSearchCV
-from sklearn.metrics import roc_auc_score,r2_score,explained_variance_score
+from sklearn.metrics import roc_auc_score,r2_score,explained_variance_score,mean_absolute_error
 from sklearn.linear_model import LassoCV,LinearRegression,LogisticRegressionCV
 from sklearn.preprocessing import StandardScaler
 
@@ -360,18 +360,19 @@ class BehavPredict:
             self.pred[test]=p
 
         if numpy.var(self.pred)>0:
-            scores=explained_variance_score(Ydata,self.pred)
+            scores=[explained_variance_score(Ydata,self.pred),
+                    mean_absolute_error(Ydata,self.pred)]
         else:
            if self.verbose:
                print(v,'zero variance in predictions')
-           scores=numpy.nan
+           scores=[numpy.nan,numpy.nan]
         if hasattr(clf,'feature_importances_'):  # for random forest
             importances.append(clf.feature_importances_)
         elif hasattr(clf,'coef_'):  # for lasso
             importances.append(clf.coef_)
 
         if self.verbose:
-            print('mean accuracy = %0.3f'%scores)
+            print('scores:',scores)
         try:
             imp=numpy.vstack(importances)
         except:
