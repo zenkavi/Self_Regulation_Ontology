@@ -1,8 +1,10 @@
 # imports
+from math import ceil
 import numpy as np
 from os import makedirs, path
 import pandas as pd
 import pickle
+from scipy.stats import entropy
 from selfregulation.utils.utils import get_behav_data
 from selfregulation.utils.r_to_py_utils import get_Rpsych
 from sklearn.preprocessing import scale
@@ -10,7 +12,7 @@ from dimensional_structure.utils import (
         create_factor_tree, find_optimal_components, get_factor_groups,
         get_hierarchical_groups, get_scores_from_subset,
         get_loadings, plot_factor_tree, get_top_factors, psychFA,
-        quantify_lower_nesting, visualize_factors
+        quantify_lower_nesting, visualize_factors, visualize_task_factors
         )
 # plotting
 import matplotlib.pyplot as plt
@@ -37,7 +39,6 @@ except FileNotFoundError:
 # ****************************************************************************
 # Peform factor analysis
 # ****************************************************************************
-
 # test if sample is suitable for factor analysis
 def adequacy_test(data):
     # KMO test should be > .6
@@ -51,59 +52,43 @@ adequate, adequacy_stats = adequacy_test(results['data'])
 print('Is the data adequate for factor analysis? %s' % ['No', 'Yes'][adequate])
 results['EFA_adequacy'] = {'adequate': adequate, 'adequacy_stats': adequacy_stats}
 
+# ********************** Verify factor solution and analysis******************
+# recreate psych calculation to verify scores
+fa, output = psychFA(results['data'], 10)
+loadings = get_loadings(output, labels=results['data'].columns)
+
+scores = output['scores'] # factor scores per subjects derived from psychFA
+scaled_data = scale(results['data'])
+redone_scores = scaled_data.dot(output['weights'])
+redone_score_diff = np.mean(scores-redone_scores)
+assert(redone_score_diff < 1e-5)
+
 # ************************* calculate optimal FA ******************************
-if 'parallel_c' not in results.keys():
+if 'c_metric-parallel' not in results.keys():
     # using BIC
     BIC_c, BICs = find_optimal_components(results['data'], metric='BIC')
-    results['BIC_c'] = BIC_c
-    results['BICs'] = BICs
+    results['c_metric-BIC'] = BIC_c
+    results['cscores_metric-BIC'] = BICs
     # using SABIC
     SABIC_c, SABICs = find_optimal_components(results['data'], metric='SABIC')
-    results['SABIC_c'] = SABIC_c
-    results['SABICs'] = SABICs
+    results['c_metric-SABIC'] = SABIC_c
+    results['cscores_metric-SABIC'] = SABICs
      # using CV
     CV_c, CVs = find_optimal_components(results['data'], maxc=50, metric='CV')
-    results['CV_c'] = CV_c
-    results['CVs'] = CVs
+    results['c_metric-CV'] = CV_c
+    results['cscores_metric-CV'] = CVs
     # parallel analysis
     parallel_out = psych.fa_parallel(results['data'], fa='fa', fm='ml',
                                      **{'n.iter': 100})
-    results['parallel_c'] = parallel_out[parallel_out.names.index('nfact')][0]
+    results['c_metric-parallel'] = parallel_out[parallel_out.names.index('nfact')][0]
 
 
 # *********************** create groups ************************************
 if 'factor_groups' not in results.keys():
-    # create putative groups
-    sorted_columns = []
-    survey_cols = ('survey', results['data'].filter(regex='survey').columns.tolist())
-    drift_cols = ('drift', results['data'].filter(regex='\.hddm_drift').columns.tolist())
-    drift_contrast_cols = ('drift con', results['data'].filter(regex='\..*_hddm_drift').columns.tolist())
-    thresh_cols = ('thresh', results['data'].filter(regex='\.hddm_thresh').columns.tolist())
-    thresh_contrast_cols = ('thresh con', results['data'].filter(regex='\..*_hddm_thresh').columns.tolist())
-    non_decision_cols = ('non-decision', results['data'].filter(regex='\.hddm_non_decision').columns.tolist())
-    non_decision_contrast_cols = ('non-decision con', results['data'].filter(regex='\..*_hddm_non_decision').columns.tolist())
-    stop_cols = ('stop', results['data'].filter(regex='stop').columns.tolist())
-    discount_cols = ('discount', results['data'].filter(regex='discount').columns.tolist())
-    leftover_cols = ('misc', results['data'].columns)
-    
-    tmp_groups = [survey_cols,
-                  drift_cols, drift_contrast_cols, 
-                  thresh_cols, thresh_contrast_cols,
-                  non_decision_cols, non_decision_contrast_cols,
-                  stop_cols, discount_cols,
-                  leftover_cols]
-    putative_groups = []
-    for name, group in tmp_groups:
-        if len(group)>0:
-            group = sorted(list(set(group)-set(sorted_columns)))
-            sorted_columns+=group
-            putative_groups.append((name,group))
-    results['putative_groups'] = putative_groups
-    
     # create hierarchical groups on data
     # perform factor analysis for hierarchical grouping
     for metric in ['SABIC', 'BIC']:
-        grouping_metric = '%s_c' % metric
+        grouping_metric = 'c_metric-%s' % metric
         fa, output = psychFA(results['data'], results[grouping_metric])
         grouping_loading = get_loadings(output, labels=results['data'].columns)
         
@@ -129,16 +114,16 @@ if 'factor_groups' not in results.keys():
             groups[6][0] = 'Context Setting (Thresh)'
             groups[7][0] = 'Information Processing'
             
-        results['%s_hierarchical_groups' % grouping_metric] = groups
+        results['hierarchical_groups_metric-%s' % metric] = groups
         # create factor groups
         factor_groups = get_factor_groups(grouping_loading)
         for i in factor_groups:
             i[0] = 'Factor %s' % i[0]
-        results['%s_factor_groups' % metric] = factor_groups
+        results['factor_groups_metric-%s' % metric] = factor_groups
 
 # ************************* create factor trees ******************************
 run_FA = results.get('factor_tree', [])
-max_factors = max([results['SABIC_c'], results['BIC_c']])+5
+max_factors = max([results['c_metric-SABIC'], results['c_metric-BIC']])+5
 if len(run_FA) < max_factors:
     # Use Putative groups
     factor_tree, factor_tree_rout = create_factor_tree(results['data'],
@@ -149,24 +134,20 @@ if len(run_FA) < max_factors:
 # quantify nesting of factor tree:
 results['lower_nesting'] = quantify_lower_nesting(results['factor_tree'])
 
-
+# quantify entropy of each measure
+for metric in ['BIC', 'SABIC']:
+    c = results['c_metric-%s' % metric]
+    loadings = results['factor_tree'][c]
+    # calculate entropy of each variable
+    loading_entropy = abs(loadings).apply(entropy, 1)
+    max_entropy = entropy([1/loadings.shape[1]]*loadings.shape[1])
+    results['entropy_metric-%s' % metric] = loading_entropy/max_entropy
 
 # ***************************** saving ****************************************
 pickle.dump(results, open(path.join(output_file, 'EFA_results.pkl'),'wb'))
 
 
-    
-# ********************** Verify factor solution and analysis******************
-# recreate psych calculation to verify scores
-fa, output = psychFA(results['data'], 10)
-loadings = get_loadings(output, labels=results['data'].columns)
-
-scores = output['scores'] # factor scores per subjects derived from psychFA
-scaled_data = scale(results['data'])
-redone_scores = scaled_data.dot(output['weights'])
-redone_score_diff = np.mean(scores-redone_scores)
-assert(redone_score_diff < 1e-5)
-
+# *************Additional (unsaved) analyses***********************************
 # analyze nesting
 factor_tree = results['factor_tree']
 explained_threshold = .5
@@ -180,10 +161,19 @@ for key in results['lower_nesting'].keys():
     
     explained_scores[key[1]-1, key[0]-1] = explained_score
     sum_explained[key[1]-1, key[0]-1] = (np.sum(adequately_explained/key[0]))
-    
-    
-# ********************* Pull out representation of specific tasks *******
 
+# analyze entropy across factor solutions
+entropies = {}
+for c, loadings in results['factor_tree'].items():
+    if c > 1:
+        # calculate entropy of each variable
+        loading_entropy = abs(loadings).apply(entropy, 1)
+        max_entropy = entropy([1/loadings.shape[1]]*loadings.shape[1])
+        entropies[c] = loading_entropy/max_entropy
+entropies = pd.DataFrame(entropies)
+
+
+# ********************* Pull out representation of specific tasks *******
 tasks_of_interest = ['stroop', 'adaptive_n_back', 'threebytwo', 
                      'stop_signal', 'motor_selective_stop_signal',]
 subset_scores, r2_scores = get_scores_from_subset(results['data'],
@@ -193,48 +183,57 @@ subset_scores, r2_scores = get_scores_from_subset(results['data'],
 # ****************************************************************************
 # Plotting
 # ****************************************************************************
+print('Plotting')
 sns.set_context('notebook', font_scale=1.4)
 
+# Plot BIC and SABIC curves
 with sns.axes_style('dark'):
-    x = list(results['BICs'].keys())
+    x = list(results['cscores_metric-BIC'].keys())
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
-    ax1.plot(x, list(results['BICs'].values()), c='c', lw=3)
+    # BIC
+    BIC_scores = list(results['cscores_metric-BIC'].values())
+    BIC_c = results['c_metric-BIC']
+    ax1.plot(x, BIC_scores, c='c', lw=3)
     ax1.set_ylabel('BIC', fontsize=20)
-    BIC_c = results['BIC_c']
-    ax1.plot(BIC_c,results['BICs'][BIC_c],'k.', markersize=30)
-    ax2.plot(x, list(results['SABICs'].values()), c='m', lw=3)
+    ax1.plot(BIC_c, BIC_scores[BIC_c],'k.', markersize=30)
+    # SABIC
+    SABIC_scores = list(results['cscores_metric-SABIC'].values())
+    SABIC_c = results['c_metric-SABIC']
+    ax2.plot(x, SABIC_scores, c='m', lw=3)
     ax2.set_ylabel('SABIC', fontsize=20)
-    SABIC_c = results['SABIC_c']
-    ax2.plot(SABIC_c,results['SABICs'][SABIC_c],'k.', markersize=30)
+    ax2.plot(SABIC_c, SABIC_scores[SABIC_c],'k.', markersize=30)
+    fig.savefig(path.join(plot_file, 'BIC_SABIC_curves.png'), 
+                bbox_inches='tight')
 
-# plot optimal factor breakdown in polar format
+# Plot factor loadings
 for group in ['hierarchical', 'factor']:
-    # plot mini factor tree
-    plot_factor_tree({i: results['factor_tree'][i] for i in [1,2]},
-                     groups=results['%s_groups' % group],
-                     filename = path.join(plot_file, '%s_mini_factor_tree.png' % group))
-
     for metric in ['BIC', 'SABIC']:
-        c = results['%s_c' % metric]
+        c = results['c_metric-%s' % metric]
         loadings = results['factor_tree'][c]
         
         # plot polar plot factor visualization for metric loadings
         fig = visualize_factors(loadings, n_rows=4, 
-                                groups=results['%s_groups' % group])
+                                groups=results['%s_groups_metric-%s' % (group, metric)])
         fig.savefig(path.join(plot_file, 
-                              '%s_%s_factor_polar.png' % (group, metric)))
+                              'factor_polar_metric-%s_group-%s.png' % (metric, group)))
         
+        # plot mini factor tree
+        plot_factor_tree({i: results['factor_tree'][i] for i in [1,2]},
+                          groups=results['%s_groups_metric-%s' % (group, metric)],
+                          filename = path.join(plot_file, 
+                                               'mini_factor_tree_metric-%s_group-%s.png' % (metric,group)))
+    
         # plot factor tree around optimal metric
         plot_factor_tree({i: results['factor_tree'][i] for i in [c-1,c,c+1]},
-                          groups=results['%s_groups' % group],
+                          groups=results['%s_groups_metric-%s' % (group, metric)],
                           filename = path.join(plot_file, 
-                                               '%s_%s_factor_tree.png' % (group, metric)))
+                                               'factor_tree_metric-%s_group-%s.png' % (metric, group)))
         
         # plot bar of each factor
         sorted_vars = get_top_factors(loadings) # sort by loading
         
-        grouping = results['%s_factor_groups' % metric]
+        grouping = results['%s_groups_metric-%s' % (group, metric)]
         flattened_factor_order = []
         for sublist in [i[1] for i in grouping]:
             flattened_factor_order += sublist
@@ -279,7 +278,8 @@ for group in ['hierarchical', 'factor']:
                 else:
                     ax1.set_xticklabels('')
         f.savefig(path.join(plot_file, 
-                            '%s_%s_factor_bars.png' % (group, metric)))
+                            'factor_bars_metric-%s_group-%s.png' % (metric, group)), 
+                  bbox_inches='tight')
         
 # plot lower nesting
 fig, ax = plt.subplots(1, 1, figsize=(30,30))
@@ -289,8 +289,51 @@ sns.heatmap(sum_explained, annot=explained_scores,
             ax = ax, vmin=.2, cbar_ax=cbar_ax,
             xticklabels = range(1,sum_explained.shape[1]+1),
             yticklabels = range(1,sum_explained.shape[0]+1))
-plt.xlabel('Higher Factors (Explainer)', fontsize=25)
-plt.ylabel('Lower Factors (Explainee)', fontsize=25)
-plt.title('Nesting of Lower Level Factors based on R2', fontsize=30)
-fig.savefig(path.join(plot_file, 'lower_nesting_heatmap.png'))
+ax.set_xlabel('Higher Factors (Explainer)', fontsize=25)
+ax.set_ylabel('Lower Factors (Explainee)', fontsize=25)
+ax.set_title('Nesting of Lower Level Factors based on R2', fontsize=30)
+fig.savefig(path.join(plot_file, 'lower_nesting_heatmap.png'), 
+            bbox_inches='tight')
 
+# plot task factor loading
+factor_tree = results['factor_tree']
+tasks = np.unique([i.split('.')[0] for i in factor_tree[1].index])
+ncols = 6
+for metric in ['BIC', 'SABIC']:
+    c = results['c_metric-%s' % metric]
+    loadings = factor_tree[c]
+    max_loading = abs(loadings).max().max()
+    
+    task_sublists = {'surveys': [t for t in tasks if 'survey' in t],
+                    'tasks': [t for t in tasks if 'survey' not in t]}
+    for sublist_name, task_sublist in task_sublists.items():
+        nrows = ceil(len(task_sublist)/ncols)
+        adjusted_cols = min(ncols, len(task_sublist))
+        # plot loading distributions. Each measure is scaled so absolute
+        # comparisons are impossible. Only the distributions can be compared
+        f, axes = plt.subplots(nrows, adjusted_cols, 
+                               figsize=(adjusted_cols*10,nrows*(8+nrows)),
+                               subplot_kw={'projection': 'polar'})
+        axes = f.get_axes()
+        for i, task in enumerate(task_sublist):
+            task_loadings = loadings.filter(regex=task, axis=0)
+            visualize_task_factors(task_loadings, axes[i])
+            axes[i].set_title(' '.join(task.split('_')), 
+                              y=1.14, fontsize=25)
+            
+        for j in range(i+1, len(axes)):
+            axes[j].set_visible(False)
+        plt.subplots_adjust(hspace=.5, wspace=.5)
+        f.savefig(path.join(plot_file,
+                            'factor_distributions_metric-%s_subset-%s.png' % (metric, sublist_name)), 
+                  bbox_inches='tight')
+
+# plot entropies
+with sns.plotting_context('notebook', font_scale=1.8):
+    f = plt.figure(figsize=(12,8))
+    sns.boxplot(data=entropies)
+    plt.xlabel('# Factors')
+    plt.ylabel('Entropy')
+    plt.title('Distribution of Measure Specificity across Factor Solutions')
+    f.savefig(path.join(plot_file, 'entropies_across_factors.png'), 
+              bbox_inches='tight')
