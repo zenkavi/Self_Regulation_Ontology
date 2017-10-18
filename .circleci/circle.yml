@@ -2,14 +2,11 @@ version: 2
 jobs:
   build:
     docker:
-      - image: continuumio/miniconda
+      - image: continuumio/miniconda3
     steps:
-      - checkout
       - run:
           name: Install Python deps in a virtual environment
           command: |
-            conda create -n py36 anaconda python=3.6
-            source activate py36
             sudo apt-get install -y default-jre gfortran
             conda update conda
             conda install --yes anaconda-client anaconda-build conda-build
@@ -17,7 +14,7 @@ jobs:
             conda install --yes numpy pytest r r-essentials numpy pandas scikit-learn imbalanced-learn nilearn scipy matplotlib networkx statsmodels
             pip install rpy2 jinja2 ipdb fancyimpute IPython
             echo "install.packages(c("mpath","glmnet","foreach","iterators","pscl","numDeriv","doParallel"),repos="http://cran.us.r-project.org", dependencies=TRUE)" | R --vanilla
+      - checkout
       - run:
           command: |
-            source activate py36
             pytest
