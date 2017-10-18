@@ -16,6 +16,13 @@ was much less likely to return constant predictions.
 
 Russ Poldrack
 12/13/2016
+
+
+TBD:
+- back out demog cleaning into main package
+- do better job of catergorization of task/survey (holt-laury)
+- get rid of double shuffle
+- clean up filtering for SMOTE
 """
 
 import sys,os
@@ -170,6 +177,27 @@ class BehavPredict:
                 print('dropping %d vars due to excessive NAs'%len(self.dropped_na_columns))
                 print('%d behavioral variables remaining'%self.behavdata.shape[1])
 
+    def filter_by_icc(self,icc_threshold=0.25,verbose=False):
+        if verbose:
+            print('filtering X variables by ICC > ',icc_threshold)
+        self.load_reliabilities()
+        orig_shape=len(self.behavdata.columns)
+        for v in self.behavdata.columns:
+            if v in ['Age','Sex']:
+                continue
+            try:
+                icc=self.reliabilities.loc[v]
+            except KeyError:
+                print('key', v,'not in ICC data frame - leaving in the list for now')
+                continue
+            if icc<icc_threshold:
+                del self.behavdata[v]
+                if verbose:
+                    print('removing',v,icc)
+        new_shape=len(self.behavdata.columns)
+        if verbose:
+            print('removed %d columns'%int(orig_shape - new_shape))
+
 
     def get_joint_datasets(self):
         demog_index=set(self.demogdata.index)
@@ -205,7 +233,7 @@ class BehavPredict:
 
     def run_crossvalidation(self,v,classifier=None,outer_cv=None,
                             imputer=fancyimpute.SimpleFill,
-                            shuffle=False,scoring='roc_auc',
+                            shuffle=False,
                             add_baseline_vars=True):
         """
         v is the variable on which to run crosvalidation
@@ -213,19 +241,17 @@ class BehavPredict:
 
         if self.data_models[v]=='binary':
             return self.run_crossvalidation_binary(v,classifier,outer_cv,
-                                                imputer,shuffle,scoring,
+                                                imputer,shuffle,
                                                 add_baseline_vars)
         else:
-            if scoring=='roc_auc':
-                scoring='r2'
             return self.run_crossvalidation_regression(v,classifier,outer_cv,
-                                                imputer,shuffle,scoring,
+                                                imputer,shuffle,
                                                 add_baseline_vars)
 
 
     def run_crossvalidation_binary(self,v,classifier,outer_cv=None,
                             imputer=fancyimpute.SoftImpute,
-                            shuffle=False,scoring='roc_auc',
+                            shuffle=False,
                             add_baseline_vars=True):
         """
         run CV for binary data
@@ -281,10 +307,7 @@ class BehavPredict:
             self.pred[test]=clf.predict(Xtest)
 
         if numpy.var(self.pred)>0:
-            if scoring=='r2':
-                scores=r2_score(Ydata,self.pred)
-            elif scoring=='roc_auc':
-                scores=roc_auc_score(Ydata,self.pred)
+            scores=roc_auc_score(Ydata,self.pred)
         else:
            if self.verbose:
                print(v,'zero variance in predictions')
@@ -303,7 +326,7 @@ class BehavPredict:
 
     def run_crossvalidation_regression(self,v,classifier,outer_cv=None,
                             imputer=fancyimpute.SoftImpute,
-                            shuffle=False,scoring='ev',
+                            shuffle=False,
                             add_baseline_vars=True):
         """
         run CV for binary data
@@ -360,7 +383,7 @@ class BehavPredict:
             self.pred[test]=p
 
         if numpy.var(self.pred)>0:
-            scores=[explained_variance_score(Ydata,self.pred),
+            scores=[numpy.corrcoef(Ydata,self.pred)[0,1]**2,
                     mean_absolute_error(Ydata,self.pred)]
         else:
            if self.verbose:
