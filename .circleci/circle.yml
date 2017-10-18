@@ -8,6 +8,8 @@ jobs:
       - run:
           name: Install Python deps in a virtual environment
           command: |
+            conda create -n py36 anaconda python=3.6
+            source activate py36
             sudo apt-get install -y default-jre gfortran
             conda update conda
             conda install --yes anaconda-client anaconda-build conda-build
@@ -17,4 +19,5 @@ jobs:
             echo "install.packages(c("mpath","glmnet","foreach","iterators","pscl","numDeriv","doParallel"),repos="http://cran.us.r-project.org", dependencies=TRUE)" | R --vanilla
       - run:
           command: |
+            source activate py36
             pytest
