@@ -11,7 +11,11 @@ jobs:
             conda update -y conda
             conda install --yes conda-build
             conda config --add channels r
-            conda install --yes numpy pytest r r-essentials numpy pandas scikit-learn scipy matplotlib networkx statsmodels
+            conda install --yes numpy
+            conda install --yes pytest 
+            conda install --yes r r-essentials
+            conda install --yes pandas scikit-learn scipy
+            conda install --yes matplotlib networkx statsmodels
             pip install rpy2 jinja2 ipdb fancyimpute IPython imbalanced-learn nilearn
             echo "install.packages(c("mpath","glmnet","foreach","iterators","pscl","numDeriv","doParallel"),repos="http://cran.us.r-project.org", dependencies=TRUE)" | R --vanilla
       - checkout
