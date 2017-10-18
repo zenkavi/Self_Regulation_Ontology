@@ -2,13 +2,15 @@ version: 2
 jobs:
   build:
     docker:
-      - image: continuumio/miniconda3
+      - image: python:3.6 
+    environment:
+      PATH: $HOME/miniconda/bin:$PATH
     steps:
+      - run: bash .circleci/setup.sh
       - run:
           name: Install Python deps in a virtual environment
           command: |
             apt-get install -y default-jre gfortran
-            conda config --set auto_update_conda false
             conda install --yes conda-build
             conda config --add channels r
             conda install --yes numpy
