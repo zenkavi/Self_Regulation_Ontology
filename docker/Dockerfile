@@ -1,4 +1,4 @@
-# Dockerfile for behavioral prediction analysis
+# Dockerfile for Self Regulation Ontology repo
 
 FROM python:3.6.3
 MAINTAINER Russ Poldrack <poldrack@gmail.com>
@@ -44,14 +44,13 @@ RUN rm -rf /workdir/R-3.4.2*
 
 ENV C_INCLUDE_PATH /usr/local/lib/R/include
 ENV LD_LIBRARY_PATH /usr/local/lib/R/lib
-
+ENV IPYTHONDIR /tmp
 RUN pip install rpy2
 
 RUN pip install jinja2 \
   ipdb \
   fancyimpute==0.2.0 \
   IPython==6.2.1
-
 
 # Clone the conf files into the docker container
 RUN git clone git@github.com:poldrack/Self_Regulation_Ontology.git
