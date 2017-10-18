@@ -2,9 +2,8 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/python:3.6.2
+      - image: docker pull continuumio/miniconda3
     steps:
-      - run: bash .circleci/setup.sh
       - run:
           name: Install Python deps in a virtual environment
           command: |
