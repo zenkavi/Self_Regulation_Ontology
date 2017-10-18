@@ -31,7 +31,7 @@ if not os.path.exists(setupfile):
     #sys.exit()
     print('creating default Self_Regulation_Settings.txt file')
     basedir=os.getcwd()
-    datasets=[i.split('/')[-1] for i in glob.glob('./data/Complete*')]
+    datasets=[i.split('/')[-1] for i in glob.glob('./Data/Complete*')]
     dates={}
     for d in datasets:
         if not d.find('Complete_')>-1:
