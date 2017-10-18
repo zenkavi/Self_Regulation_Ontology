@@ -9,7 +9,7 @@ jobs:
           command: |
             apt-get install -y default-jre gfortran
             conda update -y conda
-            conda install --yes anaconda-client anaconda-build conda-build
+            conda install --yes conda-build
             conda config --add channels r
             conda install --yes numpy pytest r r-essentials numpy pandas scikit-learn imbalanced-learn nilearn scipy matplotlib networkx statsmodels
             pip install rpy2 jinja2 ipdb fancyimpute IPython
