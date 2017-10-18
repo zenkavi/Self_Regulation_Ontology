@@ -9,6 +9,10 @@ use different strategy depending on the nature of the variable:
 
 compare each model to a baseline with age and sex as regressors
 
+TODO:
+- add metadata including dataset ID into results output
+- break icc thresholding into separate method
+- use a better imputation method than SimpleFill
 """
 
 import sys,os
@@ -45,6 +49,8 @@ if __name__=='__main__':
                         action='store_true')
     parser.add_argument('-i',"--icc_threshold", help="threshold for ICC filtering",
                         type=float,default=0.25)
+    parser.add_argument("--freq_threshold", help="threshold for binary variable frequency",
+                        type=float,default=0.04)
     parser.add_argument("--no_baseline_vars",
                         help="don't include baseline vars in task/survey model",
                         action='store_true')
@@ -89,37 +95,20 @@ if __name__=='__main__':
     # skip RetirementPercentStocks because it crashes the estimation tool
     bp=behavpredict.BehavPredict(verbose=args.verbose,
          drop_na_thresh=100,n_jobs=args.n_jobs,
-         skip_vars=['RetirementPercentStocks'])
+         skip_vars=['RetirementPercentStocks'],
+         output_dir=output_dir,shuffle=args.shuffle,
+         classifier=args.classifier,
+         add_baseline_vars=baselinevars)
     bp.load_demog_data()
     bp.get_demogdata_vartypes()
     bp.load_behav_data(args.dataset)
-    if args.icc_threshold is not None:
-        if args.verbose:
-            print('filtering X variables by ICC > ',args.icc_threshold)
-        bp.load_reliabilities()
-        orig_shape=len(bp.behavdata.columns)
-        for v in bp.behavdata.columns:
-            if v in ['Age','Sex']:
-                continue
-            try:
-                icc=bp.reliabilities.loc[v]
-            except KeyError:
-                print('key', v,'not in ICC data frame - leaving in the list for now')
-                continue
-            if icc<args.icc_threshold:
-                del bp.behavdata[v]
-                if args.verbose and False:
-                    print('removing',v,icc)
-        new_shape=len(bp.behavdata.columns)
-        print('removed %d columns'%int(orig_shape - new_shape))
+    bp.filter_by_icc()
 
-
-
-    if args.shuffle:
-        tmp=bp.demogdata.values.copy()
-        numpy.random.shuffle(tmp)
-        bp.demogdata.iloc[:,:]=tmp
-        print('WARNING: shuffling target data')
+    # if args.shuffle:
+    #     tmp=bp.demogdata.values.copy()
+    #     numpy.random.shuffle(tmp)
+    #     bp.demogdata.iloc[:,:]=tmp
+    #     print('WARNING: shuffling target data')
     bp.get_joint_datasets()
 
     if not args.singlevar:
@@ -133,47 +122,14 @@ if __name__=='__main__':
         if v in bp.skip_vars:
             print('skipping',v)
             continue
-        if numpy.mean(bp.demogdata[v]>0)<0.04:
+        if numpy.mean(bp.demogdata[v]>0)<args.freq_threshold:
             print('skipping due to low freq:',v,numpy.mean(bp.demogdata[v]>0))
             continue
         try:
-            bp.scores[v],bp.importances[v]=bp.run_crossvalidation(v,
-                     classifier=args.classifier,
-                     add_baseline_vars=baselinevars)
-            if args.report_features and numpy.mean(bp.scores[v])>0.65:
-                print('')
-                meanimp=numpy.mean(bp.importances[v],0)
-                meanimp_sortidx=numpy.argsort(meanimp)
-                for i in meanimp_sortidx[-1:-4:-1]:
-                    print(bp.behavdata.columns[i],meanimp[i])
-                for i in meanimp_sortidx[:3][::-1]:
-                    print(bp.behavdata.columns[i],meanimp[i])
+            bp.scores[v],bp.importances[v]=bp.run_crossvalidation(v)
         except:
             e = sys.exc_info()
             print('error on',v,':',e)
+            continue
 
-        h='%08x'%random.getrandbits(32)
-        shuffle_flag='shuffle_' if args.shuffle else ''
-        varflag='%s_'%v
-        outfile='prediction_%s_%s_%s%s%s.pkl'%(args.dataset,args.classifier,shuffle_flag,varflag,h)
-        if not os.path.exists(output_dir):
-            os.mkdir(output_dir)
-        if args.verbose:
-            print('saving to',os.path.join(output_dir,outfile))
-        pickle.dump((bp.scores[v],bp.importances[v]),open(os.path.join(output_dir,outfile),'wb'))
-
-    # print a report
-    if args.print_report:
-        for v in vars_to_test:
-            if not v in bp.scores:
-                continue
-            t=bp.data_models[v]
-            if t=='binary':
-                cutoff=0.65
-            else:
-                cutoff=0.15
-
-            if bp.scores[v]<cutoff:
-                continue
-
-            print('%s\t%s\t%f\t(%s)'%(v,t,bp.scores[v],'\t'.join(['%f'%i for i in bp.importances[v].tolist()[0]])))
+        bp.write_data(v)

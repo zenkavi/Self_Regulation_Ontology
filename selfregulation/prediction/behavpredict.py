@@ -21,14 +21,14 @@ Russ Poldrack
 TBD:
 - back out demog cleaning into main package
 - do better job of catergorization of task/survey (holt-laury)
-- get rid of double shuffle
 - clean up filtering for SMOTE
 """
 
-import sys,os
+import sys,os,socket,getpass
 import random
 import pickle
 import warnings
+import datetime
 
 import numpy,pandas
 import importlib
@@ -48,6 +48,23 @@ from selfregulation.utils.get_balanced_folds import BalancedKFold
 import selfregulation.prediction.prediction_utils as prediction_utils
 importlib.reload(prediction_utils)
 
+from marshmallow import Schema, fields
+
+
+class UserSchema(Schema):
+    hostname = fields.Str()
+    dataset = fields.Str()
+    drop_na_thresh = fields.Integer()
+    n_jobs = fields.Integer()
+    baseline_vars = fields.List(fields.Str())
+    username = fields.Str()
+    created_at = fields.DateTime()
+    shuffle=fields.Boolean()
+    use_smote=fields.Boolean()
+    smote_cutoff=fields.Float()
+
+
+
 class BehavPredict:
     def __init__(self,verbose=False,dataset=None,
                     use_full_dataset=True,
@@ -57,9 +74,19 @@ class BehavPredict:
                     n_outer_splits=8,
                     use_smote=True,smote_cutoff=0.3,
                     baseline_vars=['Age','Sex'],
-                    skip_vars=[]):
+                    add_baseline_vars=True,
+                    skip_vars=[],
+                    shuffle=False,
+                    classifier='rf',
+                    output_dir='prediction_outputs'):
         # set up arguments
+        self.created_at = datetime.datetime.now()
+        self.hostname= socket.gethostname()
+        self.username = getpass.getuser()
         self.verbose=verbose
+        self.shuffle=shuffle
+        self.classifier=classifier
+        self.output_dir=output_dir
         if not dataset:
             self.dataset=get_info('dataset')
         else:
@@ -67,6 +94,7 @@ class BehavPredict:
         self.skip_vars=skip_vars
         self.use_full_dataset=use_full_dataset
         self.drop_na_thresh=drop_na_thresh
+        self.add_baseline_vars=add_baseline_vars
         if not categorical_vars is None:
             self.categorical_vars=categorical_vars
         else:
@@ -84,6 +112,7 @@ class BehavPredict:
         self.baseline_vars=baseline_vars
 
         # define internal variables
+        self.predictor_set=None
         self.demogdata=None
         self.behavdata=None
         self.dropped_na_columns=None
@@ -95,6 +124,11 @@ class BehavPredict:
         self.data_models={}
         self.pred=None
         self.reliabilities=None
+
+    def dump(self):
+        schema = UserSchema()
+        result = schema.dump(self)
+        return result.data
 
     def load_demog_data(self,cleanup=True,binarize=False,
                         drop_categorical=True):
@@ -141,20 +175,35 @@ class BehavPredict:
         self.reliabilities=icc_boot.groupby('dv').mean().icc
 
     def load_behav_data(self,datasubset='all',
-                        add_baseline_vars=False):
+                        add_baseline_vars=False,
+                        cognitive_vars=['cognitive_reflection',
+                        'holt_laury']):
         self.behavdata=get_behav_data(self.dataset,
                                 'meaningful_variables_clean.csv',
                                 full_dataset=self.use_full_dataset)
+        self.predictor_set=datasubset
         if datasubset=='survey':
             for v in self.behavdata.columns:
-                if not v.find('survey')>-1 or v.find('cognitive_reflection')>-1:
+                dropvar=True
+                if v.find('survey')>-1:
+                    dropvar=False
+                for cv in cognitive_vars:
+                     if v.find(cv)>-1:
+                         dropvar=True
+                if dropvar:
                     del self.behavdata[v]
                     if self.verbose>1:
                         print('dropping non-survey var:',v)
 
         if datasubset=='task':
             for v in self.behavdata.columns:
-                if v.find('survey')>-1 and not v.find('cognitive_reflection')>-1:
+                dropvar=False
+                if v.find('survey')>-1:
+                    dropvar=True
+                for cv in cognitive_vars:
+                     if v.find(cv)>-1:
+                         dropvar=False
+                if dropvar:
                     del self.behavdata[v]
                     if self.verbose>1:
                         print('dropping non-task var:',v)
@@ -231,54 +280,50 @@ class BehavPredict:
                     self.demogdata[v]=(self.demogdata[v]>c).astype('int')
 
 
-    def run_crossvalidation(self,v,classifier=None,outer_cv=None,
-                            imputer=fancyimpute.SimpleFill,
-                            shuffle=False,
-                            add_baseline_vars=True):
+    def run_crossvalidation(self,v,outer_cv=None,
+                            imputer=fancyimpute.SimpleFill):
         """
         v is the variable on which to run crosvalidation
         """
 
         if self.data_models[v]=='binary':
-            return self.run_crossvalidation_binary(v,classifier,outer_cv,
-                                                imputer,shuffle,
-                                                add_baseline_vars)
+            return self.run_crossvalidation_binary(v,outer_cv,
+                                                imputer)
         else:
-            return self.run_crossvalidation_regression(v,classifier,outer_cv,
-                                                imputer,shuffle,
-                                                add_baseline_vars)
+            return self.run_crossvalidation_regression(v,outer_cv,
+                                                imputer)
 
 
-    def run_crossvalidation_binary(self,v,classifier,outer_cv=None,
-                            imputer=fancyimpute.SoftImpute,
-                            shuffle=False,
-                            add_baseline_vars=True):
+    def run_crossvalidation_binary(self,v,outer_cv=None,
+                            imputer=fancyimpute.SoftImpute):
         """
         run CV for binary data
         """
 
-        if classifier=='rf':
+        if self.classifier=='rf':
             clf=ExtraTreesClassifier()
-        elif classifier=='lasso':
+        elif self.classifier=='lasso':
             clf=LogisticRegressionCV(Cs=100)
+        else:
+            raise ValueError('classifier not in approved list')
 
         if self.verbose:
             print('classifying',v,numpy.mean(self.demogdata[v]))
-            print('using classifier:',classifier)
+            print('using classifier:',self.classifier)
         # set up crossvalidation
         if not outer_cv:
             outer_cv=StratifiedKFold(n_splits=self.n_outer_splits,shuffle=True)
         Ydata=self.demogdata[v].dropna().copy()
         Xdata=self.behavdata.loc[Ydata.index,:].copy()
-        if add_baseline_vars:
+        if self.add_baseline_vars:
             for v in self.baseline_vars:
                 Xdata[v]=self.demogdata[v].dropna().copy()
 
         Ydata=Ydata.values
-        if shuffle:
+        if self.shuffle:
             if self.verbose:
                 print('shuffling Y variable')
-                numpy.random.shuffle(Ydata)
+            numpy.random.shuffle(Ydata)
         Xdata=Xdata.values
         scores=[]
         importances=[]
@@ -307,57 +352,56 @@ class BehavPredict:
             self.pred[test]=clf.predict(Xtest)
 
         if numpy.var(self.pred)>0:
-            scores=roc_auc_score(Ydata,self.pred)
+            scores=[roc_auc_score(Ydata,self.pred)]
         else:
            if self.verbose:
                print(v,'zero variance in predictions')
-           scores=numpy.nan
+           scores=[numpy.nan]
         if hasattr(clf,'feature_importances_'):  # for random forest
             importances.append(clf.feature_importances_)
         elif hasattr(clf,'coef_'):  # for lasso
             importances.append(clf.coef_)
         if self.verbose:
-            print('mean accuracy = %0.3f'%scores)
+            print('mean accuracy = %0.3f'%scores[0])
         try:
             imp=numpy.vstack(importances)
         except:
             imp=None
         return scores,imp
 
-    def run_crossvalidation_regression(self,v,classifier,outer_cv=None,
-                            imputer=fancyimpute.SoftImpute,
-                            shuffle=False,
-                            add_baseline_vars=True):
+    def run_crossvalidation_regression(self,v,outer_cv=None,
+                            imputer=fancyimpute.SoftImpute):
         """
         run CV for binary data
         """
 
         if self.verbose:
             print('%s regression on'%self.data_models[v],v,numpy.mean(self.demogdata[v]>0))
-            print('using classifier:',classifier)
-        if classifier=='rf':
+            print('using classifier:',self.classifier)
+        if self.classifier=='rf':
             clf=ExtraTreesRegressor()
-        elif classifier=='lasso':
+        elif self.classifier=='lasso':
             if not self.data_models[v]=='gaussian':
                 print('using R to fit model...')
                 clf=prediction_utils.RModel(self.data_models[v],self.n_jobs)
             else:
                 clf=LassoCV()
-
+        else:
+            raise ValueError('classfier not in approved list!')
         # set up crossvalidation
         if not outer_cv:
             outer_cv=BalancedKFold()
         Ydata=self.demogdata[v].dropna().copy()
         Xdata=self.behavdata.loc[Ydata.index,:].copy()
 
-        if add_baseline_vars:
+        if self.add_baseline_vars:
             for v in self.baseline_vars:
                 Xdata[v]=self.demogdata[v].dropna().copy()
         Ydata=Ydata.values
-        if shuffle:
+        if self.shuffle:
             if self.verbose:
                 print('shuffling Y variable')
-                numpy.random.shuffle(Ydata)
+            numpy.random.shuffle(Ydata)
         Xdata=Xdata.values
         scores=[]
         importances=[]
@@ -401,3 +445,25 @@ class BehavPredict:
         except:
             imp=None
         return scores,imp
+    def write_data(self,v):
+        h='%08x'%random.getrandbits(32)
+        shuffle_flag='shuffle_' if self.shuffle else ''
+        varflag='%s_'%v
+        outfile='prediction_%s_%s_%s%s%s.pkl'%(self.predictor_set,
+            self.classifier,shuffle_flag,varflag,h)
+        if not os.path.exists(self.output_dir):
+            os.mkdir(self.output_dir)
+        if self.verbose:
+            print('saving to',os.path.join(self.output_dir,outfile))
+        info=self.dump()
+        info['variable']=v
+        info['predvars']=list(self.behavdata.columns)
+        pickle.dump((self.scores[v],self.importances[v],info),
+            open(os.path.join(self.output_dir,outfile),'wb'))
+        return info
+    def print_importances(self,v,nfeatures=3):
+            print('Most important predictors for',v)
+            meanimp=numpy.mean(self.importances[v],0)
+            meanimp_sortidx=numpy.argsort(meanimp)
+            for i in meanimp_sortidx[-1:-1*(nfeatures+1):-1]:
+                print(self.behavdata.columns[i],meanimp[i])
