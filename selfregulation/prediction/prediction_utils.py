@@ -16,13 +16,14 @@ mpath=importr('mpath')
 # create a class that implements prediction using functions from R
 
 class RModel:
-    def __init__(self,modeltype,verbose=True,ncores=2):
+    def __init__(self,modeltype,verbose=True,ncores=2,nlambda=100):
         self.modeltype=modeltype
         assert self.modeltype in ['NB', 'ZINB', 'ZIpoisson', 'poisson']
         self.verbose=verbose
         self.model=None
         self.coef_=None
         self.ncores=ncores
+        self.nlambda=nlambda
 
     def fit(self,X,Y):
         self._fit_glmreg(X,Y)
@@ -69,10 +70,16 @@ class RModel:
                 family='poisson'
             # this is a kludge because I couldn't get it to work using the
             # standard interface to cv_zipath
-            robjects.r('fit=cv.zipath(y~.|.,df,family="%s",plot.it=FALSE,n.cores=%d)'%(family,self.ncores))
+            robjects.r('fit=cv.zipath(y~.|.,df,family="%s",penalty="enet",plot.it=FALSE,nlambda=%d,n.cores=%d)'%(family,self.nlambda,self.ncores))
+
             self.model=robjects.r('fit')
             fit=self.model[self.model.names.index('fit')]
+            #self.lambdas=numpy.array(self.model[self.model.names.index('lambda')])
+            #if self.verbose:
+            #    print('model:',self.model)
             self.lambda_which=numpy.array(self.model[self.model.names.index('lambda.which')])[0]
+            if self.verbose:
+                print("lambda_which = ",self.lambda_which)
             # just get the count coefficients
             robjects.r('coef_=coef(fit$fit,which=fit$lambda.which,model="count")')
             # drop the intercept term
