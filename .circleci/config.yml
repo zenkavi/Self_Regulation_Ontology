@@ -23,7 +23,7 @@ jobs:
             conda install --yes matplotlib networkx statsmodels
             conda install --yes rpy2
             pip install jinja2 ipdb fancyimpute IPython imbalanced-learn nilearn
-            echo "install.packages(c("mpath","glmnet","foreach","iterators","pscl","numDeriv","doParallel"),repos="http://cran.us.r-project.org", dependencies=TRUE)" | R --vanilla
+            echo 'install.packages(c("mpath","glmnet","foreach","iterators","pscl","numDeriv","doParallel"),repos="http://cran.us.r-project.org", dependencies=TRUE)' | R --vanilla
       - checkout
       - run:
           command: |
