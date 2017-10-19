@@ -21,9 +21,11 @@ jobs:
             conda install -q --yes pandas scikit-learn scipy
             conda install -q --yes matplotlib networkx statsmodels
             conda install -q --yes rpy2
-            pip install pytest jinja2 ipdb fancyimpute IPython imbalanced-learn nilearn
+            conda install -q --yes pytest
+            pip install jinja2 ipdb fancyimpute IPython imbalanced-learn nilearn
             echo 'install.packages(c("mpath","glmnet","foreach","iterators","pscl","numDeriv","doParallel"),repos="http://cran.us.r-project.org", dependencies=TRUE)' | R --vanilla
       - checkout
       - run:
           command: |
+            source /root/miniconda/bin/activate py36
             pytest
