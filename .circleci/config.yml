@@ -13,7 +13,7 @@ jobs:
             bash ~/miniconda.sh -b -p /root/miniconda
             echo 'export PATH=/root/miniconda:$PATH' >> $BASH_ENV
             /root/miniconda/bin/conda install --yes conda-build
-            /root/miniconda/bin/conda create -n py36 python=3.6 anaconda
+            /root/miniconda/bin/conda create -y -n py36 python=3.6 anaconda
             source /root/miniconda/bin/activate py36
             conda config --add channels r
             conda install --yes numpy
