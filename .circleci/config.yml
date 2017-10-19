@@ -4,14 +4,21 @@ jobs:
     docker:
       - image: python:3.6.1
     steps:
-      - run:
-          name: Install Python deps in a virtual environment
+        - run:
+          name: Install initial deps
           command: |
             apt-get update
             apt-get install -y default-jre gfortran
+        - restore_cache:
+          keys:
+            - asset-cache-{{ arch }}-{{ .Branch }}-{{ checksum "VERSION" }}
+            - asset-cache-{{ arch }}-{{ .Branch }}
+            - asset-cache
+        - run:
+          name: Install miniconda
+          command: |
             wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
             bash ~/miniconda.sh -b -p /root/miniconda
-            echo 'export PATH=/root/miniconda:$PATH' >> $BASH_ENV
             /root/miniconda/bin/conda install -q --yes conda-build
             /root/miniconda/bin/conda create -y -n py36 python=3.6 anaconda
             source /root/miniconda/bin/activate py36
@@ -24,8 +31,13 @@ jobs:
             conda install -q --yes pytest
             pip install jinja2 ipdb fancyimpute IPython imbalanced-learn nilearn
             echo 'install.packages(c("mpath","glmnet","foreach","iterators","pscl","numDeriv","doParallel"),repos="http://cran.us.r-project.org", dependencies=TRUE)' | R --vanilla
+      - save_cache:
+          key: asset-cache-{{ arch }}-{{ .Branch }}-{{ checksum "VERSION" }}
+          paths:
+            - /root/miniconda
       - checkout
       - run:
           command: |
             source /root/miniconda/bin/activate py36
+            python setup.py install
             pytest
