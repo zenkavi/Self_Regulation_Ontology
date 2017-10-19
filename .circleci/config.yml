@@ -17,12 +17,11 @@ jobs:
             source /root/miniconda/bin/activate py36
             conda config --add channels r
             conda install -q --yes numpy
-            conda install -q --yes pytest
             conda install -q --yes r r-essentials
             conda install -q --yes pandas scikit-learn scipy
             conda install -q --yes matplotlib networkx statsmodels
             conda install -q --yes rpy2
-            pip install jinja2 ipdb fancyimpute IPython imbalanced-learn nilearn
+            pip install pytest jinja2 ipdb fancyimpute IPython imbalanced-learn nilearn
             echo 'install.packages(c("mpath","glmnet","foreach","iterators","pscl","numDeriv","doParallel"),repos="http://cran.us.r-project.org", dependencies=TRUE)' | R --vanilla
       - checkout
       - run:
