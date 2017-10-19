@@ -9,11 +9,13 @@ jobs:
           command: |
             apt-get update
             apt-get install -y default-jre gfortran
+
         - restore_cache:
           keys:
             - asset-cache-{{ arch }}-{{ .Branch }}-{{ checksum "VERSION" }}
             - asset-cache-{{ arch }}-{{ .Branch }}
             - asset-cache
+
         - run:
           name: Install miniconda
           command: |
@@ -31,12 +33,15 @@ jobs:
             conda install -q --yes pytest
             pip install jinja2 ipdb fancyimpute IPython imbalanced-learn nilearn
             echo 'install.packages(c("mpath","glmnet","foreach","iterators","pscl","numDeriv","doParallel"),repos="http://cran.us.r-project.org", dependencies=TRUE)' | R --vanilla
-      - save_cache:
-          key: asset-cache-{{ arch }}-{{ .Branch }}-{{ checksum "VERSION" }}
-          paths:
-            - /root/miniconda
-      - checkout
-      - run:
+
+        - save_cache:
+           key: asset-cache-{{ arch }}-{{ .Branch }}-{{ checksum "VERSION" }}
+           paths:
+             - /root/miniconda
+
+        - checkout
+
+        - run:
           command: |
             source /root/miniconda/bin/activate py36
             python setup.py install
