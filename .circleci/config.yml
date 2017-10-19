@@ -7,14 +7,14 @@ jobs:
       - run:
           name: Install Python deps in a virtual environment
           command: |
-            apt-get install -y wget
+            apt-get update
             apt-get install -y default-jre gfortran
             wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
-            bash ~/miniconda.sh -b 
+            bash ~/miniconda.sh -b
             conda install --yes conda-build
             conda config --add channels r
             conda install --yes numpy
-            conda install --yes pytest 
+            conda install --yes pytest
             conda install --yes r r-essentials
             conda install --yes pandas scikit-learn scipy
             conda install --yes matplotlib networkx statsmodels
