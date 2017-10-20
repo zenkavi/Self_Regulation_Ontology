@@ -2,22 +2,6 @@
 This code performs predictive anlaysis on the UH2 data
 as specified in the pre-registration at https://osf.io/7t677/
 
-This is a refactor of demographic_feature_importance_behav.py
-that reimplements it as a class
-
-#NOTE: differences from the methods proposed in the pre-registration:
-
-We had proposed to use a RandomForest classifier, under the assumption
-that it would perform well with the larger dataset.  However, initial
-testing found that it performed poorly on variables with minimum class
-frequency of 0.25 or less, often returning predictions with no variance.
-Because of this, we decided to try a LassoCV classifier, and found that it
-was much less likely to return constant predictions.
-
-Russ Poldrack
-12/13/2016
-
-
 TBD:
 - back out demog cleaning into main package
 - do better job of catergorization of task/survey (holt-laury)
@@ -36,7 +20,7 @@ import importlib
 from sklearn.ensemble import ExtraTreesClassifier,ExtraTreesRegressor
 from sklearn.model_selection import cross_val_score,StratifiedKFold,ShuffleSplit,GridSearchCV
 from sklearn.metrics import roc_auc_score,r2_score,explained_variance_score,mean_absolute_error
-from sklearn.linear_model import LassoCV,LinearRegression,LogisticRegressionCV
+from sklearn.linear_model import LassoCV,LinearRegression,LogisticRegressionCV,Lasso
 from sklearn.preprocessing import StandardScaler
 
 import fancyimpute
@@ -57,13 +41,12 @@ class UserSchema(Schema):
     drop_na_thresh = fields.Integer()
     n_jobs = fields.Integer()
     baseline_vars = fields.List(fields.Str())
+    errors = fields.List(fields.Str())
     username = fields.Str()
     created_at = fields.DateTime()
     shuffle=fields.Boolean()
     use_smote=fields.Boolean()
     smote_cutoff=fields.Float()
-
-
 
 class BehavPredict:
     def __init__(self,verbose=False,dataset=None,
@@ -94,7 +77,12 @@ class BehavPredict:
         self.skip_vars=skip_vars
         self.use_full_dataset=use_full_dataset
         self.drop_na_thresh=drop_na_thresh
-        self.add_baseline_vars=add_baseline_vars
+        if self.dataset=='mean':
+            if self.verbose:
+                print("modeling only the mean: excluding baseline vars")
+            self.add_baseline_vars=False
+        else:
+            self.add_baseline_vars=add_baseline_vars
         if not categorical_vars is None:
             self.categorical_vars=categorical_vars
         else:
@@ -119,16 +107,28 @@ class BehavPredict:
         self.binary_cutoffs={}
         self.scores={}
         self.importances={}
+        self.scores_insample={}
+        self.scores_insample_unbiased={}
         self.use_smote=use_smote
         self.smote_cutoff=smote_cutoff
         self.data_models={}
         self.pred=None
         self.reliabilities=None
+        self.varsets={}
+        # for debugging purposes
+        self.Xdata=None
+        self.Ydata=None
+        self.lambda_optim=None
+        self.clf=None
+        self.errors={}
 
     def dump(self):
         schema = UserSchema()
         result = schema.dump(self)
         return result.data
+
+    def add_varset(self,name,vars):
+        self.varsets[name]=vars
 
     def load_demog_data(self,cleanup=True,binarize=False,
                         drop_categorical=True):
@@ -174,6 +174,7 @@ class BehavPredict:
                 'retest_analyses',infile))
         self.reliabilities=icc_boot.groupby('dv').mean().icc
 
+
     def load_behav_data(self,datasubset='all',
                         add_baseline_vars=False,
                         cognitive_vars=['cognitive_reflection',
@@ -195,7 +196,7 @@ class BehavPredict:
                     if self.verbose>1:
                         print('dropping non-survey var:',v)
 
-        if datasubset=='task':
+        elif datasubset=='task':
             for v in self.behavdata.columns:
                 dropvar=False
                 if v.find('survey')>-1:
@@ -208,11 +209,27 @@ class BehavPredict:
                     if self.verbose>1:
                         print('dropping non-task var:',v)
 
-        if datasubset=='baseline':
+        elif datasubset=='baseline':
             self.behavdata=self.demogdata[self.baseline_vars].copy()
-        elif add_baseline_vars:
+
+        elif datasubset=='mean': # model with just mean
+            self.behavdata=pandas.DataFrame({'mean':numpy.ones(self.demogdata.shape[0])})
+            self.behavdata.index=self.demogdata.index
+        elif datasubset in self.varsets.keys():
+            for v in self.behavdata.columns:
+                if not v in self.varsets[datasubset]:
+                    del self.behavdata[v]
+                    if self.verbose>1:
+                        print('dropping off-list var:',v)
+            assert self.behavdata.shape[1]==len(self.varsets[datasubset])
+
+        else:
+            raise ValueError('datasubset %s is not defined'%datasubset)
+
+        if add_baseline_vars:
             for v in self.baseline_vars:
                 self.behavdata[v]=self.demogdata[v].copy()
+
 
         if self.drop_na_thresh>0:
             na_count=numpy.sum(numpy.isnan(self.behavdata),0)
@@ -279,9 +296,136 @@ class BehavPredict:
                 else:
                     self.demogdata[v]=(self.demogdata[v]>c).astype('int')
 
+    def run_lm(self,v,imputer=fancyimpute.SoftImpute,nlambda=100):
+        """
+        compute in-sample r^2/auroc
+        """
+        if self.data_models[v]=='binary':
+            return self.run_lm_binary(v,imputer)
+        else:
+            return self.run_lm_regression(v,imputer,nlambda)
+
+    def run_lm_binary(self,v,imputer=fancyimpute.SoftImpute):
+        if self.classifier=='rf':
+            clf=ExtraTreesClassifier()
+        elif self.classifier=='lasso':
+            clf=LogisticRegressionCV(Cs=100)
+        else:
+            raise ValueError('classifier not in approved list')
+
+        Ydata=self.demogdata[v].dropna().copy()
+        Xdata=self.behavdata.loc[Ydata.index,:].copy()
+        Ydata=Ydata.values
+        scale=StandardScaler()
+        if self.add_baseline_vars:
+            for bv in self.baseline_vars:
+                Xdata[bv]=self.demogdata[bv].dropna().copy()
+        if self.shuffle:
+            if self.verbose:
+                print('shuffling Y variable')
+            numpy.random.shuffle(Ydata)
+        Xdata=Xdata.values
+        if numpy.sum(numpy.isnan(Xdata))>0:
+            Xdata=imputer().complete(Xdata)
+        scores=[]
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message="Data with input dtype int64 was converted to float64 by StandardScaler.")
+            Xdata=scale.fit_transform(Xdata)
+        clf.fit(Xdata,Ydata)
+        self.pred=clf.predict(Xdata)
+        scores=[roc_auc_score(Ydata,self.pred)]
+
+        if hasattr(clf,'feature_importances_'):  # for random forest
+            importances=clf.feature_importances_
+        elif hasattr(clf,'coef_'):  # for lasso
+            importances=clf.coef_
+        if self.verbose:
+            print('overfit mean accuracy = %0.3f'%scores[0])
+        return scores,importances
+
+    def run_lm_regression(self,v,imputer,nlambda=100):
+        if self.classifier=='rf':
+            self.clf=ExtraTreesRegressor()
+        elif self.classifier=='lasso':
+            if not self.data_models[v]=='gaussian':
+                print('using R to fit model...')
+                if self.lambda_optim is not None:
+                    if len(self.lambda_optim)>2:
+                        lambda_optim=numpy.hstack(self.lambda_optim).T.mean(0)
+                    else:
+                        lambda_optim=self.lambda_optim
+                    print('using optimal lambdas from CV:')
+                    print(lambda_optim)
+                else:
+                    lambda_optim=None
+                self.clf=prediction_utils.RModel(self.data_models[v],self.verbose,
+                                            self.n_jobs,
+                                            lambda_preset=lambda_optim)
+
+            else:
+                if self.lambda_optim is not None:
+                    if self.lambda_optim[0]==0:
+                        self.clf=LinearRegression()
+                    else:
+                        self.clf=Lasso(alpha=self.lambda_optim)
+                else:
+                    self.clf=LassoCV()
+        else:
+            raise ValueError('classfier not in approved list!')
+        # set up crossvalidation
+        Ydata=self.demogdata[v].dropna().copy()
+        Xdata=self.behavdata.loc[Ydata.index,:].copy()
+
+        if self.add_baseline_vars:
+            for v in self.baseline_vars:
+                Xdata[v]=self.demogdata[v].dropna().copy()
+        Ydata=Ydata.values
+        if self.shuffle:
+            if self.verbose:
+                print('shuffling Y variable')
+            numpy.random.shuffle(Ydata)
+        Xdata=Xdata.values
+
+        scores=[]
+        importances=[]
+        self.pred=numpy.zeros(Xdata.shape[0])
+        scale=StandardScaler()
+        if numpy.sum(numpy.isnan(Xdata))>0:
+            Xdata=imputer().complete(Xdata)
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message="Data with input dtype int64 was converted to float64 by StandardScaler.")
+            Xdata=scale.fit_transform(Xdata)
+
+        self.Xdata=Xdata
+        self.Ydata=Ydata
+
+        self.clf.fit(Xdata,Ydata)
+        self.pred=self.clf.predict(Xdata)
+
+        if numpy.var(self.pred)>0:
+            scores=[numpy.corrcoef(Ydata,self.pred)[0,1]**2,
+                    mean_absolute_error(Ydata,self.pred)]
+        else:
+           if self.verbose:
+               print(v,'zero variance in predictions')
+           scores=[numpy.nan,numpy.nan]
+        if hasattr(self.clf,'feature_importances_'):  # for random forest
+            importances.append(self.clf.feature_importances_)
+        elif hasattr(self.clf,'coef_'):  # for lasso
+            importances.append(self.clf.coef_)
+
+        if self.verbose:
+            print('overfit scores:',scores)
+        try:
+            imp=numpy.vstack(importances)
+        except:
+            imp=None
+        return scores,imp
 
     def run_crossvalidation(self,v,outer_cv=None,
-                            imputer=fancyimpute.SimpleFill):
+                            imputer=fancyimpute.SoftImpute,
+                            nlambda=100):
         """
         v is the variable on which to run crosvalidation
         """
@@ -291,7 +435,7 @@ class BehavPredict:
                                                 imputer)
         else:
             return self.run_crossvalidation_regression(v,outer_cv,
-                                                imputer)
+                                                imputer,nlambda)
 
 
     def run_crossvalidation_binary(self,v,outer_cv=None,
@@ -300,24 +444,24 @@ class BehavPredict:
         run CV for binary data
         """
 
+
+        if self.verbose:
+            print('classifying',v,numpy.mean(self.demogdata[v]))
+            print('using classifier:',self.classifier)
         if self.classifier=='rf':
             clf=ExtraTreesClassifier()
         elif self.classifier=='lasso':
             clf=LogisticRegressionCV(Cs=100)
         else:
             raise ValueError('classifier not in approved list')
-
-        if self.verbose:
-            print('classifying',v,numpy.mean(self.demogdata[v]))
-            print('using classifier:',self.classifier)
         # set up crossvalidation
         if not outer_cv:
             outer_cv=StratifiedKFold(n_splits=self.n_outer_splits,shuffle=True)
         Ydata=self.demogdata[v].dropna().copy()
         Xdata=self.behavdata.loc[Ydata.index,:].copy()
         if self.add_baseline_vars:
-            for v in self.baseline_vars:
-                Xdata[v]=self.demogdata[v].dropna().copy()
+            for bv in self.baseline_vars:
+                Xdata[bv]=self.demogdata[bv].dropna().copy()
 
         Ydata=Ydata.values
         if self.shuffle:
@@ -370,7 +514,8 @@ class BehavPredict:
         return scores,imp
 
     def run_crossvalidation_regression(self,v,outer_cv=None,
-                            imputer=fancyimpute.SoftImpute):
+                            imputer=fancyimpute.SoftImpute,
+                            nlambda=100):
         """
         run CV for binary data
         """
@@ -383,7 +528,11 @@ class BehavPredict:
         elif self.classifier=='lasso':
             if not self.data_models[v]=='gaussian':
                 print('using R to fit model...')
-                clf=prediction_utils.RModel(self.data_models[v],self.n_jobs)
+                clf=prediction_utils.RModel(self.data_models[v],
+                                            self.verbose,
+                                            self.n_jobs,
+                                            nlambda=nlambda)
+
             else:
                 clf=LassoCV()
         else:
@@ -437,7 +586,10 @@ class BehavPredict:
             importances.append(clf.feature_importances_)
         elif hasattr(clf,'coef_'):  # for lasso
             importances.append(clf.coef_)
-
+        if hasattr(clf,'lambda_optim'):
+            self.lambda_optim=clf.lambda_optim
+            if self.verbose:
+                print('optimal lambdas:',self.lambda_optim)
         if self.verbose:
             print('scores:',scores)
         try:
@@ -458,7 +610,11 @@ class BehavPredict:
         info=self.dump()
         info['variable']=v
         info['predvars']=list(self.behavdata.columns)
-        pickle.dump((self.scores[v],self.importances[v],info),
+        info['scores_cv']=self.scores[v]
+        info['importances']=self.importances[v]
+        info['scores_insample']=self.scores_insample[v]
+        info['scores_insample_unbiased']=self.scores_insample_unbiased[v]
+        pickle.dump(info,
             open(os.path.join(self.output_dir,outfile),'wb'))
         return info
     def print_importances(self,v,nfeatures=3):

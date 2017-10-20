@@ -21,8 +21,7 @@ def run_prediction(dataset,shuffle=False,classifier='rf',
              drop_na_thresh=100,n_jobs=1,
              skip_vars=['RetirementPercentStocks'],
              output_dir='/tmp/bptest',shuffle=shuffle,
-             classifier=classifier,
-             add_baseline_vars=True)
+             classifier=classifier)
         bp.load_demog_data()
         bp.get_demogdata_vartypes()
         bp.load_behav_data(dataset)
@@ -62,3 +61,7 @@ def test_prediction_baseline_shuffle():
     scores=run_prediction('baseline',True)
     assert numpy.abs(scores['Age'][0])<0.1
     assert numpy.abs(scores['Sex'][0] - 0.5) < 0.1
+def test_prediction_mean():
+    scores=run_prediction('mean')
+    assert scores['Age'][0]>0.95
+    assert scores['Sex'][0]>0.95

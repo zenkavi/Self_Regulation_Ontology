@@ -32,6 +32,7 @@ import selfregulation.prediction.behavpredict as behavpredict
 importlib.reload(behavpredict)
 
 import argparse
+import fancyimpute
 
 if __name__=='__main__':
 
@@ -79,7 +80,7 @@ if __name__=='__main__':
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    assert args.dataset in ['survey','mirt','task','all','baseline']
+    #assert args.dataset in ['survey','mirt','task','all','baseline']
     assert args.classifier in ['lasso','rf']
     # don't regress out baseline vars for baseline model
     if args.dataset=='baseline' or args.no_baseline_vars:
@@ -101,8 +102,13 @@ if __name__=='__main__':
          add_baseline_vars=baselinevars)
     bp.load_demog_data()
     bp.get_demogdata_vartypes()
+    bp.add_varset('discounting',['bickel_titrator.hyp_discount_rate_large.logTr',
+                                'bickel_titrator.hyp_discount_rate_medium.logTr',
+                                'kirby.hyp_discount_rate_large.logTr',
+                                'kirby.hyp_discount_rate_medium.logTr',
+                                'kirby.hyp_discount_rate_small.logTr'])
     bp.load_behav_data(args.dataset)
-    bp.filter_by_icc()
+    bp.filter_by_icc(args.icc_threshold)
 
     # if args.shuffle:
     #     tmp=bp.demogdata.values.copy()
@@ -126,10 +132,18 @@ if __name__=='__main__':
             print('skipping due to low freq:',v,numpy.mean(bp.demogdata[v]>0))
             continue
         try:
-            bp.scores[v],bp.importances[v]=bp.run_crossvalidation(v)
+            bp.scores[v],bp.importances[v]=bp.run_crossvalidation(v,
+                                    imputer=fancyimpute.SimpleFill,nlambda=100)
+            bp.scores_insample[v],_=bp.run_lm(v,imputer=fancyimpute.SimpleFill,
+                                    nlambda=150)
+            # fit model with no regularization
+            bp.lambda_optim=[0,0]
+            bp.scores_insample_unbiased[v],_=bp.run_lm(v,imputer=fancyimpute.SimpleFill,
+                                    nlambda=150)
         except:
             e = sys.exc_info()
             print('error on',v,':',e)
+            bp.errors[v]=e
             continue
 
         bp.write_data(v)
