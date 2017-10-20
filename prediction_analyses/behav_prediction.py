@@ -93,20 +93,21 @@ if __name__=='__main__':
             print("including baseline vars in survey/task models")
 
 
-    # skip RetirementPercentStocks because it crashes the estimation tool
+    # skip several variables because they crash the estimation tool
     bp=behavpredict.BehavPredict(verbose=args.verbose,
          drop_na_thresh=100,n_jobs=args.n_jobs,
-         skip_vars=['RetirementPercentStocks'],
+         skip_vars=['RetirementPercentStocks',
+         'HowOftenFailedActivitiesDrinking',
+         'HowOftenGuiltRemorseDrinking'],
          output_dir=output_dir,shuffle=args.shuffle,
          classifier=args.classifier,
          add_baseline_vars=baselinevars)
     bp.load_demog_data()
     bp.get_demogdata_vartypes()
-    bp.add_varset('discounting',['bickel_titrator.hyp_discount_rate_large.logTr',
-                                'bickel_titrator.hyp_discount_rate_medium.logTr',
-                                'kirby.hyp_discount_rate_large.logTr',
-                                'kirby.hyp_discount_rate_medium.logTr',
-                                'kirby.hyp_discount_rate_small.logTr'])
+    bp.load_behav_data('task')
+    bp.add_varset('discounting',[v for v in list(bp.behavdata.columns) if v.find('discount')>-1])
+    bp.add_varset('stopping',[v for v in list(bp.behavdata.columns) if v.find('stop_signal')>-1 or v.find('nogo')>-1])
+    bp.add_varset('intelligence',[v for v in list(bp.behavdata.columns) if v.find('raven')>-1 or v.find('cognitive_reflection')>-1])
     bp.load_behav_data(args.dataset)
     bp.filter_by_icc(args.icc_threshold)
 
