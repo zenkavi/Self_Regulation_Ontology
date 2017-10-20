@@ -53,7 +53,7 @@ class RModel:
             robjects.globalenv['y']=pandas2ri.py2ri(Y)
             robjects.r('y=data.matrix(y)')
             if self.lambda_preset is not None:
-                robjects.r('fit=glmreg(df,y,family="poisson",lambda=%f)'%self.lambda_preset)
+                robjects.r('fit=glmreg(df,y,family="poisson",lambda=%f)'%self.lambda_preset[0])
                 fit=robjects.r('fit')
                 self.model=fit
                 robjects.r('coef_=coef(fit)')
@@ -65,7 +65,7 @@ class RModel:
                 fit=self.model[self.model.names.index('fit')]
                 self.lambda_which=numpy.array(self.model[self.model.names.index('lambda.which')])[0]
                 self.coef_=numpy.array(fit[fit.names.index('beta')])[:,self.lambda_which-1]
-                self.lambda_optim=self.model[self.model.names.index('lambda.optim')]
+                self.lambda_optim=numpy.array(self.model[self.model.names.index('lambda.optim')])
 
         elif self.modeltype=='ZINB' or self.modeltype=='ZIpoisson' :
             #data['y']=Y.copy()
