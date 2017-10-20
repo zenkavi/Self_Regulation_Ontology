@@ -79,6 +79,7 @@ if plot_on:
         filename = path.join(plot_file, 
                              'clustering_metric-distcorr_input-%s.png' % name)
         fig = dendroheatmap(clustering['linkage'], clustering['distance_df'], 
+                            clustering['clustering']['labels'],
                             figsize=(50,50),  filename = filename)
     
     # plot cluster agreement across embedding spaces
