@@ -616,6 +616,10 @@ class BehavPredict:
         info['scores_insample_unbiased']=self.scores_insample_unbiased[v]
         pickle.dump(info,
             open(os.path.join(self.output_dir,outfile),'wb'))
+        if len(self.errors)>0:
+            pickle.dump(self.errors,
+                open(os.path.join(self.output_dir,'error_'+outfile),'wb'))
+
         return info
     def print_importances(self,v,nfeatures=3):
             print('Most important predictors for',v)
