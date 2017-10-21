@@ -44,9 +44,13 @@ class UserSchema(Schema):
     errors = fields.List(fields.Str())
     username = fields.Str()
     created_at = fields.DateTime()
+    finished_at = fields.DateTime()
     shuffle=fields.Boolean()
     use_smote=fields.Boolean()
     smote_cutoff=fields.Float()
+    shuffle=fields.Boolean()
+    classifier=fields.Str()
+    predictior_set=fields.Str()
 
 class BehavPredict:
     def __init__(self,verbose=False,dataset=None,
@@ -100,6 +104,7 @@ class BehavPredict:
         self.baseline_vars=baseline_vars
 
         # define internal variables
+        self.finished_at=None
         self.predictor_set=None
         self.demogdata=None
         self.behavdata=None
@@ -597,30 +602,37 @@ class BehavPredict:
         except:
             imp=None
         return scores,imp
-    def write_data(self,v):
+    def write_data(self,vars):
         h='%08x'%random.getrandbits(32)
         shuffle_flag='shuffle_' if self.shuffle else ''
-        varflag='%s_'%v
-        outfile='prediction_%s_%s_%s%s%s.pkl'%(self.predictor_set,
-            self.classifier,shuffle_flag,varflag,h)
+        outfile='prediction_%s_%s_%s%s.pkl'%(self.predictor_set,
+            self.classifier,shuffle_flag,h)
         if not os.path.exists(self.output_dir):
             os.mkdir(self.output_dir)
         if self.verbose:
             print('saving to',os.path.join(self.output_dir,outfile))
-        info=self.dump()
-        info['variable']=v
-        info['predvars']=list(self.behavdata.columns)
-        info['scores_cv']=self.scores[v]
-        info['importances']=self.importances[v]
-        info['scores_insample']=self.scores_insample[v]
-        info['scores_insample_unbiased']=self.scores_insample_unbiased[v]
+        if not isinstance(vars,list):
+            vars=[vars]
+
+        info={}
+        self.finished_at=datetime.datetime.now()
+        info['info']=self.dump()
+        info['info']['hash']=h
+        info['data']={}
+        for v in vars:
+            info['data'][v]={}
+            info['data'][v]['predvars']=list(self.behavdata.columns)
+            info['data'][v]['scores_cv']=self.scores[v]
+            info['data'][v]['importances']=self.importances[v]
+            info['data'][v]['scores_insample']=self.scores_insample[v]
+            info['data'][v]['scores_insample_unbiased']=self.scores_insample_unbiased[v]
         pickle.dump(info,
             open(os.path.join(self.output_dir,outfile),'wb'))
         if len(self.errors)>0:
             pickle.dump(self.errors,
                 open(os.path.join(self.output_dir,'error_'+outfile),'wb'))
 
-        return info
+            return info
     def print_importances(self,v,nfeatures=3):
             print('Most important predictors for',v)
             meanimp=numpy.mean(self.importances[v],0)

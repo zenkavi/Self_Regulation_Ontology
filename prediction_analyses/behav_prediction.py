@@ -147,4 +147,4 @@ if __name__=='__main__':
             bp.errors[v]=e
             continue
 
-        bp.write_data(v)
+    bp.write_data(v)
