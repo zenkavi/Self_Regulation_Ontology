@@ -2,44 +2,37 @@ import os,glob,pickle
 from joblib import Parallel, delayed
 import time
 
-
-basedir='/scratch/01329/poldrack/SRO/rf'
+njobs=2
+basedir='/Users/poldrack/code/Self_Regulation_Ontology/results/prediction_outputs'
 #basedir='/Users/poldrack/Downloads'
-#clf='lasso'
-clf='rf'
-files=glob.glob(os.path.join(basedir,'prediction_outputs/*pkl'))
+clf='lasso'
+#clf='rf'
+files=glob.glob(os.path.join(basedir,'*pkl'))
 files=[i for i in files if i.find('_%s_'%clf)>-1]
 files.sort()
 print('found %d files'%len(files))
 
 start = time.time()
 def load_data(f):
-    acc={}
-    features={}
+    output={}
     d=pickle.load(open(f,'rb'))
     l_s=os.path.basename(f).replace('.pkl','').split('_')
     if l_s[3]=='shuffle':
         l_s[3]=l_s[4]
         l_s[1]=l_s[1]+'_shuffle'
     #data=
-    if not l_s[1] in acc:
-        acc[l_s[1]]={}
-        features[l_s[1]]={}
+    if not l_s[1] in output:
+        output[l_s[1]]={}
 
-    if not l_s[3] in acc[l_s[1]]:
-        acc[l_s[1]][l_s[3]]=[d[0]]
-        features[l_s[1]][l_s[3]]=[d[1]]
+    if not l_s[3] in output[l_s[1]]:
+        output[l_s[1]][l_s[3]]=d
     else:
-        acc[l_s[1]][l_s[3]].append(d[0])
-        features[l_s[1]][l_s[3]].append(d[1])
-    return (acc,features)
+        output[l_s[1]][l_s[3]].append(d)
+    return output
 
-if os.path.exists('%s_data.pkl'%clf):
-  output=pickle.load(open('%s_data.pkl'%clf,'rb'))
-else:
-  output=Parallel(n_jobs=60)(delayed(load_data)(f) for f in files)
-  print('saving data to pickle')
-  pickle.dump(output,open('%s_data.pkl'%clf,'wb'))
+output=Parallel(n_jobs=njobs)(delayed(load_data)(f) for f in files)
+print('saving data to pickle')
+pickle.dump(output,open('%s_data.pkl'%clf,'wb'))
 
 end = time.time()
 print('elapsed time:',end - start)
