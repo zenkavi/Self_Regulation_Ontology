@@ -63,6 +63,8 @@ if __name__=='__main__':
     parser.add_argument('-r',"--resultsdir", help="results directory")
     parser.add_argument("--singlevar", nargs='*',help="run with single variables")
 
+    parser.add_argument("--smote_threshold", help="threshold for applying smote (distance from 0.5)",
+                        type=float,default=0.05)
     args=parser.parse_args()
     print(args)
     print(args.dataset)
@@ -101,9 +103,14 @@ if __name__=='__main__':
          'HowOftenGuiltRemorseDrinking'],
          output_dir=output_dir,shuffle=args.shuffle,
          classifier=args.classifier,
-         add_baseline_vars=baselinevars)
+         add_baseline_vars=baselinevars,
+         smote_cutoff=args.smote_threshold,
+         freq_threshold=args.freq_threshold)
     bp.load_demog_data()
     bp.get_demogdata_vartypes()
+    bp.remove_lowfreq_vars()
+    bp.binarize_ZI_demog_vars()
+
     bp.load_behav_data('task')
     bp.add_varset('discounting',[v for v in list(bp.behavdata.columns) if v.find('discount')>-1])
     bp.add_varset('stopping',[v for v in list(bp.behavdata.columns) if v.find('stop_signal')>-1 or v.find('nogo')>-1])
@@ -119,19 +126,13 @@ if __name__=='__main__':
     bp.get_joint_datasets()
 
     if not args.singlevar:
-        vars_to_test=bp.demogdata.columns
+        vars_to_test=[v for v in bp.demogdata.columns if not v in bp.skip_vars]
     else:
         vars_to_test=args.singlevar
 
-    print(vars_to_test)
-
     for v in vars_to_test:
-        if v in bp.skip_vars:
-            print('skipping',v)
-            continue
-        if numpy.mean(bp.demogdata[v]>0)<args.freq_threshold:
-            print('skipping due to low freq:',v,numpy.mean(bp.demogdata[v]>0))
-            continue
+        if args.verbose:
+            print(v,bp.data_models[v])
         try:
             bp.scores[v],bp.importances[v]=bp.run_crossvalidation(v,
                                     imputer=fancyimpute.SimpleFill,nlambda=100)
@@ -145,6 +146,5 @@ if __name__=='__main__':
             e = sys.exc_info()
             print('error on',v,':',e)
             bp.errors[v]=e
-            continue
 
     bp.write_data(v)
