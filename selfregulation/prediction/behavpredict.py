@@ -4,7 +4,6 @@ as specified in the pre-registration at https://osf.io/7t677/
 
 TBD:
 - back out demog cleaning into main package
-- do better job of catergorization of task/survey (holt-laury)
 - clean up filtering for SMOTE
 """
 
@@ -51,6 +50,7 @@ class UserSchema(Schema):
     shuffle=fields.Boolean()
     classifier=fields.Str()
     predictior_set=fields.Str()
+    freq_threshold=fields.Integer()
 
 class BehavPredict:
     def __init__(self,verbose=False,dataset=None,
@@ -59,13 +59,15 @@ class BehavPredict:
                     n_jobs=1,
                     categorical_vars=None,
                     n_outer_splits=8,
-                    use_smote=True,smote_cutoff=0.3,
+                    use_smote=True,
+                    smote_cutoff=0.3,
                     baseline_vars=['Age','Sex'],
                     add_baseline_vars=True,
                     skip_vars=[],
                     shuffle=False,
                     classifier='rf',
-                    output_dir='prediction_outputs'):
+                    output_dir='prediction_outputs',
+                    freq_threshold=0.04):
         # set up arguments
         self.created_at = datetime.datetime.now()
         self.hostname= socket.gethostname()
@@ -78,6 +80,7 @@ class BehavPredict:
             self.dataset=get_info('dataset')
         else:
             self.dataset=dataset
+        self.freq_threshold=freq_threshold
         self.skip_vars=skip_vars
         self.use_full_dataset=use_full_dataset
         self.drop_na_thresh=drop_na_thresh
@@ -116,7 +119,7 @@ class BehavPredict:
         self.scores_insample_unbiased={}
         self.use_smote=use_smote
         self.smote_cutoff=smote_cutoff
-        self.data_models={}
+        self.data_models=None
         self.pred=None
         self.reliabilities=None
         self.varsets={}
@@ -165,13 +168,15 @@ class BehavPredict:
                     print('dropping categorical variable:',v)
 
 
-    def get_demogdata_vartypes(self,zinf_cutoff=0.5):
+    def get_demogdata_vartypes(self):
         # for each variable, get info on how it is distributed
+        self.data_models={}
         basedir=get_info('base_directory')
         with open(os.path.join(basedir,'prediction_analyses/demographic_model_type.txt')) as f:
             lines=[i.strip().split() for i in f.readlines()]
             for l in lines:
                 self.data_models[l[0]]=l[1]
+
 
     def load_reliabilities(self,infile='boot_df.csv'):
         basedir=get_info('base_directory')
@@ -281,25 +286,56 @@ class BehavPredict:
             print('datasets successfully aligned')
             print('%d subjects in joint dataset'%self.demogdata.shape[0])
 
-
-    def binarize_demog_vars(self):
-        print('binarizing demographic data...')
+    def remove_lowfreq_vars(self):
+        if self.data_models is None:
+            self.get_demogdata_vartypes()
         for v in self.demogdata.columns:
-            # first check to see if it's a binary variable already:
-            if len(self.demogdata[v].unique())==2:
-                if self.verbose>1:
-                    print('already binary:',v)
-            else:
-                c=numpy.percentile(self.demogdata[v].dropna(),50)
-                self.binary_cutoffs[v]=[c,numpy.sum(self.demogdata[v]<=c),
-                        numpy.sum(self.demogdata[v]>c)]
-                if self.binary_cutoffs[v][2]/(self.binary_cutoffs[v][1]+self.binary_cutoffs[v][2])<self.binary_min_proportion:
-                    if self.verbose:
-                        print('dropping binary var due to low frequency:',v,
-                            self.binary_cutoffs[v][2]/(self.binary_cutoffs[v][1]+self.binary_cutoffs[v][2]))
-                    del self.demogdata[v]
-                else:
-                    self.demogdata[v]=(self.demogdata[v]>c).astype('int')
+            if not self.data_models[v]=='binary':
+                continue
+            varmean=self.demogdata[v].dropna().mean()
+            if varmean<=self.freq_threshold or varmean>=(1-self.freq_threshold):
+                if self.verbose:
+                    print('dropping %s: freq too small (%f)'%(v,varmean))
+                del self.demogdata[v]
+
+    def binarize_ZI_demog_vars(self,vars=None,replace=False):
+        """
+        for zero-inflated demographic vars, create a binary version
+        replace: should we replace or create a new version?
+        zithresh: proportion of zeros necessary to include variable
+        """
+        if vars is None:
+            if self.verbose:
+                print('binarizing all appropriate variables')
+            vars=list(self.demogdata.columns)
+        elif not isinstance(vars,list):
+            vars=[vars]
+        print('binarizing demographic data...')
+        if self.data_models is None:
+            self.get_demogdata_vartypes()
+
+        vars=[v for v in vars if not self.data_models[v]=='binary']
+
+        newvars=[]
+        for v in vars:
+            m=self.demogdata[v].dropna().min()
+            pct_min=numpy.mean(self.demogdata[v].dropna()==m)
+            if pct_min<=self.freq_threshold or pct_min>=(1-self.freq_threshold):
+                if self.verbose:
+                    print('not binarizing %s: pct min too small (%f)'%(v,pct_min))
+                continue
+
+            newv=v+'.binarized'
+            newvars.append(newv)
+
+            self.binary_cutoffs[v]=[m,numpy.sum(self.demogdata[v]<=m),
+                    numpy.sum(self.demogdata[v]>m)]
+            self.demogdata[newv]=(self.demogdata[v]>m).astype('int')
+            self.data_models[newv]='binary'
+            if replace:
+                del self.demogdata[v]
+
+        return newvars
 
     def run_lm(self,v,imputer=fancyimpute.SoftImpute,nlambda=100):
         """
