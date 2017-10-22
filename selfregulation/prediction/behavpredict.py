@@ -51,6 +51,7 @@ class UserSchema(Schema):
     classifier=fields.Str()
     predictior_set=fields.Str()
     freq_threshold=fields.Integer()
+    drop_threshold=fields.Integer()
 
 class BehavPredict:
     def __init__(self,verbose=False,dataset=None,
@@ -67,7 +68,8 @@ class BehavPredict:
                     shuffle=False,
                     classifier='rf',
                     output_dir='prediction_outputs',
-                    freq_threshold=0.04):
+                    freq_threshold=0.04,
+                    drop_threshold=0.2):
         # set up arguments
         self.created_at = datetime.datetime.now()
         self.hostname= socket.gethostname()
@@ -84,6 +86,7 @@ class BehavPredict:
         self.skip_vars=skip_vars
         self.use_full_dataset=use_full_dataset
         self.drop_na_thresh=drop_na_thresh
+        self.drop_threshold=drop_threshold
         if self.dataset=='mean':
             if self.verbose:
                 print("modeling only the mean: excluding baseline vars")
@@ -336,6 +339,10 @@ class BehavPredict:
             self.data_models[newv]='binary'
             if replace:
                 del self.demogdata[v]
+            if (1-pct_min)<self.drop_threshold:
+                if self.verbose:
+                    print('dropping %s due to too few nonzero vals'%v)
+                    del self.demogdata[v]
 
         return newvars
 
@@ -357,7 +364,6 @@ class BehavPredict:
                     if self.lambda_optim[0]==0:
                         # sklearn uses different coding - 0 will break it
                         self.lambda_optim[0]=1
-                    print('using preset lambda:',self.lambda_optim)
                 clf=LogisticRegression(C=self.lambda_optim[0],penalty='l1',solver='liblinear')
             else:
                 clf=LogisticRegressionCV(Cs=100,penalty='l1',solver='liblinear')
