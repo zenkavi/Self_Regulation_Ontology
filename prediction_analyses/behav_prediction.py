@@ -19,6 +19,7 @@ import sys,os
 import random
 import pickle
 import importlib
+import traceback
 
 import numpy
 
@@ -100,7 +101,8 @@ if __name__=='__main__':
          drop_na_thresh=100,n_jobs=args.n_jobs,
          skip_vars=['RetirementPercentStocks',
          'HowOftenFailedActivitiesDrinking',
-         'HowOftenGuiltRemorseDrinking'],
+         'HowOftenGuiltRemorseDrinking',
+         'AlcoholHowOften6Drinks'],
          output_dir=output_dir,shuffle=args.shuffle,
          classifier=args.classifier,
          add_baseline_vars=baselinevars,
@@ -132,8 +134,7 @@ if __name__=='__main__':
 
     for v in vars_to_test:
         bp.lambda_optim=None
-        if args.verbose:
-            print(v,bp.data_models[v])
+        print('RUNNING:',v,bp.data_models[v])
         try:
             bp.scores[v],bp.importances[v]=bp.run_crossvalidation(v,
                                     imputer=fancyimpute.SimpleFill,nlambda=100)
@@ -146,7 +147,7 @@ if __name__=='__main__':
         except:
             e = sys.exc_info()
             print('error on',v,':',e)
-            bp.errors[v]=e
+            bp.errors[v]=traceback.print_tb(e[2])
 
 
     bp.write_data(v)
