@@ -19,7 +19,7 @@ import importlib
 from sklearn.ensemble import ExtraTreesClassifier,ExtraTreesRegressor
 from sklearn.model_selection import cross_val_score,StratifiedKFold,ShuffleSplit,GridSearchCV
 from sklearn.metrics import roc_auc_score,r2_score,explained_variance_score,mean_absolute_error
-from sklearn.linear_model import LassoCV,LinearRegression,LogisticRegressionCV,Lasso
+from sklearn.linear_model import LassoCV,LinearRegression,LogisticRegressionCV,Lasso,LogisticRegression
 from sklearn.preprocessing import StandardScaler
 
 import fancyimpute
@@ -291,9 +291,11 @@ class BehavPredict:
             self.get_demogdata_vartypes()
         for v in self.demogdata.columns:
             if not self.data_models[v]=='binary':
-                continue
-            varmean=self.demogdata[v].dropna().mean()
-            if varmean<=self.freq_threshold or varmean>=(1-self.freq_threshold):
+                data=(self.demogdata[v]>0).astype('int')
+            else:
+                data=self.demogdata[v]
+            varmean=data.dropna().mean()
+            if varmean<=self.freq_threshold:
                 if self.verbose:
                     print('dropping %s: freq too small (%f)'%(v,varmean))
                 del self.demogdata[v]
@@ -350,7 +352,15 @@ class BehavPredict:
         if self.classifier=='rf':
             clf=ExtraTreesClassifier()
         elif self.classifier=='lasso':
-            clf=LogisticRegressionCV(Cs=100)
+            if self.lambda_optim is not None:
+                if self.verbose:
+                    if self.lambda_optim[0]==0:
+                        # sklearn uses different coding - 0 will break it
+                        self.lambda_optim[0]=1
+                    print('using preset lambda:',self.lambda_optim)
+                clf=LogisticRegression(C=self.lambda_optim[0],penalty='l1',solver='liblinear')
+            else:
+                clf=LogisticRegressionCV(Cs=100,penalty='l1',solver='liblinear')
         else:
             raise ValueError('classifier not in approved list')
 
@@ -384,7 +394,7 @@ class BehavPredict:
             print('overfit mean accuracy = %0.3f'%scores[0])
         return scores,importances
 
-    def run_lm_regression(self,v,imputer,nlambda=100):
+    def run_lm_regression(self,v,imputer=fancyimpute.SoftImpute,nlambda=100):
         if self.classifier=='rf':
             self.clf=ExtraTreesRegressor()
         elif self.classifier=='lasso':
@@ -416,7 +426,6 @@ class BehavPredict:
         # set up crossvalidation
         Ydata=self.demogdata[v].dropna().copy()
         Xdata=self.behavdata.loc[Ydata.index,:].copy()
-
         if self.add_baseline_vars:
             for v in self.baseline_vars:
                 Xdata[v]=self.demogdata[v].dropna().copy()
@@ -492,7 +501,7 @@ class BehavPredict:
         if self.classifier=='rf':
             clf=ExtraTreesClassifier()
         elif self.classifier=='lasso':
-            clf=LogisticRegressionCV(Cs=100)
+            clf=LogisticRegressionCV(Cs=100,penalty='l1',solver='liblinear')
         else:
             raise ValueError('classifier not in approved list')
         # set up crossvalidation
@@ -542,6 +551,10 @@ class BehavPredict:
            if self.verbose:
                print(v,'zero variance in predictions')
            scores=[numpy.nan]
+        if hasattr(clf,'C_'):
+            self.lambda_optim=[clf.C_[0]]
+            if self.verbose:
+                print('optimal lambdas:',self.lambda_optim)
         if hasattr(clf,'feature_importances_'):  # for random forest
             importances.append(clf.feature_importances_)
         elif hasattr(clf,'coef_'):  # for lasso

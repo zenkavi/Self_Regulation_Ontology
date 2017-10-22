@@ -131,6 +131,7 @@ if __name__=='__main__':
         vars_to_test=args.singlevar
 
     for v in vars_to_test:
+        bp.lambda_optim=None
         if args.verbose:
             print(v,bp.data_models[v])
         try:
@@ -146,5 +147,6 @@ if __name__=='__main__':
             e = sys.exc_info()
             print('error on',v,':',e)
             bp.errors[v]=e
+
 
     bp.write_data(v)
