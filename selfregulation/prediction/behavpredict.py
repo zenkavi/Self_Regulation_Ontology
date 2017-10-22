@@ -677,10 +677,20 @@ class BehavPredict:
         for v in vars:
             info['data'][v]={}
             info['data'][v]['predvars']=list(self.behavdata.columns)
-            info['data'][v]['scores_cv']=self.scores[v]
-            info['data'][v]['importances']=self.importances[v]
-            info['data'][v]['scores_insample']=self.scores_insample[v]
-            info['data'][v]['scores_insample_unbiased']=self.scores_insample_unbiased[v]
+            try:
+                info['data'][v]['scores_cv']=self.scores[v]
+                info['data'][v]['importances']=self.importances[v]
+            except KeyError:
+                if self.verbose:
+                    print("no cv scores for",v)
+                continue
+            try:
+                info['data'][v]['scores_insample']=self.scores_insample[v]
+                info['data'][v]['scores_insample_unbiased']=self.scores_insample_unbiased[v]
+            except KeyError:
+                if self.verbose:
+                    print('no insample scores for',v)
+                pass
         pickle.dump(info,
             open(os.path.join(self.output_dir,outfile),'wb'))
         if len(self.errors)>0:
