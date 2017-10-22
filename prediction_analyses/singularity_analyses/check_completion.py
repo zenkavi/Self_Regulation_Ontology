@@ -1,6 +1,6 @@
 import os,glob
 
-files=glob.glob('/work/01329/poldrack/stampede2/analyses/SRO_prediction/results/prediction_outputs/*pkl')
+files=glob.glob('/data/01329/poldrack/SRO/lasso/prediction_outputs/*pkl')
 files.sort()
 datasets={}
 
