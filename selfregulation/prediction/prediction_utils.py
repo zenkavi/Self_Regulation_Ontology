@@ -95,8 +95,6 @@ class RModel:
             #if self.verbose:
             #    print('model:',self.model)
                 self.lambda_optim.append(numpy.array(self.model[self.model.names.index('lambda.optim')]))
-                if self.verbose:
-                    print("lambda_optim = ",self.lambda_optim)
             # just get the count coefficients
                 robjects.r('coef_=coef(fit$fit,which=fit$lambda.which,model="count")')
             # drop the intercept term
