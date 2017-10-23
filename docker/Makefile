@@ -1,3 +1,9 @@
+docker-clean:
+	-sudo rm ~/singularity/*
+	-docker stop $(docker ps -a -q)
+	-docker rm $(docker ps -a -q)
+	-docker images -q --filter dangling=true | xargs docker rmi
+
 docker2singularity:
 	docker run -v /var/run/docker.sock:/var/run/docker.sock -v /home/poldrack/singularity:/output --privileged -t --rm singularityware/docker2singularity selfregulation
 

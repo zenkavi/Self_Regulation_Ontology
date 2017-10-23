@@ -15,8 +15,8 @@ from selfregulation.utils.utils import get_info
 import selfregulation.prediction.behavpredict as behavpredict
 
 # test using variables that should be perfectly predictable
-def run_prediction(dataset,shuffle=False,classifier='rf',
-                    vars_to_test=['Age','Sex']):
+def run_prediction(dataset,shuffle=False,classifier='lasso',
+                    vars_to_test=['Age','Sex'],cleanup=True):
         bp=behavpredict.BehavPredict(verbose=True,
              drop_na_thresh=100,n_jobs=1,
              skip_vars=['RetirementPercentStocks'],
@@ -30,9 +30,10 @@ def run_prediction(dataset,shuffle=False,classifier='rf',
         # test one binary and one continuous variable
         for v in vars_to_test:
             bp.scores[v],bp.importances[v]=bp.run_crossvalidation(v)
-            bp.write_data(v)
-        print('cleaning up')
-        shutil.rmtree('/tmp/bptest')
+        bp.write_data(vars_to_test)
+        if cleanup:
+            print('cleaning up')
+            shutil.rmtree('/tmp/bptest')
         return bp.scores
 
 def test_prediction_task():
