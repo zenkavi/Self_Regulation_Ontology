@@ -17,20 +17,16 @@ Load the data that were generated from the analysis output files (using singular
 library(DT)
 library(dplyr)
 classifier='rf'
+
+baseline=read.csv(sprintf('R_exports/%s_baseline.csv',classifier),row.names=1)
+baseline_shuffle=read.csv(sprintf('R_exports/%s_baseline_shuffle.csv',classifier),row.names=1)
+                          
 task=read.csv(sprintf('R_exports/%s_task.csv',classifier),row.names=1)
 task_shuffle=read.csv(sprintf('R_exports/%s_task_shuffle.csv',classifier),row.names=1)
 survey=read.csv(sprintf('R_exports/%s_survey.csv',classifier),row.names=1)
 survey_shuffle=read.csv(sprintf('R_exports/%s_survey_shuffle.csv',classifier),row.names=1)
-baseline=read.csv(sprintf('R_exports/%s_baseline.csv',classifier),row.names=1)
-baseline_shuffle=read.csv(sprintf('R_exports/%s_baseline_shuffle.csv',classifier),row.names=1)
+
 binary=apply(baseline_shuffle,2,mean,na.rm=TRUE)>0.25
-# turn r values into r-squared
-task_shuffle[,binary==FALSE]=task_shuffle[,binary==FALSE]**2
-survey_shuffle[,binary==FALSE]=survey_shuffle[,binary==FALSE]**2
-baseline_shuffle[,binary==FALSE]=baseline_shuffle[,binary==FALSE]**2
-task[,binary==FALSE]=task[,binary==FALSE]**2
-survey[,binary==FALSE]=survey[,binary==FALSE]**2
-baseline[,binary==FALSE]=baseline[,binary==FALSE]**2
 
 # load feature values
 task_features=read.csv(sprintf('R_exports/%s_task_features.csv',classifier),header=TRUE)
@@ -65,8 +61,8 @@ perc = function(x,d) {
   return(fx(x))
 }
 for (v in rownames(results_df)) {
-  results_df[v,'task_p']=1-perc(results_df['taskmean'][rownames(results_df)==v,],task_shuffle[,v])
-  results_df[v,'survey_p']=1-perc(results_df['surveymean'][rownames(results_df)==v,],survey_shuffle[,v])
+  results_df[v,'task_p']=1-perc(results_df['taskmean'][rownames(results_df)==v,],baseline[,v])
+  results_df[v,'survey_p']=1-perc(results_df['surveymean'][rownames(results_df)==v,],baseline[,v])
   results_df[v,'baseline_p']=1-perc(results_df['baselinemean'][rownames(results_df)==v,],baseline_shuffle[,v])
 
 }
