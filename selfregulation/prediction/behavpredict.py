@@ -364,6 +364,7 @@ class BehavPredict:
                     if self.lambda_optim[0]==0:
                         # sklearn uses different coding - 0 will break it
                         self.lambda_optim[0]=1
+                    print('using lambda_optim:',self.lambda_optim[0])
                 clf=LogisticRegression(C=self.lambda_optim[0],penalty='l1',solver='liblinear')
             else:
                 clf=LogisticRegressionCV(Cs=100,penalty='l1',solver='liblinear')
@@ -371,12 +372,13 @@ class BehavPredict:
             raise ValueError('classifier not in approved list')
 
         Ydata=self.demogdata[v].dropna().copy()
-        Xdata=self.behavdata.loc[Ydata.index,:].copy()
+        idx=Ydata.index
+        Xdata=self.behavdata.loc[idx,:].copy()
         Ydata=Ydata.values
         scale=StandardScaler()
         if self.add_baseline_vars:
             for bv in self.baseline_vars:
-                Xdata[bv]=self.demogdata[bv].dropna().copy()
+                Xdata[bv]=self.demogdata[bv][idx].copy()
         if self.shuffle:
             if self.verbose:
                 print('shuffling Y variable')
@@ -390,7 +392,11 @@ class BehavPredict:
             Xdata=scale.fit_transform(Xdata)
         clf.fit(Xdata,Ydata)
         self.pred=clf.predict(Xdata)
-        scores=[roc_auc_score(Ydata,self.pred)]
+        if numpy.var(self.pred)==0:
+            print('zero variance in predictions')
+            scores=[numpy.nan]
+        else:
+            scores=[roc_auc_score(Ydata,self.pred)]
 
         if hasattr(clf,'feature_importances_'):  # for random forest
             importances=clf.feature_importances_
