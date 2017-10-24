@@ -137,14 +137,14 @@ if __name__=='__main__':
         print('RUNNING:',v,bp.data_models[v])
         try:
             bp.scores[v],bp.importances[v]=bp.run_crossvalidation(v,nlambda=100)
-            bp.scores_insample[v],_=bp.run_lm(v,nlambda=150)
+            bp.scores_insample[v],_=bp.run_lm(v,nlambda=100)
             # fit model with no regularization
             if bp.data_models[v]=='binary':
-                bp.lambda_optim=[1]
+                bp.lambda_optim=[0]
             else:
                 bp.lambda_optim=[0,0]
             bp.scores_insample_unbiased[v],_=bp.run_lm(v,imputer=fancyimpute.SimpleFill,
-                                    nlambda=150)
+                                    nlambda=100)
         except:
             e = sys.exc_info()
             print('error on',v,':',e)
