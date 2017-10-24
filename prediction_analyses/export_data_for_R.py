@@ -11,55 +11,21 @@ import selfregulation.prediction.behavpredict as behavpredict
 clf='lasso'
 data=pickle.load(open('singularity_analyses/%s_data.pkl'%clf,'rb'))
 
-if not os.path.exists('R_exports'):
-    os.mkdir('R_exports')
-if not os.path.exists('R_exports/features'):
-    os.mkdir('R_exports/features')
-
-# get variable names for each dataset
-
-# bp=behavpredict.BehavPredict(verbose=True,
-#      drop_na_thresh=100,n_jobs=1,
-#      skip_vars=['RetirementPercentStocks',
-#      'HowOftenFailedActivitiesDrinking',
-#      'HowOftenGuiltRemorseDrinking',
-#      'AlcoholHowOften6Drinks'],
-#      add_baseline_vars=True,
-#      smote_cutoff=0.05,
-#      freq_threshold=0.04)
-#
-# bp.load_demog_data()
-# bp.get_demogdata_vartypes()
-# bp.remove_lowfreq_vars()
-# bp.binarize_ZI_demog_vars()
-#
-# bp.load_behav_data('task')
-# bp.add_varset('discounting',[v for v in list(bp.behavdata.columns) if v.find('discount')>-1])
-# bp.add_varset('stopping',[v for v in list(bp.behavdata.columns) if v.find('stop_signal')>-1 or v.find('nogo')>-1])
-# bp.add_varset('intelligence',[v for v in list(bp.behavdata.columns) if v.find('raven')>-1 or v.find('cognitive_reflection')>-1])
-# bp.load_behav_data('task')
-# bp.filter_by_icc(0.25)
-#
-#
-# varnames['task']=list(bp.behavdata.columns)+['Age','Sex']
-# bp.load_behav_data('survey')
-# bp.filter_by_icc(0.25)
-# varnames['survey']=list(bp.behavdata.columns)+['Age','Sex']
-# bp.load_behav_data('baseline')
-# varnames['baseline']=list(bp.behavdata.columns)
-# for i in ['discounting','stopping','intelligence']:
-#     bp.load_behav_data(i)
-#     bp.filter_by_icc(0.25)
-#     varnames[i]=list(bp.behavdata.columns)+['Age','Sex']
+if not os.path.exists('R_exports_%s'%clf):
+    os.mkdir('R_exports_%s'%clf)
+if not os.path.exists('R_exports_%s/features'%clf):
+    os.mkdir('R_exports_%s/features'%clf)
 
 predvars={}
 
 acc_frames={}
 feat_frames={}
 
-maxdata=10
+maxdata=1000
 accvars=['scores_cv','scores_insample','scores_insample_unbiased']
+print('creating data frames for:')
 for k in data.keys():
+    print(k)
     acc_frames[k]={}
     feat_frames[k]={}
     for v in data[k]:
@@ -80,6 +46,8 @@ for k in data.keys():
             if not accvar in data[k][v][0]:
                 continue
             for i in range(len(data[k][v])):
+                if not accvar in data[k][v][i]:
+                    continue
                 if len(data[k][v][i][accvar])==1:
                     df=pandas.DataFrame(data[k][v][i][accvar],
                         index=['AUROC']).T
@@ -95,8 +63,10 @@ for k in data.keys():
 # now reformat so that frames contain all vars for each output type
 output_frames={}
 insample_frames={}
-
+print('')
+print('reformatting data frames for:')
 for k in data.keys():
+    print(k)
     output_frames[k]={}
     for v in acc_frames[k].keys():
         if not k in insample_frames:
@@ -109,14 +79,20 @@ for k in data.keys():
             for accvar in accvars:
                 if not ov in acc_frames[k][v][accvar]:
                     continue
+                tmpdata=acc_frames[k][v][accvar][ov].values
+                # fill any missing entires with NaN
                 if not accvar in output_frames[k][ov]:
-                    output_frames[k][ov][accvar]=pandas.DataFrame()
-                    output_frames[k][ov][accvar][v]=acc_frames[k][v][accvar][ov].values
+                    output_frames[k][ov][accvar]=pandas.DataFrame({'tmp':numpy.zeros(maxdata)})
+                    output_frames[k][ov][accvar][v]=numpy.nan*numpy.zeros(maxdata)
+                    output_frames[k][ov][accvar][v][:tmpdata.shape[0]]=tmpdata
                 else:
-                    output_frames[k][ov][accvar][v]=acc_frames[k][v][accvar][ov].values
+                    output_frames[k][ov][accvar][v]=numpy.nan*numpy.zeros(maxdata)
+                    output_frames[k][ov][accvar][v][:tmpdata.shape[0]]=tmpdata
 
-
+print('')
+print('writing data files')
 for k in output_frames.keys():
+    print(k)
     for ov in output_frames[k].keys():
         for accvar in accvars:
             index=False
@@ -125,17 +101,8 @@ for k in output_frames.keys():
                 index=True
             else:
                 tmp=output_frames[k][ov][accvar]
-            tmp.to_csv('R_exports/%s_%s_%s.csv'%(k,ov,accvar.replace('scores_','')),index=index)
+            tmp.to_csv('R_exports_%s/%s_%s_%s.csv'%(clf,k,ov,accvar.replace('scores_','')),index=index)
     for v in feat_frames[k]:
-        feat_frames[k][v].to_csv('R_exports/features/%s_%s_features.csv'%(k,v),index=False)
+        feat_frames[k][v].to_csv('R_exports_%s/features/%s_%s_features.csv'%(clf,k,v),index=False)
 
-
-    #     tmp=pandas.DataFrame(numpy.array(features[k][v]).squeeze())
-    #     tmp['varname']=v
-    #     tmp.index=tmp['varname']
-    #     del tmp['varname']
-    #     tmp.columns=varnames[k.replace('_shuffle','')]
-    #     feat_frames[k]=feat_frames[k].append(tmp)
-    #
-    # acc_frames[k].to_csv('R_exports/%s_%s.csv'%(clf,k))
-    # feat_frames[k].to_csv('R_exports/%s_%s_features.csv'%(clf,k))
+pickle.dump((output_frames,feat_frames),open('%s_data_collapsed.pkl'%clf,'wb'))
