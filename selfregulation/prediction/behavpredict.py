@@ -56,6 +56,7 @@ class UserSchema(Schema):
     freq_threshold=fields.Integer()
     drop_threshold=fields.Integer()
     imputer=fields.Str()
+    git_commit=fields.Str()
 
 class BehavPredict:
     def __init__(self,verbose=False,dataset=None,
@@ -77,7 +78,7 @@ class BehavPredict:
                     imputer='SoftImpute'):
         # set up arguments
         self.created_at = datetime.datetime.now()
-        self.git_commit=get_git_revision_short_hash()
+        self.git_commit=get_git_revision_short_hash().strip()
         self.hostname= socket.gethostname()
         self.username = getpass.getuser()
         self.verbose=verbose
