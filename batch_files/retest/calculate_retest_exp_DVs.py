@@ -1,5 +1,5 @@
 import sys
-sys.path.append('/scratch/users/zenkavi/expfactory-analysis')
+sys.path.append('/oak/stanford/groups/russpold/users/zenkavi/expfactory-analysis')
 from expanalysis.experiments.processing import get_exp_DVs
 from os import path
 import pandas as pd
