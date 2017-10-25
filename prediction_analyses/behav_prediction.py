@@ -52,7 +52,7 @@ if __name__=='__main__':
     parser.add_argument('-i',"--icc_threshold", help="threshold for ICC filtering",
                         type=float,default=0.25)
     parser.add_argument("--freq_threshold", help="threshold for binary variable frequency",
-                        type=float,default=0.04)
+                        type=float,default=0.1)
     parser.add_argument("--no_baseline_vars",
                         help="don't include baseline vars in task/survey model",
                         action='store_true')
@@ -63,7 +63,8 @@ if __name__=='__main__':
     parser.add_argument('-w',"--workdir", help="working directory")
     parser.add_argument('-r',"--resultsdir", help="results directory")
     parser.add_argument("--singlevar", nargs='*',help="run with single variables")
-
+    parser.add_argument('--imputer',help='imputer to use',
+                            default='SoftImpute')
     parser.add_argument("--smote_threshold", help="threshold for applying smote (distance from 0.5)",
                         type=float,default=0.05)
     args=parser.parse_args()
@@ -107,24 +108,21 @@ if __name__=='__main__':
          classifier=args.classifier,
          add_baseline_vars=baselinevars,
          smote_cutoff=args.smote_threshold,
-         freq_threshold=args.freq_threshold)
+         freq_threshold=args.freq_threshold,
+         imputer=args.imputer)
     bp.load_demog_data()
     bp.get_demogdata_vartypes()
     bp.remove_lowfreq_vars()
     bp.binarize_ZI_demog_vars()
 
+    # create apriori variable subsets
     bp.load_behav_data('task')
     bp.add_varset('discounting',[v for v in list(bp.behavdata.columns) if v.find('discount')>-1])
     bp.add_varset('stopping',[v for v in list(bp.behavdata.columns) if v.find('stop_signal')>-1 or v.find('nogo')>-1])
     bp.add_varset('intelligence',[v for v in list(bp.behavdata.columns) if v.find('raven')>-1 or v.find('cognitive_reflection')>-1])
+
     bp.load_behav_data(args.dataset)
     bp.filter_by_icc(args.icc_threshold)
-
-    # if args.shuffle:
-    #     tmp=bp.demogdata.values.copy()
-    #     numpy.random.shuffle(tmp)
-    #     bp.demogdata.iloc[:,:]=tmp
-    #     print('WARNING: shuffling target data')
     bp.get_joint_datasets()
 
     if not args.singlevar:
@@ -137,18 +135,19 @@ if __name__=='__main__':
         print('RUNNING:',v,bp.data_models[v])
         try:
             bp.scores[v],bp.importances[v]=bp.run_crossvalidation(v,nlambda=100)
-            bp.scores_insample[v],_=bp.run_lm(v,nlambda=150)
+            bp.scores_insample[v],_=bp.run_lm(v,nlambda=100)
             # fit model with no regularization
             if bp.data_models[v]=='binary':
-                bp.lambda_optim=[1]
+                bp.lambda_optim=[0]
             else:
                 bp.lambda_optim=[0,0]
-            bp.scores_insample_unbiased[v],_=bp.run_lm(v,imputer=fancyimpute.SimpleFill,
-                                    nlambda=150)
+            bp.scores_insample_unbiased[v],_=bp.run_lm(v,nlambda=100)
         except:
             e = sys.exc_info()
             print('error on',v,':',e)
             bp.errors[v]=traceback.print_tb(e[2])
 
-
-    bp.write_data(vars_to_test)
+    if args.singlevar:
+        bp.write_data(vars_to_test,listvar=True)
+    else:
+        bp.write_data(vars_to_test)

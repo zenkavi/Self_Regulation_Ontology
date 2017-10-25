@@ -52,6 +52,7 @@ class UserSchema(Schema):
     predictior_set=fields.Str()
     freq_threshold=fields.Integer()
     drop_threshold=fields.Integer()
+    imputer=fields.Str()
 
 class BehavPredict:
     def __init__(self,verbose=False,dataset=None,
@@ -69,7 +70,8 @@ class BehavPredict:
                     classifier='rf',
                     output_dir='prediction_outputs',
                     freq_threshold=0.04,
-                    drop_threshold=0.2):
+                    drop_threshold=0.2,
+                    imputer='SoftImpute'):
         # set up arguments
         self.created_at = datetime.datetime.now()
         self.hostname= socket.gethostname()
@@ -108,6 +110,7 @@ class BehavPredict:
         self.n_jobs=n_jobs
         self.n_outer_splits=n_outer_splits
         self.baseline_vars=baseline_vars
+        self.imputer=imputer
 
         # define internal variables
         self.finished_at=None
@@ -346,16 +349,18 @@ class BehavPredict:
 
         return newvars
 
-    def run_lm(self,v,imputer=fancyimpute.SoftImpute,nlambda=100):
+    def run_lm(self,v,nlambda=100):
         """
         compute in-sample r^2/auroc
         """
+        imputer=eval('fancyimpute.%s'%self.imputer)
+            
         if self.data_models[v]=='binary':
             return self.run_lm_binary(v,imputer)
         else:
             return self.run_lm_regression(v,imputer,nlambda)
 
-    def run_lm_binary(self,v,imputer=fancyimpute.SoftImpute):
+    def run_lm_binary(self,v,imputer):
         if self.classifier=='rf':
             clf=ExtraTreesClassifier()
         elif self.classifier=='lasso':
@@ -364,6 +369,7 @@ class BehavPredict:
                     if self.lambda_optim[0]==0:
                         # sklearn uses different coding - 0 will break it
                         self.lambda_optim[0]=1
+                    print('using lambda_optim:',self.lambda_optim[0])
                 clf=LogisticRegression(C=self.lambda_optim[0],penalty='l1',solver='liblinear')
             else:
                 clf=LogisticRegressionCV(Cs=100,penalty='l1',solver='liblinear')
@@ -371,12 +377,13 @@ class BehavPredict:
             raise ValueError('classifier not in approved list')
 
         Ydata=self.demogdata[v].dropna().copy()
-        Xdata=self.behavdata.loc[Ydata.index,:].copy()
+        idx=Ydata.index
+        Xdata=self.behavdata.loc[idx,:].copy()
         Ydata=Ydata.values
         scale=StandardScaler()
         if self.add_baseline_vars:
             for bv in self.baseline_vars:
-                Xdata[bv]=self.demogdata[bv].dropna().copy()
+                Xdata[bv]=self.demogdata[bv][idx].copy()
         if self.shuffle:
             if self.verbose:
                 print('shuffling Y variable')
@@ -390,7 +397,11 @@ class BehavPredict:
             Xdata=scale.fit_transform(Xdata)
         clf.fit(Xdata,Ydata)
         self.pred=clf.predict(Xdata)
-        scores=[roc_auc_score(Ydata,self.pred)]
+        if numpy.var(self.pred)==0:
+            print('zero variance in predictions')
+            scores=[numpy.nan]
+        else:
+            scores=[roc_auc_score(Ydata,self.pred)]
 
         if hasattr(clf,'feature_importances_'):  # for random forest
             importances=clf.feature_importances_
@@ -400,7 +411,7 @@ class BehavPredict:
             print('overfit mean accuracy = %0.3f'%scores[0])
         return scores,importances
 
-    def run_lm_regression(self,v,imputer=fancyimpute.SoftImpute,nlambda=100):
+    def run_lm_regression(self,v,imputer,nlambda=100):
         if self.classifier=='rf':
             self.clf=ExtraTreesRegressor()
         elif self.classifier=='lasso':
@@ -480,22 +491,20 @@ class BehavPredict:
         return scores,imp
 
     def run_crossvalidation(self,v,outer_cv=None,
-                            imputer=fancyimpute.SoftImpute,
                             nlambda=100):
         """
         v is the variable on which to run crosvalidation
         """
+        imputer=eval('fancyimpute.%s'%self.imputer)
 
         if self.data_models[v]=='binary':
-            return self.run_crossvalidation_binary(v,outer_cv,
-                                                imputer)
+            return self.run_crossvalidation_binary(v,imputer,outer_cv)
         else:
-            return self.run_crossvalidation_regression(v,outer_cv,
-                                                imputer,nlambda)
+            return self.run_crossvalidation_regression(v,imputer,outer_cv,
+                                                nlambda)
 
 
-    def run_crossvalidation_binary(self,v,outer_cv=None,
-                            imputer=fancyimpute.SoftImpute):
+    def run_crossvalidation_binary(self,v,imputer,outer_cv=None):
         """
         run CV for binary data
         """
@@ -573,8 +582,7 @@ class BehavPredict:
             imp=None
         return scores,imp
 
-    def run_crossvalidation_regression(self,v,outer_cv=None,
-                            imputer=fancyimpute.SoftImpute,
+    def run_crossvalidation_regression(self,v,imputer,outer_cv=None,
                             nlambda=100):
         """
         run CV for binary data
@@ -657,11 +665,16 @@ class BehavPredict:
         except:
             imp=None
         return scores,imp
-    def write_data(self,vars):
+    def write_data(self,vars,listvar=False):
         h='%08x'%random.getrandbits(32)
         shuffle_flag='shuffle_' if self.shuffle else ''
-        outfile='prediction_%s_%s_%s%s.pkl'%(self.predictor_set,
-            self.classifier,shuffle_flag,h)
+        if listvar:
+            assert len(vars)==1
+            listflag='_%s'%vars[0]
+        else:
+            listflag=''
+        outfile='prediction_%s_%s_%s%s%s.pkl'%(self.predictor_set,
+            self.classifier,shuffle_flag,h,listflag)
         if not os.path.exists(self.output_dir):
             os.mkdir(self.output_dir)
         if self.verbose:
