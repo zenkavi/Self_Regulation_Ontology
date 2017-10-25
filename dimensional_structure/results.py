@@ -72,6 +72,10 @@ class EFA_Analysis:
         metric_cs = [v for k,v in self.results.items() if 'c_metric-' in k]
         self.max_factors = int(max(metric_cs))
     
+    def get_metric_cs(self):
+        metric_cs = {k:v for k,v in self.results.items() if 'c_metric-' in k}
+        return metric_cs
+    
     def get_loading_entropy(self, c):
         assert c>1
         loadings = self.results['factor_tree'][c]
@@ -210,7 +214,7 @@ class Results(EFA_Analysis, HCA_Analysis):
         self.data = imputed_data
         self.data_no_impute = cleaned_data
         # set up plotting files
-        self.plot_file = path.join('Plots', datafile, 'EFA')
+        self.plot_file = path.join('Plots', datafile)
         self.output_file = path.join('Output', datafile)
         makedirs(self.plot_file, exist_ok = True)
         makedirs(self.output_file, exist_ok = True)
