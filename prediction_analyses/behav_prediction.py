@@ -64,7 +64,7 @@ if __name__=='__main__':
     parser.add_argument('-r',"--resultsdir", help="results directory")
     parser.add_argument("--singlevar", nargs='*',help="run with single variables")
     parser.add_argument('--imputer',help='imputer to use',
-                            default='SoftImpute')
+                            default='SimpleFill')
     parser.add_argument("--smote_threshold", help="threshold for applying smote (distance from 0.5)",
                         type=float,default=0.05)
     args=parser.parse_args()
@@ -145,7 +145,7 @@ if __name__=='__main__':
         except:
             e = sys.exc_info()
             print('error on',v,':',e)
-            bp.errors[v]=traceback.print_tb(e[2])
+            bp.errors[v]=traceback.format_tb(e[2])
 
     if args.singlevar:
         bp.write_data(vars_to_test,listvar=True)
