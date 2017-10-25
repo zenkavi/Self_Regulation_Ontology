@@ -663,11 +663,16 @@ class BehavPredict:
         except:
             imp=None
         return scores,imp
-    def write_data(self,vars):
+    def write_data(self,vars,listvar=False):
         h='%08x'%random.getrandbits(32)
         shuffle_flag='shuffle_' if self.shuffle else ''
-        outfile='prediction_%s_%s_%s%s.pkl'%(self.predictor_set,
-            self.classifier,shuffle_flag,h)
+        if listvar:
+            assert len(vars)==1
+            listflag='_%s'%vars[0]
+        else:
+            listflag=''
+        outfile='prediction_%s_%s_%s%s%s.pkl'%(self.predictor_set,
+            self.classifier,shuffle_flag,h,listflag)
         if not os.path.exists(self.output_dir):
             os.mkdir(self.output_dir)
         if self.verbose:

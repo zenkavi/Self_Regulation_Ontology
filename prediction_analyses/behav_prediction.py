@@ -150,5 +150,7 @@ if __name__=='__main__':
             print('error on',v,':',e)
             bp.errors[v]=traceback.print_tb(e[2])
 
-
-    bp.write_data(vars_to_test)
+    if args.singlevar:
+        bp.write_data(vars_to_test,listvar=True)
+    else:
+        bp.write_data(vars_to_test)
