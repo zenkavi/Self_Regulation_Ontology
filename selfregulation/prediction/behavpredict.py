@@ -354,7 +354,7 @@ class BehavPredict:
         compute in-sample r^2/auroc
         """
         imputer=eval('fancyimpute.%s'%self.imputer)
-            
+
         if self.data_models[v]=='binary':
             return self.run_lm_binary(v,imputer)
         else:
@@ -365,10 +365,10 @@ class BehavPredict:
             clf=ExtraTreesClassifier()
         elif self.classifier=='lasso':
             if self.lambda_optim is not None:
+                if self.lambda_optim[0]==0:
+                    # sklearn uses different coding - 0 will break it
+                    self.lambda_optim[0]=1
                 if self.verbose:
-                    if self.lambda_optim[0]==0:
-                        # sklearn uses different coding - 0 will break it
-                        self.lambda_optim[0]=1
                     print('using lambda_optim:',self.lambda_optim[0])
                 clf=LogisticRegression(C=self.lambda_optim[0],penalty='l1',solver='liblinear')
             else:
