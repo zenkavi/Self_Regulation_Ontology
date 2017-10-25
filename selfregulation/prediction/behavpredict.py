@@ -52,6 +52,7 @@ class UserSchema(Schema):
     predictior_set=fields.Str()
     freq_threshold=fields.Integer()
     drop_threshold=fields.Integer()
+    imputer=fields.Str()
 
 class BehavPredict:
     def __init__(self,verbose=False,dataset=None,
@@ -69,7 +70,8 @@ class BehavPredict:
                     classifier='rf',
                     output_dir='prediction_outputs',
                     freq_threshold=0.04,
-                    drop_threshold=0.2):
+                    drop_threshold=0.2,
+                    imputer='SoftImpute'):
         # set up arguments
         self.created_at = datetime.datetime.now()
         self.hostname= socket.gethostname()
@@ -108,6 +110,7 @@ class BehavPredict:
         self.n_jobs=n_jobs
         self.n_outer_splits=n_outer_splits
         self.baseline_vars=baseline_vars
+        self.imputer=imputer
 
         # define internal variables
         self.finished_at=None
@@ -346,16 +349,18 @@ class BehavPredict:
 
         return newvars
 
-    def run_lm(self,v,imputer=fancyimpute.SoftImpute,nlambda=100):
+    def run_lm(self,v,nlambda=100):
         """
         compute in-sample r^2/auroc
         """
+        imputer=eval('fancyimpute.%s'%self.imputer)
+            
         if self.data_models[v]=='binary':
             return self.run_lm_binary(v,imputer)
         else:
             return self.run_lm_regression(v,imputer,nlambda)
 
-    def run_lm_binary(self,v,imputer=fancyimpute.SoftImpute):
+    def run_lm_binary(self,v,imputer):
         if self.classifier=='rf':
             clf=ExtraTreesClassifier()
         elif self.classifier=='lasso':
@@ -406,7 +411,7 @@ class BehavPredict:
             print('overfit mean accuracy = %0.3f'%scores[0])
         return scores,importances
 
-    def run_lm_regression(self,v,imputer=fancyimpute.SoftImpute,nlambda=100):
+    def run_lm_regression(self,v,imputer,nlambda=100):
         if self.classifier=='rf':
             self.clf=ExtraTreesRegressor()
         elif self.classifier=='lasso':
@@ -486,22 +491,20 @@ class BehavPredict:
         return scores,imp
 
     def run_crossvalidation(self,v,outer_cv=None,
-                            imputer=fancyimpute.SoftImpute,
                             nlambda=100):
         """
         v is the variable on which to run crosvalidation
         """
+        imputer=eval('fancyimpute.%s'%self.imputer)
 
         if self.data_models[v]=='binary':
-            return self.run_crossvalidation_binary(v,outer_cv,
-                                                imputer)
+            return self.run_crossvalidation_binary(v,imputer,outer_cv)
         else:
-            return self.run_crossvalidation_regression(v,outer_cv,
-                                                imputer,nlambda)
+            return self.run_crossvalidation_regression(v,imputer,outer_cv,
+                                                nlambda)
 
 
-    def run_crossvalidation_binary(self,v,outer_cv=None,
-                            imputer=fancyimpute.SoftImpute):
+    def run_crossvalidation_binary(self,v,imputer,outer_cv=None):
         """
         run CV for binary data
         """
@@ -579,8 +582,7 @@ class BehavPredict:
             imp=None
         return scores,imp
 
-    def run_crossvalidation_regression(self,v,outer_cv=None,
-                            imputer=fancyimpute.SoftImpute,
+    def run_crossvalidation_regression(self,v,imputer,outer_cv=None,
                             nlambda=100):
         """
         run CV for binary data
