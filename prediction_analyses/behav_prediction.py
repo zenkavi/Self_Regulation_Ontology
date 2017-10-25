@@ -68,8 +68,6 @@ if __name__=='__main__':
     parser.add_argument("--smote_threshold", help="threshold for applying smote (distance from 0.5)",
                         type=float,default=0.05)
     args=parser.parse_args()
-    print(args)
-    print(args.dataset)
 
     # parameters to set
 
@@ -132,7 +130,7 @@ if __name__=='__main__':
 
     for v in vars_to_test:
         bp.lambda_optim=None
-        print('RUNNING:',v,bp.data_models[v])
+        print('RUNNING:',v,bp.data_models[v],args.dataset)
         try:
             bp.scores[v],bp.importances[v]=bp.run_crossvalidation(v,nlambda=100)
             bp.scores_insample[v],_=bp.run_lm(v,nlambda=100)
