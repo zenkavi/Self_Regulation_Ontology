@@ -32,7 +32,10 @@ import selfregulation.prediction.prediction_utils as prediction_utils
 importlib.reload(prediction_utils)
 
 from marshmallow import Schema, fields
+import subprocess
 
+def get_git_revision_short_hash():
+    return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD'])
 
 class UserSchema(Schema):
     hostname = fields.Str()
@@ -53,6 +56,7 @@ class UserSchema(Schema):
     freq_threshold=fields.Integer()
     drop_threshold=fields.Integer()
     imputer=fields.Str()
+    git_commit=fields.Str()
 
 class BehavPredict:
     def __init__(self,verbose=False,dataset=None,
@@ -74,6 +78,7 @@ class BehavPredict:
                     imputer='SoftImpute'):
         # set up arguments
         self.created_at = datetime.datetime.now()
+        self.git_commit=get_git_revision_short_hash().strip()
         self.hostname= socket.gethostname()
         self.username = getpass.getuser()
         self.verbose=verbose
@@ -318,7 +323,8 @@ class BehavPredict:
             vars=list(self.demogdata.columns)
         elif not isinstance(vars,list):
             vars=[vars]
-        print('binarizing demographic data...')
+        if self.verbose:
+            print('binarizing demographic data...')
         if self.data_models is None:
             self.get_demogdata_vartypes()
 
@@ -354,7 +360,7 @@ class BehavPredict:
         compute in-sample r^2/auroc
         """
         imputer=eval('fancyimpute.%s'%self.imputer)
-            
+
         if self.data_models[v]=='binary':
             return self.run_lm_binary(v,imputer)
         else:
@@ -365,10 +371,10 @@ class BehavPredict:
             clf=ExtraTreesClassifier()
         elif self.classifier=='lasso':
             if self.lambda_optim is not None:
+                if self.lambda_optim[0]==0:
+                    # sklearn uses different coding - 0 will break it
+                    self.lambda_optim[0]=1
                 if self.verbose:
-                    if self.lambda_optim[0]==0:
-                        # sklearn uses different coding - 0 will break it
-                        self.lambda_optim[0]=1
                     print('using lambda_optim:',self.lambda_optim[0])
                 clf=LogisticRegression(C=self.lambda_optim[0],penalty='l1',solver='liblinear')
             else:
@@ -398,7 +404,8 @@ class BehavPredict:
         clf.fit(Xdata,Ydata)
         self.pred=clf.predict(Xdata)
         if numpy.var(self.pred)==0:
-            print('zero variance in predictions')
+            if self.verbose:
+                print('zero variance in predictions')
             scores=[numpy.nan]
         else:
             scores=[roc_auc_score(Ydata,self.pred)]
@@ -416,14 +423,16 @@ class BehavPredict:
             self.clf=ExtraTreesRegressor()
         elif self.classifier=='lasso':
             if not self.data_models[v]=='gaussian':
-                print('using R to fit model...')
+                if self.verbose:
+                    print('using R to fit model...')
                 if self.lambda_optim is not None:
                     if len(self.lambda_optim)>2:
                         lambda_optim=numpy.hstack(self.lambda_optim).T.mean(0)
                     else:
                         lambda_optim=self.lambda_optim
-                    print('using optimal lambdas from CV:')
-                    print(lambda_optim)
+                    if self.verbose:
+                        print('using optimal lambdas from CV:')
+                        print(lambda_optim)
                 else:
                     lambda_optim=None
                 self.clf=prediction_utils.RModel(self.data_models[v],self.verbose,
@@ -595,7 +604,8 @@ class BehavPredict:
             clf=ExtraTreesRegressor()
         elif self.classifier=='lasso':
             if not self.data_models[v]=='gaussian':
-                print('using R to fit model...')
+                if self.verbose:
+                    print('using R to fit model...')
                 clf=prediction_utils.RModel(self.data_models[v],
                                             self.verbose,
                                             self.n_jobs,

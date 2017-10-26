@@ -64,12 +64,10 @@ if __name__=='__main__':
     parser.add_argument('-r',"--resultsdir", help="results directory")
     parser.add_argument("--singlevar", nargs='*',help="run with single variables")
     parser.add_argument('--imputer',help='imputer to use',
-                            default='SoftImpute')
+                            default='SimpleFill')
     parser.add_argument("--smote_threshold", help="threshold for applying smote (distance from 0.5)",
                         type=float,default=0.05)
     args=parser.parse_args()
-    print(args)
-    print(args.dataset)
 
     # parameters to set
 
@@ -132,7 +130,7 @@ if __name__=='__main__':
 
     for v in vars_to_test:
         bp.lambda_optim=None
-        print('RUNNING:',v,bp.data_models[v])
+        print('RUNNING:',v,bp.data_models[v],args.dataset)
         try:
             bp.scores[v],bp.importances[v]=bp.run_crossvalidation(v,nlambda=100)
             bp.scores_insample[v],_=bp.run_lm(v,nlambda=100)
@@ -145,7 +143,7 @@ if __name__=='__main__':
         except:
             e = sys.exc_info()
             print('error on',v,':',e)
-            bp.errors[v]=traceback.print_tb(e[2])
+            bp.errors[v]=traceback.format_tb(e[2])
 
     if args.singlevar:
         bp.write_data(vars_to_test,listvar=True)
