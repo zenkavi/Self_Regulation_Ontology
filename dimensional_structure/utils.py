@@ -67,8 +67,15 @@ def distcorr(X, Y, flip=True):
         dcor = 1-dcor
     return dcor
 
-def save_figure(fig, loc, save_kws):
+def convert_to_abs_correlation(correlation_dist):
+    correlations = 1-correlation_dist
+    absolute_distance = 1-abs(correlations)
+    return absolute_distance
+    
+def save_figure(fig, loc, save_kws=None):
     """ Saves figure in location and creates directory tree if needed """
+    if save_kws is None:
+        save_kws = {}
     directory = os.path.dirname(loc)
     if directory != "":
         os.makedirs(directory, exist_ok=True)
@@ -91,7 +98,13 @@ def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None,
     if compute_dist == True:
         if pdist_kws is None:
             pdist_kws= {'metric': 'correlation'}
-        dist_vec = pdist(df, **pdist_kws)
+        if pdist_kws['metric'] == 'abscorrelation':
+            pdist_kws['metric'] = 'correlation'
+            dist_vec = pdist(df, **pdist_kws)
+            # convert to absolute correlations
+            dist_vec = convert_to_abs_correlation(dist_vec)
+        else:
+            dist_vec = pdist(df, **pdist_kws)
         dist_df = pd.DataFrame(squareform(dist_vec), 
                                index=df.index, 
                                columns=df.index)
@@ -139,13 +152,14 @@ def corr_lower_higher(higher_dim, lower_dim, cross_only=True):
     return corr
 
 # functions to fit and extract factor analysis solutions
-def find_optimal_components(data, minc=1, maxc=40, metric='BIC'):
+def find_optimal_components(data, minc=1, maxc=50, metric='BIC'):
     """
     Fit EFA over a range of components and returns the best c. If metric = CV
     uses sklearn. Otherwise uses psych
     metric: str, method to use for optimal components. Options 'BIC', 'SABIC',
             and 'CV'
     """
+    steps_since_best = 0 # count steps since last best metric.
     metrics = {}
     n_components = range(minc,maxc)
     scaler = StandardScaler()
@@ -153,7 +167,16 @@ def find_optimal_components(data, minc=1, maxc=40, metric='BIC'):
         scaled_data = scaler.fit_transform(data)
         for c in n_components:
             fa, output = psychFA(scaled_data, c, method='ml')
-            metrics[c] = output[metric]
+            last_metric = output[metric]
+            # iterate counter if new metric isn't better than previous metric
+            if len(metrics) > 0:
+                if last_metric > metrics[c-1]:
+                    steps_since_best += 1
+                else:
+                    steps_since_best = 0
+            metrics[c] = last_metric
+            if steps_since_best > 2:
+                break
         best_c = min(metrics, key=metrics.get)
     else:
         for c in n_components:
@@ -164,9 +187,16 @@ def find_optimal_components(data, minc=1, maxc=40, metric='BIC'):
                                      ('scale', scaler),
                                      ('fa', fa)])
             cv = cross_val_score(pipe, data, cv=10)
+            # iterate counter if new metric isn't better than previous metric
+            if len(metrics) > 0:
+                if cv < metrics[c-1]:
+                    steps_since_best += 1
+                else:
+                    steps_since_best = 0
             metrics[c] = np.mean(cv)
+            if steps_since_best > 2:
+                break
         best_c = max(metrics, key=metrics.get)
-    print('Best Component: ', best_c)
     return best_c, metrics
 
 def get_loadings(fa_output, labels):
@@ -202,7 +232,7 @@ def reorder_data(data, groups, axis=1):
     new_data = data.reindex_axis(ordered_cols, axis)
     return new_data
 
-def create_factor_tree(data, component_range=(1,13)):
+def create_factor_tree(data, component_range=(1,13), component_list=None):
     """
     Runs "visualize_factors" at multiple dimensionalities and saves them
     to a pdf
@@ -211,8 +241,8 @@ def create_factor_tree(data, component_range=(1,13)):
     filename: filename to save pdf
     component_range: limits of EFA dimensionalities. e.g. (1,5) will run
                      EFA with 1 component, 2 components... 5 components.
-    reorder_list: optional. List of index values in an order that will be used
-                  to rearrange data
+    component_list: list of specific components to calculate. Overrides
+                    component_range if set
     """
     def get_similarity_order(lower_dim, higher_dim):
         "Helper function to reorder factors into correspondance between two dimensionalities"
@@ -223,7 +253,11 @@ def create_factor_tree(data, component_range=(1,13)):
     EFA_results = {}
     full_fa_results = {}
     # plot
-    for c in range(component_range[0],component_range[1]+1):
+    if component_list is None:
+        components = range(component_range[0],component_range[1]+1)
+    else:
+        components = component_list
+    for c in components:
         fa, output = psychFA(data, c)
         tmp_loading_df = get_loadings(output, labels=data.columns)
         if (c-1) in EFA_results.keys():
@@ -239,7 +273,7 @@ def get_factor_groups(loading_df):
     factor_groups = []
     for assignment in np.unique(index_assignments):
         assignment_vars = [var for i,var in enumerate(loading_df.index) if index_assignments[i] == assignment]
-        factor_groups.append([assignment,assignment_vars])
+        factor_groups.append([assignment+1, assignment_vars])
     return factor_groups
 
 def get_hierarchical_groups(loading_df, n_groups=8):
@@ -401,7 +435,7 @@ def create_categorical_legend(labels,colors, ax):
                     mec='none', marker='o', color=color)
         return line
     proxies = [create_proxy(item) for item in colors]
-    ncol = len(proxies)//6
+    ncol = max(len(proxies)//6, 1)
     ax.legend(proxies, labels, numpoints=1, markerscale=2.5, ncol=ncol,
               bbox_to_anchor=(1, .95), prop={'size':20})
 

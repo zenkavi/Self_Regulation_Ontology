@@ -1,5 +1,6 @@
 # imports
-import argparse
+import matplotlib
+matplotlib.use('Agg')
 from math import ceil
 from dimensional_structure.utils import (
         create_factor_tree, find_optimal_components, get_factor_groups,
@@ -198,10 +199,19 @@ def plot_entropies(EFA, plot_dir=None):
             f.savefig(path.join(plot_dir, 'entropies_across_factors.png'), 
                       bbox_inches='tight')
             
-def plot_EFA(EFA, c, plot_dir=None):
-    plot_BIC_SABIC(EFA, plot_dir)
-    plot_nesting(EFA, plot_dir=plot_dir)
+def plot_EFA(EFA, c, plot_dir=None, plot_generic=True, verbose=False):
+    # plots that don't depend on c
+    if plot_generic:
+        if verbose: print("Plotting BIC/SABIC")
+        plot_BIC_SABIC(EFA, plot_dir)
+        if verbose: print("Plotting nesting")
+        plot_nesting(EFA, plot_dir=plot_dir)
+        if verbose: print("Plotting entropies")
+        plot_entropies(EFA, plot_dir)
+    
+    if verbose: print("Plotting factor bars")
     plot_bar_factors(EFA, c, plot_dir)
+    if verbose: print("Plotting factor polar")
     plot_polar_factors(EFA, c, plot_dir)
-    plot_task_factors(EFA< c, plot_dir=plot_dir)
-    plot_entropies(EFA, plot_dir)
+    if verbose: print("Plotting task factors")
+    plot_task_factors(EFA, c, plot_dir=plot_dir)

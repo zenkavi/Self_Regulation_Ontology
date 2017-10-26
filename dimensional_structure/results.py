@@ -3,9 +3,13 @@ from dimensional_structure.utils import (
         create_factor_tree, distcorr,  find_optimal_components, 
         get_scores_from_subset, hierarchical_cluster, quantify_lower_nesting
         )
-import numpy as np
+import glob
 from os import makedirs, path
 import pandas as pd
+from pathos.multiprocessing import ProcessingPool as Pool
+import numpy as np
+import pickle
+import random
 from scipy.stats import entropy
 from selfregulation.utils.utils import get_behav_data
 from selfregulation.utils.r_to_py_utils import get_Rpsych, psychFA
@@ -42,22 +46,22 @@ class EFA_Analysis:
     
     def get_dimensionality(self, metrics=None, verbose=False):
         if metrics is None:
-            metrics = ['BIC', 'SABIC', 'parallel']
+            metrics = ['BIC', 'parallel']
         if 'BIC' in metrics:
             BIC_c, BICs = find_optimal_components(self.data, metric='BIC')
             self.results['c_metric-BIC'] = BIC_c
             self.results['cscores_metric-BIC'] = BICs
+        if 'parallel' in metrics:
+            # parallel analysis
+            parallel_out = psych.fa_parallel(self.data, fa='fa', fm='ml',
+                                             plot=False, **{'n.iter': 100})
+            parallel_c = parallel_out[parallel_out.names.index('nfact')][0]
+            self.results['c_metric-parallel'] = int(parallel_c)
         if 'SABIC' in metrics:
             # using SABIC
             SABIC_c, SABICs = find_optimal_components(self.data, metric='SABIC')
             self.results['c_metric-SABIC'] = SABIC_c
             self.results['cscores_metric-SABIC'] = SABICs
-        if 'parallel' in metrics:
-            # parallel analysis
-            parallel_out = psych.fa_parallel(self.data, fa='fa', fm='ml',
-                                             **{'n.iter': 100})
-            parallel_c = parallel_out[parallel_out.names.index('nfact')][0]
-            self.results['c_metric-parallel'] = parallel_c
         if 'CV' in metrics:
             try:
                  # using CV
@@ -69,8 +73,11 @@ class EFA_Analysis:
                 print("CV dimensionality could not be calculated. " + \
                       "data_no_impute not found.")
         # record max_factors
-        metric_cs = [v for k,v in self.results.items() if 'c_metric-' in k]
-        self.max_factors = int(max(metric_cs))
+        best_cs = {k:v for k,v in self.results.items() if 'c_metric-' in k}
+        metric_cs = best_cs.values()
+        self.max_factors = int(max(metric_cs))+5
+        if verbose:
+                print('Best Components: ', best_cs)
     
     def get_metric_cs(self):
         metric_cs = {k:v for k,v in self.results.items() if 'c_metric-' in k}
@@ -101,7 +108,7 @@ class EFA_Analysis:
                                            (loading_entropy/max_entropy).values)
         return permuted_entropies
     
-    def run_EFA(self, rerun=False, verbose=False):
+    def run(self, rerun=False, verbose=False):
         # check adequacy
         adequate, adequacy_stats = self.adequacy_test(verbose)
         assert adequate, "Data is not adequate for EFA!"
@@ -111,7 +118,7 @@ class EFA_Analysis:
         # get optimal dimensionality
         if 'c_metric-parallel' not in self.results.keys() or rerun==True:
             if verbose: print('Determining Optimal Dimensionality')
-            self.get_dimensionality()
+            self.get_dimensionality(verbose=verbose)
             
         # create factor tree
         if verbose: print('Creating Factor Tree')
@@ -181,24 +188,31 @@ class HCA_Analysis():
     def __init__(self, dist_metric):
         self.results = {}
         self.dist_metric = dist_metric
+        self.metric_name = 'unknown'
+        if self.dist_metric == distcorr:
+            self.metric_name = 'distcorr'
+        else:
+            self.metric_name = self.dist_metric
         
     def cluster_data(self, data):
         output = hierarchical_cluster(data.T, 
                                       pdist_kws={'metric': self.dist_metric})
-        self.results['clustering_metric-distcorr_input-data'] = output
+        self.results['clustering_metric-%s_input-data' % self.metric_name] = output
         
-    def cluster_EFA(self, EFA_results, c):
-        loadings = EFA_results['factor_tree'][c]
+    def cluster_EFA(self, EFA, c):
+        loadings = EFA.results['factor_tree'][c]
         output = hierarchical_cluster(loadings, 
                                       pdist_kws={'metric': self.dist_metric})
-        self.results['clustering_metric-distcorr_input-EFA%s' % c] = output
+        self.results['clustering_metric-%s_input-EFA%s' % (self.metric_name, c)] = output
 
-    def run_HCA(self, data, EFA_results, verbose=False):
-        if verbose: print("Clustering data")
-        self.cluster_data(data)
+    def run(self, data, EFA, rerun=True, verbose=False):
+        if ('clustering_metric-%s_input-data' % self.metric_name in 
+            self.results.keys()) or (rerun==True):
+            if verbose: print("Clustering data")
+            self.cluster_data(data)
         if verbose: print("Clustering EFA")
-        c=3
-        self.cluster_EFA(EFA_results, c)
+        for c in EFA.get_metric_cs().values():
+            self.cluster_EFA(EFA, c)
 
 class Results(EFA_Analysis, HCA_Analysis):
     """ Class to hold olutput of EFA, HCA and graph analyses """
@@ -218,47 +232,94 @@ class Results(EFA_Analysis, HCA_Analysis):
         self.output_file = path.join('Output', datafile)
         makedirs(self.plot_file, exist_ok = True)
         makedirs(self.output_file, exist_ok = True)
+        # set vars
+        self.dist_metric = dist_metric
         
         # initialize analysis classes
         self.EFA = EFA_Analysis(self.data, self.data_no_impute)
-        self.HCA = HCA_Analysis(dist_metric=distcorr)
+        self.HCA = HCA_Analysis(dist_metric=self.dist_metric)
         
     def run_EFA_analysis(self, rerun=False, verbose=False):
-        self.EFA.run_EFA(rerun=rerun, verbose=verbose)
+        if verbose:
+            print('*'*79)
+            print('Running EFA')
+            print('*'*79)
+        self.EFA.run(rerun=rerun, verbose=verbose)
 
     def run_HCA_analysis(self, verbose=False):
-        self.HCA.run_HCA(self.data, self.EFA.results, verbose=verbose)
-        
+        if verbose:
+            print('*'*79)
+            print('Running HCA')
+            print('*'*79)
+        self.HCA.run(self.data, self.EFA, verbose=verbose)
+    
+    # Bootstrap Functions
     def gen_resample_data(self):
-        return self.data.sample(self.data.shaoe[0], replace=True)
-        
-    def run_EFA_bootstrap(self, boot_data=None):
+        return self.data.sample(self.data.shape[0], replace=True)
+    
+    def run_EFA_bootstrap(self, boot_data=None, verbose=False):
         if boot_data is None:
             boot_data = self.gen_resample_data()
         EFA_boot = EFA_Analysis(boot_data)
-        EFA_boot.run_EFA()
+        EFA_boot.run(verbose=verbose)
         return EFA_boot
     
-    def run_HCA_bootstrap(self, EFA_results, boot_data=None):
+    def run_HCA_bootstrap(self, EFA, boot_data=None, verbose=False):
         if boot_data is None:
             boot_data = self.gen_resample_data()
-        HCA_boot = HCA_Analysis()
-        HCA_boot.run_HCA(boot_data, EFA_results)
+        HCA_boot = HCA_Analysis(self.dist_metric)
+        HCA_boot.run(boot_data, EFA, verbose=verbose)
         return HCA_boot
 
-    def run_bootstrap(self, reps):
-        bootstrap_runs = []
-        for rep in range(reps):
-            boot_data = self.gen_resample_data()
-            EFA_boot = self.run_EFA_bootstrap(boot_data)
-            HCA_boot = self.run_HCA_bootstrap(EFA_boot, boot_data)
-            bootstrap_runs.append({'EFA': EFA_boot.results, 
-                                   'HCA': HCA_boot.results})
-        return bootstrap_runs
-            
+    def run_bootstrap(self, run_HCA=True, verbose=False, save_dir=None):
+        boot_data = self.gen_resample_data()
+        EFA_boot = self.run_EFA_bootstrap(boot_data, verbose)
+        boot_run = {'data': boot_data, 'EFA': EFA_boot}
+        if run_HCA:
+            HCA_boot = self.run_HCA_bootstrap(EFA_boot, boot_data, verbose)
+            boot_run['HCA'] = HCA_boot
+        if save_dir is not None:
+            ID = random.getrandbits(16)
+            filename = 'bootstrap_ID-%s.pkl' % ID
+            pickle.dump(boot_run, 
+                        open(path.join(save_dir, filename),'wb'))
+        else:
+            return boot_run
     
+    def run_parallel_boot(self, reps, save_dir, run_HCA=True):
+        def bootstrap_wrapper(ignored):
+            self.run_bootstrap(save_dir=save_dir, run_HCA=run_HCA)
+        pool = Pool()
+        pool.map(bootstrap_wrapper, range(reps))
+        pool.close()
+        pool.join()
+        
+    def reduce_boot(self, boot_run):
+        EFA = boot_run['EFA']
+        HCA = boot_run['HCA']
+        cs = EFA.get_metric_cs()
+        factors = {i: EFA.results['factor_tree'][i] for i in cs.values()}
+        results = {}
+        results['metric_cs'] = cs
+        results['factor_solutions'] = factors
+        results['HCA_solutions'] = HCA.results
+        return results
+        
+    def reduce_boot_files(self, boot_loc, save=False):
+        """ Run "run_boostrap", but only save important params """
+        results = []
+        for filey in glob.glob(path.join(boot_loc, 'bootstrap*ID*')):
+            boot_run = pickle.load(open(filey, 'rb'))
+            results.append(self.reduce_boot(boot_run))
+        if save == True:
+            pickle.save(open(path.join(boot_loc, 'bootstrap_aggregate.pkl', 'wb')))
+        else:
+            return results
     
-    
+
+                
+
+
     
     
     
