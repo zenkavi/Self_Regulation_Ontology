@@ -1,11 +1,15 @@
 from collections import OrderedDict as odict
+from dynamicTreeCut import cutreeHybrid
+import fancyimpute
 from itertools import combinations
 from matplotlib import pyplot as plt
 import numpy as np
+import os
 import pandas as pd
 import seaborn as sns
 from scipy.cluster.hierarchy import dendrogram, linkage, cut_tree
 from scipy.spatial.distance import pdist, squareform
+from selfregulation.utils.plot_utils import dendroheatmap
 from selfregulation.utils.r_to_py_utils import psychFA
 from sklearn.decomposition import FactorAnalysis
 from sklearn.linear_model import LinearRegression
@@ -14,6 +18,21 @@ from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, scale
 
+class Imputer(object):
+    """ Imputation class so that fancyimpute can be used with scikit pipeline"""
+    def __init__(self, imputer=None):
+        if imputer is None:
+            self.imputer = fancyimpute.SimpleFill()
+        else:
+            self.imputer = imputer(verbose=False)
+        
+    def transform(self, X):
+        transformed = self.imputer.complete(X)
+        return transformed
+    
+    def fit(self, X, y=None):
+        return self
+    
 def distcorr(X, Y, flip=True):
     """ Compute the distance correlation function
     
@@ -21,6 +40,8 @@ def distcorr(X, Y, flip=True):
     >>> b = np.array([1,2,9,4,4])
     >>> distcorr(a, b)
     0.762676242417
+    
+    Taken from: https://gist.github.com/satra/aa3d19a12b74e9ab7941
     """
     X = np.atleast_1d(X)
     Y = np.atleast_1d(Y)
@@ -46,8 +67,79 @@ def distcorr(X, Y, flip=True):
         dcor = 1-dcor
     return dcor
 
+def save_figure(fig, loc, save_kws):
+    """ Saves figure in location and creates directory tree if needed """
+    directory = os.path.dirname(loc)
+    if directory != "":
+        os.makedirs(directory, exist_ok=True)
+    fig.savefig(loc, **save_kws)
+
+# ****************************************************************************
+# helper functions for hierarchical clustering
+# ****************************************************************************
+def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None, 
+                         plot=False, cluster_kws=None, plot_kws=None):
+    """
+    plot hierarchical clustering and heatmap
+    :df: a correlation matrix
+    parse_heatmap: int (optional). If defined, devides the columns of the 
+                    heatmap based on cutting the dendrogram
+    """
+    
+    # if compute_dist = False, assume df is a distance matrix. Otherwise
+    # compute distance on df rows
+    if compute_dist == True:
+        if pdist_kws is None:
+            pdist_kws= {'metric': 'correlation'}
+        dist_vec = pdist(df, **pdist_kws)
+        dist_df = pd.DataFrame(squareform(dist_vec), 
+                               index=df.index, 
+                               columns=df.index)
+    else:
+        assert df.shape[0] == df.shape[1]
+        dist_df = df
+        dist_vec = squareform(df.values)
+    #clustering
+    link = linkage(dist_vec, method='ward')    
+    #dendrogram
+    row_dendr = dendrogram(link, labels=df.index, no_plot = True)
+    rowclust_df = dist_df.iloc[row_dendr['leaves'],row_dendr['leaves']]
+    # clustering
+    if cluster_kws is None:
+        cluster_kws = {'minClusterSize': 1}
+    clustering = cutreeHybrid(link, dist_vec, **cluster_kws)
+    if plot == True:
+        if plot_kws is None:
+            plot_kws = {}
+        dendroheatmap(link, dist_df, clustering['labels'], **plot_kws)
+        
+    return {'distance_df': dist_df, 
+            'linkage': link, 
+            'clustered_df': rowclust_df,
+            'clustering': clustering}
+    
+# ****************************************************************************
+# helper functions for dealing with factor analytic results
+# ****************************************************************************
+def corr_lower_higher(higher_dim, lower_dim, cross_only=True):
+    """
+    Returns a correlation matrix between factors at different dimensionalities
+    cross_only: bool, if True only display the correlations between dimensions
+    """
+    # higher dim is the factor solution with fewer factors
+    higher_dim = higher_dim.copy()
+    lower_dim = lower_dim.copy()
+    higher_n = higher_dim.shape[1]
+    
+    lower_dim.columns = ['l%s' % i  for i in lower_dim.columns]
+    higher_dim.columns = ['h%s' % i for i in higher_dim.columns]
+    corr = pd.concat([higher_dim, lower_dim], axis=1).corr()
+    if cross_only:
+        corr = corr.iloc[:higher_n, higher_n:]
+    return corr
+
 # functions to fit and extract factor analysis solutions
-def find_optimal_components(data, minc=1, maxc=30, metric='BIC'):
+def find_optimal_components(data, minc=1, maxc=40, metric='BIC'):
     """
     Fit EFA over a range of components and returns the best c. If metric = CV
     uses sklearn. Otherwise uses psych
@@ -67,7 +159,9 @@ def find_optimal_components(data, minc=1, maxc=30, metric='BIC'):
         for c in n_components:
             fa = FactorAnalysis(c)
             scaler = StandardScaler()
-            pipe = Pipeline(steps = [('scale', scaler),
+            imputer = Imputer()
+            pipe = Pipeline(steps = [('impute', imputer),
+                                     ('scale', scaler),
                                      ('fa', fa)])
             cv = cross_val_score(pipe, data, cv=10)
             metrics[c] = np.mean(cv)
@@ -100,26 +194,6 @@ def get_top_factors(loading_df, n=4, verbose=False):
             print('\nFACTOR %s' % i)
             print(top_vars[0:n])
     return factor_top_vars
-        
-# ****************************************************************************
-# Other helper functions for dealing with factor analytic results
-# ****************************************************************************
-def corr_lower_higher(higher_dim, lower_dim, cross_only=True):
-    """
-    Returns a correlation matrix between factors at different dimensionalities
-    cross_only: bool, if True only display the correlations between dimensions
-    """
-    # higher dim is the factor solution with fewer factors
-    higher_dim = higher_dim.copy()
-    lower_dim = lower_dim.copy()
-    higher_n = higher_dim.shape[1]
-    
-    lower_dim.columns = ['l%s' % i  for i in lower_dim.columns]
-    higher_dim.columns = ['h%s' % i for i in higher_dim.columns]
-    corr = pd.concat([higher_dim, lower_dim], axis=1).corr()
-    if cross_only:
-        corr = corr.iloc[:higher_n, higher_n:]
-    return corr
 
 def reorder_data(data, groups, axis=1):
     ordered_cols = []
@@ -275,7 +349,7 @@ def quantify_lower_nesting(factor_tree):
                         'coefs': lr.coef_}
         relationships[(higher_c,lower_c)] = relationship
     return relationships
-  
+
 # ****************************************************************************
 # Helper functions for visualization of component loadings
 # ****************************************************************************
@@ -432,7 +506,7 @@ def plot_factor_tree(factor_tree, groups=None, filename=None):
         for ax in axes[rowi,c:]:
             ax.set_axis_off()
     if filename:
-        f.savefig(filename, bbox_inches='tight')
+        save_figure(f, filename, {'bbox_inches': 'tight'})
     else:
         return f
 

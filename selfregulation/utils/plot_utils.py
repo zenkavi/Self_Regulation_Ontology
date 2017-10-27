@@ -1,8 +1,9 @@
+from dynamicTreeCut import cutreeHybrid
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from scipy.cluster.hierarchy import cut_tree, dendrogram, linkage
-from scipy.spatial.distance import pdist, squareform
+from scipy.cluster.hierarchy import dendrogram
+from scipy.spatial.distance import squareform
 import seaborn as sns
 
 #***************************************************
@@ -86,37 +87,30 @@ def DDM_plot(v,t,a, sigma = .1, n = 10, plot_n = 15, file = None):
     return fig, trajectories
 
 
-def dendroheatmap(df, compute_dist=True, labels=True, label_fontsize=None, 
-                  pdist_kws=None, figsize=None, parse=None):
+def dendroheatmap(link, dist_df, clusters=None,
+                  label_fontsize=None, labels=True,
+                  figsize=None, filename=None):
+    """Take linkage and distance matrices and plot
+    
+    Args:
+        link: linkage matrix
+        dist_df: distance dataframe where index/columns are in the same order
+                 as the input to link
+        clusters: (optional) list of cluster labels created from the linkage 
+                   used to parse the dendrogram heatmap
+                   Assumes that clusters are contiguous along the dendrogram
+        label_fontsize: int, fontsize for labels
+        labels: (optional) bool, whether to show labels on heatmap
+        figsize: figure size
+        filename: string. If given, save to this location
     """
-    plot hierarchical clustering and heatmap
-    :df: a correlation matrix
-    parse_heatmap: int (optional). If defined, devides the columns of the 
-                    heatmap based on cutting the dendrogram
-    """
+    row_dendr = dendrogram(link, labels=dist_df.index, no_plot = True)
+    rowclust_df = dist_df.iloc[row_dendr['leaves'], row_dendr['leaves']]
+    # plot
     if figsize is None:
         figsize=(16,16)
-    # if compute_dist = False, assume df is a distance matrix. Otherwise
-    # compute distance on df rows
-    if compute_dist == True:
-        if pdist_kws is None:
-            pdist_kws= {'metric': 'correlation'}
-        dist_vec = pdist(df, **pdist_kws)
-        dist_df = pd.DataFrame(squareform(dist_vec), 
-                               index=df.index, 
-                               columns=df.index)
-    else:
-        assert df.shape[0] == df.shape[1]
-        dist_df = df
-        dist_vec = squareform(df.values)
-    #clustering
-    row_clusters = linkage(dist_vec, method='ward')    
-    #dendrogram
-    row_dendr = dendrogram(row_clusters, labels=df.index, no_plot = True)
-    rowclust_df = dist_df.iloc[row_dendr['leaves'],row_dendr['leaves']]
-    #plotting
     if label_fontsize == None:
-        label_fontsize = figsize[1]*.27
+            label_fontsize = figsize[1]*.27
     sns.set_style("white")
     fig = plt.figure(figsize = figsize)
     ax = fig.add_axes([.16,.3,.62,.62]) 
@@ -132,14 +126,14 @@ def dendroheatmap(df, compute_dist=True, labels=True, label_fontsize=None,
                        rotation_mode = "anchor", ha = 'left')
     ax1 = fig.add_axes([.01,.3,.15,.62])
     plt.axis('off')
-    row_dendr = dendrogram(row_clusters, orientation='left',  ax = ax1, 
+    row_dendr = dendrogram(link, orientation='left',  ax = ax1, 
                            color_threshold=-1,
                            above_threshold_color='gray') 
     ax1.invert_yaxis()
     
-    if parse is not None:
-        groups = cut_tree(row_clusters,parse)[row_dendr['leaves']]
-        groups = [i[0] for i in groups][::-1]
+    # add parse lines between trees 
+    if clusters is not None:
+        groups = clusters[row_dendr['leaves']][::-1]
         cuts = []
         curr = groups[0]
         for i,label in enumerate(groups[1:]):
@@ -151,12 +145,11 @@ def dendroheatmap(df, compute_dist=True, labels=True, label_fontsize=None,
         pad = (ticks[0]-ticks[1])/2
         separations = (ticks+pad)*len(rowclust_df)
         for c in cuts:
-            ax.hlines(separations[c], 0, len(rowclust_df), colors='w')
-    return fig, {'distance_df': dist_df, 
-                 'linkage': row_clusters, 
-                 'clustered_df': rowclust_df}
-
-
+            ax.hlines(separations[c], 0, len(rowclust_df), colors='w') 
+    if filename:
+        fig.savefig(filename, bbox_inches='tight')
+    return fig
+    
 def heatmap(df):
     """
     :df: plot heatmap
