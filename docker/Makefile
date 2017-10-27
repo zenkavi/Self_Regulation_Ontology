@@ -7,7 +7,11 @@ docker-clean:
 docker2singularity:
 	docker run -v /var/run/docker.sock:/var/run/docker.sock -v /home/poldrack/singularity:/output --privileged -t --rm singularityware/docker2singularity selfregulation
 
+# this adds a character to the RUN command
+# # which causes all commands below to be re-excuted
 docker-build:
+	cat Dockerfile | sed 's/RUN echo "/RUN echo "x/'>Dockerfile.tmp
+	cp Dockerfile.tmp Dockerfile
 	docker build -t selfregulation .
 
 docker-devel:
@@ -16,3 +20,6 @@ docker-devel:
 keygen:
 	ssh-keygen -f id_rsa_docker
 	@echo "now add id_rsa_docker.pub to your github keys"
+
+copy:
+	scp ~/singularity/selfregulation-*.img wrangler.tacc.utexas.edu:/work/01329/poldrack/stampede2/singularity_images
