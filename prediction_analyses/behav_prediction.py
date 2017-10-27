@@ -113,11 +113,37 @@ if __name__=='__main__':
     bp.remove_lowfreq_vars()
     bp.binarize_ZI_demog_vars()
 
+    def add_varsets(bp,tags):
+        vars=list(bp.behavdata.columns)
+        for tag in tags:
+            varsets=tags[tag]
+            indvars=[]
+            for v in vars:
+                for vs in varsets:
+                    if v.find(vs)>-1:
+                        indvars.append(v)
+            if bp.verbose:
+                print(tag,indvars)
+            bp.add_varset(tag,indvars)
+
     # create apriori variable subsets
     bp.load_behav_data('task')
-    bp.add_varset('discounting',[v for v in list(bp.behavdata.columns) if v.find('discount')>-1])
-    bp.add_varset('stopping',[v for v in list(bp.behavdata.columns) if v.find('stop_signal')>-1 or v.find('nogo')>-1])
-    bp.add_varset('intelligence',[v for v in list(bp.behavdata.columns) if v.find('raven')>-1 or v.find('cognitive_reflection')>-1])
+    task_tags={'discounting':['discount'],
+                'stopping':['stop_signal','nogo'],
+                'intelligence':['raven','cognitive_reflection']}
+    add_varsets(bp,task_tags)
+
+    bp.load_behav_data('survey')
+    survey_tags={'impulsivity':['upps_impulsivity_survey','dickman_survey',
+                                'bis11_survey','self_regulation_survey',
+                                'brief_self_control_survey'],
+                'big5':['ten_item_personality_survey'],
+                'risktaking':['sensation_seeking_survey','dospert'],
+                'grit':['grit_scale_survey'],
+                'emotion_regulation':['erq_survey'],
+                'bisbas':['bis_bas_survey']
+                }
+    add_varsets(bp,survey_tags)
 
     bp.load_behav_data(args.dataset)
     bp.filter_by_icc(args.icc_threshold)
