@@ -20,8 +20,8 @@ data_dir = data_dir=path.join('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Se
 label = 'retest'
 DV_df = pd.read_json(path.join(data_dir,'Local/mturk_' + label + '_DV.json'))
 valence_df = pd.read_json(path.join(data_dir,'Local/mturk_' + label + '_DV_valence.json'))
-#data = pd.read_json(path.join(data_dir,'Local/mturk_' + label + '_data_post.json')).reset_index(drop = True)
-data = pd.read_json(path.join(data_dir,'Local/mturk_' + label + '_data_manual_post.json')).reset_index(drop = True)
+data = pd.read_json(path.join(data_dir,'Local/mturk_' + label + '_data_post.json')).reset_index(drop = True)
+#data = pd.read_json(path.join(data_dir,'Local/mturk_' + label + '_data_manual_post.json')).reset_index(drop = True)
 
 # drop failed QC vars
 drop_failed_QC_vars(DV_df,data)
@@ -84,7 +84,7 @@ readme_lines += ["meaningful_variables.csv: Same as meaningful_variables_hddm.cs
 # Retest meaningful_variables_clean.csv mimicking the test one
 # Instead of cleaning on this sample get variables resulting from test cleaning procedures
 # DO NOT remove outliers from this sample and transform based on what was done for test data
-meaningful_variables_clean_test = pd.read_csv('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Data/Complete_01-31-2017/meaningful_variables_clean.csv')
+meaningful_variables_clean_test = pd.read_csv('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Data/Complete_10-08-2017/meaningful_variables_clean.csv')
 
 transformed_variables = [col for col in meaningful_variables_clean_test.columns if 'logTr' in col]
 
@@ -118,6 +118,7 @@ readme_lines += ["meaningful_variables_clean.csv: includes variables for meaning
 
 #save selected variables
 selected_variables_reference = valence_df
+reference_dir = path.join(data_dir,'references')
 selected_variables_reference.loc[selected_variables.columns].to_csv(path.join(reference_dir, 'selected_variables_reference.csv'))
 
 #meaningful_variables_imputed.csv
@@ -167,6 +168,7 @@ selected_variables_reference.loc[task_selection_data.columns].to_csv(path.join(r
 
 files = glob(path.join(data_dir,'*csv'))
 files = [f for f in files if not any(i in f for i in ['demographic','health','alcohol_drug'])]
+cd '/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/data_preparation/'
 for f in files:
     name = f.split('/')[-1]
     df = pd.DataFrame.from_csv(f)
