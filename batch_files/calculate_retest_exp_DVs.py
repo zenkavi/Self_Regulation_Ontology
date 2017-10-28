@@ -1,3 +1,4 @@
+import argparse
 import sys
 sys.path.append('/scratch/users/zenkavi/expfactory-analysis')
 from expanalysis.experiments.processing import get_exp_DVs
@@ -6,14 +7,13 @@ import pandas as pd
 
 data_dir='/scratch/users/zenkavi/Self_Regulation_Ontology/Data/Retest_02-11-2017/Local'
 
-#parse arguments
-exp_id = sys.argv[1]
-data = sys.argv[2]
-#if len(sys.argv) > 3:
-#    out_dir = sys.argv[3]
-#else:
- #   out_dir = data_dir
+# parse arguments
+parser = argparse.ArgumentParser()
+parser.add_argument('exp_id')
+parser.add_argument('data')
 
+exp_id = args.exp_id
+data = args.data
 out_dir = '/scratch/users/zenkavi/Self_Regulation_Ontology/Data/Retest_02-11-2017/batch_output'
 
 #discovery

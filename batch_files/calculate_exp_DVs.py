@@ -1,3 +1,4 @@
+import argparse
 from expanalysis.experiments.processing import get_exp_DVs
 from os import path
 import pandas as pd
@@ -10,14 +11,20 @@ try:
 except Exception:
     data_dir=path.join(get_info('base_directory'),'Data')
 
-#parse arguments
-exp_id = sys.argv[1]
-data = sys.argv[2]
-if len(sys.argv) > 3:
-    out_dir = sys.argv[3]
-else:
-    out_dir = data_dir
 
+# parse arguments
+parser = argparse.ArgumentParser()
+parser.add_argument('exp_id')
+parser.add_argument('data')
+parser.add_argument('--out_dir', default=data_dir)
+
+args = parser.parse_args()
+
+exp_id = args.exp_id
+data = args.data
+out_dir = args.out_dir
+
+print(exp_id, data, out_dir)
 #load Data
 dataset = pd.read_pickle(path.join(data_dir, data + '_data_post.pkl'))
 
