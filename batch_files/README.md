@@ -30,9 +30,12 @@ calculate_[data]_DVs.batch - runs calculate_exps_DVs.py
     which, for example, calculates HDDM parameters for many tasks.
     This can significantly increase the length of the DV calculations
 
-    Calculate_exp_DVs.py takes two arguments: the name of the dataset to label
-    the output DV files (e.g. mturk_complete) and an output folder 
-    (which should be "output") where the DVs will be saved (temporarily, see below)
+    Calculate_exp_DVs.py takes 2 required arguments: the exp_id,
+    and the the name of the dataset to label
+    the output DV files (e.g. mturk_complete). To optional arguments
+    are the name of an output folder (defaults to data directory, but
+        should be set to something else) where the DVs will be saved (temporarily, see below),
+        and a flag "no_group", which will set the use_group_fun to False
 
 ### Concatenate the DVs
 concatenate_[data]_DVs.py
