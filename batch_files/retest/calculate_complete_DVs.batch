@@ -11,4 +11,5 @@
 #SBATCH --mail-user=zenkavi@stanford.edu
 export PATH=$HOME/miniconda3/bin:$PATH
 source activate SRO_retest
+/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/batch_files/retest
 python calculate_exp_DVs.py {EXP_ID} mturk_complete /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Complete_10-27-2017/batch_output/
