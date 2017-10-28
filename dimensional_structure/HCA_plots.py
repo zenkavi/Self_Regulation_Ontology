@@ -1,20 +1,18 @@
 # imports
 import argparse
-from dimensional_structure.utils import (
-        distcorr, hierarchical_cluster, save_figure
-        )
-from glob import glob
+from dimensional_structure.utils import  save_figure
 from itertools import combinations
 import matplotlib.pyplot as plt
 import numpy as np
-from os import makedirs, path, remove
+from os import path
 import pandas as pd
-from scipy.spatial.distance import pdist, squareform
 import seaborn as sns
 from selfregulation.utils.plot_utils import dendroheatmap
 from sklearn.decomposition import PCA
+from sklearn.manifold import MDS
 from sklearn.metrics import adjusted_mutual_info_score, adjusted_rand_score
 from sklearn.preprocessing import scale
+
 import subprocess
 
 # parse arguments
@@ -79,7 +77,56 @@ def plot_clusterings(HCA, plot_dir=None, verbose=False):
               % score_consistency)
         
         
+def visualize_loading(results, c, plot_dir):
+    HCA = results.HCA=None
+    EFA = results.EFA
+    c = 9
+    
+    cluster_loadings = HCA.get_cluster_loading(EFA, 'data', c)
+    cluster_loadings_mat = np.vstack([i[1] for i in cluster_loadings])
+    EFA_loading = abs(EFA.get_loading(c))
+    EFA_loading_mat = EFA_loading.values
+    input_data = np.vstack([cluster_loadings_mat, EFA_loading_mat])
+    
+    
+    n_clusters = cluster_loadings_mat.shape[0]
+    color_palette = sns.color_palette(palette='hls', n_colors=n_clusters)
+    colors = []
+    for var in EFA_loading.index:
+        # find which cluster this variable is in
+        index = [i for i,cluster in enumerate(cluster_loadings) \
+                 if var in cluster[0]][0]
+        colors.append(color_palette[index])
         
+    
+    mds = MDS()
+    mds_out = mds.fit_transform(input_data)
+    
+    with sns.axes_style('white'):
+        f=plt.figure(figsize=(14,14))
+        plt.scatter(mds_out[n_clusters:,0], mds_out[n_clusters:,1], 
+                    s=50, color=colors)
+        plt.scatter(mds_out[:n_clusters,0], mds_out[:n_clusters,1], 
+                    marker='*', s=2200, color=color_palette)
+        # plot cluster number
+        offset = .011
+        font_dict = {'fontsize': 17, 'color':'white'}
+        for i,(x,y) in enumerate(mds_out[:n_clusters]):
+            if i<9:
+                plt.text(x-offset,y-offset,i+1, font_dict)
+            else:
+                plt.text(x-offset*2,y-offset,i+1, font_dict)
+    if plot_dir:
+        save_figure(f, path.join(plot_dir, 'MDS_factor_loadings'))
+    
+    # same plot as above but over the raw data
+    plt.figure(figsize=(12,12))
+    mds = MDS()
+    mds_out = mds.fit_transform(scale(results.data).T)
+    plt.scatter(mds_out[:,0], mds_out[:,1], 
+                    s=100, color=colors)
+
+       
 """      
     # plot distance correlation for factor solutions in the same order as the
     # clustered solution

@@ -3,8 +3,10 @@ import argparse
 from dimensional_structure.EFA_plots import plot_EFA
 from dimensional_structure.HCA_plots import plot_clusterings
 from dimensional_structure.results import Results
+from glob import glob
 from os import makedirs, path
 import pickle
+
 
 """
 # parse arguments
@@ -26,16 +28,17 @@ results.run_EFA_analysis(verbose=True)
 results.run_HCA_analysis(verbose=True)
 
 # ***************************** saving ****************************************
-distmetric = results.HCA.metric_name
 pickle.dump(results, open(path.join(results.output_file, 
-                                    'results_distmetric-%s.pkl' % distmetric),'wb'))
+                                    'results_ID-%s.pkl' % results.ID),'wb'))
 
 
 # ***************************** loading ****************************************
-# results = pickle.load(open('Output/%s/results.pkl' % datafile, 'rb'))
+result_file = glob('Output/%s/results_ID*.pkl' % datafile)[-1]
+results = pickle.load(open(result_file, 'rb'))
 
 # add function to existing class
 # results.fun = fun.__get__(results)
+
 # ****************************************************************************
 # Bootstrap run
 # ****************************************************************************
@@ -44,7 +47,7 @@ results.run_bootstrap(verbose=True, save_dir='/home/ian/tmp')
 
 import time
 start = time.time()
-results.run_parallel_boot(2, save_dir='/home/ian/tmp')
+results.run_parallel_boot(100, save_dir='/home/ian/tmp')
 end = time.time()-start
 
 def eval_data_clusters(results, boot_results):
@@ -59,8 +62,11 @@ def eval_data_clusters(results, boot_results):
                         in  combinations(boot_clusters,2)]
     data_consistency = [adjusted_rand_score(orig_data_clusters,a) for a
                         in  boot_clusters]
-    avg_data_consistency = np.mean(data_consistency)
-        
+    return {'boot_consistency': np.mean(boot_consistency),  
+            'data_consistency': np.mean(data_consistency)}
+    
+def get_dimensionality_estimates(boot_results):
+    return [i['metric_cs'] for i in boot_results]
         
 # ****************************************************************************
 # Plotting

@@ -11,8 +11,9 @@ import numpy as np
 import pickle
 import random
 from scipy.stats import entropy
+from selfregulation.utils.graph_utils import  (get_adj, Graph_Analysis)
 from selfregulation.utils.utils import get_behav_data
-from selfregulation.utils.r_to_py_utils import get_Rpsych, psychFA
+from selfregulation.utils.r_to_py_utils import get_attr, get_Rpsych, psychFA
 from sklearn.preprocessing import scale
 
 # load the psych R package
@@ -79,36 +80,39 @@ class EFA_Analysis:
         if verbose:
                 print('Best Components: ', best_cs)
     
+    def get_loading(self, c):
+        return self.results['factor_tree'][c]
+    
     def get_metric_cs(self):
         metric_cs = {k:v for k,v in self.results.items() if 'c_metric-' in k}
         return metric_cs
     
     def get_loading_entropy(self, c):
         assert c>1
-        loadings = self.results['factor_tree'][c]
+        loading = self.get_loading(c)
         # calculate entropy of each variable
-        loading_entropy = abs(loadings).apply(entropy, 1)
-        max_entropy = entropy([1/loadings.shape[1]]*loadings.shape[1])
+        loading_entropy = abs(loading).apply(entropy, 1)
+        max_entropy = entropy([1/loading.shape[1]]*loading.shape[1])
         return loading_entropy/max_entropy
     
     def get_null_loading_entropy(self, c, reps=50):
         assert c>1
         # get absolute loading
-        loadings = abs(self.results['factor_tree'][c])
-        max_entropy = entropy([1/loadings.shape[1]]*loadings.shape[1])
+        loading = abs(self.get_loading(c))
+        max_entropy = entropy([1/loading.shape[1]]*loading.shape[1])
         permuted_entropies = np.array([])
         for _ in range(reps):
             # shuffle matrix
-            for i, col in enumerate(loadings.values.T):
+            for i, col in enumerate(loading.values.T):
                 shuffle_vec = np.random.permutation(col)
-                loadings.iloc[:, i] = shuffle_vec
+                loading.iloc[:, i] = shuffle_vec
             # calculate entropy of each variable
-            loading_entropy = loadings.apply(entropy, 1)
+            loading_entropy = loading.apply(entropy, 1)
             permuted_entropies = np.append(permuted_entropies,
                                            (loading_entropy/max_entropy).values)
         return permuted_entropies
     
-    def run(self, rerun=False, verbose=False):
+    def run(self, loading_thresh=None, rerun=False, verbose=False):
         # check adequacy
         adequate, adequacy_stats = self.adequacy_test(verbose)
         assert adequate, "Data is not adequate for EFA!"
@@ -128,7 +132,11 @@ class EFA_Analysis:
                                                    (1,self.max_factors))
             self.results['factor_tree'] = ftree
             self.results['factor_tree_Rout'] = ftree_rout
-            
+        # optional threshold
+        if loading_thresh is not None:
+            for c, loading in self.results['factor_tree'].items():
+                thresh_loading = self.thresh_loading(loading, loading_thresh)
+                self.results['factor_tree'][c], rejected = thresh_loading
         # quantify lower nesting
         self.results['lower_nesting'] = quantify_lower_nesting(self.results['factor_tree'])
         
@@ -143,17 +151,7 @@ class EFA_Analysis:
         self.results['null_entropies'] = pd.DataFrame(null_entropies)
 
     def get_task_representations(self, tasks, c):
-        """Take a list of tasks and reconstructs factor scores"""
-        def get_attr(fa, attr):
-            try:
-                index = list(fa.names).index(attr)
-                val = list(fa.items())[index][1]
-                if len(val) == 1:
-                    val = val[0]
-                return np.matrix(val)
-            except ValueError:
-                print('Did not pass a valid attribute')
-            
+        """Take a list of tasks and reconstructs factor scores"""            
         fa_output = self.results['factor_tree_Rout'][c]
         output = {'weights': get_attr(fa_output, 'weights'),
                   'scores': get_attr(fa_output, 'scores')}
@@ -175,6 +173,11 @@ class EFA_Analysis:
             sum_explained[key[1]-1, key[0]-1] = (np.sum(adequately_explained/key[0]))
         return explained_scores, sum_explained
     
+    def thresh_loading(loading, threshold=.2):
+        over_thresh = loading.max(1)>threshold
+        rejected = loading.index[~over_thresh]
+        return loading.loc[over_thresh,:], rejected
+        
     def verify_factor_solution(self):
         fa, output = psychFA(self.data, 10)
         scores = output['scores'] # factor scores per subjects derived from psychFA
@@ -197,14 +200,53 @@ class HCA_Analysis():
     def cluster_data(self, data):
         output = hierarchical_cluster(data.T, 
                                       pdist_kws={'metric': self.dist_metric})
-        self.results['clustering_metric-%s_input-data' % self.metric_name] = output
+        self.results['clustering_input-data'] = output
         
     def cluster_EFA(self, EFA, c):
-        loadings = EFA.results['factor_tree'][c]
-        output = hierarchical_cluster(loadings, 
+        loading = EFA.get_loading(c)
+        output = hierarchical_cluster(loading, 
                                       pdist_kws={'metric': self.dist_metric})
-        self.results['clustering_metric-%s_input-EFA%s' % (self.metric_name, c)] = output
-
+        self.results['clustering_input-EFA%s' % c] = output
+        
+    def get_cluster_labels(self, inp='data'):
+        cluster = self.results['clustering_input-%s' % inp]
+        clustered_df = cluster['clustered_df']
+        labels = cluster['distance_df'].index
+        cluster_index = cluster['clustering']['labels']
+        cluster_labels = [[labels[i] for i,index in enumerate(cluster_index) \
+                           if index == j] for j in np.unique(cluster_index)]
+                    
+        return cluster_labels
+    
+    def build_graphs(self, inp, graph_data):
+        """ Build graphs from clusters from HCA analysis
+        Args:
+            inp: the input label used for the hierarchical analysis
+            graph_data: the data to subset based on the clusters found using
+                inp. This data will be passed to a graph analysis. E.G, 
+                graph_data can be the original data matrix or a EF embedding
+        """
+        cluster_labels = self.get_cluster_labels(inp)
+        graphs = []
+        for cluster in cluster_labels:
+            subset = graph_data.loc[:,cluster]
+            cor = get_adj(subset, 'EBICglasso')
+            GA = Graph_Analysis()
+            GA.setup(adj = cor)
+            GA.calculate_centrality()
+            graphs.append(GA)
+        return graphs
+    
+    def get_cluster_loading(self, EFA, inp, c):
+        cluster_labels = self.get_cluster_labels(inp)
+        cluster_loadings = []
+        for cluster in cluster_labels:
+            subset = abs(EFA.get_loading(c).loc[cluster,:])
+            cluster_vec = subset.mean(0)
+            cluster_loadings.append((cluster, cluster_vec))
+        return cluster_loadings
+            
+            
     def run(self, data, EFA, rerun=True, verbose=False):
         if ('clustering_metric-%s_input-data' % self.metric_name in 
             self.results.keys()) or (rerun==True):
@@ -213,10 +255,19 @@ class HCA_Analysis():
         if verbose: print("Clustering EFA")
         for c in EFA.get_metric_cs().values():
             self.cluster_EFA(EFA, c)
+        # run graph analysis
+        for name, cluster in self.results.items():
+            inp = name.split('-')[1]
+            graphs = self.build_graphs(inp, data)
+            self.results[name]['graphs'] = graphs
+        
+
 
 class Results(EFA_Analysis, HCA_Analysis):
     """ Class to hold olutput of EFA, HCA and graph analyses """
-    def __init__(self, datafile, dist_metric=distcorr):
+    def __init__(self, datafile, 
+                 loading_thresh=None,
+                 dist_metric=distcorr,):
         """
         Args:
             dist_metric: distance metric for hierarchical clustering that is 
@@ -233,8 +284,9 @@ class Results(EFA_Analysis, HCA_Analysis):
         makedirs(self.plot_file, exist_ok = True)
         makedirs(self.output_file, exist_ok = True)
         # set vars
+        self.loading_thresh = None
         self.dist_metric = dist_metric
-        
+        self.ID =  random.getrandbits(16)
         # initialize analysis classes
         self.EFA = EFA_Analysis(self.data, self.data_no_impute)
         self.HCA = HCA_Analysis(dist_metric=self.dist_metric)
@@ -244,7 +296,7 @@ class Results(EFA_Analysis, HCA_Analysis):
             print('*'*79)
             print('Running EFA')
             print('*'*79)
-        self.EFA.run(rerun=rerun, verbose=verbose)
+        self.EFA.run(self.loading_thresh, rerun=rerun, verbose=verbose)
 
     def run_HCA_analysis(self, verbose=False):
         if verbose:
@@ -253,6 +305,14 @@ class Results(EFA_Analysis, HCA_Analysis):
             print('*'*79)
         self.HCA.run(self.data, self.EFA, verbose=verbose)
     
+    def set_EFA(self, EFA):
+        """ replace current EFA object with another """
+        self.EFA = EFA
+        
+    def set_HCA(self, HCA):
+        """ replace current EFA object with another """
+        self.HCA = HCA
+        
     # Bootstrap Functions
     def gen_resample_data(self):
         return self.data.sample(self.data.shape[0], replace=True)
@@ -298,7 +358,7 @@ class Results(EFA_Analysis, HCA_Analysis):
         EFA = boot_run['EFA']
         HCA = boot_run['HCA']
         cs = EFA.get_metric_cs()
-        factors = {i: EFA.results['factor_tree'][i] for i in cs.values()}
+        factors = {i: EFA.get_loading(c) for i in cs.values()}
         results = {}
         results['metric_cs'] = cs
         results['factor_solutions'] = factors

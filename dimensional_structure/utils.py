@@ -116,7 +116,8 @@ def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None,
     link = linkage(dist_vec, method='ward')    
     #dendrogram
     row_dendr = dendrogram(link, labels=df.index, no_plot = True)
-    rowclust_df = dist_df.iloc[row_dendr['leaves'],row_dendr['leaves']]
+    reorder_vec = row_dendr['leaves']
+    rowclust_df = dist_df.iloc[reorder_vec, reorder_vec]
     # clustering
     if cluster_kws is None:
         cluster_kws = {'minClusterSize': 1}
@@ -126,9 +127,10 @@ def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None,
             plot_kws = {}
         dendroheatmap(link, dist_df, clustering['labels'], **plot_kws)
         
-    return {'distance_df': dist_df, 
-            'linkage': link, 
+    return {'linkage': link, 
+            'distance_df': dist_df, 
             'clustered_df': rowclust_df,
+            'reorder_vec': reorder_vec,
             'clustering': clustering}
     
 # ****************************************************************************
