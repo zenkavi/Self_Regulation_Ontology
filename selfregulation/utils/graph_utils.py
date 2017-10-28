@@ -1,7 +1,6 @@
 import bct
 import igraph
 from itertools import combinations 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from pprint import pprint
@@ -201,13 +200,6 @@ Created on Sun Dec 11 22:40:47 2016
 
 @author: ian
 """
-import bct
-import igraph
-import numpy as np
-import pandas as pd
-from pprint import pprint
-import seaborn as sns
-
 
 class Graph_Analysis(object):
     def __init__(self):
@@ -265,6 +257,8 @@ class Graph_Analysis(object):
         self.node_order = list(range(graph_mat.shape[0]))
             
     def calculate_communities(self, reorder=False, **kwargs):
+        assert self.community_alg is not None, \
+            print("Community algorithm has not been set!")
         G = self.G
         graph_mat = self.graph_mat
         # calculate community structure
@@ -281,17 +275,19 @@ class Graph_Analysis(object):
             G.vs['part_coef_neg'] = participation_neg
         else:
             G.vs['part_coef'] = bct.participation_coef(graph_mat, comm)
-        
-        if self.weight:
-            G.vs['eigen_centrality'] = G.eigenvector_centrality(directed = False, weights = G.es['weight'])
-        else:
-            G.vs['eigen_centrality'] = G.eigenvector_centrality(directed = False)
         if reorder:
             self.reorder()
         # calculate subgraph (within-community) characteristics
         self._subgraph_analysis()
         return mod
     
+    def calculate_centrality(self):
+        G = self.G
+        if self.weight:
+            G.vs['eigen_centrality'] = G.eigenvector_centrality(directed = False, weights = G.es['weight'], scale=False)
+        else:
+            G.vs['eigen_centrality'] = G.eigenvector_centrality(directed = False)
+            
     def create_visual_style(self, G, layout='kk', layout_graph = None, vertex_size = None, size = 1000, labels = None):
         """
         Creates an appropriate visual style for a graph. 
@@ -497,8 +493,11 @@ class Graph_Analysis(object):
                 layout_graph = igraph.Graph.Weighted_Adjacency(plot_adj.values.tolist(), mode = 'undirected')
         if labels=='auto':
             labels = self.G.vs['id']
-        self.visual_style = self.create_visual_style(self.G, layout = layout, layout_graph = layout_graph, vertex_size = 'eigen_centrality', labels = labels,
-                                        size = size)
+        self.visual_style = self.create_visual_style(self.G, layout = layout, 
+                                                     layout_graph = layout_graph, 
+                                                     vertex_size = 'eigen_centrality', 
+                                                     labels = labels,
+                                                     size = size)
   
     def _graph_to_matrix(self, G):
         if 'weight' in G.es.attribute_names():
