@@ -130,7 +130,10 @@ if __name__=='__main__':
     bp.load_behav_data('task')
     task_tags={'discounting':['discount'],
                 'stopping':['stop_signal','nogo'],
-                'intelligence':['raven','cognitive_reflection']}
+                'intelligence':['raven','cognitive_reflection'],
+                'drift':['hddm_drift'],
+                'thresh':['hddm_thresh'],
+                'nondecision':['hddm_nondecision']}
     add_varsets(bp,task_tags)
 
     bp.load_behav_data('survey')
