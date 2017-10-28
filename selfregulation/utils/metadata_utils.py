@@ -1,7 +1,7 @@
 """
 utilities for fixing metadata
 """
-import os,json
+import os,json,sys
 
 from selfregulation.utils.utils import get_info
 

@@ -28,9 +28,8 @@ except:
 
 from cleanup_item_dist import cleanup_item_dist,get_respdist
 
-sys.path.append('../utils')
 
-from utils import get_info,get_behav_data
+from selfregulation.utils.utils import get_info,get_behav_data
 basedir=get_info('base_directory')
 #dataset=get_info('dataset')
 if usefull:

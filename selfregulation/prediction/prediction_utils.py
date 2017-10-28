@@ -1,9 +1,12 @@
 # prediction_utils
 
+
+
 import pandas,numpy
 
 import rpy2.robjects as robjects
-import pandas.rpy.common as com
+#import pandas.rpy.common as com
+
 from rpy2.robjects.packages import importr
 from rpy2.robjects import pandas2ri
 pandas2ri.activate()
@@ -15,13 +18,19 @@ mpath=importr('mpath')
 # create a class that implements prediction using functions from R
 
 class RModel:
-    def __init__(self,modeltype,verbose=True,ncores=2):
+    def __init__(self,modeltype,verbose=True,ncores=2,nlambda=100,
+                lambda_preset=None):
         self.modeltype=modeltype
         assert self.modeltype in ['NB', 'ZINB', 'ZIpoisson', 'poisson']
         self.verbose=verbose
         self.model=None
         self.coef_=None
         self.ncores=ncores
+        self.nlambda=nlambda
+        self.lambda_preset=lambda_preset
+        if self.lambda_preset is not None:
+            print('using preset lambdas:',self.lambda_preset)
+        self.lambda_optim=[]
 
     def fit(self,X,Y):
         self._fit_glmreg(X,Y)
@@ -39,26 +48,29 @@ class RModel:
         data=X.copy()
         #data['y']=Y
         if self.modeltype=='poisson':
-            robjects.globalenv['df']=com.convert_to_r_matrix(data)
-            robjects.globalenv['y']=com.convert_to_r_matrix(Y)
-            self.model=mpath.cv_glmreg(base.as_symbol('df'),base.as_symbol('y'),
-                                    family = 'poisson')
-            fit=self.model[self.model.names.index('fit')]
-            self.lambda_which=numpy.array(self.model[self.model.names.index('lambda.which')])[0]
-            self.coef_=numpy.array(fit[fit.names.index('beta')])[:,self.lambda_which-1]
-        elif self.modeltype=='NB':
-            data['y']=Y.copy()
-            robjects.globalenv['df']=com.convert_to_r_dataframe(data)
-            self.model=mpath.cv_glmregNB('y~.',base.as_symbol('df'),
-                                n_cores=self.ncores,plot_it=False)
-            fit=self.model[self.model.names.index('fit')]
-            self.lambda_which=numpy.array(self.model[self.model.names.index('lambda.which')])[0]
-            self.coef_=numpy.array(fit[fit.names.index('beta')])[:,self.lambda_which-1]
+            robjects.globalenv['df']=pandas2ri.py2ri(data)
+            robjects.r('df=data.matrix(df)')
+            robjects.globalenv['y']=pandas2ri.py2ri(Y)
+            robjects.r('y=data.matrix(y)')
+            if self.lambda_preset is not None:
+                robjects.r('fit=glmreg(df,y,family="poisson",lambda=%f)'%self.lambda_preset[0])
+                fit=robjects.r('fit')
+                self.model=fit
+                robjects.r('coef_=coef(fit)')
+                self.coef_=numpy.array(robjects.r('coef_'))[1:]
+
+            else:
+                self.model=mpath.cv_glmreg(base.as_symbol('df'),base.as_symbol('y'),
+                                        family = 'poisson')
+                fit=self.model[self.model.names.index('fit')]
+                self.lambda_which=numpy.array(self.model[self.model.names.index('lambda.which')])[0]
+                self.coef_=numpy.array(fit[fit.names.index('beta')])[:,self.lambda_which-1]
+                self.lambda_optim=numpy.array(self.model[self.model.names.index('lambda.optim')])
 
         elif self.modeltype=='ZINB' or self.modeltype=='ZIpoisson' :
             #data['y']=Y.copy()
-            robjects.globalenv['df']=com.convert_to_r_dataframe(data)
-            robjects.globalenv['y']=com.convert_to_r_dataframe(Y)
+            robjects.globalenv['df']=pandas2ri.py2ri(data)
+            robjects.globalenv['y']=pandas2ri.py2ri(Y)
             robjects.r('df$y=y$X0')
             if self.modeltype=='ZINB':
                 family='negbin'
@@ -66,12 +78,25 @@ class RModel:
                 family='poisson'
             # this is a kludge because I couldn't get it to work using the
             # standard interface to cv_zipath
-            robjects.r('fit=cv.zipath(y~.|.,df,family="%s",plot.it=FALSE,n.cores=%d)'%(family,self.ncores))
-            self.model=robjects.r('fit')
-            fit=self.model[self.model.names.index('fit')]
-            self.lambda_which=numpy.array(self.model[self.model.names.index('lambda.which')])[0]
+            if self.lambda_preset is not None:
+                robjects.r('fit=zipath(y~.|.,df,family="%s",penalty="enet",lambda.count=%f,lambda.zero=%f)'%(family,
+                                self.lambda_preset[0],self.lambda_preset[1]))
+                fit=robjects.r('fit')
+                self.model=fit
+                robjects.r('coef_=coef(fit,model="count")')
+                self.coef_=numpy.array(robjects.r('coef_'))[1:]
+            else:
+                # use CV
+                robjects.r('fit=cv.zipath(y~.|.,df,family="%s",penalty="enet",plot.it=FALSE,nlambda=%d,n.cores=%d)'%(family,self.nlambda,self.ncores))
+
+                self.model=robjects.r('fit')
+                fit=self.model[self.model.names.index('fit')]
+            #self.lambdas=numpy.array(self.model[self.model.names.index('lambda')])
+            #if self.verbose:
+            #    print('model:',self.model)
+                self.lambda_optim.append(numpy.array(self.model[self.model.names.index('lambda.optim')]))
             # just get the count coefficients
-            robjects.r('coef_=coef(fit$fit,which=fit$lambda.which,model="count")')
+                robjects.r('coef_=coef(fit$fit,which=fit$lambda.which,model="count")')
             # drop the intercept term
             self.coef_=numpy.array(robjects.r('coef_'))[1:]
 
@@ -84,19 +109,26 @@ class RModel:
             newX=pandas.DataFrame(newX,columns=['V%d'%i for i in range(newX.shape[1])])
 
         if self.modeltype=='poisson':
-            robjects.globalenv['newX']=com.convert_to_r_matrix(newX)
-            pred=mpath.predict_glmreg(self.model[self.model.names.index('fit')],
-                                base.as_symbol('newX'),
-                                which=self.lambda_which)
-        elif self.modeltype=='NB':
-            robjects.globalenv['newX']=com.convert_to_r_dataframe(newX)
-            pred=mpath.predict_glmreg(self.model[self.model.names.index('fit')],
+            robjects.globalenv['newX']=pandas2ri.py2ri(newX)
+            robjects.r('newX=data.matrix(newX)')
+            if self.lambda_preset is not None:
+                # heuristic for whether we are using zipath()
+                robjects.r('pred=predict(fit,newX)')
+                pred=robjects.r('pred').squeeze()
+            else:
+                pred=mpath.predict_glmreg(self.model[self.model.names.index('fit')],
                                 base.as_symbol('newX'),
                                 which=self.lambda_which)
         elif self.modeltype=='ZINB' or self.modeltype=='ZIpoisson' :
-            robjects.globalenv['newX']=com.convert_to_r_dataframe(newX)
-            robjects.r('pred=predict(fit$fit,newX,which=fit$lambda.which)')
-            pred=robjects.r('pred')
+            robjects.globalenv['newX']=pandas2ri.py2ri(newX)
+            #robjects.r('newX=data.matrix(newX)')
+            if self.lambda_preset is not None:
+                # heuristic for whether we are using zipath()
+                robjects.r('pred=predict(fit,newX)')
+            else:
+                robjects.r('pred=predict(fit$fit,newX,which=fit$lambda.which)')
+            pred=robjects.r('pred').squeeze()
+
 
         return numpy.array(pred)
 
@@ -109,7 +141,7 @@ if __name__=='__main__':
     Yz[Yz<0]=0
     Y=pandas.DataFrame(numpy.floor(Yz))
 
-    for modeltype in [ 'poisson' ,'NB','ZINB', 'ZIpoisson']:
+    for modeltype in [ 'poisson' ,'ZINB', 'ZIpoisson']:
         rm=RModel(modeltype)
         rm.fit(X,Y)
         if not rm.model is None:
