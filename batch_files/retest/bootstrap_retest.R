@@ -66,6 +66,20 @@ get_spearman = function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_da
   return(rho)
 }
 
+get_pearson = function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_data, merge_var = 'sub_id', sample='full', sample_vec){
+
+  if(sample=='full'){
+    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var, format='wide')
+  }
+  else if(sample=='bootstrap'){
+    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var, format='wide', sample='bootstrap', sample_vec = sample_vec)
+  }
+
+  r = cor(df$`1`, df$`2`, method='pearson')
+
+  return(r)
+}
+
 get_icc <- function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_data, merge_var = 'sub_id', sample='full', sample_vec){
   if(sample=='full'){
     df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var, format='wide')
@@ -112,13 +126,16 @@ sample_workers = function(N = 150, repl= TRUE, df=retest_data, worker_col = "sub
   return(sample(df[,worker_col], N, replace = repl))
 }
 
-bootstrap_relialibility = function(metric = c('icc', 'spearman', 'eta_sq', 'sem'), dv_var){
+bootstrap_relialibility = function(metric = c('icc', 'spearman','pearson', 'eta_sq', 'sem'), dv_var){
   tmp_sample = sample_workers()
   out_df = data.frame(dv = dv_var)
   if('icc' %in% metric){
     out_df$icc = get_icc(dv_var, sample = 'bootstrap', sample_vec = tmp_sample)
   }
   if('spearman' %in% metric){
+    out_df$spearman = get_spearman(dv_var, sample = 'bootstrap', sample_vec = tmp_sample)
+  }
+  if('pearson' %in% metric){
     out_df$spearman = get_spearman(dv_var, sample = 'bootstrap', sample_vec = tmp_sample)
   }
   if('eta_sq' %in% metric){
