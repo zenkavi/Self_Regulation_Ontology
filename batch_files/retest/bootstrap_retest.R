@@ -147,8 +147,16 @@ bootstrap_relialibility = function(metric = c('icc', 'spearman','pearson', 'eta_
   return(out_df)
 }
 
-#save output
+# generate random seed
+cur_seed <- sample(1:2^15, 1)
+set.seed(cur_seed)
+
+# bootstrap given variable for given n times
 output_df = plyr::rdply(n, bootstrap_relialibility(dv_var = dv_name))
 
+# add seed info
+output_df$seed <- cur_seed
+
+# save output
 write.csv(output_df, paste0(output_dir, dv_name, '_output.csv'))
 
