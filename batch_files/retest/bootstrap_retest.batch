@@ -10,4 +10,4 @@
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-user=zenkavi@stanford.edu
 source /home/zenkavi/.bash_profile
-Rscript --vanilla bootstrap_retest.R /scratch/users/zenkavi/tmp/bootstrap/ /scratch/users/zenkavi/tmp/bootstrap/bootstrap_output/ 1000 {VAR_ID}
+Rscript --vanilla bootstrap_retest.R /scratch/users/zenkavi/tmp/bootstrap/ retest_subs_test_data.csv retest_data.csv /scratch/users/zenkavi/tmp/bootstrap/bootstrap_output/ 1000 {VAR_ID}
