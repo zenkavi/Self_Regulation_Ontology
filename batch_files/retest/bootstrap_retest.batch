@@ -1,0 +1,13 @@
+#!/bin/bash
+#SBATCH --job-name=bootstrap_retest_{VAR_ID}
+#SBATCH --output=/scratch/users/zenkavi/tmp/bootstrap/bootstrap_output/.out/bootstrap_retest_{VAR_ID}.job.out
+#SBATCH --error=/scratch/users/zenkavi/tmp/bootstrap/bootstrap_output/.err/bootstrap_retest_{VAR_ID}.job.err
+#SBATCH --time=40:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=16000
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=zenkavi@stanford.edu
+source /home/zenkavi/.bash_profile
+Rscript --vanilla bootstrap_retest.R /scratch/users/zenkavi/tmp/bootstrap/ /scratch/users/zenkavi/tmp/bootstrap/bootstrap_output/ 1000 {VAR_ID}
