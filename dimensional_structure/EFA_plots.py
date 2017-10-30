@@ -202,8 +202,8 @@ def plot_entropies(EFA, plot_dir=None):
 def plot_EFA(EFA, c, plot_dir=None, plot_generic=True, verbose=False):
     # plots that don't depend on c
     if plot_generic:
-        if verbose: print("Plotting BIC/SABIC")
-        plot_BIC_SABIC(EFA, plot_dir)
+        #if verbose: print("Plotting BIC/SABIC")
+        #plot_BIC_SABIC(EFA, plot_dir)
         if verbose: print("Plotting nesting")
         plot_nesting(EFA, plot_dir=plot_dir)
         if verbose: print("Plotting entropies")

@@ -266,14 +266,10 @@ class HCA_Analysis():
         if verbose: print("Clustering EFA")
         for c in EFA.get_metric_cs().values():
             self.cluster_EFA(EFA, c)
-        # run graph analysis
-        for name, cluster in self.results.items():
-            inp = name.split('-')[1]
-            graphs = self.build_graphs(inp, data)
-            self.results[name]['graphs'] = graphs
+        # run graph analysis on raw data
+        graphs = self.build_graphs('data', data)
+        self.results['clustering_input-data']['graphs'] = graphs
         
-
-
 class Results(EFA_Analysis, HCA_Analysis):
     """ Class to hold olutput of EFA, HCA and graph analyses """
     def __init__(self, datafile, 

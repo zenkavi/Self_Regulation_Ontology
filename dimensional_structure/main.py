@@ -1,8 +1,8 @@
 # imports
 import argparse
-from dimensional_structure.EFA_plots import plot_EFA
-from dimensional_structure.HCA_plots import plot_clusterings, visualize_loading
-from dimensional_structure.results import Results
+from EFA_plots import plot_EFA
+from HCA_plots import plot_clusterings, visualize_loading
+from results import Results
 from glob import glob
 from os import makedirs, path
 import pickle
@@ -43,6 +43,7 @@ results = pickle.load(open(result_file, 'rb'))
 # Bootstrap run
 # ****************************************************************************
 
+"""
 results.run_bootstrap(verbose=True, save_dir='/home/ian/tmp')
 
 import time
@@ -67,7 +68,8 @@ def eval_data_clusters(results, boot_results):
     
 def get_dimensionality_estimates(boot_results):
     return [i['metric_cs'] for i in boot_results]
-        
+"""
+   
 # ****************************************************************************
 # Plotting
 # ****************************************************************************
@@ -77,6 +79,7 @@ makedirs(EFA_plot_dir, exist_ok = True)
 makedirs(HCA_plot_dir, exist_ok = True)
 
 # Plot EFA
+print("Plotting EFA")
 for i, c in enumerate(results.EFA.get_metric_cs().values()):
     if i==0:
         plot_EFA(results.EFA, c, EFA_plot_dir, verbose=True)
@@ -85,6 +88,7 @@ for i, c in enumerate(results.EFA.get_metric_cs().values()):
                  verbose=True, plot_generic=False)
     
 # Plot HCA
+print("Plotting HCA")
 plot_clusterings(results.HCA, HCA_plot_dir, verbose=False)
 for c in results.EFA.get_metric_cs().values():
     for metric in ['abs_correlation', 'euclidean']:

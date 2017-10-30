@@ -1,6 +1,6 @@
 # imports
 import argparse
-from dimensional_structure.utils import abs_pdist, save_figure, set_seed
+from utils import abs_pdist, save_figure, set_seed
 from itertools import combinations
 import matplotlib.pyplot as plt
 import numpy as np
@@ -49,9 +49,20 @@ def plot_clusterings(HCA, plot_dir=None, verbose=False):
     cluster_similarity = pd.DataFrame(cluster_similarity, 
                                      index=names,
                                      columns=names)
+    
+    distance_similarity = np.zeros((len(clusterings), len(clusterings)))
+    distance_similarity = pd.DataFrame(distance_similarity, 
+                                     index=names,
+                                     columns=names)
     for clustering1, clustering2 in combinations(clusterings, 2):
         name1 = clustering1[0].split('-')[-1]
         name2 = clustering2[0].split('-')[-1]
+        # record similarity of distance_df
+        dist_corr = np.corrcoef(squareform(clustering1[1]['distance_df']),
+                                squareform(clustering2[1]['distance_df']))[1,0]
+        distance_similarity.loc[name1, name2] = dist_corr
+        distance_similarity.loc[name2, name1] = dist_corr
+        # record similarity of clustering of dendrogram
         clusters1 = clustering1[1]['clustering']['labels']
         clusters2 = clustering2[1]['clustering']['labels']
         rand_score = adjusted_rand_score(clusters1, clusters2)
@@ -60,14 +71,22 @@ def plot_clusterings(HCA, plot_dir=None, verbose=False):
         cluster_similarity.loc[name2, name1] = MI_score
     
     with sns.plotting_context(context='notebook', font_scale=1.4):
-        fig = plt.figure(figsize = (12,12))
+        clust_fig = plt.figure(figsize = (12,12))
         sns.heatmap(cluster_similarity, square=True)
         plt.title('Cluster Similarity: TRIL: Adjusted MI, TRIU: Adjusted Rand',
                   y=1.02)
         
+        dist_fig = plt.figure(figsize = (12,12))
+        sns.heatmap(distance_similarity, square=True)
+        plt.title('Distance Similarity, metric: %s' % HCA.dist_metric,
+                  y=1.02)
+        
     if plot_dir is not None:
-        save_figure(fig, path.join(plot_dir, 
-                                   'cluster_similarity_across_measures.pdf'),
+        save_figure(clust_fig, path.join(plot_dir, 
+                                   'cluster_similarity_across_measures.png'),
+                    {'bbox_inches': 'tight'})
+        save_figure(dist_fig, path.join(plot_dir, 
+                                   'distance_similarity_across_measures.png'),
                     {'bbox_inches': 'tight'})
     
     if verbose:

@@ -157,7 +157,11 @@ def construct_relational_tree(intersections, proportional=False):
             for j in range(target_length):
                 G.add_edge(i+layer_start,j+origin_length+layer_start,weight=intersection[i,j],color = curr_color)
         layer_start+=intersection.shape[0]
-    igraph.plot(G, layout = 'rt', **{'inline': False, 'vertex_label': range(len(G.vs)), 'edge_width':[w for w in G.es['weight']], 'edge_color': G.es['color'], 'bbox': (1000,1000)})
+    igraph.plot(G, layout = 'rt', **{'inline': False, 
+                                     'vertex_label': range(len(G.vs)), 
+                                     'edge_width':[w for w in G.es['weight']],
+                                     'edge_color': G.es['color'],
+                                     'bbox': (1000,1000)})
     #G.write_dot('test.dot')
 
 def find_intersection(community, reference):
@@ -288,7 +292,8 @@ class Graph_Analysis(object):
         else:
             G.vs['eigen_centrality'] = G.eigenvector_centrality(directed = False)
             
-    def create_visual_style(self, G, layout='kk', layout_graph = None, vertex_size = None, size = 1000, labels = None):
+    def create_visual_style(self, G, layout='kk', layout_graph = None, 
+                            vertex_size = None, size = 1000, labels = None):
         """
         Creates an appropriate visual style for a graph. 
         
