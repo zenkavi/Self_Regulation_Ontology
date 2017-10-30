@@ -1,7 +1,7 @@
 # imports
 import argparse
 from dimensional_structure.EFA_plots import plot_EFA
-from dimensional_structure.HCA_plots import plot_clusterings
+from dimensional_structure.HCA_plots import plot_clusterings, visualize_loading
 from dimensional_structure.results import Results
 from glob import glob
 from os import makedirs, path
@@ -85,4 +85,8 @@ for i, c in enumerate(results.EFA.get_metric_cs().values()):
                  verbose=True, plot_generic=False)
     
 # Plot HCA
-plot_clusterings(results.HCA, HCA_plot_dir, verbose=True)
+plot_clusterings(results.HCA, HCA_plot_dir, verbose=False)
+for c in results.EFA.get_metric_cs().values():
+    for metric in ['abs_correlation', 'euclidean']:
+        visualize_loading(results, c, HCA_plot_dir,
+                          dist_metric=metric)

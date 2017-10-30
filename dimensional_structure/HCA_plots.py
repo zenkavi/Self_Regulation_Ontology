@@ -1,17 +1,17 @@
 # imports
 import argparse
-from dimensional_structure.utils import  save_figure
+from dimensional_structure.utils import abs_pdist, save_figure, set_seed
 from itertools import combinations
 import matplotlib.pyplot as plt
 import numpy as np
 from os import path
 import pandas as pd
 import seaborn as sns
+from scipy.spatial.distance import pdist, squareform
 from selfregulation.utils.plot_utils import dendroheatmap
-from sklearn.decomposition import PCA
 from sklearn.manifold import MDS
 from sklearn.metrics import adjusted_mutual_info_score, adjusted_rand_score
-from sklearn.preprocessing import scale
+from sklearn.preprocessing import MinMaxScaler, scale
 
 import subprocess
 
@@ -32,12 +32,14 @@ def plot_clusterings(HCA, plot_dir=None, verbose=False):
     
     # plot dendrogram heatmaps
     for name, clustering in clusterings:
+        title = name.split('-')[1] + '_metric-' + HCA.dist_metric
         filename = None
         if plot_dir is not None:
             filename = path.join(plot_dir, '%s.png' % name)
         fig = dendroheatmap(clustering['linkage'], clustering['distance_df'], 
                             clustering['clustering']['labels'],
-                            figsize=(50,50),  filename = filename)
+                            figsize=(50,50), title=title,
+                            filename = filename)
     
     
     # plot cluster agreement across embedding spaces
@@ -76,19 +78,55 @@ def plot_clusterings(HCA, plot_dir=None, verbose=False):
         print('Correlation between measures of cluster consistency: %.2f' \
               % score_consistency)
         
+@set_seed(seed=15)
+def visualize_loading(results, c, plot_dir=None, 
+                      dist_metric='abs_correlation', **plot_kws):
+    """ visualize EFA loadings and compares to raw space """
+    def scale_plot(input_data, data_colors=None, cluster_colors=None,
+                   cluster_sizes=None, dissimilarity='euclidean', filey=None):
+        """ Plot MDS of data and clusters """
+        if data_colors is None:
+            data_colors = 'r'
+        if cluster_colors is None:
+            cluster_colors='b'
+        if cluster_sizes is None:
+            cluster_sizes = 2200
+            
+        # scale
+        mds = MDS(dissimilarity=dissimilarity)
+        mds_out = mds.fit_transform(input_data)
         
-def visualize_loading(results, c, plot_dir):
-    HCA = results.HCA=None
+        with sns.axes_style('white'):
+            f=plt.figure(figsize=(14,14))
+            plt.scatter(mds_out[n_clusters:,0], mds_out[n_clusters:,1], 
+                        s=75, color=data_colors)
+            plt.scatter(mds_out[:n_clusters,0], mds_out[:n_clusters,1], 
+                        marker='*', s=cluster_sizes, color=cluster_colors,
+                        edgecolor='black', linewidth=2)
+            # plot cluster number
+            offset = .011
+            font_dict = {'fontsize': 17, 'color':'white'}
+            for i,(x,y) in enumerate(mds_out[:n_clusters]):
+                if i<9:
+                    plt.text(x-offset,y-offset,i+1, font_dict)
+                else:
+                    plt.text(x-offset*2,y-offset,i+1, font_dict)
+            plt.title(path.basename(filey)[:-4], fontsize=20)
+        if filey is not None:
+            save_figure(f, filey)
+            
+    # set up variables
+    data = results.data
+    HCA = results.HCA
     EFA = results.EFA
-    c = 9
     
     cluster_loadings = HCA.get_cluster_loading(EFA, 'data', c)
     cluster_loadings_mat = np.vstack([i[1] for i in cluster_loadings])
     EFA_loading = abs(EFA.get_loading(c))
     EFA_loading_mat = EFA_loading.values
-    input_data = np.vstack([cluster_loadings_mat, EFA_loading_mat])
+    EFA_space = np.vstack([cluster_loadings_mat, EFA_loading_mat])
     
-    
+    # set up colors
     n_clusters = cluster_loadings_mat.shape[0]
     color_palette = sns.color_palette(palette='hls', n_colors=n_clusters)
     colors = []
@@ -97,34 +135,47 @@ def visualize_loading(results, c, plot_dir):
         index = [i for i,cluster in enumerate(cluster_loadings) \
                  if var in cluster[0]][0]
         colors.append(color_palette[index])
+    # set up cluster sizes proportional to number of members
+    n_members = np.reshape([len(i) for i,j in cluster_loadings], [-1,1])
+    scaler = MinMaxScaler()
+    relative_members = scaler.fit_transform(n_members).flatten()
+    sizes = 1500+2000*relative_members
+    
+    if dist_metric == 'abs_correlation':
+        EFA_space_distances = squareform(abs_pdist(EFA_space))
+    else: 
+        EFA_space_distances = squareform(pdist(EFA_space, dist_metric))
+    
+    # repeat the same thing as above but with raw distances
+    scaled_data = pd.DataFrame(scale(data).T,
+                               index=data.columns,
+                               columns=data.index)
+    clusters_raw = []
+    for labels, EFA_vec in cluster_loadings:
+        subset = scaled_data.loc[labels,:]
+        cluster_vec = subset.mean(0)
+        clusters_raw.append(cluster_vec)
+    raw_space = np.vstack([clusters_raw, scaled_data])
+    # turn raw space into distances
+    if dist_metric == 'abs_correlation':
+        raw_space_distances = squareform(abs_pdist(raw_space))
+    else:
+        raw_space_distances = squareform(pdist(raw_space, dist_metric))
+    
+    # plot distances
+    distances = {'EFA%s' % c: EFA_space_distances,
+                 'subj': raw_space_distances}
+    filey=None
+    for label, space in distances.items():
+        if plot_dir is not None:
+            filey = path.join(plot_dir, 
+                              'MDS_%s_metric-%s.png' % (label, dist_metric))
+        scale_plot(space, data_colors=colors,
+                   cluster_colors=color_palette,
+                   cluster_sizes=sizes,
+                   dissimilarity='precomputed',
+                   filey=filey)
         
-    
-    mds = MDS()
-    mds_out = mds.fit_transform(input_data)
-    
-    with sns.axes_style('white'):
-        f=plt.figure(figsize=(14,14))
-        plt.scatter(mds_out[n_clusters:,0], mds_out[n_clusters:,1], 
-                    s=50, color=colors)
-        plt.scatter(mds_out[:n_clusters,0], mds_out[:n_clusters,1], 
-                    marker='*', s=2200, color=color_palette)
-        # plot cluster number
-        offset = .011
-        font_dict = {'fontsize': 17, 'color':'white'}
-        for i,(x,y) in enumerate(mds_out[:n_clusters]):
-            if i<9:
-                plt.text(x-offset,y-offset,i+1, font_dict)
-            else:
-                plt.text(x-offset*2,y-offset,i+1, font_dict)
-    if plot_dir:
-        save_figure(f, path.join(plot_dir, 'MDS_factor_loadings'))
-    
-    # same plot as above but over the raw data
-    plt.figure(figsize=(12,12))
-    mds = MDS()
-    mds_out = mds.fit_transform(scale(results.data).T)
-    plt.scatter(mds_out[:,0], mds_out[:,1], 
-                    s=100, color=colors)
 
        
 """      

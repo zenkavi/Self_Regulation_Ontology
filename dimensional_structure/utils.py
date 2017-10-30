@@ -1,6 +1,7 @@
 from collections import OrderedDict as odict
 from dynamicTreeCut import cutreeHybrid
 import fancyimpute
+import functools
 from itertools import combinations
 from matplotlib import pyplot as plt
 import numpy as np
@@ -18,6 +19,18 @@ from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, scale
 
+def set_seed(seed):
+    def seeded_fun_decorator(fun):
+        @functools.wraps(fun)
+        def wrapper(*args, **kwargs):
+            np.random.seed(seed)
+            out = fun(*args, **kwargs)
+            np.random.seed()
+            return out
+        return wrapper
+    return seeded_fun_decorator
+    
+    
 class Imputer(object):
     """ Imputation class so that fancyimpute can be used with scikit pipeline"""
     def __init__(self, imputer=None):
@@ -32,7 +45,7 @@ class Imputer(object):
     
     def fit(self, X, y=None):
         return self
-    
+
 def distcorr(X, Y, flip=True):
     """ Compute the distance correlation function
     
@@ -67,7 +80,8 @@ def distcorr(X, Y, flip=True):
         dcor = 1-dcor
     return dcor
 
-def convert_to_abs_correlation(correlation_dist):
+def abs_pdist(mat):
+    correlation_dist = pdist(mat, metric='correlation')
     correlations = 1-correlation_dist
     absolute_distance = 1-abs(correlations)
     return absolute_distance
@@ -99,10 +113,8 @@ def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None,
         if pdist_kws is None:
             pdist_kws= {'metric': 'correlation'}
         if pdist_kws['metric'] == 'abscorrelation':
-            pdist_kws['metric'] = 'correlation'
-            dist_vec = pdist(df, **pdist_kws)
             # convert to absolute correlations
-            dist_vec = convert_to_abs_correlation(dist_vec)
+            dist_vec = abs_pdist(df)
         else:
             dist_vec = pdist(df, **pdist_kws)
         dist_df = pd.DataFrame(squareform(dist_vec), 

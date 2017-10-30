@@ -89,7 +89,7 @@ def DDM_plot(v,t,a, sigma = .1, n = 10, plot_n = 15, file = None):
 
 def dendroheatmap(link, dist_df, clusters=None,
                   label_fontsize=None, labels=True,
-                  figsize=None, filename=None):
+                  figsize=None, title=None, filename=None):
     """Take linkage and distance matrices and plot
     
     Args:
@@ -130,6 +130,8 @@ def dendroheatmap(link, dist_df, clusters=None,
                            color_threshold=-1,
                            above_threshold_color='gray') 
     ax1.invert_yaxis()
+    if title is not None:
+        ax.set_title(title, fontsize=20)
     
     # add parse lines between trees 
     if clusters is not None:

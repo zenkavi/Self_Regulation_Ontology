@@ -210,12 +210,23 @@ class HCA_Analysis():
         
     def get_cluster_labels(self, inp='data'):
         cluster = self.results['clustering_input-%s' % inp]
-        clustered_df = cluster['clustered_df']
-        labels = cluster['distance_df'].index
-        cluster_index = cluster['clustering']['labels']
-        cluster_labels = [[labels[i] for i,index in enumerate(cluster_index) \
-                           if index == j] for j in np.unique(cluster_index)]
-                    
+        labels = cluster['clustered_df'].index
+        reorder_vec = cluster['reorder_vec']
+        cluster_index = cluster['clustering']['labels'][reorder_vec]
+        # reindex so the clusters are in order based on their proximity
+        # in the dendrogram
+        cluster_reindex = []
+        last_group = 1
+        for i in cluster_index:
+            if len(cluster_reindex) == 0:
+                cluster_reindex.append(1)
+            elif i == last_group:
+                cluster_reindex.append(cluster_reindex[-1])
+            else:
+                cluster_reindex.append(cluster_reindex[-1]+1)
+            last_group = i
+        cluster_labels = [[labels[i] for i,index in enumerate(cluster_reindex) \
+                           if index == j] for j in np.unique(cluster_reindex)]
         return cluster_labels
     
     def build_graphs(self, inp, graph_data):
