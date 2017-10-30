@@ -133,7 +133,7 @@ if __name__=='__main__':
                 'intelligence':['raven','cognitive_reflection'],
                 'drift':['hddm_drift'],
                 'thresh':['hddm_thresh'],
-                'nondecision':['hddm_nondecision']}
+                'nondecision':['hddm_non_decision']}
     add_varsets(bp,task_tags)
 
     bp.load_behav_data('survey')
