@@ -152,8 +152,9 @@ if __name__=='__main__':
     bp.filter_by_icc(args.icc_threshold)
     bp.get_joint_datasets()
 
+
     if not args.singlevar:
-        vars_to_test=[v for v in bp.demogdata.columns if not v in bp.skip_vars]
+        vars_to_test=list(bp.demogdata.columns)
     else:
         vars_to_test=args.singlevar
 
