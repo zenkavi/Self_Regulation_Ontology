@@ -9,7 +9,7 @@ from selfregulation.utils.utils import get_info
 import selfregulation.prediction.behavpredict as behavpredict
 
 clf='lasso'
-data=pickle.load(open('singularity_analyses/%s_data.pkl'%clf,'rb'))
+data=pickle.load(open('singularity_analyses/wrangler/%s_data.pkl'%clf,'rb'))
 
 if not os.path.exists('R_exports_%s'%clf):
     os.mkdir('R_exports_%s'%clf)
@@ -105,4 +105,4 @@ for k in output_frames.keys():
     for v in feat_frames[k]:
         feat_frames[k][v].to_csv('R_exports_%s/features/%s_%s_features.csv'%(clf,k,v),index=False)
 
-pickle.dump((output_frames,feat_frames),open('%s_data_collapsed.pkl'%clf,'wb'))
+pickle.dump((output_frames,feat_frames),open('singularity_analyses/wrangler/%s_data_collapsed.pkl'%clf,'wb'))
