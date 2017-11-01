@@ -69,26 +69,26 @@ def get_behav_data(dataset=None, file=None, full_dataset=False, flip_valence=Fal
         valence_flip(data, flip_df)
     return data.sort_index()
 
-def get_info(item,infile=None):
-    """
-    get info from settings file
-    """
-    config=pkg_resources.resource_string('selfregulation',
-                        'data/Self_Regulation_Settings.txt')
-    config=str(config,'utf-8').strip()
-    infodict={}
+#def get_info(item,infile=None):
+#    """
+#    get info from settings file
+#    """
+#    config=pkg_resources.resource_string('selfregulation',
+#                        'data/Self_Regulation_Settings.txt')
+#    config=str(config,'utf-8').strip()
+#    infodict={}
 
-    for l in config.split('\n'):
-        if l.find('#')==0:
-            continue
-        l_s=l.rstrip('\n').split(':')
-        if len(l_s)>1:
-                infodict[l_s[0]]=l_s[1]
-    try:
-        assert item in infodict
-    except:
-        raise Exception('infodict does not include requested item')
-    return infodict[item]
+#    for l in config.split('\n'):
+#        if l.find('#')==0:
+#            continue
+#        l_s=l.rstrip('\n').split(':')
+#        if len(l_s)>1:
+#                infodict[l_s[0]]=l_s[1]
+#    try:
+#        assert item in infodict
+#    except:
+#        raise Exception('infodict does not include requested item')
+#    return infodict[item]
 
 def get_single_dataset(dataset,survey):
     basedir=get_info('base_directory')
