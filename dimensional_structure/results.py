@@ -258,7 +258,7 @@ class HCA_Analysis():
         return cluster_loadings
             
             
-    def run(self, data, EFA, rerun=True, verbose=False):
+    def run(self, data, EFA, run_graphs=False, rerun=True, verbose=False):
         if ('clustering_metric-%s_input-data' % self.metric_name in 
             self.results.keys()) or (rerun==True):
             if verbose: print("Clustering data")
@@ -266,9 +266,10 @@ class HCA_Analysis():
         if verbose: print("Clustering EFA")
         for c in EFA.get_metric_cs().values():
             self.cluster_EFA(EFA, c)
-        # run graph analysis on raw data
-        graphs = self.build_graphs('data', data)
-        self.results['clustering_input-data']['graphs'] = graphs
+        if run_graphs == True:
+            # run graph analysis on raw data
+            graphs = self.build_graphs('data', data)
+            self.results['clustering_input-data']['graphs'] = graphs
         
 class Results(EFA_Analysis, HCA_Analysis):
     """ Class to hold olutput of EFA, HCA and graph analyses """
@@ -310,7 +311,7 @@ class Results(EFA_Analysis, HCA_Analysis):
             print('*'*79)
             print('Running HCA')
             print('*'*79)
-        self.HCA.run(self.data, self.EFA, verbose=verbose)
+        self.HCA.run(self.data, self.EFA, run_graphs=True, verbose=verbose)
     
     def set_EFA(self, EFA):
         """ replace current EFA object with another """
@@ -328,7 +329,7 @@ class Results(EFA_Analysis, HCA_Analysis):
         if boot_data is None:
             boot_data = self.gen_resample_data()
         EFA_boot = EFA_Analysis(boot_data)
-        EFA_boot.run(verbose=verbose)
+        EFA_boot.run(self.loading_thresh, verbose=verbose)
         return EFA_boot
     
     def run_HCA_bootstrap(self, EFA, boot_data=None, verbose=False):
@@ -352,20 +353,12 @@ class Results(EFA_Analysis, HCA_Analysis):
                         open(path.join(save_dir, filename),'wb'))
         else:
             return boot_run
-    
-    def run_parallel_boot(self, reps, save_dir, run_HCA=True):
-        def bootstrap_wrapper(ignored):
-            self.run_bootstrap(save_dir=save_dir, run_HCA=run_HCA)
-        pool = Pool()
-        pool.map(bootstrap_wrapper, range(reps))
-        pool.close()
-        pool.join()
         
     def reduce_boot(self, boot_run):
         EFA = boot_run['EFA']
         HCA = boot_run['HCA']
         cs = EFA.get_metric_cs()
-        factors = {i: EFA.get_loading(c) for i in cs.values()}
+        factors = {i: EFA.get_loading(c) for i, c in cs.items()}
         results = {}
         results['metric_cs'] = cs
         results['factor_solutions'] = factors

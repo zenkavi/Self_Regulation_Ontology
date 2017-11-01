@@ -1,13 +1,13 @@
 # imports
 import argparse
 from EFA_plots import plot_EFA
-from HCA_plots import plot_clusterings, visualize_loading
+from HCA_plots import plot_clusterings, plot_dendrograms, visualize_loading
 from results import Results
 from glob import glob
-from os import makedirs, path
+from os import makedirs, path, remove
 import pickle
-
-
+from shutil import copyfile
+import time
 """
 # parse arguments
 parser = argparse.ArgumentParser()
@@ -18,18 +18,21 @@ args = parser.parse_args()
 rerun = args.rerun
 plot_on = not args.no_plot
 """
-
 # ****************************************************************************
 # Laad Data
 # ****************************************************************************
+start = time.time()
+
 datafile = 'Complete_10-08-2017'
 results = Results(datafile, dist_metric='abscorrelation')
 results.run_EFA_analysis(verbose=True)
 results.run_HCA_analysis(verbose=True)
 
+run_time = time.time()-start
 # ***************************** saving ****************************************
-pickle.dump(results, open(path.join(results.output_file, 
-                                    'results_ID-%s.pkl' % results.ID),'wb'))
+id_file = path.join(results.output_file,  'results_ID-%s.pkl' % results.ID)
+pickle.dump(results, open(id_file,'wb'))
+copyfile(id_file, path.join(results.output_file, 'results.pkl'))
 
 
 # ***************************** loading ****************************************
@@ -39,17 +42,22 @@ results = pickle.load(open(result_file, 'rb'))
 # add function to existing class
 # results.fun = fun.__get__(results)
 
+# *************************Aim 2 Task Choice**************************************
+EFA = results.EFA
+loadings = EFA.get_loading(EFA.get_metric_cs()['c_metric-BIC'])
+
+for task in ['stop_signal', 'kirby', 'stroop', 'threebytwo']:
+    print(task)
+
 # ****************************************************************************
 # Bootstrap run
 # ****************************************************************************
+start = time.time()
+for _ in range(10):
+    results.run_bootstrap(verbose=True, save_dir='/home/ian/tmp')
+boot_time = time.time()-start
 
 """
-results.run_bootstrap(verbose=True, save_dir='/home/ian/tmp')
-
-import time
-start = time.time()
-results.run_parallel_boot(100, save_dir='/home/ian/tmp')
-end = time.time()-start
 
 def eval_data_clusters(results, boot_results):
     orig_data_clusters = results.HCA.results['clustering_metric-abscorrelation_input-data']['clustering']['labels']
@@ -90,6 +98,7 @@ for i, c in enumerate(results.EFA.get_metric_cs().values()):
 # Plot HCA
 print("Plotting HCA")
 plot_clusterings(results.HCA, HCA_plot_dir, verbose=False)
+plot_dendrograms(results.HCA, HCA_plot_dir)
 for c in results.EFA.get_metric_cs().values():
     for metric in ['abs_correlation', 'euclidean']:
         visualize_loading(results, c, HCA_plot_dir,

@@ -404,9 +404,9 @@ class Graph_Analysis(object):
                 print('Communities not detected! Run calculate_communities() first!')
         if plot:
             assert self.visual_style!=None, 'Must first call set_visual_style() !'
-            if plot_options==None:
+            if plot_options is None:
                 plot_options = {}
-                self._plot_graph(**plot_options)
+            self._plot_graph(**plot_options)
                 
     def get_subgraph(self, community = 1):
         G = self.G

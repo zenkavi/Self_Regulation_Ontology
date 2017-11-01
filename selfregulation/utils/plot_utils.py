@@ -131,7 +131,7 @@ def dendroheatmap(link, dist_df, clusters=None,
                            above_threshold_color='gray') 
     ax1.invert_yaxis()
     if title is not None:
-        ax.set_title(title, fontsize=20)
+        ax.set_title(title, fontsize=40)
     
     # add parse lines between trees 
     if clusters is not None:

@@ -3,10 +3,12 @@ import argparse
 from utils import abs_pdist, save_figure, set_seed
 from itertools import combinations
 import matplotlib.pyplot as plt
+from matplotlib import patches
 import numpy as np
-from os import path
+from os import makedirs, path
 import pandas as pd
 import seaborn as sns
+from scipy.cluster.hierarchy import dendrogram
 from scipy.spatial.distance import pdist, squareform
 from selfregulation.utils.plot_utils import dendroheatmap
 from sklearn.manifold import MDS
@@ -96,7 +98,59 @@ def plot_clusterings(HCA, plot_dir=None, verbose=False):
         score_consistency = np.corrcoef(rand_scores, MI_scores)[0,1]
         print('Correlation between measures of cluster consistency: %.2f' \
               % score_consistency)
+
+def plot_dendrograms(HCA, plot_dir=None):
+    # get all clustering solutions
+    clusterings = [(k ,v) for k,v in 
+                    HCA.results.items() if 'clustering' in k]
+    for name, clustering in clusterings:
+        title = name.split('-')[1] + '_metric-' + HCA.dist_metric
+        # get cluster sizes
+        cluster_labels = HCA.get_cluster_labels(inp=name.split('-')[1])
+        cluster_sizes = [len(i) for i in cluster_labels]
+        # create dendrogram
+        link = clustering['linkage']
+        distance_df = clustering['distance_df']
+        out = dendrogram(link, labels=distance_df.columns, no_plot=True)
+        # plot dendrogram
+        color_palette = sns.color_palette(palette='hls', n_colors=2)
+        with sns.axes_style('white'):
+            f, ax = plt.subplots(1,1,figsize=(34,8))
+            out = dendrogram(link, labels=distance_df.columns, 
+                             color_threshold=-1,
+                             above_threshold_color='black')
+            # add background color to distinguish clusters
+            xlim = ax.get_xlim(); step = xlim[1]/len(distance_df)
+            ymin, ymax = ax.get_ylim()
+            begin = 0
+            for i, size in enumerate(cluster_sizes):
+                patch = patches.Rectangle((begin ,0), size*step, ymax,
+                                          color=color_palette[i%2],
+                                          alpha=.3)
+                ax.add_patch(patch)
+                begin+=size*step
+            ax.tick_params(axis='x', which='major', labelsize=12)
+            ax.invert_xaxis()
+            plt.title(title, fontsize=40)
+        if plot_dir is not None:
+            save_figure(f, path.join(plot_dir, 
+                                             '%s_dendrogram.png' % name),
+                        {'bbox_inches': 'tight'})
         
+def plot_graphs(HCA_graphs, plot_dir=None):
+    if plot_dir is not None:
+        makedirs(path.join(plot_dir, 'graphs'))
+    plot_options = {'inline': False,  'target': None}
+    for i, GA in enumerate(HCA_graphs):
+        if plot_dir is not None:
+            plot_options['target'] = path.join(plot_dir, 
+                                                'graphs', 
+                                                'graph%s.png' % i)
+        GA.set_visual_style()
+        GA.display(plot_options)
+    
+    
+    
 @set_seed(seed=15)
 def visualize_loading(results, c, plot_dir=None, 
                       dist_metric='abs_correlation', **plot_kws):
