@@ -14,7 +14,7 @@ except NameError:
     release_date = input('Enter release_ date:')
     
 
-data_dir = data_dir=path.join('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Data/','Retest_'+release_date)
+data_dir=path.join('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Data/','Retest_'+release_date)
 
 #Read in DVs and valence
 label = 'retest'

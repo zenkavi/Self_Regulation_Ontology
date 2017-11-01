@@ -96,6 +96,22 @@ get_icc <- function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_data, 
   return(icc_3k)
 }
 
+get_var_breakdown <- function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_data, merge_var = 'sub_id', sample='full', sample_vec){
+  if(sample=='full'){
+    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var, format='wide')
+  }
+  else if(sample=='bootstrap'){
+    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var, format='wide', sample='bootstrap', sample_vec = sample_vec)
+  }
+  
+  df = df %>% select(-dv, -sub_id)
+  icc = ICC(df)
+  var_breakdown = data.frame(subs = icc$summary[[1]][1,'Mean Sq'],
+                             ind = icc$summary[[1]][2,'Mean Sq'],
+                             resid = icc$summary[[1]][3,'Mean Sq'])
+  return(var_breakdown)
+  }
+
 get_eta <- function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_data, merge_var = 'sub_id', sample='full', sample_vec){
   if(sample=='full'){
     df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var)
@@ -128,7 +144,7 @@ sample_workers = function(N = 150, repl= TRUE, df=retest_data, worker_col = "sub
   return(sample(df[,worker_col], N, replace = repl))
 }
 
-bootstrap_relialibility = function(metric = c('icc', 'spearman','pearson', 'eta_sq', 'sem'), dv_var){
+bootstrap_relialibility = function(metric = c('icc', 'spearman','pearson', 'eta_sq', 'sem', 'var_breakdown'), dv_var){
   tmp_sample = sample_workers()
   out_df = data.frame(dv = dv_var)
   if('icc' %in% metric){
@@ -145,6 +161,15 @@ bootstrap_relialibility = function(metric = c('icc', 'spearman','pearson', 'eta_
   }
   if('sem' %in% metric){
     out_df$sem = get_sem(dv_var, sample = 'bootstrap', sample_vec = tmp_sample)
+  }
+  if('var_breakdown' %in% metric){
+    out_df$var_subs = get_var_breakdown(dv_var, sample = 'bootstrap', sample_vec = tmp_sample)$subs
+  }
+  if('var_breakdown' %in% metric){
+    out_df$var_ind = get_var_breakdown(dv_var, sample = 'bootstrap', sample_vec = tmp_sample)$ind
+  }
+  if('var_breakdown' %in% metric){
+    out_df$var_resid = get_var_breakdown(dv_var, sample = 'bootstrap', sample_vec = tmp_sample)$resid
   }
   return(out_df)
 }
