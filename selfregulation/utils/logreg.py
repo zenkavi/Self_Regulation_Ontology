@@ -12,7 +12,7 @@ class LogReg:
         X=add_constant(X)
         self.lr=Logit(y,X)
         self.l_fitted=self.lr.fit()
-        self.coef_=self.l_fitted.params.values[:-1]
+        self.coef_=self.l_fitted.params[:-1]
 
     def predict(self,X):
         if self.coef_ is None:
