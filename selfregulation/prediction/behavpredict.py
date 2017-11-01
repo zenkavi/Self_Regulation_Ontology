@@ -177,6 +177,11 @@ class BehavPredict:
                 del self.demogdata[v]
                 if self.verbose:
                     print('dropping categorical variable:',v)
+        if len(self.skip_vars)>0:
+            for v in self.skip_vars:
+                del self.demogdata[v]
+                if self.verbose:
+                    print('dropping skipped variable:',v)
 
 
     def get_demogdata_vartypes(self):
