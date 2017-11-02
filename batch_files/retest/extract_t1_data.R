@@ -20,6 +20,6 @@ retest_workers = c('s198', 's409', 's473', 's286', 's017', 's092', 's403', 's103
 
 retest_t1_data <- full_t1_data[as.character(full_t1_data$X) %in% retest_workers,]
 
-names(retest_t1_data) <- <- gsub('_mturk', '', names(retest_t1_data))
+names(retest_t1_data) <- gsub('_mturk', '', names(retest_t1_data))
 
 write.csv(retest_t1_data, paste0(out_dir, dataset), row.names = F)
