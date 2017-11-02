@@ -11,4 +11,5 @@
 #SBATCH --mail-user=zenkavi@stanford.edu
 source /home/users/zenkavi/.bash_profile
 source activate SRO
-python complete_save_data_pre.py
+cd /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology
+python data_preparation/retest/complete_save_data_pre.py
