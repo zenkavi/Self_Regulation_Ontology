@@ -4,7 +4,7 @@ sys.path.append('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ont
 import numpy as np
 from os import path, makedirs, chdir
 import pandas as pd
-
+chdir('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology')
 from selfregulation.utils.data_preparation_utils import save_task_data
 from expanalysis.experiments.processing import extract_experiment
 from process_demographics import process_demographics
