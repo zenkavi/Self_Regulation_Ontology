@@ -12,6 +12,13 @@ release_date = '10-27-2017'
 
 data_dir = '/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Complete_10-27-2017'
 
+meta_dir = path.join(data_dir,'metadata')
+reference_dir = path.join(data_dir,'references')
+if not path.exists(meta_dir):
+    makedirs(meta_dir)
+if not path.exists(reference_dir):
+    makedirs(reference_dir)
+
 #Read in DVs and valence
 label = 'complete'
 DV_df = pd.read_json(path.join(data_dir,'Local/mturk_' + label + '_DV.json'))
