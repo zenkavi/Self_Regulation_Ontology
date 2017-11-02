@@ -2,7 +2,7 @@ import sys
 sys.path.append('/oak/stanford/groups/russpold/users/zenkavi/expfactory-analysis')
 sys.path.append('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/data_preparation')
 import numpy as np
-from os import path
+from os import path, chdir
 import pandas as pd
 from glob import glob
 from selfregulation.utils.data_preparation_utils import convert_var_names, drop_failed_QC_vars, drop_vars
@@ -164,7 +164,7 @@ selected_variables_reference.loc[task_selection_data.columns].to_csv(path.join(r
 
 files = glob(path.join(data_dir,'*csv'))
 files = [f for f in files if not any(i in f for i in ['demographic','health','alcohol_drug'])]
-cd '/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/data_preparation'
+chdir('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/data_preparation')
 for f in files:
     name = f.split('/')[-1]
     df = pd.DataFrame.from_csv(f)
