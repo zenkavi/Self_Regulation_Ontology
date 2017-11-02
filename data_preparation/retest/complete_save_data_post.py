@@ -2,7 +2,7 @@ import sys
 sys.path.append('/oak/stanford/groups/russpold/users/zenkavi/expfactory-analysis')
 sys.path.append('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/data_preparation')
 import numpy as np
-from os import path, chdir
+from os import path, chdir, makedirs
 import pandas as pd
 from glob import glob
 from selfregulation.utils.data_preparation_utils import convert_var_names, drop_failed_QC_vars, drop_vars, remove_correlated_task_variables, remove_outliers, transform_remove_skew
