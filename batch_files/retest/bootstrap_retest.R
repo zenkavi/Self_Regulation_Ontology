@@ -26,6 +26,9 @@ library(psych)
 retest_subs_test_data <- read.csv(paste0(data_dir, 't1_data/',df_name))
 retest_data <- read.csv(paste0(data_dir, df_name))
 
+names(retest_subs_test_data)[which(names(retest_subs_test_data) == "X")] <- "sub_id"
+names(retest_data)[which(names(retest_data) == "X")] <- "sub_id"
+
 #bootstrap 1000 times
 
 match_t1_t2 <- function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_data, merge_var = 'sub_id', format = "long", sample = 'full', sample_vec){
@@ -178,7 +181,7 @@ cur_seed <- sample(1:2^15, 1)
 set.seed(cur_seed)
 
 # bootstrap given variable for given n times
-output_df = plyr::rdply(n, bootstrap_relialibility(dv_var = dv_name, worker_col= "X"))
+output_df = plyr::rdply(n, bootstrap_relialibility(dv_var = dv_name))
 
 # add seed info
 output_df$seed <- cur_seed
