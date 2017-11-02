@@ -6,7 +6,7 @@ args = commandArgs(trailingOnly=TRUE)
 
 #test if all arguments are supplied
 # test if there is at least one argument: if not, return an error
-if (length(args)<3) {
+if (length(args)<2) {
   stop("Arguments are missing. Usage: Rscript --vanilla extract_t1_data.R in_dir out_dir dataset", call.=FALSE)
 } 
 
