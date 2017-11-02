@@ -5,7 +5,7 @@ import numpy as np
 from os import path, chdir
 import pandas as pd
 from glob import glob
-from selfregulation.utils.data_preparation_utils import convert_var_names, drop_failed_QC_vars, drop_vars
+from selfregulation.utils.data_preparation_utils import convert_var_names, drop_failed_QC_vars, drop_vars, remove_correlated_task_variables, remove_outliers, transform_remove_skew
 from selfregulation.utils.r_to_py_utils import missForest
 
 release_date = '10-27-2017'
