@@ -23,8 +23,8 @@ library(psych)
 
 
 #load data
-retest_subs_test_data <- read.csv(paste0(data_dir, 't1_data',t1_df_name))
-retest_data <- read.csv(paste0(data_dir, t2_df_name))
+retest_subs_test_data <- read.csv(paste0(data_dir, 't1_data',df_name))
+retest_data <- read.csv(paste0(data_dir, df_name))
 
 #bootstrap 1000 times
 
