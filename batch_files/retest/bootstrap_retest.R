@@ -143,8 +143,8 @@ sample_workers = function(N = 150, repl= TRUE, df=retest_data, worker_col = "sub
   return(sample(df[,worker_col], N, replace = repl))
 }
 
-bootstrap_relialibility = function(metric = c('icc', 'spearman','pearson', 'eta_sq', 'sem', 'var_breakdown'), dv_var){
-  tmp_sample = sample_workers()
+bootstrap_relialibility = function(metric = c('icc', 'spearman','pearson', 'eta_sq', 'sem', 'var_breakdown'), dv_var, worker_col="sub_id"){
+  tmp_sample = sample_workers(worker_col = worker_col)
   out_df = data.frame(dv = dv_var)
   if('icc' %in% metric){
     out_df$icc = get_icc(dv_var, sample = 'bootstrap', sample_vec = tmp_sample)
@@ -178,7 +178,7 @@ cur_seed <- sample(1:2^15, 1)
 set.seed(cur_seed)
 
 # bootstrap given variable for given n times
-output_df = plyr::rdply(n, bootstrap_relialibility(dv_var = dv_name))
+output_df = plyr::rdply(n, bootstrap_relialibility(dv_var = dv_name, worker_col= "X"))
 
 # add seed info
 output_df$seed <- cur_seed
