@@ -9,9 +9,9 @@ from selfregulation.utils.utils import get_info
                                   # to keep log files from overflowing
 
 nruns=10
-dataset='Discovery_9-26-16'
-#basedir=get_info('base_directory')
-#derived_dir=os.path.join(basedir,'Data/Derived_Data/%s'%dataset)
+dataset='Complete_10-27-2017'
+basedir=get_info('base_directory')
+derived_dir=os.path.join(basedir,'Data/Complete_Data/%s'%dataset)
 
 
 outdir=os.path.join(derived_dir,'metadata')
