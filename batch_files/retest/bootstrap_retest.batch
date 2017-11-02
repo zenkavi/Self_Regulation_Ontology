@@ -10,4 +10,4 @@
 # #SBATCH --mail-type=FAIL
 #SBATCH --mail-user=zenkavi@stanford.edu
 source activate SRO
-Rscript --vanilla bootstrap_retest.R /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_09-27-2017/ variables_exhaustive_t1.csv variables_exhaustive.csv /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_09-27-2017/batch_output/bootstrap_output/ 1000 {VAR_ID}
+Rscript --vanilla bootstrap_retest.R /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_09-27-2017/ variables_exhaustive.csv /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_09-27-2017/batch_output/bootstrap_output/ 1000 {VAR_ID}
