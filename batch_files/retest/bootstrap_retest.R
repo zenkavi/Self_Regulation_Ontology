@@ -147,28 +147,28 @@ bootstrap_relialibility = function(metric = c('icc', 'spearman','pearson', 'eta_
   tmp_sample = sample_workers(worker_col = worker_col)
   out_df = data.frame(dv = dv_var)
   if('icc' %in% metric){
-    out_df$icc = get_icc(dv_var, sample = 'bootstrap', sample_vec = tmp_sample)
+    out_df$icc = get_icc(dv_var, sample = 'bootstrap', sample_vec = tmp_sample, merge_var = worker_col)
   }
   if('spearman' %in% metric){
-    out_df$spearman = get_spearman(dv_var, sample = 'bootstrap', sample_vec = tmp_sample)
+    out_df$spearman = get_spearman(dv_var, sample = 'bootstrap', sample_vec = tmp_sample, merge_var = worker_col)
   }
   if('pearson' %in% metric){
-    out_df$spearman = get_spearman(dv_var, sample = 'bootstrap', sample_vec = tmp_sample)
+    out_df$spearman = get_spearman(dv_var, sample = 'bootstrap', sample_vec = tmp_sample, merge_var = worker_col)
   }
   if('eta_sq' %in% metric){
-    out_df$eta_sq = get_eta(dv_var, sample = 'bootstrap', sample_vec = tmp_sample)
+    out_df$eta_sq = get_eta(dv_var, sample = 'bootstrap', sample_vec = tmp_sample, merge_var = worker_col)
   }
   if('sem' %in% metric){
-    out_df$sem = get_sem(dv_var, sample = 'bootstrap', sample_vec = tmp_sample)
+    out_df$sem = get_sem(dv_var, sample = 'bootstrap', sample_vec = tmp_sample, merge_var = worker_col)
   }
   if('var_breakdown' %in% metric){
-    out_df$var_subs = get_var_breakdown(dv_var, sample = 'bootstrap', sample_vec = tmp_sample)$subs
+    out_df$var_subs = get_var_breakdown(dv_var, sample = 'bootstrap', sample_vec = tmp_sample, merge_var = worker_col)$subs
   }
   if('var_breakdown' %in% metric){
-    out_df$var_ind = get_var_breakdown(dv_var, sample = 'bootstrap', sample_vec = tmp_sample)$ind
+    out_df$var_ind = get_var_breakdown(dv_var, sample = 'bootstrap', sample_vec = tmp_sample, merge_var = worker_col)$ind
   }
   if('var_breakdown' %in% metric){
-    out_df$var_resid = get_var_breakdown(dv_var, sample = 'bootstrap', sample_vec = tmp_sample)$resid
+    out_df$var_resid = get_var_breakdown(dv_var, sample = 'bootstrap', sample_vec = tmp_sample, merge_var = worker_col)$resid
   }
   return(out_df)
 }
