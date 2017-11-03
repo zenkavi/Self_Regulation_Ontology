@@ -1,9 +1,8 @@
-from dynamicTreeCut import cutreeHybrid
+from math import ceil
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.cluster.hierarchy import dendrogram
-from scipy.spatial.distance import squareform
 import seaborn as sns
 
 #***************************************************
@@ -113,25 +112,32 @@ def dendroheatmap(link, dist_df, clusters=None,
             label_fontsize = figsize[1]*.27
     sns.set_style("white")
     fig = plt.figure(figsize = figsize)
-    ax = fig.add_axes([.16,.3,.62,.62]) 
+    ax1 = fig.add_axes([.16,.3,.62,.62]) 
     cax = fig.add_axes([0.21,0.25,0.5,0.02]) 
-    sns.heatmap(rowclust_df, ax=ax, xticklabels = False,
+    sns.heatmap(rowclust_df, ax=ax1, xticklabels = False,
                 cbar_ax=cax, 
                 cbar_kws={'orientation': 'horizontal'})
-    ax.yaxis.tick_right()
-    ax.set_yticklabels(rowclust_df.columns[::-1], rotation=0, 
+    # update colorbar ticks
+    cbar = ax1.collections[0].colorbar
+    cbar.set_ticks([0, .5, .99])
+    cbar.set_ticklabels([0, .5, ceil(dist_df.max().max())])
+    cax.tick_params(labelsize=20)
+    # reorient axis labels
+    ax1.yaxis.tick_right()
+    ax1.set_yticklabels(rowclust_df.columns[::-1], rotation=0, 
                        rotation_mode="anchor", fontsize=label_fontsize, 
                        visible=labels)
-    ax.set_xticklabels(rowclust_df.columns, rotation=-90, 
+    ax1.set_xticklabels(rowclust_df.columns, rotation=-90, 
                        rotation_mode = "anchor", ha = 'left')
-    ax1 = fig.add_axes([.01,.3,.15,.62])
+    ax2 = fig.add_axes([.01,.3,.15,.62])
     plt.axis('off')
-    row_dendr = dendrogram(link, orientation='left',  ax = ax1, 
+    # plot dendrogram
+    row_dendr = dendrogram(link, orientation='left',  ax = ax2, 
                            color_threshold=-1,
                            above_threshold_color='gray') 
-    ax1.invert_yaxis()
+    ax2.invert_yaxis()
     if title is not None:
-        ax.set_title(title, fontsize=40)
+        ax1.set_title(title, fontsize=40)
     
     # add parse lines between trees 
     if clusters is not None:
@@ -142,12 +148,16 @@ def dendroheatmap(link, dist_df, clusters=None,
             if label!=curr:
                 cuts.append(i+1)
                 curr=label
-        y_min, y_max = ax.get_ylim()
-        ticks = [(tick - y_min)/(y_max - y_min) for tick in ax.get_yticks()]
-        pad = (ticks[0]-ticks[1])/2
-        separations = (ticks+pad)*len(rowclust_df)
-        for c in cuts:
-            ax.hlines(separations[c], 0, len(rowclust_df), colors='w') 
+        
+        for ax, color in [(ax1, 'w')]:
+            y_min, y_max = ax.get_ylim()
+            ticks = [(tick - y_min)/(y_max - y_min) for tick in ax.get_yticks()]
+            pad = (ticks[0]-ticks[1])/2
+            separations = (ticks+pad)*max(y_min, y_max)
+            for c in cuts:
+                ax.hlines(separations[c], 0, len(rowclust_df), colors=color,
+                          linestyles='dashed') 
+                
     if filename:
         fig.savefig(filename, bbox_inches='tight')
     return fig

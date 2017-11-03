@@ -2,6 +2,7 @@
 import argparse
 from utils import abs_pdist, save_figure, set_seed
 from itertools import combinations
+from math import ceil
 import matplotlib.pyplot as plt
 from matplotlib import patches
 import numpy as np
@@ -44,6 +45,11 @@ def plot_clusterings(HCA, plot_dir=None, verbose=False):
                             filename = filename)
     
     
+    
+def plot_clustering_similarity(HCA, plot_dir=None, verbose=False):   
+    # get all clustering solutions
+    clusterings = [(k ,v) for k,v in 
+                    HCA.results.items() if 'clustering' in k]
     # plot cluster agreement across embedding spaces
     names = [k.split('-')[-1] for k,v in 
                     HCA.results.items() if 'clustering' in k]
@@ -98,42 +104,70 @@ def plot_clusterings(HCA, plot_dir=None, verbose=False):
         score_consistency = np.corrcoef(rand_scores, MI_scores)[0,1]
         print('Correlation between measures of cluster consistency: %.2f' \
               % score_consistency)
-
-def plot_dendrograms(HCA, plot_dir=None):
+        
+    
+    
+def plot_dendrograms(HCA, label_top_percent=.2, 
+                     centrality_thresh=.1, plot_dir=None):
     # get all clustering solutions
     clusterings = [(k ,v) for k,v in 
                     HCA.results.items() if 'clustering' in k]
+
+        
     for name, clustering in clusterings:
         title = name.split('-')[1] + '_metric-' + HCA.dist_metric
+        # extract cluster vars
+        link = clustering['linkage']
+        distance_df = clustering['distance_df']
+        # check if graphs exist
+        if 'graphs' in clustering.keys() and len(distance_df)>120:
+            graph_vars = HCA.get_graph_vars(clustering['graphs'])
+            # extract variables that are in the top_n most central for each cluster
+            label_vars = []
+            for i in graph_vars:
+                top_n = ceil(len(i)*label_top_percent)
+                top_n = i[-(top_n+1):-1]
+                label_vars += [v[0] for v in top_n if v[1]>centrality_thresh]
+            labels = [i if i in label_vars else '' for i in distance_df.columns]
+        else:
+            labels = distance_df.columns
         # get cluster sizes
         cluster_labels = HCA.get_cluster_labels(inp=name.split('-')[1])
         cluster_sizes = [len(i) for i in cluster_labels]
-        # create dendrogram
-        link = clustering['linkage']
-        distance_df = clustering['distance_df']
-        out = dendrogram(link, labels=distance_df.columns, no_plot=True)
         # plot dendrogram
-        color_palette = sns.color_palette(palette='hls', n_colors=2)
+        color_palette = [[.4,.4, .4], [.8,.8,.8]]
         with sns.axes_style('white'):
-            f, ax = plt.subplots(1,1,figsize=(34,8))
-            out = dendrogram(link, labels=distance_df.columns, 
-                             color_threshold=-1,
-                             above_threshold_color='black')
+            fig = plt.figure(figsize=(34,14))
+            ax1 = fig.add_axes([0,.4,1,.55]) 
+            dendrogram(link, labels=labels, color_threshold=-1,
+                       above_threshold_color='black', ax=ax1)
+            # change axis properties
+            ax1.tick_params(axis='x', which='major', labelsize=14)
             # add background color to distinguish clusters
-            xlim = ax.get_xlim(); step = xlim[1]/len(distance_df)
-            ymin, ymax = ax.get_ylim()
+            ax2 = fig.add_axes([0,0,1,1]) 
+            ax2.patch.set_alpha(0)
+            xlim = ax2.get_xlim(); step = xlim[1]/len(distance_df)
+            ymin, ymax = ax1.get_ylim()
             begin = 0
             for i, size in enumerate(cluster_sizes):
-                patch = patches.Rectangle((begin ,0), size*step, ymax,
+                patch = patches.Rectangle((begin, .4), size*step, ymax,
                                           color=color_palette[i%2],
                                           alpha=.3)
-                ax.add_patch(patch)
+                ax2.add_patch(patch)
                 begin+=size*step
-            ax.tick_params(axis='x', which='major', labelsize=12)
-            ax.invert_xaxis()
-            plt.title(title, fontsize=40)
+            # add title
+            plt.title(title, fontsize=40, y=1.05)
+            # invert axes
+            ax2.get_xaxis().set_visible(False)
+            for ax in [ax1, ax2]:
+                ax.get_yaxis().set_visible(False)
+                ax.spines['top'].set_visible(False)
+                ax.spines['right'].set_visible(False)
+                ax.spines['bottom'].set_visible(False)
+                ax.spines['left'].set_visible(False)
+                ax.invert_xaxis()
         if plot_dir is not None:
-            save_figure(f, path.join(plot_dir, 
+            save_figure(fig, path.join(plot_dir, 
                                              '%s_dendrogram.png' % name),
                         {'bbox_inches': 'tight'})
         
@@ -249,6 +283,15 @@ def visualize_loading(results, c, plot_dir=None,
                    dissimilarity='precomputed',
                    filey=filey)
         
+def plot_HCA(results, plot_dir=None,verbose=False):
+    HCA = results.HCA
+    plot_clusterings(HCA, plot_dir, verbose=verbose)
+    plot_dendrograms(HCA, plot_dir)
+    plot_clustering_similarity(HCA, plot_dir, verbose=verbose)
+    for c in results.EFA.get_metric_cs().values():
+        for metric in ['abs_correlation', 'euclidean']:
+            visualize_loading(results, c, plot_dir,
+                              dist_metric=metric)
 
        
 """      

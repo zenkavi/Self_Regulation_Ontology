@@ -2,7 +2,7 @@
 import matplotlib
 matplotlib.use('Agg')
 from math import ceil
-from dimensional_structure.utils import (
+from utils import (
         create_factor_tree, find_optimal_components, get_factor_groups,
         get_hierarchical_groups, get_scores_from_subset,
         get_loadings, plot_factor_tree, get_top_factors, 
@@ -145,6 +145,7 @@ def plot_task_factors(EFA, c, task_sublists=None, plot_dir=None):
     # plot task factor loading
     entropies = EFA.results['entropies']
     loadings = EFA.results['factor_tree'][c]
+    max_loading = abs(loadings).max().max()
     tasks = np.unique([i.split('.')[0] for i in loadings.index])
     ncols = 6
     
@@ -162,12 +163,12 @@ def plot_task_factors(EFA, c, task_sublists=None, plot_dir=None):
                                subplot_kw={'projection': 'polar'})
         axes = f.get_axes()
         for i, task in enumerate(task_sublist):
-            task_loadings = loadings.filter(regex=task, axis=0)
+            task_loadings = loadings.filter(regex='^%s' % task, axis=0)
             # add entropy to index
             task_entropies = entropies[c][task_loadings.index]
             task_loadings.index = [i+'(%.2f)' % task_entropies.loc[i] for i in task_loadings.index]
             # plot
-            visualize_task_factors(task_loadings, axes[i])
+            visualize_task_factors(task_loadings, axes[i], ymax=max_loading)
             axes[i].set_title(' '.join(task.split('_')), 
                               y=1.14, fontsize=25)
             
@@ -199,7 +200,8 @@ def plot_entropies(EFA, plot_dir=None):
             f.savefig(path.join(plot_dir, 'entropies_across_factors.png'), 
                       bbox_inches='tight')
             
-def plot_EFA(EFA, c, plot_dir=None, plot_generic=True, verbose=False):
+def plot_EFA(EFA, c, plot_dir=None, plot_generic=True, verbose=False,
+             plot_task_kws={}):
     # plots that don't depend on c
     if plot_generic:
         #if verbose: print("Plotting BIC/SABIC")
@@ -214,4 +216,4 @@ def plot_EFA(EFA, c, plot_dir=None, plot_generic=True, verbose=False):
     if verbose: print("Plotting factor polar")
     plot_polar_factors(EFA, c, plot_dir)
     if verbose: print("Plotting task factors")
-    plot_task_factors(EFA, c, plot_dir=plot_dir)
+    plot_task_factors(EFA, c, plot_dir=plot_dir, **plot_task_kws)

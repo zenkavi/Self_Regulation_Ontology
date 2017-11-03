@@ -218,10 +218,11 @@ def get_loadings(fa_output, labels):
     Takes output of psychFA, and a list of labels and returns a loadings dataframe
     """
     loading_df = pd.DataFrame(fa_output['loadings'], index=labels)
-    # sort by maximum loading on surveys
-    sorting_index = np.argsort(loading_df.filter(regex='survey',axis=0).abs().mean()).tolist()[::-1]
-    loading_df = loading_df.loc[:,sorting_index]
-    loading_df.columns = range(loading_df.shape[1])
+    if loading_df.filter(regex='survey').shape[1]>0:
+        # sort by maximum loading on surveys
+        sorting_index = np.argsort(loading_df.filter(regex='survey',axis=0).abs().mean()).tolist()[::-1]
+        loading_df = loading_df.loc[:,sorting_index]
+        loading_df.columns = range(loading_df.shape[1])
     return loading_df
 
 def get_top_factors(loading_df, n=4, verbose=False):
@@ -403,7 +404,7 @@ def quantify_lower_nesting(factor_tree):
 # ****************************************************************************
 
 def plot_loadings(ax, component_loadings, groups=None, colors=None, 
-                  width_scale=1, offset=0, bar_kws=None):
+                  width_scale=1, offset=0, kind='bar', plot_kws=None):
     """Plot component loadings
     
     Args:
@@ -420,8 +421,8 @@ def plot_loadings(ax, component_loadings, groups=None, colors=None,
             columns side by side under one factor
         bar_kws (dict): keywords to pass to ax.bar
     """
-    if bar_kws is None:
-        bar_kws = {}
+    if plot_kws is None:
+        plot_kws = {}
     N = len(component_loadings)
     if groups is None:
         groups = [('all', [0]*N)]
@@ -435,10 +436,15 @@ def plot_loadings(ax, component_loadings, groups=None, colors=None,
     width = np.pi/(N/2)*width_scale*np.ones(N)
     theta = np.arange(0.0, 2*np.pi, 2*np.pi/N) + width[0]*offset
     radii = component_loadings
-    bars = ax.bar(theta, radii, width=width, bottom=0.0, **bar_kws)
-    for i,r,bar in zip(range(N),radii, bars):
-        color_index = sum((np.cumsum([len(g[1]) for g in groups])<i))
-        bar.set_facecolor(colors[color_index])
+    if kind == 'bar':
+        bars = ax.bar(theta, radii, width=width, bottom=0.0, **plot_kws)
+        for i,r,bar in zip(range(N),radii, bars):
+            color_index = sum((np.cumsum([len(g[1]) for g in groups])<i))
+            bar.set_facecolor(colors[color_index])
+    elif kind == 'line':
+        theta = np.append(theta, theta[0])
+        radii = np.append(radii, radii[0])
+        bars = ax.plot(theta, radii, linewidth=5, **plot_kws)
     return colors
         
 def create_categorical_legend(labels,colors, ax):
@@ -488,15 +494,15 @@ def visualize_factors(loading_df, groups=None, n_rows=2,
         return fig
 
 def visualize_task_factors(task_loadings, ax, xticklabels=True, 
-                           yticklabels=True, legend=True):
+                           yticklabels=True, pad=0, ymax=None, legend=True):
     """Plot task loadings on one axis"""
     n_measures = len(task_loadings)
     colors = sns.hls_palette(len(task_loadings), l=.5, s=.8)
     for i, (name, DV) in enumerate(task_loadings.iterrows()):
-        plot_loadings(ax, abs(DV), width_scale=1/(n_measures), 
+        plot_loadings(ax, abs(DV)+pad, width_scale=1/(n_measures), 
                       colors = [colors.pop()], offset=i+.5,
-                      bar_kws={'label': name, 'alpha': .8,
-                               'linewidth': 1, 'edgecolor': 'k'})
+                      kind='line',
+                      plot_kws={'label': name, 'alpha': .8})
     # set up x ticks
     xtick_locs = np.arange(0.0, 2*np.pi, 2*np.pi/len(DV))
     ax.set_xticks(xtick_locs)
@@ -505,6 +511,8 @@ def visualize_task_factors(task_loadings, ax, xticklabels=True,
         ax.set_xticklabels(['Fac %s' % i for i in task_loadings.columns], 
                            y=.08, minor=True)
     # set up yticks
+    if ymax:
+        ax.set_ylim(top=ymax)
     ytick_locs = ax.yaxis.get_ticklocs()
     new_yticks = np.linspace(0, ytick_locs[-1], 7)
     ax.set_yticks(new_yticks)
