@@ -56,6 +56,9 @@ if __name__=='__main__':
     parser.add_argument("--no_baseline_vars",
                         help="don't include baseline vars in task/survey model",
                         action='store_true')
+    parser.add_argument("--demogfile",
+                        help="use data from file for demog vars",
+                        default=None)
     parser.add_argument('-d',"--dataset", help="dataset for prediction",
                             required=True)
     parser.add_argument('-j',"--n_jobs", help="number of processors",type=int,
@@ -108,10 +111,18 @@ if __name__=='__main__':
          smote_cutoff=args.smote_threshold,
          freq_threshold=args.freq_threshold,
          imputer=args.imputer)
-    bp.load_demog_data()
-    bp.get_demogdata_vartypes()
-    bp.remove_lowfreq_vars()
-    bp.binarize_ZI_demog_vars()
+
+    if args.demogfile is not None:
+        import pandas
+        bp.demogdata=pandas.read_csv(args.demogfile,index_col=0)
+        bp.data_models={}
+        for i in bp.demogdata.columns:
+            bp.data_models[i]='gaussian'
+    else:
+        bp.load_demog_data()
+        bp.get_demogdata_vartypes()
+        bp.remove_lowfreq_vars()
+        bp.binarize_ZI_demog_vars()
 
     def add_varsets(bp,tags,taskname=None):
         vars=list(bp.behavdata.columns)
