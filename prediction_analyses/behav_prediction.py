@@ -56,6 +56,9 @@ if __name__=='__main__':
     parser.add_argument("--no_baseline_vars",
                         help="don't include baseline vars in task/survey model",
                         action='store_true')
+    parser.add_argument("--debugbreak",
+                        help="break after setting up class",
+                        action='store_true')
     parser.add_argument("--demogfile",
                         help="use data from file for demog vars",
                         default=None)
@@ -111,6 +114,9 @@ if __name__=='__main__':
          smote_cutoff=args.smote_threshold,
          freq_threshold=args.freq_threshold,
          imputer=args.imputer)
+
+    if args.debugbreak:
+        raise Exception('breaking')
 
     if args.demogfile is not None:
         import pandas
