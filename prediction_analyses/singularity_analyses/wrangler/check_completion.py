@@ -1,13 +1,16 @@
 import os,glob
 import pickle
 clf='lasso'
+minsize=10
+
 indir='/work/01329/poldrack/stampede2/code/Self_Regulation_Ontology/prediction_analyses/singularity_analyses/ls5/results/prediction_outputs'
 indir='/data/01329/poldrack/SRO/lasso/prediction_outputs'
-files=glob.glob(os.path.join(indir,'*pkl'))
+indir='/Users/poldrack/code/Self_Regulation_Ontology/results/prediction_outputs'
+files=glob.glob(os.path.join(indir,'pred*pkl'))
 files.sort()
 datasets={}
 for f in files:
-    l_s=os.path.basename(f).replace('.pkl','').split('_')  
+    l_s=os.path.basename(f).replace('.pkl','').split('_')
     if l_s[3]=='shuffle':
         l_s[1]=l_s[1]+'_shuffle'
     if not l_s[1] in datasets:
@@ -18,14 +21,22 @@ completed={}
 incomplete={}
 allkeys=[]
 allsets=['baseline','task','survey','baseline_shuffle','discounting','intelligence','stopping']
-data={}
+
+if os.path.exists('../lasso_data.pkl'):
+    print('loading existing data')
+    data=pickle.load(open('../lasso_data.pkl','rb'))
+else:
+    data={}
+
 for t in allsets:
     if not t in datasets:
         datasets[t]={}
-    data[t]={}
-    counter[t]={}
-    incomplete[t]={}
-    completed[t]=[]
+    if not t in data:
+        data[t]={}
+    if not t in counter:
+        counter[t]={}
+        incomplete[t]={}
+        completed[t]=[]
     print('')
     print(t,len(datasets[t]))
     for v in datasets[t]:
@@ -43,15 +54,15 @@ for t in allsets:
                 counter[t][k]+=1
 pickle.dump(data,open('%s_data.pkl'%clf,'wb'))
 
-allkeys=list(set(allkeys))        
+allkeys=list(set(allkeys))
 for t in allsets:
     for k in allkeys:
         if not k in counter[t]:
-             incomplete[t][k]=1000 
+             incomplete[t][k]=minsize
              continue
-        if counter[t][k]>=1000:
-               completed[t].append(k)  
+        if counter[t][k]>=minsize:
+               completed[t].append(k)
         else:
-               incomplete[t][k]=1000-counter[t][k]
-        	
+               incomplete[t][k]=minsize-counter[t][k]
+
     print(t,len(completed[t]),'completed',len(incomplete[t]),'incomplete')

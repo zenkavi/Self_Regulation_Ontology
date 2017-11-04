@@ -16,13 +16,24 @@ if not os.path.exists(outdir):
 if not os.path.exists('%s/features'%outdir):
     os.mkdir('%s/features'%outdir)
 
+# Note: factors were misnamed because R doesn't spit them out
+# in numeric order
+
+factor_renaming_dict={'smoking severity':'MentalIllness',
+                      'mental illness':'ProblemDrinking',
+                    'smoking':'Obesity',
+                      'obesity':'Smoking',
+                     'alcohol':'SmokingSeverity',
+                      'domestic':'Financial'}
+
+
 predvars={}
 
 acc_frames={}
 feat_frames={}
 
-maxdata=1000
-accvars=['scores_cv','scores_insample','scores_insample_unbiased']
+maxdata=120
+accvars=['scores_cv','scores_insample_unbiased']
 print('creating data frames for:')
 for k in data.keys():
     print(k)
@@ -37,7 +48,7 @@ for k in data.keys():
             assert len(predvars[k])==data[k][v][0]['importances'].shape[1]
         if not v in acc_frames[k]:
             acc_frames[k][v]={}
-            feat_frames[k][v]=pandas.DataFrame()
+            feat_frames[k][factor_renaming_dict[v]]=pandas.DataFrame()
             for accvar in accvars:
                 acc_frames[k][v][accvar]=pandas.DataFrame()
         if len(data[k][v])>maxdata:
@@ -58,7 +69,7 @@ for k in data.keys():
                 if accvar==accvars[0]:
                     feats=pandas.DataFrame(data[k][v][i]['importances'],
                         columns=predvars[k])
-                    feat_frames[k][v]=feat_frames[k][v].append(feats)
+                    feat_frames[k][factor_renaming_dict[v]]=feat_frames[k][factor_renaming_dict[v]].append(feats)
 
 # now reformat so that frames contain all vars for each output type
 output_frames={}
@@ -89,6 +100,18 @@ for k in data.keys():
                     output_frames[k][ov][accvar][v]=numpy.nan*numpy.zeros(maxdata)
                     output_frames[k][ov][accvar][v][:tmpdata.shape[0]]=tmpdata
 
+    # rename columns
+    for v in acc_frames[k].keys():
+        outvars=list(acc_frames[k][v]['scores_cv'].columns)
+        for ov in outvars:
+            for accvar in accvars:
+                if 'tmp' in output_frames[k][ov][accvar]:
+                    del output_frames[k][ov][accvar]['tmp']
+                for c in output_frames[k][ov][accvar].columns:
+                    if not c in factor_renaming_dict:
+                        continue
+                    output_frames[k][ov][accvar][factor_renaming_dict[c]]=output_frames[k][ov][accvar][c]
+                    del output_frames[k][ov][accvar][c]
 print('')
 print('writing data files')
 for k in output_frames.keys():
