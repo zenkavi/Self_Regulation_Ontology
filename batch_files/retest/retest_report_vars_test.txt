@@ -1,8 +1,3 @@
-hierarchical_rule.score
-holt_laury_survey.risk_aversion
-holt_laury_survey.risky_choices
-holt_laury_survey.safe_choices
-impulsive_venture_survey.impulsiveness
 impulsive_venture_survey.venturesomeness
 information_sampling_task.Decreasing_Win_acc
 information_sampling_task.Decreasing_Win_boxes_opened
