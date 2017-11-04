@@ -23,30 +23,35 @@ def get_Rpsych():
     psych = importr('psych')
     return psych
 
-def psychFA(data, n_components, return_attrs=['BIC', 'SABIC', 'RMSEA'], 
-            rotate='oblimin', method='ml', verbose=False):
-    def get_attr(attr):
+def get_attr(fa, attr, is_mat=True):
         try:
             index = list(fa.names).index(attr)
             val = list(fa.items())[index][1]
             if len(val) == 1:
                 val = val[0]
+            if is_mat:
+                val = np.matrix(val)
             return val
         except ValueError:
             print('Did not pass a valid attribute')
+            
+def psychFA(data, n_components, return_attrs=['BIC', 'SABIC', 'RMSEA'], 
+            rotate='oblimin', method='ml', verbose=False):
+    
     psych = importr('psych')
-    fa = psych.fa(data, n_components, rotate=rotate, fm=method)
+    fa = psych.fa(data, n_components, rotate=rotate, fm=method,
+                  scores='tenBerge')
     attr_dic = {}
     # loadings are roughly equivalent to the correlation between each variable
     # and the factor scores
-    attr_dic['loadings'] = np.matrix(get_attr('loadings'))
+    attr_dic['loadings'] = get_attr(fa, 'loadings')
     # scores are the the factors
-    attr_dic['scores'] = np.matrix(get_attr('scores'))
+    attr_dic['scores'] = get_attr(fa, 'scores')
     # weights are the "mixing matrix" such that the final data is
     # S * W
-    attr_dic['weights'] = np.matrix(get_attr('weights'))
+    attr_dic['weights'] = get_attr(fa, 'weights')
     for attr in return_attrs:
-        attr_dic[attr] = get_attr(attr)
+        attr_dic[attr] = get_attr(fa, attr, is_mat=False)
     if verbose:
         print(fa)
     return fa, attr_dic

@@ -1,6 +1,8 @@
 import os,glob
 import pickle
 clf='lasso'
+minsize=10
+
 indir='/work/01329/poldrack/stampede2/code/Self_Regulation_Ontology/prediction_analyses/singularity_analyses/ls5/results/prediction_outputs'
 indir='/data/01329/poldrack/SRO/lasso/prediction_outputs'
 files=glob.glob(os.path.join(indir,'pred*pkl'))
@@ -42,10 +44,12 @@ for t in allsets:
     if not t in datasets:
         print('nothing for',t)
         datasets[t]={}
-    data[t]={}
-    counter[t]={}
-    incomplete[t]={}
-    completed[t]=[]
+    if not t in data:
+        data[t]={}
+    if not t in counter:
+        counter[t]={}
+        incomplete[t]={}
+        completed[t]=[]
     print('')
     print(t,len(datasets[t]))
     for v in datasets[t]:

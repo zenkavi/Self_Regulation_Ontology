@@ -3,7 +3,6 @@ from os.path import join
 import seaborn as sns
 from selfregulation.utils.r_to_py_utils import qgraph_cor
 from selfregulation.utils.utils import get_behav_data, get_info
-from selfregulation.utils.plot_utils import dendroheatmap_left
 from selfregulation.utils.graph_utils import  Graph_Analysis
 
 base_directory = get_info('base_directory')
@@ -17,10 +16,6 @@ cor = qgraph_cor(data)
 gcor, tuning_param = qgraph_cor(data, True)
 # how similar are these?
 sns.plt.scatter(cor.as_matrix().flatten(),gcor.as_matrix().flatten())
-# plot heatmaps
-fig,leaves = dendroheatmap_left(gcor, label_fontsize=6)
-fig.savefig(join(plot_dir,'gcor_dendroheatmap.pdf'))
-
 
 
 GA = Graph_Analysis()
