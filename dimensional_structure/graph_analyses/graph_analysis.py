@@ -3,7 +3,6 @@ from selfregulation.utils.graph_utils import get_adj, \
     find_intersection, get_fully_connected_threshold, remove_island_variables
 from selfregulation.utils.graph_utils import  Graph_Analysis, threshold, \
     threshold_proportional_sign
-from selfregulation.utils.plot_utils import dendroheatmap
 from selfregulation.utils.utils import get_behav_data, get_info
 
 import bct
@@ -36,14 +35,6 @@ def run_graph_analysis(adj_dict, save_plots=False):
     # if saving plots, make sure directory exists
     if save_plots: 
         makedirs(join(plot_dir,adj_name), exist_ok=True)
-        
-    # ************************************
-    # ********* Heatmaps *******************
-    # ************************************
-    # dendrogram heatmap
-    fig, column_order = dendroheatmap(adj, labels = True)
-    if save_plots: fig.savefig(plot_name('dendroheatmap.pdf'),
-                               bbox_inches='tight')
     
     # ************************************
     # ********* Graphs *******************

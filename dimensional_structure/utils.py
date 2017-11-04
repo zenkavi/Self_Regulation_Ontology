@@ -1,6 +1,7 @@
 from collections import OrderedDict as odict
 from dynamicTreeCut import cutreeHybrid
 import fancyimpute
+import functools
 from itertools import combinations
 from matplotlib import pyplot as plt
 import numpy as np
@@ -18,6 +19,18 @@ from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, scale
 
+def set_seed(seed):
+    def seeded_fun_decorator(fun):
+        @functools.wraps(fun)
+        def wrapper(*args, **kwargs):
+            np.random.seed(seed)
+            out = fun(*args, **kwargs)
+            np.random.seed()
+            return out
+        return wrapper
+    return seeded_fun_decorator
+    
+    
 class Imputer(object):
     """ Imputation class so that fancyimpute can be used with scikit pipeline"""
     def __init__(self, imputer=None):
@@ -32,7 +45,7 @@ class Imputer(object):
     
     def fit(self, X, y=None):
         return self
-    
+
 def distcorr(X, Y, flip=True):
     """ Compute the distance correlation function
     
@@ -67,8 +80,16 @@ def distcorr(X, Y, flip=True):
         dcor = 1-dcor
     return dcor
 
-def save_figure(fig, loc, save_kws):
+def abs_pdist(mat):
+    correlation_dist = pdist(mat, metric='correlation')
+    correlations = 1-correlation_dist
+    absolute_distance = 1-abs(correlations)
+    return absolute_distance
+    
+def save_figure(fig, loc, save_kws=None):
     """ Saves figure in location and creates directory tree if needed """
+    if save_kws is None:
+        save_kws = {}
     directory = os.path.dirname(loc)
     if directory != "":
         os.makedirs(directory, exist_ok=True)
@@ -91,7 +112,11 @@ def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None,
     if compute_dist == True:
         if pdist_kws is None:
             pdist_kws= {'metric': 'correlation'}
-        dist_vec = pdist(df, **pdist_kws)
+        if pdist_kws['metric'] == 'abscorrelation':
+            # convert to absolute correlations
+            dist_vec = abs_pdist(df)
+        else:
+            dist_vec = pdist(df, **pdist_kws)
         dist_df = pd.DataFrame(squareform(dist_vec), 
                                index=df.index, 
                                columns=df.index)
@@ -103,7 +128,8 @@ def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None,
     link = linkage(dist_vec, method='ward')    
     #dendrogram
     row_dendr = dendrogram(link, labels=df.index, no_plot = True)
-    rowclust_df = dist_df.iloc[row_dendr['leaves'],row_dendr['leaves']]
+    reorder_vec = row_dendr['leaves']
+    rowclust_df = dist_df.iloc[reorder_vec, reorder_vec]
     # clustering
     if cluster_kws is None:
         cluster_kws = {'minClusterSize': 1}
@@ -113,9 +139,10 @@ def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None,
             plot_kws = {}
         dendroheatmap(link, dist_df, clustering['labels'], **plot_kws)
         
-    return {'distance_df': dist_df, 
-            'linkage': link, 
+    return {'linkage': link, 
+            'distance_df': dist_df, 
             'clustered_df': rowclust_df,
+            'reorder_vec': reorder_vec,
             'clustering': clustering}
     
 # ****************************************************************************
@@ -139,13 +166,14 @@ def corr_lower_higher(higher_dim, lower_dim, cross_only=True):
     return corr
 
 # functions to fit and extract factor analysis solutions
-def find_optimal_components(data, minc=1, maxc=40, metric='BIC'):
+def find_optimal_components(data, minc=1, maxc=50, metric='BIC'):
     """
     Fit EFA over a range of components and returns the best c. If metric = CV
     uses sklearn. Otherwise uses psych
     metric: str, method to use for optimal components. Options 'BIC', 'SABIC',
             and 'CV'
     """
+    steps_since_best = 0 # count steps since last best metric.
     metrics = {}
     n_components = range(minc,maxc)
     scaler = StandardScaler()
@@ -153,7 +181,16 @@ def find_optimal_components(data, minc=1, maxc=40, metric='BIC'):
         scaled_data = scaler.fit_transform(data)
         for c in n_components:
             fa, output = psychFA(scaled_data, c, method='ml')
-            metrics[c] = output[metric]
+            last_metric = output[metric]
+            # iterate counter if new metric isn't better than previous metric
+            if len(metrics) > 0:
+                if last_metric > metrics[c-1]:
+                    steps_since_best += 1
+                else:
+                    steps_since_best = 0
+            metrics[c] = last_metric
+            if steps_since_best > 2:
+                break
         best_c = min(metrics, key=metrics.get)
     else:
         for c in n_components:
@@ -164,9 +201,16 @@ def find_optimal_components(data, minc=1, maxc=40, metric='BIC'):
                                      ('scale', scaler),
                                      ('fa', fa)])
             cv = cross_val_score(pipe, data, cv=10)
+            # iterate counter if new metric isn't better than previous metric
+            if len(metrics) > 0:
+                if cv < metrics[c-1]:
+                    steps_since_best += 1
+                else:
+                    steps_since_best = 0
             metrics[c] = np.mean(cv)
+            if steps_since_best > 2:
+                break
         best_c = max(metrics, key=metrics.get)
-    print('Best Component: ', best_c)
     return best_c, metrics
 
 def get_loadings(fa_output, labels):
@@ -174,10 +218,11 @@ def get_loadings(fa_output, labels):
     Takes output of psychFA, and a list of labels and returns a loadings dataframe
     """
     loading_df = pd.DataFrame(fa_output['loadings'], index=labels)
-    # sort by maximum loading on surveys
-    sorting_index = np.argsort(loading_df.filter(regex='survey',axis=0).abs().mean()).tolist()[::-1]
-    loading_df = loading_df.loc[:,sorting_index]
-    loading_df.columns = range(loading_df.shape[1])
+    if loading_df.filter(regex='survey').shape[1]>0:
+        # sort by maximum loading on surveys
+        sorting_index = np.argsort(loading_df.filter(regex='survey',axis=0).abs().mean()).tolist()[::-1]
+        loading_df = loading_df.loc[:,sorting_index]
+        loading_df.columns = range(loading_df.shape[1])
     return loading_df
 
 def get_top_factors(loading_df, n=4, verbose=False):
@@ -202,7 +247,7 @@ def reorder_data(data, groups, axis=1):
     new_data = data.reindex_axis(ordered_cols, axis)
     return new_data
 
-def create_factor_tree(data, component_range=(1,13)):
+def create_factor_tree(data, component_range=(1,13), component_list=None):
     """
     Runs "visualize_factors" at multiple dimensionalities and saves them
     to a pdf
@@ -211,8 +256,8 @@ def create_factor_tree(data, component_range=(1,13)):
     filename: filename to save pdf
     component_range: limits of EFA dimensionalities. e.g. (1,5) will run
                      EFA with 1 component, 2 components... 5 components.
-    reorder_list: optional. List of index values in an order that will be used
-                  to rearrange data
+    component_list: list of specific components to calculate. Overrides
+                    component_range if set
     """
     def get_similarity_order(lower_dim, higher_dim):
         "Helper function to reorder factors into correspondance between two dimensionalities"
@@ -223,7 +268,11 @@ def create_factor_tree(data, component_range=(1,13)):
     EFA_results = {}
     full_fa_results = {}
     # plot
-    for c in range(component_range[0],component_range[1]+1):
+    if component_list is None:
+        components = range(component_range[0],component_range[1]+1)
+    else:
+        components = component_list
+    for c in components:
         fa, output = psychFA(data, c)
         tmp_loading_df = get_loadings(output, labels=data.columns)
         if (c-1) in EFA_results.keys():
@@ -239,7 +288,7 @@ def get_factor_groups(loading_df):
     factor_groups = []
     for assignment in np.unique(index_assignments):
         assignment_vars = [var for i,var in enumerate(loading_df.index) if index_assignments[i] == assignment]
-        factor_groups.append([assignment,assignment_vars])
+        factor_groups.append([assignment+1, assignment_vars])
     return factor_groups
 
 def get_hierarchical_groups(loading_df, n_groups=8):
@@ -355,7 +404,7 @@ def quantify_lower_nesting(factor_tree):
 # ****************************************************************************
 
 def plot_loadings(ax, component_loadings, groups=None, colors=None, 
-                  width_scale=1, offset=0, bar_kws=None):
+                  width_scale=1, offset=0, kind='bar', plot_kws=None):
     """Plot component loadings
     
     Args:
@@ -372,8 +421,8 @@ def plot_loadings(ax, component_loadings, groups=None, colors=None,
             columns side by side under one factor
         bar_kws (dict): keywords to pass to ax.bar
     """
-    if bar_kws is None:
-        bar_kws = {}
+    if plot_kws is None:
+        plot_kws = {}
     N = len(component_loadings)
     if groups is None:
         groups = [('all', [0]*N)]
@@ -387,10 +436,15 @@ def plot_loadings(ax, component_loadings, groups=None, colors=None,
     width = np.pi/(N/2)*width_scale*np.ones(N)
     theta = np.arange(0.0, 2*np.pi, 2*np.pi/N) + width[0]*offset
     radii = component_loadings
-    bars = ax.bar(theta, radii, width=width, bottom=0.0, **bar_kws)
-    for i,r,bar in zip(range(N),radii, bars):
-        color_index = sum((np.cumsum([len(g[1]) for g in groups])<i))
-        bar.set_facecolor(colors[color_index])
+    if kind == 'bar':
+        bars = ax.bar(theta, radii, width=width, bottom=0.0, **plot_kws)
+        for i,r,bar in zip(range(N),radii, bars):
+            color_index = sum((np.cumsum([len(g[1]) for g in groups])<i))
+            bar.set_facecolor(colors[color_index])
+    elif kind == 'line':
+        theta = np.append(theta, theta[0])
+        radii = np.append(radii, radii[0])
+        bars = ax.plot(theta, radii, linewidth=5, **plot_kws)
     return colors
         
 def create_categorical_legend(labels,colors, ax):
@@ -401,7 +455,7 @@ def create_categorical_legend(labels,colors, ax):
                     mec='none', marker='o', color=color)
         return line
     proxies = [create_proxy(item) for item in colors]
-    ncol = len(proxies)//6
+    ncol = max(len(proxies)//6, 1)
     ax.legend(proxies, labels, numpoints=1, markerscale=2.5, ncol=ncol,
               bbox_to_anchor=(1, .95), prop={'size':20})
 
@@ -440,15 +494,15 @@ def visualize_factors(loading_df, groups=None, n_rows=2,
         return fig
 
 def visualize_task_factors(task_loadings, ax, xticklabels=True, 
-                           yticklabels=True, legend=True):
+                           yticklabels=True, pad=0, ymax=None, legend=True):
     """Plot task loadings on one axis"""
     n_measures = len(task_loadings)
     colors = sns.hls_palette(len(task_loadings), l=.5, s=.8)
     for i, (name, DV) in enumerate(task_loadings.iterrows()):
-        plot_loadings(ax, abs(DV), width_scale=1/(n_measures), 
+        plot_loadings(ax, abs(DV)+pad, width_scale=1/(n_measures), 
                       colors = [colors.pop()], offset=i+.5,
-                      bar_kws={'label': name, 'alpha': .8,
-                               'linewidth': 1, 'edgecolor': 'k'})
+                      kind='line',
+                      plot_kws={'label': name, 'alpha': .8})
     # set up x ticks
     xtick_locs = np.arange(0.0, 2*np.pi, 2*np.pi/len(DV))
     ax.set_xticks(xtick_locs)
@@ -457,6 +511,8 @@ def visualize_task_factors(task_loadings, ax, xticklabels=True,
         ax.set_xticklabels(['Fac %s' % i for i in task_loadings.columns], 
                            y=.08, minor=True)
     # set up yticks
+    if ymax:
+        ax.set_ylim(top=ymax)
     ytick_locs = ax.yaxis.get_ticklocs()
     new_yticks = np.linspace(0, ytick_locs[-1], 7)
     ax.set_yticks(new_yticks)

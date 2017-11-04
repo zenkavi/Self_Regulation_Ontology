@@ -26,20 +26,35 @@ inputs = {'data': scale(results['data']).T,
 
 
 
-for name, input_data in inputs.items():
-    HCA = results['HCA']['clustering_metric-distcorr_input-%s' % name]
-    clusters = HCA['dynamic_clusters']['labels']
-    color_palette = sns.color_palette(palette='hls', n_colors=max(clusters))
-    colors = [color_palette[i-1] for i in clusters]
+def visualize_loading(results, c)
+    HCA = results.HCA
+    EFA = results.EFA
+    c = 9
     
-    # apply two different dimensionality reductions
-    tsne = t_sne.TSNE(perplexity=5)
-    tsne_out = tsne.fit_transform(input_data)
+    cluster_loadings = HCA.get_cluster_loading(EFA, 'data', c)
+    cluster_loadings_mat = np.vstack([i[1] for i in cluster_loadings])
+    EFA_loading = abs(EFA.get_loading(c))
+    EFA_loading_mat = EFA_loading.values
+    input_data = np.vstack([cluster_loadings_mat, EFA_loading_mat])
+    
+    
+    n_clusters = cluster_loadings_mat.shape[0]
+    color_palette = sns.color_palette(palette='hls', n_colors=n_clusters)
+    colors = []
+    for var in EFA_loading.index:
+        # find which cluster this variable is in
+        index = [i for i,cluster in enumerate(cluster_loadings) \
+                 if var in cluster[0]][0]
+        colors.append(color_palette[index])
+        
+    
     mds = MDS()
     mds_out = mds.fit_transform(input_data)
     
-    f = plt.figure(figsize=(16,8))
-    plt.subplot(1,2,1)
-    plt.scatter(tsne_out[:,0], tsne_out[:,1], c=colors)
-    plt.subplot(1,2,2)
-    plt.scatter(mds_out[:,0], mds_out[:,1], c=colors)
+    
+    plt.figure(figsize=(20,20))
+    plt.scatter(mds_out[:n_clusters,0], mds_out[:n_clusters,1], 
+                marker='*', s=400, color=color_palette)
+    plt.scatter(mds_out[n_clusters:,0], mds_out[n_clusters:,1], 
+                s=50, color=colors)
+
