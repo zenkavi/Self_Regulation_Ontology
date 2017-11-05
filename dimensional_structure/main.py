@@ -2,64 +2,86 @@
 import argparse
 from EFA_plots import plot_EFA
 from HCA_plots import plot_HCA
+from prediction_plots import plot_prediction
 from results import Results
 from glob import glob
 import numpy as np
-from os import makedirs, path, remove
+from os import makedirs, path
 import pickle
-from shutil import copyfile
+from shutil import copyfile, copytree, rmtree
 import time
-"""
+from utils import not_regex
+
 # parse arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('-rerun', action='store_true')
+parser.add_argument('-no_analysis', action='store_true')
 parser.add_argument('-no_plot', action='store_true')
 args = parser.parse_args()
 
-rerun = args.rerun
-plot_on = not args.no_plot
-"""
-def not_regex(txt):
-    return '^((?!%s).)*$' % txt
-datafile = 'Complete_10-08-2017'
-subsets = [{'name': 'task', 'regex': not_regex('survey')},
-           {'name': 'all', 'regex': '.'},
-            {'name': 'survey', 'regex': 'survey'}]
+run_analysis = not args.no_analysis
+run_plot = not args.no_plot
+print('Running Analysis? %s, Plotting? %s' % (['No', 'Yes'][run_analysis], 
+                                              ['No', 'Yes'][run_plot]))
 
+datafile = 'Complete_10-08-2017'
+subsets = [{'name': 'all', 
+            'regex': '.',
+            'factor_names': ['Pros Plan', 'Sensation Seeking', 'Mind Over Matter', 'Info Processing', 'Discounting', 'Stim Processing', 'Caution', 'Planning/WM', 'Env Resp']},
+           {'name': 'task', 
+            'regex': not_regex('survey')+'|cognitive_reflection',
+            'factor_names': ['Info Processing1', 'Info Processing2', 'WM/IQ', 'Movement Speed', 'Risk', 'Stim Processing', 'Caution', 'Discount']},
+            {'name': 'survey',
+             'regex': not_regex(not_regex('survey')+'|cognitive_reflection'),
+             'factor_names': ['Immediacy', 'Future', 'Sensation Seeking', 'DOSPERT', 'DOSPERT_fin', 'Agreeableness', 'DOSPERT_RP', 'Hedonism', 'Social', 'Emotional Control', 'Eating', 'Mindfulness']}]
+
+ID = None # ID will be created
+# create/run results for each subset
 for subset in subsets:
     name = subset['name']
     print('Running Subset: %s' % name)
-    # ****************************************************************************
-    # Laad Data
-    # ****************************************************************************
-    # run dimensional analysis
-    start = time.time()
-    results = Results(datafile, dist_metric='abscorrelation',
-                      name=subset['name'],
-                      filter_regex=subset['regex'])
-    results.run_EFA_analysis(verbose=True)
-    results.run_HCA_analysis(verbose=True)
-    run_time = time.time()-start
-    
-    # ***************************** saving ****************************************
-    id_file = path.join(results.output_file,  'results_ID-%s.pkl' % results.ID)
-    pickle.dump(results, open(id_file,'wb'))
-    copyfile(id_file, path.join(results.output_file, 'results_%s.pkl' % name))
-    
+    if run_analysis == True:
+        # ****************************************************************************
+        # Laad Data
+        # ****************************************************************************
+        # run dimensional analysis
+        start = time.time()
+        results = Results(datafile, dist_metric='abscorrelation',
+                          name=subset['name'],
+                          filter_regex=subset['regex'],
+                          ID=ID)
+        results.run_EFA_analysis(verbose=True)
+        results.run_HCA_analysis(verbose=True, run_graphs=False)
+        ID = results.ID.split('_')[1]
+        # name factors
+        factor_names = subset.get('factor_names', None)
+        if factor_names is not None:
+            results.EFA.name_factors(len(factor_names), factor_names)
+        # run behavioral prediction using the factor results determined by BIC
+        c = results.EFA.get_metric_cs()['c_metric-BIC']
+        results.run_prediction(c=c)
+        results.run_prediction(c=c, shuffle=True) # shuffled
+        run_time = time.time()-start
+        
+        # ***************************** saving ****************************************
+        id_file = path.join(results.output_file,  'results_ID-%s.pkl' % results.ID)
+        pickle.dump(results, open(id_file,'wb'))
+        # copy latest results and prediction to higher directory
+        copyfile(id_file, path.join(path.dirname(results.output_file), 
+                                    'results_%s.pkl' % name))
+        prediction_dir = path.join(results.output_file, 'prediction_outputs')
+        base_prediction_dir = path.join(path.dirname(results.output_file), 
+                                           'prediction_outputs')
+        if path.exists(base_prediction_dir):
+            rmtree(base_prediction_dir)
+        copytree(prediction_dir, base_prediction_dir)
+        
     
     # ***************************** loading ****************************************
-    result_file = glob('Output/%s/%s/results_ID*.pkl' % (datafile, name))[-1]
+    result_file = glob('Output/%s/%s/results_%s.pkl' % (datafile, name, name))[0]
     results = pickle.load(open(result_file, 'rb'))
     
     # add function to existing class
     # results.fun = fun.__get__(results)
-    
-    # *************************Aim 2 Task Choice**************************************
-    EFA = results.EFA
-    loadings = EFA.get_loading(EFA.get_metric_cs()['c_metric-BIC'])
-    
-    for task in ['stop_signal', 'kirby', 'stroop', 'threebytwo']:
-        print(task)
     
     # ****************************************************************************
     # Bootstrap run
@@ -93,31 +115,40 @@ for subset in subsets:
     # ****************************************************************************
     # Plotting
     # ****************************************************************************
-    EFA_plot_dir = path.join(results.plot_file, 'EFA')
-    HCA_plot_dir = path.join(results.plot_file, 'HCA')
-    makedirs(EFA_plot_dir, exist_ok = True)
-    makedirs(HCA_plot_dir, exist_ok = True)
-    
-    # set up kws for plotting functions
-    tasks = np.unique([i.split('.')[0] for i in results.data.columns])
-    if name == 'task':
-        plot_task_kws= {'task_sublists': {'tasks': [t for t in tasks if 'survey' not in t]}}
-    elif name == 'survey':
-        plot_task_kws= {'task_sublists': {'surveys': [t for t in tasks if 'survey' in t]}}
-    else:
-        plot_task_kws={}
+    if run_plot==True:
+        EFA_plot_dir = path.join(results.plot_file, 'EFA')
+        HCA_plot_dir = path.join(results.plot_file, 'HCA')
+        prediction_plot_dir = path.join(results.plot_file, 'prediction')
+        makedirs(EFA_plot_dir, exist_ok = True)
+        makedirs(HCA_plot_dir, exist_ok = True)
         
-    # Plot EFA
-    print("Plotting EFA")
-    for i, c in enumerate(results.EFA.get_metric_cs().values()):
-        if i==0:
-            plot_EFA(results.EFA, c, EFA_plot_dir, verbose=True,
-                     plot_task_kws=plot_task_kws)
+        # set up kws for plotting functions
+        tasks = np.unique([i.split('.')[0] for i in results.data.columns])
+        if name == 'task':
+            plot_task_kws= {'task_sublists': {'tasks': [t for t in tasks if 'survey' not in t]}}
+        elif name == 'survey':
+            plot_task_kws= {'task_sublists': {'surveys': [t for t in tasks if 'survey' in t]}}
         else:
-            plot_EFA(results.EFA, c, EFA_plot_dir, 
-                     verbose=True, plot_generic=False,
-                     plot_task_kws=plot_task_kws)
+            plot_task_kws={}
+            
+        # Plot EFA
+        print("Plotting EFA")
+        plot_EFA(results, EFA_plot_dir, verbose=True,  plot_task_kws=plot_task_kws)
+            
+        # Plot HCA
+        print("Plotting HCA")
+        plot_HCA(results, HCA_plot_dir)
         
-    # Plot HCA
-    print("Plotting HCA")
-    plot_HCA(results, HCA_plot_dir)
+        # Plot prediction
+        print("Plotting Prediction")
+        plot_prediction(results, prediction_plot_dir)
+        
+        # copy latest results and prediction to higher directory
+        for plot_type in ['EFA','HCA','prediction']:
+            plot_dir = path.join(results.plot_file, plot_type)
+            base_plot_dir = path.join(path.dirname(results.plot_file), 
+                                               plot_type)
+            if path.exists(base_plot_dir):
+                rmtree(base_plot_dir)
+            copytree(plot_dir, base_plot_dir)
+            

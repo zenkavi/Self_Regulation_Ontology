@@ -1,7 +1,8 @@
 # imports
-from dimensional_structure.utils import (
+from utils import (
         create_factor_tree, distcorr,  find_optimal_components, 
-        get_scores_from_subset, hierarchical_cluster, quantify_lower_nesting
+        get_scores_from_subset, hierarchical_cluster, quantify_lower_nesting,
+        run_EFA_prediction
         )
 import glob
 from os import makedirs, path
@@ -153,10 +154,15 @@ class EFA_Analysis:
                 null_entropies[c] = self.get_null_loading_entropy(c)
         self.results['entropies'] = pd.DataFrame(entropies)
         self.results['null_entropies'] = pd.DataFrame(null_entropies)
-        
+    
+    def get_factor_names(self, c):
+        return self.get_loading(c).columns
+    
     def get_scores(self, c):
         scores = self.get_attr(c, 'scores')
-        scores = pd.DataFrame(scores, index=self.data.index)
+        names = self.get_factor_names(c)
+        scores = pd.DataFrame(scores, index=self.data.index,
+                              columns=names)
         return scores
         
     def get_task_representations(self, tasks, c):
@@ -181,6 +187,10 @@ class EFA_Analysis:
             explained_scores[key[1]-1, key[0]-1] = explained_score
             sum_explained[key[1]-1, key[0]-1] = (np.sum(adequately_explained/key[0]))
         return explained_scores, sum_explained
+    
+    def name_factors(self, c, labels):
+        loading = self.get_loading(c)
+        loading.columns = labels
     
     def thresh_loading(loading, threshold=.2):
         over_thresh = loading.max(1)>threshold
@@ -249,12 +259,15 @@ class HCA_Analysis():
         cluster_labels = self.get_cluster_labels(inp)
         graphs = []
         for cluster in cluster_labels:
-            subset = graph_data.loc[:,cluster]
-            cor = get_adj(subset, 'abs_pearson')
-            GA = Graph_Analysis()
-            GA.setup(adj = cor)
-            GA.calculate_centrality()
-            graphs.append(GA)
+            if len(cluster)>1:
+                subset = graph_data.loc[:,cluster]
+                cor = get_adj(subset, 'abs_pearson')
+                GA = Graph_Analysis()
+                GA.setup(adj = cor)
+                GA.calculate_centrality()
+                graphs.append(GA)
+            else:
+                graphs.append(np.nan)
         return graphs
     
     def get_cluster_loading(self, EFA, inp, c):
@@ -274,7 +287,7 @@ class HCA_Analysis():
             sorted_vars = sorted(g_vars, key = lambda x: x[1])
             graph_vars.append(sorted_vars)
         return graph_vars
-
+    
     def run(self, data, EFA, cluster_EFA=False,
             run_graphs=False, rerun=True, verbose=False):
         if ('clustering_metric-%s_input-data' % self.metric_name in 
@@ -296,7 +309,8 @@ class Results(EFA_Analysis, HCA_Analysis):
                  loading_thresh=None,
                  dist_metric=distcorr,
                  name='',
-                 filter_regex='.'
+                 filter_regex='.',
+                 ID=None
                  ):
         """
         Args:
@@ -309,12 +323,16 @@ class Results(EFA_Analysis, HCA_Analysis):
         # load data
         imputed_data = get_behav_data(dataset=datafile, file='meaningful_variables_imputed.csv')
         cleaned_data = get_behav_data(dataset=datafile, file='meaningful_variables_clean.csv')
+        self.dataset = datafile
         self.data = imputed_data.filter(regex=filter_regex)
         self.data_no_impute = cleaned_data.filter(regex=filter_regex)
-        self.ID =  '%s_%d' % (name, random.getrandbits(16))
+        if ID is None:
+            self.ID =  '%s_%d' % (name, random.getrandbits(16))
+        else:
+            self.ID = '%s_%d' % (name, ID)
         # set up plotting files
-        self.plot_file = path.join('Plots', datafile, name)
-        self.output_file = path.join('Output', datafile, name)
+        self.plot_file = path.join('Plots', datafile, name, self.ID)
+        self.output_file = path.join('Output', datafile, name, self.ID)
         makedirs(self.plot_file, exist_ok = True)
         makedirs(self.output_file, exist_ok = True)
         # set vars
@@ -354,6 +372,35 @@ class Results(EFA_Analysis, HCA_Analysis):
                     run_graphs=run_graphs, verbose=verbose)
             return HCA
     
+    def run_prediction(self, c, shuffle=False, no_baseline_vars=True,
+                       outfile=None):
+        scores = self.EFA.get_scores(c)
+        if outfile is None:
+            run_EFA_prediction(self.dataset, scores, self.output_file,
+                               shuffle=shuffle, 
+                               no_baseline_vars=no_baseline_vars)
+        else:
+            run_EFA_prediction(self.dataset, scores, outfile,
+                               shuffle=shuffle, 
+                               no_baseline_vars=no_baseline_vars)
+    
+    def load_prediction_object(self, ID=None, shuffle=False):
+        prediction_files = glob.glob(path.join(self.output_file,
+                                               'prediction_outputs',
+                                               '*'))
+        if shuffle:
+            prediction_files = [f for f in prediction_files if 'shuffle' in f]
+        else:
+            prediction_files = [f for f in prediction_files if 'shuffle' not in f]
+        # sort by time
+        if ID is not None:
+            filey = [i for i in prediction_files if ID in i][0]
+        else:
+            prediction_files.sort(key=path.getmtime)
+            filey = prediction_files[-1]
+        behavpredict = pickle.load(open(filey,'rb'))
+        return behavpredict
+
     def set_EFA(self, EFA):
         """ replace current EFA object with another """
         self.EFA = EFA

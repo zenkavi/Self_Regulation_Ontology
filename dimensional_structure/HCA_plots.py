@@ -1,6 +1,6 @@
 # imports
 import argparse
-from utils import abs_pdist, save_figure, set_seed
+from utils import abs_pdist, save_figure, set_seed, plot_loadings
 from itertools import combinations
 from math import ceil
 import matplotlib.pyplot as plt
@@ -186,7 +186,7 @@ def plot_graphs(HCA_graphs, plot_dir=None):
     
     
 @set_seed(seed=15)
-def visualize_loading(results, c, plot_dir=None, 
+def MDS_visualization(results, c, plot_dir=None, 
                       dist_metric='abs_correlation', **plot_kws):
     """ visualize EFA loadings and compares to raw space """
     def scale_plot(input_data, data_colors=None, cluster_colors=None,
@@ -282,18 +282,104 @@ def visualize_loading(results, c, plot_dir=None,
                    cluster_sizes=sizes,
                    dissimilarity='precomputed',
                    filey=filey)
+
+def visualize_importance(importance, ax, xticklabels=True, 
+                           yticklabels=True, pad=0, ymax=None, legend=True):
+    """Plot task loadings on one axis"""
+    importance_vars = importance[0]
+    importance_vals = [abs(i)+pad for i in importance[1].T]
+    plot_loadings(ax, importance_vals, kind='line', offset=.5,
+                  plot_kws={'alpha': 1})
+    # set up x ticks
+    xtick_locs = np.arange(0.0, 2*np.pi, 2*np.pi/len(importance_vars))
+    ax.set_xticks(xtick_locs)
+    ax.set_xticks(xtick_locs+np.pi/len(importance_vars), minor=True)
+    if xticklabels:
+        if type(importance_vars[0]) == str:
+            ax.set_xticklabels(importance_vars, 
+                               y=.08, minor=True)
+        else:
+            ax.set_xticklabels(['Fac %s' % str(i+1) for i in importance_vars], 
+                               y=.08, minor=True)
+    # set up yticks
+    if ymax:
+        ax.set_ylim(top=ymax)
+    ytick_locs = ax.yaxis.get_ticklocs()
+    new_yticks = np.linspace(0, ytick_locs[-1], 7)
+    ax.set_yticks(new_yticks)
+    if yticklabels:
+        labels = np.round(new_yticks,2)
+        replace_dict = {i:'' for i in labels[::2]}
+        labels = [replace_dict.get(i, i) for i in labels]
+        ax.set_yticklabels(labels)
+    if legend:
+        ax.legend(loc='upper center', bbox_to_anchor=(.5,-.15))
         
+def plot_cluster_factors(results, c,  plot_dir=None):
+    """
+    Args:
+        EFA: EFA_Analysis object
+        c: number of components for EFA
+        task_sublists: a dictionary whose values are sets of tasks, and 
+                        whose keywords are labels for those lists
+    """
+    # set up variables
+    HCA = results.HCA
+    EFA = results.EFA
+    
+    cluster_loadings = HCA.get_cluster_loading(EFA, 'data', c)
+    max_loading = max([max(abs(i[1])) for i in cluster_loadings])
+    # plot
+    ncols = min(6, len(cluster_loadings))
+    nrows = ceil(len(cluster_loadings)/ncols)
+    f, axes = plt.subplots(nrows, ncols, 
+                               figsize=(ncols*10,nrows*(8+nrows)),
+                               subplot_kw={'projection': 'polar'})
+    axes = f.get_axes()
+    for i, (measures, loading) in enumerate(cluster_loadings):
+        if i%(ncols*2)==0 or i%(ncols*2)==5:
+            plot_loadings(axes[i], loading, kind='line', offset=.5,
+                  plot_kws={'alpha': .8})
+        else:
+            plot_loadings(axes[i], loading, kind='line', offset=.5,
+                  plot_kws={'alpha': .8})
+        axes[i].set_title('Cluster %s' % i, y=1.14, fontsize=25)
+        if i%(ncols*2)==0 or i%(ncols*2)==5:
+            # set tick labels
+            xtick_locs = np.arange(0.0, 2*np.pi, 2*np.pi/len(loading))
+            axes[i].set_xticks(xtick_locs)
+            axes[i].set_xticks(xtick_locs+np.pi/len(loading), minor=True)
+            axes[i].set_xticklabels(loading.index,  y=.08, minor=True)
+            # set ylim
+            axes[i].set_ylim(top=max_loading)
+    for j in range(i+1, len(axes)):
+        axes[j].set_visible(False)
+    plt.subplots_adjust(hspace=.5, wspace=.5)
+    
+    filename = 'clustering_polar_factors_EFA%s.png' % c
+    if plot_dir is not None:
+        save_figure(f, path.join(plot_dir, filename),
+                    {'bbox_inches': 'tight'})
+        
+            
 def plot_HCA(results, plot_dir=None,verbose=False):
     HCA = results.HCA
-    plot_clusterings(HCA, plot_dir, verbose=verbose)
-    plot_dendrograms(HCA, plot_dir)
-    plot_clustering_similarity(HCA, plot_dir, verbose=verbose)
-    for c in results.EFA.get_metric_cs().values():
-        for metric in ['abs_correlation', 'euclidean']:
-            visualize_loading(results, c, plot_dir,
-                              dist_metric=metric)
+    c = results.EFA.get_metric_cs()['c_metric-BIC']
+    # plots, woo
+    if verbose: print("Plotting dendrogram heatmaps")
+    plot_clusterings(HCA, plot_dir=plot_dir, verbose=verbose)
+    if verbose: print("Plotting dendrograms")
+    plot_dendrograms(HCA, plot_dir=plot_dir)
+    if verbose: print("Plotting clustering similarity")
+    plot_clustering_similarity(HCA, plot_dir=plot_dir, verbose=verbose)
+    if verbose: print("Plotting cluster polar plots")
+    plot_cluster_factors(results, c, plot_dir=plot_dir)
+    if verbose: print("Plotting MDS space")
+    for metric in ['abs_correlation']:
+        MDS_visualization(results, c, plot_dir=plot_dir,
+                          dist_metric=metric)
 
-       
+
 """      
     # plot distance correlation for factor solutions in the same order as the
     # clustered solution
