@@ -1,0 +1,88 @@
+"""
+perform prediction on demographic data
+
+use different strategy depending on the nature of the variable:
+- lasso classification (logistic regression) for binary variables
+- lasso regression for normally distributed variables
+- lasso-regularized zero-inflated poisson regression for zero-inflated variables
+-- via R mpath library using rpy2
+
+compare each model to a baseline with age and sex as regressors
+
+TODO:
+- add metadata including dataset ID into results output
+- break icc thresholding into separate method
+- use a better imputation method than SimpleFill
+"""
+
+import sys,os
+import importlib
+import traceback
+import selfregulation.prediction.behavpredict as behavpredict
+importlib.reload(behavpredict)
+
+
+def run_EFA_prediction(dataset, factor_scores, output_base, 
+                       verbose=False, classifier='lasso',
+                       shuffle=False, n_jobs=2, imputer="SimpleFill",
+                       smote_threshold=.05, freq_threshold=.1, icc_threshold=.25,
+                       no_baseline_vars=False):
+    
+    output_dir=os.path.join(output_base,'prediction_outputs')
+    if dataset is 'baseline' or no_baseline_vars:
+        baselinevars=False
+        if verbose:
+            print("turning off inclusion of baseline vars")
+    else:
+        baselinevars=True
+        if verbose:
+            print("including baseline vars in prediction models")
+            
+    # skip several variables because they crash the estimation tool
+    bp=behavpredict.BehavPredict(verbose=verbose,
+                                 dataset=dataset,
+         drop_na_thresh=100,n_jobs=n_jobs,
+         skip_vars=['RetirementPercentStocks',
+         'HowOftenFailedActivitiesDrinking',
+         'HowOftenGuiltRemorseDrinking',
+         'AlcoholHowOften6Drinks'],
+         output_dir=output_dir,shuffle=shuffle,
+         classifier=classifier,
+         add_baseline_vars=baselinevars,
+         smote_cutoff=smote_threshold,
+         freq_threshold=freq_threshold,
+         imputer=imputer, singlevar=None)
+    bp.load_demog_data()
+    bp.get_demogdata_vartypes()
+    bp.remove_lowfreq_vars()
+    bp.binarize_ZI_demog_vars()
+    bp.behavdata = factor_scores
+    #bp.filter_by_icc(icc_threshold)
+    bp.get_joint_datasets()
+    
+    if not singlevar:
+        vars_to_test=[v for v in bp.demogdata.columns if not v in bp.skip_vars]
+    else:
+        vars_to_test=singlevar
+    
+    vars_to_test ['BMI', 'AlcoholHowManyDrinksDay', 'SmokeEveryDay', 'CannabisHowOften', 'DayLostLastMonth']
+    for v in vars_to_test:
+        bp.lambda_optim=None
+        print('RUNNING:',v,bp.data_models[v],dataset)
+        try:
+            bp.scores[v],bp.importances[v]=bp.run_crossvalidation(v,nlambda=100)
+            bp.scores_insample[v],_=bp.run_lm(v,nlambda=100)
+            # fit model with no regularization
+            if bp.data_models[v]=='binary':
+                bp.lambda_optim=[0]
+            else:
+                bp.lambda_optim=[0,0]
+            bp.scores_insample_unbiased[v],_=bp.run_lm(v,nlambda=100)
+        except:
+            e = sys.exc_info()
+            print('error on',v,':',e)
+            bp.errors[v]=traceback.format_tb(e[2])
+    if singlevar:
+        bp.write_data(vars_to_test,listvar=True)
+    else:
+        bp.write_data(vars_to_test)

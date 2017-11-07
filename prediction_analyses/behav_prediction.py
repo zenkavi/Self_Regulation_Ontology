@@ -9,12 +9,17 @@ use different strategy depending on the nature of the variable:
 
 compare each model to a baseline with age and sex as regressors
 
+TODO:
+- add metadata including dataset ID into results output
+- break icc thresholding into separate method
+- use a better imputation method than SimpleFill
 """
 
 import sys,os
 import random
 import pickle
 import importlib
+import traceback
 
 import numpy
 
@@ -27,82 +32,149 @@ from selfregulation.utils.utils import get_info
 import selfregulation.prediction.behavpredict as behavpredict
 importlib.reload(behavpredict)
 
+import argparse
+import fancyimpute
+
 if __name__=='__main__':
 
-    # parameters to set
-    report_features=False
-    if len(sys.argv)>1:
-        shuffle=int(sys.argv[1])
-    else:
-        shuffle=False
-    if len(sys.argv)>2:
-        datasubset=sys.argv[2]
-    else:
-        datasubset='baseline'
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-v',"--verbose", help="increase output verbosity",
+                        default=0, action='count')
+    parser.add_argument('-c',"--classifier", help="classifier",
+                            default='lasso')
 
-    try:
-        output_base=get_info('results_directory')
-    except:
-        output_base='.'
+    parser.add_argument("--report_features", help="print features",
+                        action='store_true')
+    parser.add_argument("--print_report", help="print report at the end",
+                        action='store_true')
+    parser.add_argument('-s',"--shuffle", help="shuffle target variable",
+                        action='store_true')
+    parser.add_argument('-i',"--icc_threshold", help="threshold for ICC filtering",
+                        type=float,default=0.25)
+    parser.add_argument("--freq_threshold", help="threshold for binary variable frequency",
+                        type=float,default=0.1)
+    parser.add_argument("--no_baseline_vars",
+                        help="don't include baseline vars in task/survey model",
+                        action='store_true')
+    parser.add_argument('-d',"--dataset", help="dataset for prediction",
+                            required=True)
+    parser.add_argument('-j',"--n_jobs", help="number of processors",type=int,
+                            default=2)
+    parser.add_argument('-w',"--workdir", help="working directory")
+    parser.add_argument('-r',"--resultsdir", help="results directory")
+    parser.add_argument("--singlevar", nargs='*',help="run with single variables")
+    parser.add_argument('--imputer',help='imputer to use',
+                            default='SimpleFill')
+    parser.add_argument("--smote_threshold", help="threshold for applying smote (distance from 0.5)",
+                        type=float,default=0.05)
+    args=parser.parse_args()
+
+    # parameters to set
+
+    if args.resultsdir is None:
+        try:
+            output_base=get_info('results_directory')
+        except:
+            output_base='.'
+    else:
+        output_base=args.resultsdir
     output_dir=os.path.join(output_base,'prediction_outputs')
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
+    #assert args.dataset in ['survey','mirt','task','all','baseline']
+    assert args.classifier in ['lasso','rf']
+    # don't regress out baseline vars for baseline model
+    if args.dataset=='baseline' or args.no_baseline_vars:
+        baselinevars=False
+        if args.verbose:
+            print("turning off inclusion of baseline vars")
+    else:
+        baselinevars=True
+        if args.verbose:
+            print("including baseline vars in survey/task models")
 
-    assert datasubset in ['survey','mirt','task','all','baseline']
 
-    # set up classifier
-    clf=LassoCV()
-
-    bp=behavpredict.BehavPredict(verbose=2,
-         drop_na_thresh=100,n_jobs=2)
+    # skip several variables because they crash the estimation tool
+    bp=behavpredict.BehavPredict(verbose=args.verbose,
+         drop_na_thresh=100,n_jobs=args.n_jobs,
+         skip_vars=['RetirementPercentStocks',
+         'HowOftenFailedActivitiesDrinking',
+         'HowOftenGuiltRemorseDrinking',
+         'AlcoholHowOften6Drinks'],
+         output_dir=output_dir,shuffle=args.shuffle,
+         classifier=args.classifier,
+         add_baseline_vars=baselinevars,
+         smote_cutoff=args.smote_threshold,
+         freq_threshold=args.freq_threshold,
+         imputer=args.imputer)
     bp.load_demog_data()
     bp.get_demogdata_vartypes()
-    bp.load_behav_data(datasubset)
-    if shuffle:
-        tmp=bp.demogdata.values.copy()
-        numpy.random.shuffle(tmp)
-        bp.demogdata.iloc[:,:]=tmp
-        print('WARNING: shuffling target data')
+    bp.remove_lowfreq_vars()
+    bp.binarize_ZI_demog_vars()
+
+    def add_varsets(bp,tags):
+        vars=list(bp.behavdata.columns)
+        for tag in tags:
+            varsets=tags[tag]
+            indvars=[]
+            for v in vars:
+                for vs in varsets:
+                    if v.find(vs)>-1:
+                        indvars.append(v)
+            if bp.verbose:
+                print(tag,indvars)
+            bp.add_varset(tag,indvars)
+
+    # create apriori variable subsets
+    bp.load_behav_data('task')
+    task_tags={'discounting':['discount'],
+                'stopping':['stop_signal','nogo'],
+                'intelligence':['raven','cognitive_reflection'],
+                'drift':['hddm_drift'],
+                'thresh':['hddm_thresh'],
+                'nondecision':['hddm_nondecision']}
+    add_varsets(bp,task_tags)
+
+    bp.load_behav_data('survey')
+    survey_tags={'impulsivity':['upps_impulsivity_survey','dickman_survey',
+                                'bis11_survey','self_regulation_survey',
+                                'brief_self_control_survey'],
+                'big5':['ten_item_personality_survey'],
+                'risktaking':['sensation_seeking_survey','dospert'],
+                'grit':['grit_scale_survey'],
+                'emotion_regulation':['erq_survey'],
+                'bisbas':['bis_bas_survey']
+                }
+    add_varsets(bp,survey_tags)
+
+    bp.load_behav_data(args.dataset)
+    bp.filter_by_icc(args.icc_threshold)
     bp.get_joint_datasets()
 
-    vars_to_test=bp.demogdata.columns
-    #vars_to_test=['BMI']
+    if not args.singlevar:
+        vars_to_test=[v for v in bp.demogdata.columns if not v in bp.skip_vars]
+    else:
+        vars_to_test=args.singlevar
+
     for v in vars_to_test:
-        if numpy.mean(bp.demogdata[v]>0)<0.04:
-            print('skipping due to low freq:',v,numpy.mean(bp.demogdata[v]>0))
-            continue
+        bp.lambda_optim=None
+        print('RUNNING:',v,bp.data_models[v],args.dataset)
         try:
-            bp.scores[v],bp.importances[v]=bp.run_crossvalidation(v)
-            if report_features and numpy.mean(bp.scores[v])>0.65:
-                print('')
-                meanimp=numpy.mean(bp.importances[v],0)
-                meanimp_sortidx=numpy.argsort(meanimp)
-                for i in meanimp_sortidx[-1:-4:-1]:
-                    print(bp.behavdata.columns[i],meanimp[i])
-                for i in meanimp_sortidx[:3][::-1]:
-                    print(bp.behavdata.columns[i],meanimp[i])
+            bp.scores[v],bp.importances[v]=bp.run_crossvalidation(v,nlambda=100)
+            bp.scores_insample[v],_=bp.run_lm(v,nlambda=100)
+            # fit model with no regularization
+            if bp.data_models[v]=='binary':
+                bp.lambda_optim=[0]
+            else:
+                bp.lambda_optim=[0,0]
+            bp.scores_insample_unbiased[v],_=bp.run_lm(v,nlambda=100)
         except:
-            e = sys.exc_info()[0]
+            e = sys.exc_info()
             print('error on',v,':',e)
+            bp.errors[v]=traceback.format_tb(e[2])
 
-    h='%08x'%random.getrandbits(32)
-    shuffle_flag='shuffle_' if shuffle else ''
-    outfile='prediction_%s_%s%s.pkl'%(datasubset,shuffle_flag,h)
-    if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
-    pickle.dump((bp.scores,bp.importances),open(os.path.join(output_dir,outfile),'wb'))
-
-    # print a report
-
-    for v in vars_to_test:
-        t=bp.data_models[v]
-        if t=='binary':
-            cutoff=0.65
-        else:
-            cutoff=0.15
-
-        if bp.scores[v]<cutoff:
-            continue
-
-        print('%s\t%s\t%f\t(%s)'%(v,t,bp.scores[v],'\t'.join(['%f'%i for i in bp.importances[v].tolist()[0]])))
+    if args.singlevar:
+        bp.write_data(vars_to_test,listvar=True)
+    else:
+        bp.write_data(vars_to_test)

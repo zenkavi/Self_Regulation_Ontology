@@ -15,8 +15,8 @@ from sklearn.linear_model import LassoCV
 from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV,ShuffleSplit
 
-from get_balanced_folds import BalancedKFold
-import behavpredict
+from selfregulation.utils.get_balanced_folds import BalancedKFold
+import selfregulation.prediction.behavpredict as behavpredict
 importlib.reload(behavpredict)
 
 if __name__=='__main__':

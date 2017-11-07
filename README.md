@@ -1,4 +1,5 @@
 # Self_Regulation_Ontology
+![CircleCI](https://circleci.com/gh/poldrack/Self_Regulation_Ontology.svg?style=svg&circle-token=c2c503d9ef106e45769fa00ca689b3b10d882c9d)
 
 This is the main reposistory for analyses and data for the UH2 Self Regulation Ontology project.
 

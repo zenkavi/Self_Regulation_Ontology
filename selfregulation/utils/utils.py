@@ -17,7 +17,8 @@ def print_confusion_matrix(y_true,y_pred,labels=[0,1]):
     print('Actual\t0\t%d\t%d'%(cm[0,0],cm[0,1]))
     print('\t1\t%d\t%d'%(cm[1,0],cm[1,1]))
 
-def get_behav_data(dataset=None, file=None, full_dataset=False, flip_valence=False):
+def get_behav_data(dataset=None, file=None, full_dataset=False,
+                flip_valence=False,verbose=False):
     '''Retrieves a file from a data release. By default extracts meaningful_variables from
     the most recent Discovery dataset.
     :param dataset: optional, string indicating discovery, validation, or complete dataset of interest
@@ -44,7 +45,8 @@ def get_behav_data(dataset=None, file=None, full_dataset=False, flip_valence=Fal
         datadirs = [datadir, second_datadir]
     else:
         datadirs = [datadir]
-    print('Getting datasets...:\n', '\n '.join(datadirs))
+    if verbose:
+        print('Getting datasets...:\n', '\n '.join(datadirs))
     if file == None:
         file = 'meaningful_variables.csv'
     data = pandas.DataFrame()
