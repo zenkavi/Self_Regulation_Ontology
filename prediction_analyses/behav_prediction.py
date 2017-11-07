@@ -182,7 +182,8 @@ if __name__=='__main__':
     add_varsets(bp,survey_tags)
 
     bp.load_behav_data(args.dataset)
-    bp.filter_by_icc(args.icc_threshold)
+    if args.icc_threshold>0:
+        bp.filter_by_icc(args.icc_threshold)
     bp.get_joint_datasets()
 
 

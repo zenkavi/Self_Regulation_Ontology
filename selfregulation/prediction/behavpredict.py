@@ -206,11 +206,11 @@ class BehavPredict:
                         add_baseline_vars=False,
                         cognitive_vars=['cognitive_reflection',
                         'holt_laury']):
-        self.behavdata=get_behav_data(self.dataset,
-                                'meaningful_variables_clean.csv',
-                                full_dataset=self.use_full_dataset)
-        self.predictor_set=datasubset
         if datasubset=='survey':
+            self.behavdata=get_behav_data(self.dataset,
+                                    'meaningful_variables_clean.csv',
+                                    full_dataset=self.use_full_dataset)
+            self.predictor_set=datasubset
             for v in self.behavdata.columns:
                 dropvar=True
                 if v.find('survey')>-1:
@@ -224,6 +224,10 @@ class BehavPredict:
                         print('dropping non-survey var:',v)
 
         elif datasubset=='task':
+            self.behavdata=get_behav_data(self.dataset,
+                                    'meaningful_variables_clean.csv',
+                                    full_dataset=self.use_full_dataset)
+            self.predictor_set=datasubset
             for v in self.behavdata.columns:
                 dropvar=False
                 if v.find('survey')>-1:
@@ -243,12 +247,21 @@ class BehavPredict:
             self.behavdata=pandas.DataFrame({'mean':numpy.ones(self.demogdata.shape[0])})
             self.behavdata.index=self.demogdata.index
         elif datasubset in self.varsets.keys():
+            self.behavdata=get_behav_data(self.dataset,
+                                    'meaningful_variables_clean.csv',
+                                    full_dataset=self.use_full_dataset)
+            self.predictor_set=datasubset
             for v in self.behavdata.columns:
                 if not v in self.varsets[datasubset]:
                     del self.behavdata[v]
                     if self.verbose>1:
                         print('dropping off-list var:',v)
             assert self.behavdata.shape[1]==len(self.varsets[datasubset])
+
+        elif datasubset=='survey_items':
+            self.behavdata=get_behav_data(self.dataset,
+                                    'subject_x_items.csv',
+                                    full_dataset=self.use_full_dataset)
 
         else:
             raise ValueError('datasubset %s is not defined'%datasubset)
