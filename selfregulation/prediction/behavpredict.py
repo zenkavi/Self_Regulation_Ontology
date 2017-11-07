@@ -85,7 +85,7 @@ class BehavPredict:
         self.shuffle=shuffle
         self.classifier=classifier
         self.output_dir=output_dir
-        if not dataset:
+        if dataset is None:
             self.dataset=get_info('dataset')
         else:
             self.dataset=dataset
@@ -94,7 +94,7 @@ class BehavPredict:
         self.use_full_dataset=use_full_dataset
         self.drop_na_thresh=drop_na_thresh
         self.drop_threshold=drop_threshold
-        if self.dataset=='mean':
+        if self.dataset is 'mean':
             if self.verbose:
                 print("modeling only the mean: excluding baseline vars")
             self.add_baseline_vars=False
