@@ -4,26 +4,54 @@ and collapse into unified structures
 """
 
 import pickle
-
-d=pickle.load(open('rf_data.pkl','rb'))
+clf='lasso'
+d=pickle.load(open('%s_data.pkl'%clf,'rb'))
 
 acc={}
+MAE={}
 features={}
 
-for a,f in d:
+for a in d:
+
     k=list(a.keys())[0]
-    if not k in acc:
-        acc[k]={}
+    if not k in acc_cv:
+        acc_cv[k]={}
+        acc_insample[k]={}
+        acc_insample_overfit[k]={}
+        MAE[k]={}
     if not k in features:
         features[k]={}
+
     v=list(a[k].keys())[0]
     if not v in acc[k]:
-        acc[k][v]=a[k][v]
+        acc[k][v]=[[a[k][v]['scores_cv'][0]],
+                    a[k][v]['scores_insample'][0],
+                    a[k][v]['scores_insample_unbiased'][0]]
+        try:
+            MAE[k][v]=[[a[k][v]['scores_cv'][1],
+                a[k][v]['scores_insample'][1],
+                a[k][v]['scores_insample_unbiased'][1]]]
+        except:
+            # binary vars don't have MAE
+            pass
     else:
-        acc[k][v].append(a[k][v])
-    if not v in features[k]:
-        features[k][v]=f[k][v]
-    else:
-        features[k][v].append(f[k][v])
+        acc[k][v].append([a[k][v]['scores_cv'][0]],
+                    a[k][v]['scores_insample'][0],
+                    a[k][v]['scores_insample_unbiased'][0]])
+        try:
+            MAE[k][v].append([a[k][v]['scores_cv'][1],
+                a[k][v]['scores_insample'][1],
+                a[k][v]['scores_insample_unbiased'][1]])
+        except:
+            # binary vars don't have MAE
+            pass
 
-pickle.dump((acc,features),open('rf_data_collapsed.pkl','wb'))
+    if not v in features[k]:
+        features[k][v]=[a[k][v]['importances'].squeeze()]
+    else:
+        features[k][v].append(a[k][v]['importances'].squeeze())
+
+data={'acc_cv':acc_cv,'acc_insample':acc_insample,
+        'acc_insample_overfit':acc_insample_overfit,
+        'MAE':MAE}
+pickle.dump(data,open('%s_data_collapsed.pkl'%clf,'wb'))

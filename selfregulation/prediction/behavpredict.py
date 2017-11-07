@@ -26,6 +26,7 @@ import fancyimpute
 from imblearn.combine import SMOTETomek
 
 from selfregulation.utils.utils import get_info,get_behav_data,get_demographics
+from selfregulation.utils.logreg import LogReg
 
 from selfregulation.utils.get_balanced_folds import BalancedKFold
 import selfregulation.prediction.prediction_utils as prediction_utils
@@ -177,6 +178,11 @@ class BehavPredict:
                 del self.demogdata[v]
                 if self.verbose:
                     print('dropping categorical variable:',v)
+        if len(self.skip_vars)>0:
+            for v in self.skip_vars:
+                del self.demogdata[v]
+                if self.verbose:
+                    print('dropping skipped variable:',v)
 
 
     def get_demogdata_vartypes(self):
@@ -200,11 +206,11 @@ class BehavPredict:
                         add_baseline_vars=False,
                         cognitive_vars=['cognitive_reflection',
                         'holt_laury']):
-        self.behavdata=get_behav_data(self.dataset,
-                                'meaningful_variables_clean.csv',
-                                full_dataset=self.use_full_dataset)
-        self.predictor_set=datasubset
         if datasubset=='survey':
+            self.behavdata=get_behav_data(self.dataset,
+                                    'meaningful_variables_clean.csv',
+                                    full_dataset=self.use_full_dataset)
+            self.predictor_set=datasubset
             for v in self.behavdata.columns:
                 dropvar=True
                 if v.find('survey')>-1:
@@ -218,6 +224,10 @@ class BehavPredict:
                         print('dropping non-survey var:',v)
 
         elif datasubset=='task':
+            self.behavdata=get_behav_data(self.dataset,
+                                    'meaningful_variables_clean.csv',
+                                    full_dataset=self.use_full_dataset)
+            self.predictor_set=datasubset
             for v in self.behavdata.columns:
                 dropvar=False
                 if v.find('survey')>-1:
@@ -237,12 +247,21 @@ class BehavPredict:
             self.behavdata=pandas.DataFrame({'mean':numpy.ones(self.demogdata.shape[0])})
             self.behavdata.index=self.demogdata.index
         elif datasubset in self.varsets.keys():
+            self.behavdata=get_behav_data(self.dataset,
+                                    'meaningful_variables_clean.csv',
+                                    full_dataset=self.use_full_dataset)
+            self.predictor_set=datasubset
             for v in self.behavdata.columns:
                 if not v in self.varsets[datasubset]:
                     del self.behavdata[v]
                     if self.verbose>1:
                         print('dropping off-list var:',v)
             assert self.behavdata.shape[1]==len(self.varsets[datasubset])
+
+        elif datasubset=='survey_items':
+            self.behavdata=get_behav_data(self.dataset,
+                                    'subject_x_items.csv',
+                                    full_dataset=self.use_full_dataset)
 
         else:
             raise ValueError('datasubset %s is not defined'%datasubset)
@@ -373,10 +392,12 @@ class BehavPredict:
             if self.lambda_optim is not None:
                 if self.lambda_optim[0]==0:
                     # sklearn uses different coding - 0 will break it
-                    self.lambda_optim[0]=1
-                if self.verbose:
-                    print('using lambda_optim:',self.lambda_optim[0])
-                clf=LogisticRegression(C=self.lambda_optim[0],penalty='l1',solver='liblinear')
+                    clf=LogReg()
+
+                else:
+                    if self.verbose:
+                        print('using lambda_optim:',self.lambda_optim[0])
+                    clf=LogisticRegression(C=self.lambda_optim[0],penalty='l1',solver='liblinear')
             else:
                 clf=LogisticRegressionCV(Cs=100,penalty='l1',solver='liblinear')
         else:

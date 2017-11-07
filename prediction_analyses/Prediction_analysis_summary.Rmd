@@ -7,7 +7,7 @@ output:
 
 ---
 
-These results are based on the analyses performed using the singularity container on stampede2 during period of October 10-15.  
+These results are based on the analyses performed using the singularity container on ls5 during period of October 21-23.  
 
 ### Setup
 

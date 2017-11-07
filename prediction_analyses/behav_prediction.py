@@ -56,6 +56,12 @@ if __name__=='__main__':
     parser.add_argument("--no_baseline_vars",
                         help="don't include baseline vars in task/survey model",
                         action='store_true')
+    parser.add_argument("--debugbreak",
+                        help="break after setting up class",
+                        action='store_true')
+    parser.add_argument("--demogfile",
+                        help="use data from file for demog vars",
+                        default=None)
     parser.add_argument('-d',"--dataset", help="dataset for prediction",
                             required=True)
     parser.add_argument('-j',"--n_jobs", help="number of processors",type=int,
@@ -108,20 +114,36 @@ if __name__=='__main__':
          smote_cutoff=args.smote_threshold,
          freq_threshold=args.freq_threshold,
          imputer=args.imputer)
-    bp.load_demog_data()
-    bp.get_demogdata_vartypes()
-    bp.remove_lowfreq_vars()
-    bp.binarize_ZI_demog_vars()
 
-    def add_varsets(bp,tags):
+    if args.debugbreak:
+        raise Exception('breaking')
+
+    if args.demogfile is not None:
+        import pandas
+        bp.demogdata=pandas.read_csv(args.demogfile,index_col=0)
+        bp.data_models={}
+        for i in bp.demogdata.columns:
+            bp.data_models[i]='gaussian'
+    else:
+        bp.load_demog_data()
+        bp.get_demogdata_vartypes()
+        bp.remove_lowfreq_vars()
+        bp.binarize_ZI_demog_vars()
+
+    def add_varsets(bp,tags,taskname=None):
         vars=list(bp.behavdata.columns)
         for tag in tags:
             varsets=tags[tag]
             indvars=[]
             for v in vars:
                 for vs in varsets:
-                    if v.find(vs)>-1:
-                        indvars.append(v)
+                    if taskname is None:
+                        if v.find(vs)>-1:
+                            indvars.append(v)
+                    else:
+                        if v.find(vs)==0:
+                            indvars.append(v)
+
             if bp.verbose:
                 print(tag,indvars)
             bp.add_varset(tag,indvars)
@@ -133,8 +155,19 @@ if __name__=='__main__':
                 'intelligence':['raven','cognitive_reflection'],
                 'drift':['hddm_drift'],
                 'thresh':['hddm_thresh'],
-                'nondecision':['hddm_nondecision']}
+                'nondecision':['hddm_non_decision']}
     add_varsets(bp,task_tags)
+    task_name_tags={'stroop':['stroop'],
+                'dot_pattern_expectancy':['dot_pattern_expectancy'],
+                'attention_network_task':['attention_network_task'],
+                'threebytwo':['threebytwo'],
+                'stop_signal':['stop_signal'],
+                'motor_selective_stop_signal':['motor_selective_stop_signal'],
+                'kirby':['kirby'],
+                'discount_titrate':['discount_titrate'],
+                'tower_of_london':['tower_of_london'],
+                'columbia_card_task_hot':['columbia_card_task_hot']}
+    add_varsets(bp,task_name_tags,taskname=True)
 
     bp.load_behav_data('survey')
     survey_tags={'impulsivity':['upps_impulsivity_survey','dickman_survey',
@@ -149,11 +182,13 @@ if __name__=='__main__':
     add_varsets(bp,survey_tags)
 
     bp.load_behav_data(args.dataset)
-    bp.filter_by_icc(args.icc_threshold)
+    if args.icc_threshold>0:
+        bp.filter_by_icc(args.icc_threshold)
     bp.get_joint_datasets()
 
+
     if not args.singlevar:
-        vars_to_test=[v for v in bp.demogdata.columns if not v in bp.skip_vars]
+        vars_to_test=list(bp.demogdata.columns)
     else:
         vars_to_test=args.singlevar
 
