@@ -5,31 +5,44 @@ minsize=10
 
 indir='/work/01329/poldrack/stampede2/code/Self_Regulation_Ontology/prediction_analyses/singularity_analyses/ls5/results/prediction_outputs'
 indir='/data/01329/poldrack/SRO/lasso/prediction_outputs'
-indir='/Users/poldrack/code/Self_Regulation_Ontology/results/prediction_outputs'
 files=glob.glob(os.path.join(indir,'pred*pkl'))
+indir='/data/01329/poldrack/SRO/lasso_septask/prediction_outputs'
+files=files+glob.glob(os.path.join(indir,'pred*pkl'))
+indir='/data/01329/poldrack/SRO/lasso_septask/prediction_outputs_single'
+files=files+glob.glob(os.path.join(indir,'pred*pkl'))
+
 files.sort()
 datasets={}
 for f in files:
-    l_s=os.path.basename(f).replace('.pkl','').split('_')
-    if l_s[3]=='shuffle':
-        l_s[1]=l_s[1]+'_shuffle'
-    if not l_s[1] in datasets:
-        datasets[l_s[1]]=[]
-    datasets[l_s[1]].append(f)
+    l_s=os.path.basename(f).replace('.pkl','').split('_')  
+    clfpos=[i for i,x in enumerate(l_s) if x == clf]
+    dsname='_'.join(l_s[1:clfpos[0]])
+    shufflepos=[i for i,x in enumerate(l_s) if x == 'shuffle']
+    if len(shufflepos)>0:
+        dsname=dsname+'_shuffle'
+    #print(f,dsname,l_s)
+    if not dsname in datasets:
+        datasets[dsname]=[]
+    datasets[dsname].append(f)
 counter={}
 completed={}
 incomplete={}
 allkeys=[]
-allsets=['baseline','task','survey','baseline_shuffle','discounting','intelligence','stopping']
-
-if os.path.exists('../lasso_data.pkl'):
-    print('loading existing data')
-    data=pickle.load(open('../lasso_data.pkl','rb'))
-else:
-    data={}
-
+allsets=['baseline','task','survey','baseline_shuffle','discounting','intelligence','stopping','impulsivity','big5','risktaking','grit','emotion','bisbas','thresh','drift','nondecision']
+allsets = allsets + ['stroop',
+ 'dot_pattern_expectancy',
+ 'attention_network_task',
+ 'threebytwo',
+ 'stop_signal',
+ 'motor_selective_stop_signal',
+ 'kirby',
+ 'discount_titrate',
+ 'tower_of_london',
+ 'columbia_card_task_hot']
+data={}
 for t in allsets:
     if not t in datasets:
+        print('nothing for',t)
         datasets[t]={}
     if not t in data:
         data[t]={}
@@ -53,16 +66,24 @@ for t in allsets:
             else:
                 counter[t][k]+=1
 pickle.dump(data,open('%s_data.pkl'%clf,'wb'))
-
-allkeys=list(set(allkeys))
+skip_vars=['RetirementPercentStocks',
+         'HowOftenFailedActivitiesDrinking',
+         'HowOftenGuiltRemorseDrinking',
+         'AlcoholHowOften6Drinks']
+allkeys=list(set(allkeys))        
 for t in allsets:
+    print(t)
     for k in allkeys:
+        if k in skip_vars:
+            continue
         if not k in counter[t]:
-             incomplete[t][k]=minsize
+             incomplete[t][k]=100 
              continue
-        if counter[t][k]>=minsize:
-               completed[t].append(k)
+        if counter[t][k]>=100:
+               completed[t].append(k)  
         else:
-               incomplete[t][k]=minsize-counter[t][k]
+               incomplete[t][k]=100-counter[t][k]
+               print(k,incomplete[t][k])	
+    #print(t,len(completed[t]),'completed',len(incomplete[t]),'incomplete')
+pickle.dump(incomplete,open('incomplete.pkl','wb'))
 
-    print(t,len(completed[t]),'completed',len(incomplete[t]),'incomplete')
