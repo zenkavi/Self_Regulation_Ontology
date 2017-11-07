@@ -327,9 +327,9 @@ class Results(EFA_Analysis, HCA_Analysis):
         self.data = imputed_data.filter(regex=filter_regex)
         self.data_no_impute = cleaned_data.filter(regex=filter_regex)
         if ID is None:
-            self.ID =  '%s_%d' % (name, random.getrandbits(16))
+            self.ID =  '%s_%s' % (name, str(random.getrandbits(16)))
         else:
-            self.ID = '%s_%d' % (name, ID)
+            self.ID = '%s_%s' % (name, str(ID))
         # set up plotting files
         self.plot_file = path.join('Plots', datafile, name, self.ID)
         self.output_file = path.join('Output', datafile, name, self.ID)
