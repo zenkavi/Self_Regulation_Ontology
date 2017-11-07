@@ -35,8 +35,8 @@ RUN pip install \
   scipy==0.19.1 \
   matplotlib==2.1.0 \
   networkx==2.0 \
-  statsmodels==0.8.0
-
+  statsmodels==0.8.0 \
+  jupyter
 
 RUN echo 'install.packages(c("mpath","glmnet","foreach","iterators","pscl","numDeriv","doParallel"), repos="http://cran.us.r-project.org", dependencies=TRUE)' > /tmp/packages.R \
       && Rscript /tmp/packages.R
@@ -52,9 +52,17 @@ RUN pip install jinja2 \
   fancyimpute==0.2.0 \
   IPython==6.2.1
 
+RUN pip install seaborn
+
+RUN echo "xxxxxxxxxxssfoo"
+
 # Clone the conf files into the docker container
 RUN git clone git@github.com:poldrack/Self_Regulation_Ontology.git
 RUN mkdir /results
 WORKDIR /workdir/Self_Regulation_Ontology
 
 RUN make setup-docker
+RUN jupyter notebook --generate-config
+RUN echo "c.NotebookApp.ip = '0.0.0.0'" >> ~/.jupyter/jupyter_notebook_config.py
+RUN echo "c.NotebookApp.token = ''" >> ~/.jupyter/jupyter_notebook_config.py
+RUN echo "c.NotebookApp.allow_root = True" >> ~/.jupyter/jupyter_notebook_config.py
