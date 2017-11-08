@@ -12,13 +12,18 @@ data = data.query("worker_id == '%s'" % workers[0])
 
 from scipy.optimize import minimize
 def eval_MoE(fit_args, passed_args):
-    args = passed_args
-    args['kappa'] = fit_args[0]
-    args['zeta'] = fit_args[1]
-    args['xi'] = fit_args[2]
-    super_confidences = [{'a': fit_args[3], 'b': fit_args[4]}, 
-                          {'a': fit_args[5], 'b': fit_args[6]}]
-    args['super_confidences'] = super_confidences
+    args = {
+        'kappa': fit_args[0],
+        'zeta': fit_args[1],
+        'xi': fit_args[2],
+        'beta2' : fit_args[3],
+        'beta3': fit_args[4],
+        'alphaC': fit_args[5],
+        'alphaO': fit_args[6],
+        'alphaS': fit_args[7],
+        'beta_hierarchy': fit_args[8],
+        'data': data,
+        }
     
     MoE_model = MoE_Model(**args)
     likelihoods = []
@@ -36,13 +41,11 @@ def eval_MoE(fit_args, passed_args):
 def fit_MoE(args):
     assert set(['kappa', 'zeta', 'xi']) <= set(args.keys())
     fit_args = [args['kappa'], args['zeta'], 
-                args['xi'], args['H_a'], args['H_b'], args['F_a'], args['F_b']]
+                args['xi'], args['beta2'], args['beta3'], args['alphaC'], 
+                args['alphaO'], args['alphaS'], args['beta_hierarchy']]
     
     
-    passed_args = {'data': args['data'],
-                   'uni_confidences': args['uni_confidences'],
-                   'full_confidence': args['full_confidence'],
-                   'beta2': args['beta2']}
+    passed_args = {'data': args['data']}
     out = minimize(eval_MoE, fit_args, passed_args, method='Nelder-Mead')
     return out
 
@@ -50,31 +53,30 @@ def fit_MoE(args):
 
 kappa = 1
 zeta = .1
-xi = .5
-uni_confidences = [{'a':100,'b':1},{'a':100,'b':1},{'a':1,'b':1}]
-full_confidence = [{'a':1, 'b': 1}]
+xi = .2
+alphaC = 1
+alphaS = 1
+alphaO = 1
 beta2 = 100
-
+beta3 = 100
+beta_hierarchy=20
+                 
 args = {
         'kappa': kappa,
         'zeta': zeta,
         'xi': xi,
-        'H_a': 1,
-        'H_b': 1,
-        'F_a': 1,
-        'F_b': 1,
+        'beta2' : beta2,
+        'beta3': beta3,
+        'alphaC': alphaC,
+        'alphaO': alphaO,
+        'alphaS': alphaS,
+        'beta_hierarchy': beta_hierarchy,
         'data': data,
-        'uni_confidences': uni_confidences,
-        'full_confidence': full_confidence,
-        'beta2': beta2
         }
+
 #out = fit_MoE(args)
 
-# simulate model
-super_confidences = [{'a': args.pop('H_a'), 'b': args.pop('H_b')}, 
-                      {'a': args.pop('F_a'), 'b': args.pop('F_b')}]
 
-args['super_confidences'] = super_confidences
 model = MoE_Model(**args.copy())
 
 model_data = data.copy()
@@ -94,13 +96,14 @@ for i, trial in data.iloc[0:100].iterrows():
         trial.key_press = action
         new_data.append(trial)
         if verbose:
-            print(i)
-            print(list(trial[['orientation', 'stim', 'border']]))
+            print('*'*79)
+            print('Trial:', i)
+            print('OSC:', list(trial[['orientation', 'stim', 'border']]))
             print([e.get_action_probs(trial) for e in model.experts])
             print('correct choice', trial.correct_response)
             print('top action', action)
         # update model
-        model.update_confidence(trial, verbose=verbose)
+        model.update_confidence(trial)
         model.update_experts(trial)
         trial_by_trial_confidence.append(model.get_all_confidences(trial))
         if verbose:
