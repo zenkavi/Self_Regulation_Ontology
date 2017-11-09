@@ -14,7 +14,7 @@ outdir=os.path.join(basedir,'Data/Derived_Data/%s'%dataset)
 metadata=pickle.load(open(os.path.join(outdir,'survey_metadata.pkl'),'rb'))
 surveys=list(metadata.keys())
 surveys.sort()
-with open(os.path.join(outdir,'survey_metadata.csv'),'w') as f:
+with open(os.path.join(outdir,'survey_metadata.tsv'),'w') as f:
     for s in surveys:
         items=list(metadata[s].keys())
         items.sort()
