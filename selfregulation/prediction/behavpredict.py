@@ -465,7 +465,7 @@ class BehavPredict:
                     else:
                         self.clf=Lasso(alpha=self.lambda_optim)
                 else:
-                    self.clf=LassoCV()
+                    self.clf=LassoCV(max_iter=5000)
         else:
             raise ValueError('classfier not in approved list!')
         # set up crossvalidation
@@ -631,7 +631,7 @@ class BehavPredict:
                                             nlambda=nlambda)
 
             else:
-                clf=LassoCV()
+                clf=LassoCV(max_iter=5000)
         else:
             raise ValueError('classfier not in approved list!')
         # set up crossvalidation
