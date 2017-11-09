@@ -206,11 +206,11 @@ class BehavPredict:
                         add_baseline_vars=False,
                         cognitive_vars=['cognitive_reflection',
                         'holt_laury']):
+        self.predictor_set=datasubset
         if datasubset=='survey':
             self.behavdata=get_behav_data(self.dataset,
                                     'meaningful_variables_clean.csv',
                                     full_dataset=self.use_full_dataset)
-            self.predictor_set=datasubset
             for v in self.behavdata.columns:
                 dropvar=True
                 if v.find('survey')>-1:
@@ -227,7 +227,6 @@ class BehavPredict:
             self.behavdata=get_behav_data(self.dataset,
                                     'meaningful_variables_clean.csv',
                                     full_dataset=self.use_full_dataset)
-            self.predictor_set=datasubset
             for v in self.behavdata.columns:
                 dropvar=False
                 if v.find('survey')>-1:
@@ -250,7 +249,6 @@ class BehavPredict:
             self.behavdata=get_behav_data(self.dataset,
                                     'meaningful_variables_clean.csv',
                                     full_dataset=self.use_full_dataset)
-            self.predictor_set=datasubset
             for v in self.behavdata.columns:
                 if not v in self.varsets[datasubset]:
                     del self.behavdata[v]
