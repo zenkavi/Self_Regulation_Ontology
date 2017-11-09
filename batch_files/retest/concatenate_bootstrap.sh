@@ -3,4 +3,4 @@ cat *.csv > ../../Local/bootstrap_merged.csv
 cd ../../Local
 awk '!a[$0]++' bootstrap_merged.csv > bootstrap_merged_clean.csv
 rm bootstrap_merged.csv
-mv bootstrap_merged_clean.csv ./boostrap_merged.csv
+mv bootstrap_merged_clean.csv ./bootstrap_merged.csv
