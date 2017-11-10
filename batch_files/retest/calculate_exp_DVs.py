@@ -4,7 +4,7 @@ from expanalysis.experiments.processing import get_exp_DVs
 from os import path
 import pandas as pd
 
-data_dir='/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/Data'
+data_dir='/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data'
 
 #parse arguments
 exp_id = sys.argv[1]
