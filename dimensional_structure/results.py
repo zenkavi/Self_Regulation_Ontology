@@ -1,13 +1,12 @@
 # imports
 from utils import (
-        create_factor_tree, distcorr,  find_optimal_components, 
-        get_scores_from_subset, hierarchical_cluster, quantify_lower_nesting,
-        run_EFA_prediction
+        abs_pdist, create_factor_tree, distcorr,  find_optimal_components, 
+        get_scores_from_subset, hdbscan_cluster, hierarchical_cluster, 
+        quantify_lower_nesting, run_EFA_prediction
         )
 import glob
 from os import makedirs, path
 import pandas as pd
-from pathos.multiprocessing import ProcessingPool as Pool
 import numpy as np
 import pickle
 import random
@@ -117,7 +116,7 @@ class EFA_Analysis:
                                            (loading_entropy/max_entropy).values)
         return permuted_entropies
     
-    def run(self, loading_thresh=None, rerun=False, verbose=False):
+    def run(self, loading_thresh=None, verbose=False):
         # check adequacy
         adequate, adequacy_stats = self.adequacy_test(verbose)
         assert adequate, "Data is not adequate for EFA!"
@@ -125,14 +124,14 @@ class EFA_Analysis:
                                             'adequacy_stats': adequacy_stats}
         
         # get optimal dimensionality
-        if 'c_metric-parallel' not in self.results.keys() or rerun==True:
+        if 'c_metric-parallel' not in self.results.keys():
             if verbose: print('Determining Optimal Dimensionality')
             self.get_dimensionality(verbose=verbose)
             
         # create factor tree
         if verbose: print('Creating Factor Tree')
         run_FA = self.results.get('factor_tree', [])
-        if len(run_FA) < self.max_factors or rerun == True:
+        if len(run_FA) < self.max_factors:
             ftree, ftree_rout = create_factor_tree(self.data,
                                                    (1,self.max_factors))
             self.results['factor_tree'] = ftree
@@ -205,6 +204,54 @@ class EFA_Analysis:
         redone_score_diff = np.mean(scores-redone_scores)
         assert(redone_score_diff < 1e-5)
 
+class HDBScan_Analysis():
+    """ Runs Hierarchical Clustering Analysis """
+    def __init__(self, dist_metric):
+        self.results = {}
+        self.dist_metric = dist_metric
+        self.metric_name = 'unknown'
+        if self.dist_metric == distcorr:
+            self.metric_name = 'distcorr'
+        else:
+            self.metric_name = self.dist_metric
+    
+    def cluster_data(self, data):
+        output = hierarchical_cluster(data.T)
+        self.results['clustering_input-data'] = output
+        
+    def cluster_EFA(self, EFA, c):
+        loading = EFA.get_loading(c)
+        output = hdbscan_cluster(loading)
+        self.results['clustering_input-EFA%s' % c] = output
+        
+    
+    def get_cluster_labels(self, inp='data'):
+        cluster = self.results['clustering_input-%s' % inp]
+        dist = cluster['distance_df']
+        labels = cluster['labels']
+        probs = cluster['probs']
+        label_names = [[(dist.index[i], probs[i]) 
+                        for i,l in enumerate(labels) if l == ii]
+                        for ii in np.unique(labels)]
+        return label_names
+    
+    def get_cluster_loading(self, EFA, inp, c):
+        cluster_labels = self.get_cluster_labels(inp)
+        cluster_loadings = []
+        for cluster in cluster_labels:
+            subset = abs(EFA.get_loading(c).loc[cluster,:])
+            cluster_vec = subset.mean(0)
+            cluster_loadings.append((cluster, cluster_vec))
+        return cluster_loadings
+    
+    def run(self, data, EFA, cluster_EFA=False, verbose=False):
+        if verbose: print("Clustering data")
+        self.cluster_data(data)
+        if cluster_EFA:
+            if verbose: print("Clustering EFA")
+            for c in EFA.get_metric_cs().values():
+                self.cluster_EFA(EFA, c)
+            
 class HCA_Analysis():
     """ Runs Hierarchical Clustering Analysis """
     def __init__(self, dist_metric):
@@ -231,7 +278,7 @@ class HCA_Analysis():
         cluster = self.results['clustering_input-%s' % inp]
         labels = cluster['clustered_df'].index
         reorder_vec = cluster['reorder_vec']
-        cluster_index = cluster['clustering']['labels'][reorder_vec]
+        cluster_index = cluster['labels'][reorder_vec]
         # reindex so the clusters are in order based on their proximity
         # in the dendrogram
         cluster_reindex = []
@@ -289,11 +336,9 @@ class HCA_Analysis():
         return graph_vars
     
     def run(self, data, EFA, cluster_EFA=False,
-            run_graphs=False, rerun=True, verbose=False):
-        if ('clustering_metric-%s_input-data' % self.metric_name in 
-            self.results.keys()) or (rerun==True):
-            if verbose: print("Clustering data")
-            self.cluster_data(data)
+            run_graphs=False, verbose=False):
+        if verbose: print("Clustering data")
+        self.cluster_data(data)
         if cluster_EFA:
             if verbose: print("Clustering EFA")
             for c in EFA.get_metric_cs().values():
@@ -341,16 +386,17 @@ class Results(EFA_Analysis, HCA_Analysis):
         # initialize analysis classes
         self.EFA = EFA_Analysis(self.data, self.data_no_impute)
         self.HCA = HCA_Analysis(dist_metric=self.dist_metric)
+        self.hdbscan = HDBScan_Analysis(dist_metric=self.dist_metric)
         
-    def run_EFA_analysis(self, rerun=False, verbose=False):
+    def run_EFA_analysis(self, verbose=False):
         if verbose:
             print('*'*79)
             print('Running EFA')
             print('*'*79)
-        self.EFA.run(self.loading_thresh, rerun=rerun, verbose=verbose)
+        self.EFA.run(self.loading_thresh, verbose=verbose)
 
-    def run_HCA_analysis(self, cluster_EFA=True, run_graphs=True,
-                         dist_metric=None, verbose=False):
+    def run_clustering_analysis(self, cluster_EFA=True, run_graphs=True,
+                                dist_metric=None, verbose=False):
         """ Run HCA Analysis
         
         Args:
@@ -366,11 +412,16 @@ class Results(EFA_Analysis, HCA_Analysis):
         if dist_metric is None: 
             self.HCA.run(self.data, self.EFA, cluster_EFA=cluster_EFA,
                          run_graphs=run_graphs, verbose=verbose)
+            self.hdbscan.run(self.data, self.EFA, cluster_EFA=cluster_EFA,
+                             verbose=verbose)
         else:
             HCA = HCA_Analysis(dist_metric=dist_metric)
             HCA.run(self.data, self.EFA, cluster_EFA=cluster_EFA,
                     run_graphs=run_graphs, verbose=verbose)
-            return HCA
+            hdbscan = HDBScan_Analysis(dist_metric=dist_metric)
+            hdbscan.run(self.data, self.EFA, cluster_EFA=cluster_EFA,
+                        verbose=verbose)
+            return {'HCA': HCA, 'hdbscan': hdbscan}
     
     def run_prediction(self, c, shuffle=False, no_baseline_vars=True,
                        outfile=None):
@@ -420,20 +471,27 @@ class Results(EFA_Analysis, HCA_Analysis):
         EFA_boot.run(self.loading_thresh, verbose=verbose)
         return EFA_boot
     
-    def run_HCA_bootstrap(self, EFA, boot_data=None, verbose=False):
+    def run_clustering_bootstrap(self, EFA, boot_data=None, cluster_EFA=True, 
+                                 verbose=False):
         if boot_data is None:
             boot_data = self.gen_resample_data()
         HCA_boot = HCA_Analysis(self.dist_metric)
-        HCA_boot.run(boot_data, EFA, verbose=verbose)
-        return HCA_boot
+        HCA_boot.run(boot_data, EFA, cluster_EFA=cluster_EFA, verbose=verbose)
+        
+        hdbscan_boot = HDBScan_Analysis(dist_metric=self.dist_metric)
+        hdbscan_boot.run(boot_data, EFA, cluster_EFA=cluster_EFA,
+                        verbose=verbose)
+            
+        return {'HCA': HCA_boot, 'hdbscan': hdbscan_boot}
 
     def run_bootstrap(self, run_HCA=True, verbose=False, save=False):
         boot_data = self.gen_resample_data()
         EFA_boot = self.run_EFA_bootstrap(boot_data, verbose)
         boot_run = {'data': boot_data, 'EFA': EFA_boot}
         if run_HCA:
-            HCA_boot = self.run_HCA_bootstrap(EFA_boot, boot_data, verbose)
-            boot_run['HCA'] = HCA_boot
+            cluster_boot = self.run_clustering_bootstrap(EFA_boot, boot_data, verbose)
+            boot_run['HCA'] = cluster_boot['HCA']
+            boot_run['hdbscan'] = cluster_boot['hdbscan']
         if save==True:
             boot_path = path.join(self.output_file, 'bootstrap_output')
             makedirs(boot_path, exist_ok=True)

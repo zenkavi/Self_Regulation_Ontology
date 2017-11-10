@@ -40,7 +40,7 @@ def plot_clusterings(HCA, plot_dir=None, verbose=False):
         if plot_dir is not None:
             filename = path.join(plot_dir, '%s.png' % name)
         fig = dendroheatmap(clustering['linkage'], clustering['distance_df'], 
-                            clustering['clustering']['labels'],
+                            clustering['labels'],
                             figsize=(50,50), title=title,
                             filename = filename)
     
@@ -71,8 +71,8 @@ def plot_clustering_similarity(HCA, plot_dir=None, verbose=False):
         distance_similarity.loc[name1, name2] = dist_corr
         distance_similarity.loc[name2, name1] = dist_corr
         # record similarity of clustering of dendrogram
-        clusters1 = clustering1[1]['clustering']['labels']
-        clusters2 = clustering2[1]['clustering']['labels']
+        clusters1 = clustering1[1]['labels']
+        clusters2 = clustering2[1]['labels']
         rand_score = adjusted_rand_score(clusters1, clusters2)
         MI_score = adjusted_mutual_info_score(clusters1, clusters2)
         cluster_similarity.loc[name1, name2] = rand_score

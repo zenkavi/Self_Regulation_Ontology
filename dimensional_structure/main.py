@@ -50,7 +50,7 @@ for subset in subsets:
                           filter_regex=subset['regex'],
                           ID=ID)
         results.run_EFA_analysis(verbose=True)
-        results.run_HCA_analysis(verbose=True, run_graphs=False)
+        results.run_clustering_analysis(verbose=True, run_graphs=False)
         ID = results.ID.split('_')[1]
         # name factors
         factor_names = subset.get('factor_names', None)
