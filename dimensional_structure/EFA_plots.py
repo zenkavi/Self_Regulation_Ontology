@@ -2,12 +2,8 @@
 import matplotlib
 matplotlib.use('Agg')
 from math import ceil
-from utils import (
-        create_factor_tree, find_optimal_components, get_factor_groups,
-        get_hierarchical_groups, get_scores_from_subset,
-        get_loadings, plot_factor_tree, get_top_factors, 
-        quantify_lower_nesting, save_figure,
-        visualize_factors, visualize_task_factors
+from utils import (get_factor_groups, plot_factor_tree, get_top_factors, 
+         save_figure, visualize_factors, visualize_task_factors
         )
 import matplotlib.pyplot as plt
 import numpy as np
@@ -91,19 +87,19 @@ def plot_bar_factors(EFA, c, plot_dir=None):
             abs(ordered_v).plot(kind='bar', ax=ax1, color=ordered_colors)
             # draw lines separating groups
             for x_val in np.cumsum([len(i[1]) for i in grouping]):
-                ax1.vlines(x_val, 0, 1.1, lw=2, color='grey')
+                ax1.vlines(x_val-.5, 0, 1.1, lw=2, color='grey', linestyle='dashed')
             # set axes properties
             ax1.set_ylim(0,1.1); ax2.set_ylim(0,1.1)
             ax1.set_yticklabels(''); ax2.set_yticklabels('')
             ax2.set_xticklabels('')
             labels = ax1.get_xticklabels()
             locs = ax1.xaxis.get_ticklocs()
-            ax1.set_ylabel('Factor %s' % (i+1))
+            ax1.set_ylabel(k)
             if i == 0:
                 ax_copy = ax1.twiny()
                 ax_copy.set_xticks(locs[::2])
                 ax_copy.set_xticklabels(labels[::2], rotation=90)
-                ax2.set_title('Factor Loading Distribution')
+                ax2.set_title('Factor Loading Distribution', fontsize=14)
             if i == len(sorted_vars)-1:
                 # and other half on bottom
                 ax1.set_xticks(locs[1::2])
@@ -115,12 +111,16 @@ def plot_bar_factors(EFA, c, plot_dir=None):
         save_figure(f, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight'})
 
-def plot_polar_factors(EFA, c, plot_dir=None):
+def plot_polar_factors(EFA, c, color_by_group=True, plot_dir=None):
     loadings = EFA.results['factor_tree'][c]
     groups = get_factor_groups(loadings)    
     # plot polar plot factor visualization for metric loadings
     filename =  'factor_polar_EFA%s.png' % c
-    fig = visualize_factors(loadings, n_rows=4, groups=groups)
+    if color_by_group==True:
+        colors=None
+    else:
+        colors=['b']*len(loadings.columns)
+    fig = visualize_factors(loadings, n_rows=2, groups=groups, colors=colors)
     if plot_dir is not None:
         save_figure(fig, path.join(plot_dir, filename),
                     {'bbox_inches': 'tight'})
@@ -168,7 +168,12 @@ def plot_task_factors(EFA, c, task_sublists=None, plot_dir=None):
             task_entropies = entropies[c][task_loadings.index]
             task_loadings.index = [i+'(%.2f)' % task_entropies.loc[i] for i in task_loadings.index]
             # plot
-            visualize_task_factors(task_loadings, axes[i], ymax=max_loading)
+            if i%(ncols*2)==0 or i%(ncols*2)==5:
+                visualize_task_factors(task_loadings, axes[i], ymax=max_loading,
+                                       xticklabels=True)
+            else:
+                visualize_task_factors(task_loadings, axes[i], ymax=max_loading,
+                                       xticklabels=False)
             axes[i].set_title(' '.join(task.split('_')), 
                               y=1.14, fontsize=25)
             
@@ -200,20 +205,20 @@ def plot_entropies(EFA, plot_dir=None):
             f.savefig(path.join(plot_dir, 'entropies_across_factors.png'), 
                       bbox_inches='tight')
             
-def plot_EFA(EFA, c, plot_dir=None, plot_generic=True, verbose=False,
+def plot_EFA(results, plot_dir=None, verbose=False,
              plot_task_kws={}):
-    # plots that don't depend on c
-    if plot_generic:
-        #if verbose: print("Plotting BIC/SABIC")
-        #plot_BIC_SABIC(EFA, plot_dir)
-        if verbose: print("Plotting nesting")
-        plot_nesting(EFA, plot_dir=plot_dir)
-        if verbose: print("Plotting entropies")
-        plot_entropies(EFA, plot_dir)
-    
+
+    EFA = results.EFA
+    c = results.EFA.get_metric_cs()['c_metric-BIC']
+    #if verbose: print("Plotting BIC/SABIC")
+    #plot_BIC_SABIC(EFA, plot_dir)
+    if verbose: print("Plotting nesting")
+    plot_nesting(EFA, plot_dir=plot_dir)
+    if verbose: print("Plotting entropies")
+    plot_entropies(EFA, plot_dir=plot_dir)
     if verbose: print("Plotting factor bars")
-    plot_bar_factors(EFA, c, plot_dir)
+    plot_bar_factors(EFA, c, plot_dir=plot_dir)
     if verbose: print("Plotting factor polar")
-    plot_polar_factors(EFA, c, plot_dir)
+    plot_polar_factors(EFA, c=c, plot_dir=plot_dir)
     if verbose: print("Plotting task factors")
     plot_task_factors(EFA, c, plot_dir=plot_dir, **plot_task_kws)
