@@ -22,23 +22,27 @@ The metadata schema is aligned as closely as possible to the
 It contains the following entries:
 
 For each instrument (task or survey):
-* Title: full text name of instrument
-* ShortName: short name for instrument (from NDADD)
-* URL:
-  * CognitiveAtlasURL: URL for instrument in Cognitive Atlas
-  * NDAURL: URL for instrument in NDA Data Dictionary
+* **title**: full text name of instrument
+* **description**: detailed description of instrument
+* **expFactoryName**: instrument name in Experiment Factory
+* **shortName**: short name for instrument (from NDADD)
+* **URL**:
+  * **CognitiveAtlasURL**: URL for instrument in Cognitive Atlas
+  * **NDAURL**: URL for instrument in NDA Data Dictionary
+* **dataElements**: a list of data elements (e.g. items, variables)
 
-
-For each item within an instrument:
-* ElementName: item identifier
-* NDAElementName: identifier for item from NIH Data Archive DD
-* DataType: one of ['String','Integer','Float','Boolean']
-* VariableScope: one of ['Item','Subscale','Scale']
-* VariableDefinition: None, or a dictionary defining the ElementNames included in the subscale and their weights
-* VariableUnits: None, or one of ['Ordinal','Seconds','Probability','Percentage','Rate','Count','Other']
-* VariableType: one of ['SurveyResponse','SurveySummary','ResponseTime','Accuracy','DDMDriftRate','DDMNondecisionTime','DDMThreshold','LearningRate','Load','DiscountRate','Span']
-* Size: max size for strings,empty otherwise
-* Required: one of ['Required','Recommended']
-* Description: full text description of item (for survey items this is the item text)
-* ValueRange: range of possible values
-* Notes: For survey items, including semicolon delimited list of choice descriptions
+For each data element within an instrument:
+* **expFactoryName**: item identifier
+* **NDAElementName**: identifier for item from NIH Data Archive DD
+* **variableType**: one of ['string','integer','float','boolean']
+* **variableScope**: one of ['item','subscale','instrument']
+* **variableDefinition**: None, or a dictionary defining the ElementNames included in the subscale and their weights
+* **variableUnits**: None, or one of ['ordinal','seconds','probability','percentage','rate','count','other']
+* **variableClass**: one of ['surveyResponse','surveySummary',
+'responseTime','accuracy','DDMDriftRate','DDMNondecisionTime',
+'DDMThreshold','learningRate','load','discountRate','span']
+* **size**: max size for strings,None otherwise
+* **isRequired**: one of ['required','recommended']
+* **description**: full text description of item (for survey items this is the item text)
+* **valueRange**: range of possible values (defined as "min::max")
+* **notes**: For survey items, including semicolon delimited list of
