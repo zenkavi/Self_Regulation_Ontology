@@ -1,20 +1,23 @@
 import sys
-sys.path.append('/Users/zeynepenkavi/Dropbox/PoldrackLab/expfactory-analysis')
-sys.path.append('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/data_preparation')
+#sys.path.append('/Users/zeynepenkavi/Dropbox/PoldrackLab/expfactory-analysis')
+#sys.path.append('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/data_preparation')
 import numpy as np
-from os import path
+from os import path, chdir
 import pandas as pd
 from glob import glob
 from selfregulation.utils.data_preparation_utils import convert_var_names, drop_failed_QC_vars, drop_vars
 from selfregulation.utils.r_to_py_utils import missForest
 
-try: 
-    release_date
-except NameError:
-    release_date = input('Enter release_ date:')
+#try: 
+#    release_date
+#except NameError:
+#    release_date = input('Enter release_ date:')
     
 
-data_dir=path.join('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Data/','Retest_'+release_date)
+#data_dir=path.join('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Data/','Retest_'+release_date)
+
+release_data = sys.argv[1]
+data_dir = sys.argv[2]
 
 #Read in DVs and valence
 label = 'retest'
@@ -84,7 +87,9 @@ readme_lines += ["meaningful_variables.csv: Same as meaningful_variables_hddm.cs
 # Retest meaningful_variables_clean.csv mimicking the test one
 # Instead of cleaning on this sample get variables resulting from test cleaning procedures
 # DO NOT remove outliers from this sample and transform based on what was done for test data
-meaningful_variables_clean_test = pd.read_csv('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Data/Complete_10-08-2017/meaningful_variables_clean.csv')
+#meaningful_variables_clean_test = pd.read_csv('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Data/Complete_10-08-2017/meaningful_variables_clean.csv')
+
+meaningful_variables_clean_test = pd.read_csv('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Complete_10-08-2017/meaningful_variables_clean.csv')
 
 transformed_variables = [col for col in meaningful_variables_clean_test.columns if 'logTr' in col]
 
@@ -168,7 +173,8 @@ selected_variables_reference.loc[task_selection_data.columns].to_csv(path.join(r
 
 files = glob(path.join(data_dir,'*csv'))
 files = [f for f in files if not any(i in f for i in ['demographic','health','alcohol_drug'])]
-cd '/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/data_preparation/'
+#cd '/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/data_preparation/'
+chdir('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/data_preparation/')
 for f in files:
     name = f.split('/')[-1]
     df = pd.DataFrame.from_csv(f)
