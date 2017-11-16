@@ -1,14 +1,2 @@
-two_stage_decision.model_based
-two_stage_decision.model_free
-two_stage_decision.perseverance
-two_stage_decision.avg_rt
-dot_pattern_expectancy.AX_errors
-dot_pattern_expectancy.AX_rt
-dot_pattern_expectancy.AY_errors   
-dot_pattern_expectancy.AY_rt
-dot_pattern_expectancy.BX_error
-dot_pattern_expectancy.BX_rt
-dot_pattern_expectancy.BY_error
-dot_pattern_expectancy.BY_rt
 eating_survey.total
 five_facet_mindfulness_survey.total

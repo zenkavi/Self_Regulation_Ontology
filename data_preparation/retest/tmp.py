@@ -46,3 +46,4 @@ readme_lines += ["DV_valence.csv: Subjective assessment of whether each variable
 #drop na columns
 DV_df.dropna(axis = 1, how = 'all', inplace = True)
 DV_df.to_csv(path.join(data_dir, 'variables_exhaustive.csv'))
+readme_lines += ["variables_exhaustive.csv: all variables calculated for each measure\n\n"]
