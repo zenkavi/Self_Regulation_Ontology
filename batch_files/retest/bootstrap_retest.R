@@ -156,7 +156,7 @@ bootstrap_relialibility = function(metric = c('icc', 'spearman','pearson', 'eta_
     out_df$spearman = get_spearman(dv_var, sample = 'bootstrap', sample_vec = tmp_sample, merge_var = worker_col)
   }
   if('pearson' %in% metric){
-    out_df$spearman = get_spearman(dv_var, sample = 'bootstrap', sample_vec = tmp_sample, merge_var = worker_col)
+    out_df$pearson = get_pearson(dv_var, sample = 'bootstrap', sample_vec = tmp_sample, merge_var = worker_col)
   }
   if('eta_sq' %in% metric){
     out_df$eta_sq = get_eta(dv_var, sample = 'bootstrap', sample_vec = tmp_sample, merge_var = worker_col)
