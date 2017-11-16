@@ -257,6 +257,7 @@ dot_pattern_expectancy_mturk.std_rt,1.0
 dot_pattern_expectancy_mturk.std_rt_error,1.0
 eating_survey_mturk.cognitive_restraint,1.0
 eating_survey_mturk.emotional_eating,-1.0
+eating_survey_mturk.total,1.0
 eating_survey_mturk.uncontrolled_eating,-1.0
 erq_survey_mturk.reappraisal,1.0
 erq_survey_mturk.suppression,1.0
@@ -265,6 +266,7 @@ five_facet_mindfulness_survey_mturk.describe,1.0
 five_facet_mindfulness_survey_mturk.nonjudge,1.0
 five_facet_mindfulness_survey_mturk.nonreact,1.0
 five_facet_mindfulness_survey_mturk.observe,1.0
+five_facet_mindfulness_survey_mturk.total,1.0
 future_time_perspective_survey_mturk.future_time_perspective,1.0
 go_nogo_mturk.acc,1.0
 go_nogo_mturk.bias,1.0
