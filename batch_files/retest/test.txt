@@ -1,2 +1,2 @@
-eating_survey.total
-five_facet_mindfulness_survey.total
+dot_pattern_expectancy.BX_errors
+dot_pattern_expectancy.BY_errors
