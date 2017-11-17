@@ -1,2 +1,1 @@
-dot_pattern_expectancy.BX_errors
-dot_pattern_expectancy.BY_errors
+directed_forgetting.avg_rt
