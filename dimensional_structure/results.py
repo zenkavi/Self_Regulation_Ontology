@@ -1,3 +1,5 @@
+# Defines Results and Analysis Classes to run on subsets of data
+
 # imports
 from utils import (
         abs_pdist, create_factor_tree, distcorr,  find_optimal_components, 
