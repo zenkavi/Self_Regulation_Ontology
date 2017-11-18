@@ -35,7 +35,7 @@ def get_behav_data(dataset=None, file=None, full_dataset=False,
     basedir=get_info('base_directory')
     pattern = re.compile('|'.join(d.keys()))
     if dataset == None:
-        files = glob(os.path.join(basedir,'Data/Discovery*'))
+        files = glob(os.path.join(basedir,'Data/Complete*'))
         files.sort(key=sorting)
         datadir = files[-1]
     else:
@@ -79,7 +79,7 @@ def get_info(item,infile=None):
                         'data/Self_Regulation_Settings.txt')
     config=str(config,'utf-8').strip()
     infodict={}
-
+    
     for l in config.split('\n'):
         if l.find('#')==0:
             continue
@@ -89,7 +89,7 @@ def get_info(item,infile=None):
     try:
         assert item in infodict
     except:
-        raise Exception('infodict does not include requested item')
+        raise Exception('infodict does not include requested item: %s' % item)
     return infodict[item]
 
 def get_single_dataset(dataset,survey):

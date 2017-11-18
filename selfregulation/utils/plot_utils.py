@@ -1,5 +1,6 @@
 from math import ceil
 import matplotlib.pyplot as plt
+from matplotlib.colors import to_hex
 import numpy as np
 import pandas as pd
 from scipy.cluster.hierarchy import dendrogram
@@ -8,7 +9,12 @@ import seaborn as sns
 #***************************************************
 # ********* Plotting Functions **********************
 #**************************************************
-
+def beautify_legend(legend, colors):
+    for i, text in enumerate(legend.get_texts()):
+        text.set_color(colors[i])
+    for item in legend.legendHandles:
+        item.set_visible(False)
+        
 def DDM_plot(v,t,a, sigma = .1, n = 10, plot_n = 15, file = None):
     """ Make a plot of trajectories using ddm parameters (in seconds)
     
@@ -161,7 +167,35 @@ def dendroheatmap(link, dist_df, clusters=None,
     if filename:
         fig.savefig(filename, bbox_inches='tight')
     return fig
+
+def get_dendrogram_color_fun(Z, labels, clusters, color_palette=sns.hls_palette):
+    """ return the color function for a dendrogram
     
+    ref: https://stackoverflow.com/questions/38153829/custom-cluster-colors-of-scipy-dendrogram-in-python-link-color-func
+    Args:
+        Z: linkage 
+        Labels: list of labels in the order of the dendrogram. They should be
+            the index of the original clustered list. I.E. [0,3,1,2] would
+            be the labels list - the original list reordered to the order of the leaves
+        clusters: cluster assignments for the labels in the original order
+    
+    """
+    dflt_col = "#808080"   # Unclustered gray
+    color_palette = sns.hls_palette(len(np.unique(clusters)))
+    D_leaf_colors = {i: to_hex(color_palette[clusters[i]-1]) for i in labels}
+    
+    # notes:
+    # * rows in Z correspond to "inverted U" links that connect clusters
+    # * rows are ordered by increasing distance
+    # * if the colors of the connected clusters match, use that color for link
+    link_cols = {}
+    for i, i12 in enumerate(Z[:,:2].astype(int)):
+      c1, c2 = (link_cols[x] if x > len(Z) else D_leaf_colors[x]
+        for x in i12)
+      link_cols[i+1+len(Z)] = c1 if c1 == c2 else dflt_col
+    
+    return lambda x: link_cols[x], color_palette
+
 def heatmap(df):
     """
     :df: plot heatmap
