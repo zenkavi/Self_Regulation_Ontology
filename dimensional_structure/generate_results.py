@@ -1,3 +1,5 @@
+# Running script to create results objects for subsets of data and plot
+
 # imports
 import argparse
 from EFA_plots import plot_EFA

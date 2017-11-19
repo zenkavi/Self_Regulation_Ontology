@@ -222,8 +222,6 @@ def hdbscan_cluster(df, compute_dist=True,  pdist_kws=None,
             'probs': probs,
             'link': link}
 
-        
-
 
 # ****************************************************************************
 # helper functions for dealing with factor analytic results
