@@ -8,8 +8,9 @@ import matplotlib.pyplot as plt
 
 dataset='Complete_10-27-2017'
 basedir=get_info('base_directory')
-if len(sys.argv)>1:
-    outdir=sys.argv[1]
+nruns=int(sys.argv[1])
+if len(sys.argv)>2:
+    outdir=sys.argv[2]
 else:
     outdir='maxcorr'
 if not os.path.exists(outdir):
@@ -66,15 +67,18 @@ if plot_heatmap:
     plt.savefig('corr_hmap.png')
 
 # shuffle, recompute, and store maximum for each run
-nruns=2
-def col_shuffle(df):
+
+def col_shuffle(df,test=False):
     """
     shuffle data within each column
     """
+    if test:
+        return(df)
     df_shuf=df.copy()
     for i in range(df.shape[1]):
         numpy.random.shuffle(df_shuf.iloc[:,i])
     return(df_shuf)
+
 maxcc=numpy.zeros(nruns)
 for i in range(nruns):
     df_tmp=col_shuffle(df)
