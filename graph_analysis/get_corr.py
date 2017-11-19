@@ -8,7 +8,10 @@ import matplotlib.pyplot as plt
 
 dataset='Complete_10-27-2017'
 basedir=get_info('base_directory')
-outdir='maxcorr'
+if len(sys.argv)>1:
+    outdir=sys.argv[1]
+else:
+    outdir='maxcorr'
 if not os.path.exists(outdir):
     os.mkdir(outdir)
 datafile=os.path.join(basedir,
