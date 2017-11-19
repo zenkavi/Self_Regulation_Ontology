@@ -1,7 +1,7 @@
 import sys,os
 import random
 import pickle
-import pandas,numpy,seaborn
+import pandas,numpy
 from selfregulation.utils.utils import get_info,get_behav_data
 import fancyimpute
 import matplotlib.pyplot as plt
