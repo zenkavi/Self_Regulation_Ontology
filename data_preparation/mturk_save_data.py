@@ -68,7 +68,7 @@ for data,directory, DV_df, valence_df in datasets:
     print('Saving items...')
     subjectsxitems = items_df.pivot('worker','item_ID','coded_response')
     # ensure there are the correct number of items
-    assert subjectsxitems.shape[1] == 594, "Wrong number of items found"
+    assert subjectsxitems.shape[1] == 593, "Wrong number of items found"
     # save items
     items_df.to_csv(path.join(directory, 'items.csv.gz'), compression = 'gzip')
     subjectsxitems.to_csv(path.join(directory, 'subject_x_items.csv'))

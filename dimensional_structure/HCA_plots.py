@@ -165,7 +165,7 @@ def plot_dendrograms(results, c, display_labels=False, inp=None, titles=None,
 
             # plot loadings as heatmap below
             ax2 = fig.add_axes([0,.05,1,.25])
-            sns.heatmap(abs(ordered_loading.T), ax=ax2, cbar=False,
+            sns.heatmap(ordered_loading.T, ax=ax2, cbar=False,
                         xticklabels=False)
             ax2.tick_params(labelsize=figsize[0]*.75)
            # add background color to distinguish clusters
@@ -399,7 +399,7 @@ def plot_HCA(results, plot_dir=None, verbose=False, ext='png'):
     if verbose: print("Plotting dendrogram heatmaps")
     plot_clusterings(results, plot_dir=plot_dir, verbose=verbose, ext=ext)
     if verbose: print("Plotting dendrograms")
-    plot_dendrograms(results, plot_dir=plot_dir, ext=ext)
+    plot_dendrograms(results, c, plot_dir=plot_dir, ext=ext)
     if verbose: print("Plotting clustering similarity")
     plot_clustering_similarity(results, plot_dir=plot_dir, verbose=verbose, ext=ext)
     if verbose: print("Plotting cluster polar plots")
