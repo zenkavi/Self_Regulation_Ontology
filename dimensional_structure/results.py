@@ -14,7 +14,7 @@ import pickle
 import random
 from scipy.stats import entropy
 from selfregulation.utils.graph_utils import  (get_adj, Graph_Analysis)
-from selfregulation.utils.utils import get_behav_data
+from selfregulation.utils.utils import get_behav_data, get_info
 from selfregulation.utils.r_to_py_utils import get_attr, get_Rpsych, psychFA
 from sklearn.preprocessing import scale
 
@@ -357,7 +357,8 @@ class Results(EFA_Analysis, HCA_Analysis):
                  dist_metric=distcorr,
                  name='',
                  filter_regex='.',
-                 ID=None
+                 ID=None,
+                 results_dir=None
                  ):
         """
         Args:
@@ -379,9 +380,11 @@ class Results(EFA_Analysis, HCA_Analysis):
             self.ID =  '%s_%s' % (name, str(random.getrandbits(16)))
         else:
             self.ID = '%s_%s' % (name, str(ID))
-        # set up plotting files
-        self.plot_file = path.join('Plots', datafile, name, self.ID)
-        self.output_file = path.join('Output', datafile, name, self.ID)
+        # set up output files
+        if results_dir is None:
+            results_dir = get_info('results_directory')
+        self.plot_file = path.join(results_dir, 'dimensional_structure', datafile, 'Plots', name, self.ID)
+        self.output_file = path.join(results_dir, 'dimensional_structure', datafile, 'Output', name, self.ID)
         makedirs(self.plot_file, exist_ok = True)
         makedirs(self.output_file, exist_ok = True)
         # set vars
