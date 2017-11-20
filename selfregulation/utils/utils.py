@@ -42,7 +42,7 @@ def get_var_category(var):
 # Data get methods
 
 def get_behav_data(dataset=None, file=None, filter_regex=None,
-                flip_valence=False, verbose=False):
+                flip_valence=False, verbose=False, full_dataset=None):
     '''Retrieves a file from a data release. 
     
     By default extracts meaningful_variables from the most recent Complete dataset.
@@ -54,6 +54,8 @@ def get_behav_data(dataset=None, file=None, filter_regex=None,
             "survey(s)" or "task(s)" to return measures associated with those
         flip_valence: bool, default false. If true use DV_valence.csv to flip variables based on their subjective valence
     '''
+    if full_dataset is not None:
+        print("Full dataset is deprecrated and no longer functional")
     def sorting(L):
         date = L.split('_')[-1]
         month,day,year = date.split('-')
