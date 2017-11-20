@@ -88,7 +88,7 @@ def get_behav_data(dataset=None, file=None, filter_regex=None,
         flip_df = os.path.join(datadir, 'DV_valence.csv')
         valence_flip(data, flip_df)
     if filter_regex is not None:
-        data = filter_behav_data(data, regex=filter_regex)
+        data = filter_behav_data(data, filter_regex=filter_regex)
     return data.sort_index()
 
 def get_info(item,infile=None):

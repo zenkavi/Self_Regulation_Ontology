@@ -368,11 +368,13 @@ class Results(EFA_Analysis, HCA_Analysis):
             filter_regex: regex string passed to data.filter
         """
         # load data
-        imputed_data = get_behav_data(dataset=datafile, file='meaningful_variables_imputed.csv')
-        cleaned_data = get_behav_data(dataset=datafile, file='meaningful_variables_clean.csv')
+        self.data = get_behav_data(dataset=datafile, 
+                                  file='meaningful_variables_imputed.csv',
+                                  filter_regex=filter_regex)
+        self.data_no_impute = get_behav_data(dataset=datafile, 
+                                             file='meaningful_variables_clean.csv',
+                                             filter_regex=filter_regex)
         self.dataset = datafile
-        self.data = imputed_data.filter(regex=filter_regex)
-        self.data_no_impute = cleaned_data.filter(regex=filter_regex)
         if ID is None:
             self.ID =  '%s_%s' % (name, str(random.getrandbits(16)))
         else:

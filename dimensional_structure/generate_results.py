@@ -30,10 +30,10 @@ subsets = [{'name': 'all',
             'regex': '.',
             'factor_names': ['Pros Plan', 'Sensation Seeking', 'Mind Over Matter', 'Info Processing', 'Discounting', 'Stim Processing', 'Caution', 'Planning/WM', 'Env Resp']},
            {'name': 'task', 
-            'regex': not_regex('survey')+'|cognitive_reflection',
+            'regex': 'task',
             'factor_names': ['Info Processing1', 'Info Processing2', 'WM/IQ', 'Movement Speed', 'Risk', 'Stim Processing', 'Caution', 'Discount']},
             {'name': 'survey',
-             'regex': not_regex(not_regex('survey')+'|cognitive_reflection'),
+             'regex': 'survey',
              'factor_names': ['Immediacy', 'Future', 'Sensation Seeking', 'DOSPERT', 'DOSPERT_fin', 'Agreeableness', 'DOSPERT_RP', 'Hedonism', 'Social', 'Emotional Control', 'Eating', 'Mindfulness']}]
 
 ID = None # ID will be created
