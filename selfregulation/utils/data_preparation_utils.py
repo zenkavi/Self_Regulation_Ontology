@@ -203,22 +203,27 @@ def drop_vars(data, drop_vars = [], saved_vars = []):
                     ".first_order", "bis11_survey.total", # bis11
                     "bis_bas_survey.BAS_total", 
                     "dietary_decision.prop_healthy_choice", # dietary decision
+                    "dot_pattern_expectancy.*errors", # DPX errors
+                    "eating_survey.total", # eating total score
+                    "five_facet_mindfulness_survey.total", 
                     "\.risky_choices$", "\.number_of_switches", # holt and laury
                     "boxes_opened$", # information sampling task
                     "_total_points$", # IST
-                    "\.go_acc$", "\.nogo_acc$", "\.go_rt$", "go_nogo*errors", #go_nogo
+                    "\.go_acc$", "\.nogo_acc$", "\.go_rt$", "go_nogo.*error.*", #go_nogo
                     "discount_titrate.hyp_discount_rate", "discount_titrate.hyp_discount_rate_(glm|nm)"  #delay discounting
-                    "kirby.percent_patient","kirby.hyp_discount_rate$",  "kirby.exp_discount*", 
+                    "kirby.percent_patient","kirby.hyp_discount_rate$",  "kirby.exp_discount.*", 
                     "\.warnings$", "_notnow$", "_now$", #kirby and delay discounting
-                    "local_global_letter*errors", # local global errors
+                    "local_global_letter.*error.*", # local global errors
                     "PRP_slowing", # PRP_two_choices
-                    "shape_matching*prim*", # shape matching prime measures
+                    "shape_matching.*prim.*", # shape matching prime measures
                     "sensation_seeking_survey.total", # SSS
                     "DDS", "DNN", "DSD", "SDD", "SSS", "DDD", "stimulus_interference_rt", # shape matching
+                    "shift_task.*errors", "shift_task.model_fit", "shift_task.conceptual_responses", #shift task
+                    "shift_task.fail_to_maintain_set", 'shift_task.perseverative_responses', # shift task continued
                      "go_acc","stop_acc","go_rt_error","go_rt_std_error", "go_rt","go_rt_std", # stop signal
                      "stop_rt_error","stop_rt_error_std","SS_delay", "^stop_signal.SSRT$", # stop signal continue
-                     "stop_signal*error", # stop signal continued
-                     "stroop*errors", # stroop
+                     "stop_signal.*errors", # stop signal continued
+                     "stroop.*errors", # stroop
                      "threebytwo.*inhibition", # threebytwo
                      "num_correct", "weighted_performance_score", # tower of london
                      "sentiment_label" # writing task
