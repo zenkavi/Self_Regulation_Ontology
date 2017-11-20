@@ -12,7 +12,6 @@ from os import makedirs, path
 import pickle
 from shutil import copyfile, copytree, rmtree
 import time
-from utils import not_regex
 
 # parse arguments
 parser = argparse.ArgumentParser()
@@ -76,14 +75,6 @@ for subset in subsets:
         if path.exists(base_prediction_dir):
             rmtree(base_prediction_dir)
         copytree(prediction_dir, base_prediction_dir)
-        
-    
-    # ***************************** loading ****************************************
-    result_file = glob('Output/%s/%s/results_%s.pkl' % (datafile, name, name))[0]
-    results = pickle.load(open(result_file, 'rb'))
-    
-    # add function to existing class
-    # results.fun = fun.__get__(results)
     
     # ****************************************************************************
     # Bootstrap run

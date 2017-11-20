@@ -15,6 +15,7 @@ from scipy.cluster.hierarchy import leaves_list, linkage, cut_tree
 from scipy.spatial.distance import pdist, squareform
 from selfregulation.utils.plot_utils import dendroheatmap
 from selfregulation.utils.r_to_py_utils import psychFA
+from selfregulation.utils.utils import get_info
 from sklearn.decomposition import FactorAnalysis
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
@@ -97,9 +98,11 @@ def abs_pdist(mat, square=False):
         absolute_distance = squareform(absolute_distance)
     return absolute_distance
 
-def load_results(datafile):
+def load_results(datafile, results_dir=None):
+    if results_dir is None:
+        results_dir = get_info('results_directory')
     results = {}
-    result_files = glob('Output/%s/*/results*.pkl' % (datafile))
+    result_files = glob(results_dir+'/dimensional_structure/%s/Output/*/results*.pkl' % (datafile))
     for filey in result_files:
         name = os.path.basename(os.path.dirname(filey))
         results[name] = pickle.load(open(filey,'rb'))
