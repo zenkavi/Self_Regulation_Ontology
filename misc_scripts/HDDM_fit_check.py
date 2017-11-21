@@ -104,6 +104,14 @@ stats['mc err']
 
 # first thing to do is look at the traces - make sure the model converged
 m.plot_posteriors(['a', 't', 'v']) 
+# these traces are stored in the mc object...
+mc = m.mc
+# in the mc object are nodes corresponding to each variables
+mc_nodes = mc.nodes
+# you can get the trace if you know the name of the variable
+trace = mc.trace('a')
+
+# ok, back to hddm stuff
 
 # generate post predictive. This will run the model {samples} times
 # using the parameters for each subject
