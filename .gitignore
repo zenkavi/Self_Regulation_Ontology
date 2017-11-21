@@ -17,6 +17,10 @@ Plots
 *.pyc
 *.nb.html
 *.egg-info
+.spyproject/
+*.pkl
+*.pdf
+*.Rdata
 internal_settings.json
 Self_Regulation_Settings.txt
 dimensional_structure/Output/*/*ID*

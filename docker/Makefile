@@ -10,7 +10,7 @@ docker2singularity:
 # this adds a character to the RUN command
 # # which causes all commands below to be re-excuted
 docker-build:
-	cat Dockerfile | sed 's/RUN echo "/RUN echo "x/'>Dockerfile.tmp
+	cat Dockerfile | sed 's/RUN echo "x/RUN echo "xx/'>Dockerfile.tmp
 	cp Dockerfile.tmp Dockerfile
 	docker build -t selfregulation .
 
@@ -23,3 +23,9 @@ keygen:
 
 copy:
 	scp ~/singularity/selfregulation-*.img wrangler.tacc.utexas.edu:/work/01329/poldrack/stampede2/singularity_images
+
+shell:
+	docker run -v /tmp/results:/workdir/Self_Regulation_Ontology/results -it selfregulation /bin/bash
+
+jupyter:
+	docker run -ti -v /tmp/results:/workdir/Self_Regulation_Ontology/results -p 7777:8888 selfregulation jupyter notebook /workdir/Self_Regulation_Ontology/prediction_analyses/PredictionResults.ipynb

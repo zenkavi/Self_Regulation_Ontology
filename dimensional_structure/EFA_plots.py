@@ -14,7 +14,16 @@ sns.set_context('notebook', font_scale=1.4)
 
 
 
-def plot_BIC_SABIC(EFA, plot_dir=None):
+def plot_BIC_SABIC(results, dpi=300, ext='png', plot_dir=None):
+    """ Plots BIC and SABIC curves
+    
+    Args:
+        results: a dimensional structure results object
+        dpi: the final dpi for the image
+        ext: the extension for the saved figure
+        plot_dir: the directory to save the figure. If none, do not save
+    """
+    EFA = results.EFA
     # Plot BIC and SABIC curves
     with sns.axes_style('white'):
         x = list(EFA.results['cscores_metric-BIC'].keys())
@@ -36,14 +45,25 @@ def plot_BIC_SABIC(EFA, plot_dir=None):
         ax1.plot(np.nan, c='m', lw=3, label='SABIC')
         ax1.legend(loc='upper center')
         if plot_dir is not None:
-            save_figure(fig, path.join(plot_dir, 'BIC_SABIC_curves.png'),
-                        {'bbox_inches': 'tight'})
+            save_figure(fig, path.join(plot_dir, 'BIC_SABIC_curves.%s' % ext),
+                        {'bbox_inches': 'tight', 'dpi': dpi})
 
-def plot_nesting(EFA, thresh=.5, plot_dir=None):
+def plot_nesting(results, thresh=.5, dpi=300, figsize=12, ext='png', plot_dir=None):
+    """ Plots nesting of factor solutions
+    
+    Args:
+        results: a dimensional structure results object
+        thresh: the threshold to pass to EFA.get_nesting_matrix
+        dpi: the final dpi for the image
+        figsize: scalar - the width and height of the (square) image
+        ext: the extension for the saved figure
+        plot_dir: the directory to save the figure. If none, do not save
+    """
+    EFA = results.EFA
     explained_scores, sum_explained = EFA.get_nesting_matrix(thresh)
 
     # plot lower nesting
-    fig, ax = plt.subplots(1, 1, figsize=(30,30))
+    fig, ax = plt.subplots(1, 1, figsize=(figsize, figsize))
     cbar_ax = fig.add_axes([.905, .3, .05, .3])
     sns.heatmap(sum_explained, annot=explained_scores,
                 fmt='.2f', mask=(explained_scores==-1), square=True,
@@ -54,11 +74,23 @@ def plot_nesting(EFA, thresh=.5, plot_dir=None):
     ax.set_ylabel('Lower Factors (Explainee)', fontsize=25)
     ax.set_title('Nesting of Lower Level Factors based on R2', fontsize=30)
     if plot_dir is not None:
-        filename = 'lower_nesting_heatmap.png'
+        filename = 'lower_nesting_heatmap.%s' % ext
         save_figure(fig, path.join(plot_dir, filename), 
-                    {'bbox_inches': 'tight'})
+                    {'bbox_inches': 'tight', 'dpi': dpi})
     
-def plot_bar_factors(EFA, c, plot_dir=None):
+def plot_bar_factors(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):
+    """ Plots factor analytic results as bars
+    
+    Args:
+        results: a dimensional structure results object
+        c: the number of components to use
+        dpi: the final dpi for the image
+        figsize: scalar - the width of the plot. The height is determined
+            by the number of factors
+        ext: the extension for the saved figure
+        plot_dir: the directory to save the figure. If none, do not save
+    """
+    EFA = results.EFA
     loadings = EFA.results['factor_tree'][c]
     sorted_vars = get_top_factors(loadings) # sort by loading
             
@@ -68,7 +100,7 @@ def plot_bar_factors(EFA, c, plot_dir=None):
         flattened_factor_order += sublist
         
     n_factors = len(sorted_vars)
-    f = plt.figure(figsize=(30, n_factors*3))
+    f = plt.figure(figsize=(figsize, n_factors*(figsize/10)))
     axes = []
     for i in range(n_factors):
         axes.append(plt.subplot2grid((n_factors, 4), (i,0), colspan=3))
@@ -107,15 +139,28 @@ def plot_bar_factors(EFA, c, plot_dir=None):
             else:
                 ax1.set_xticklabels('')
     if plot_dir:
-        filename = 'factor_bars_EFA%s.png' % c
+        filename = 'factor_bars_EFA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
-                    {'bbox_inches': 'tight'})
+                    {'bbox_inches': 'tight', 'dpi': dpi})
 
-def plot_polar_factors(EFA, c, color_by_group=True, plot_dir=None):
+def plot_polar_factors(results, c, color_by_group=True, 
+                       dpi=300, ext='png', plot_dir=None):
+    """ Plots factor analytic results as polar plots
+    
+    Args:
+        results: a dimensional structure results object
+        c: the number of components to use
+        color_by_group: whether to color the polar plot by factor groups. Groups
+            are defined by the factor each measurement loads most highly on
+        dpi: the final dpi for the image
+        ext: the extension for the saved figure
+        plot_dir: the directory to save the figure. If none, do not save
+    """
+    EFA = results.EFA
     loadings = EFA.results['factor_tree'][c]
     groups = get_factor_groups(loadings)    
     # plot polar plot factor visualization for metric loadings
-    filename =  'factor_polar_EFA%s.png' % c
+    filename =  'factor_polar_EFA%s.%s' % (c, ext)
     if color_by_group==True:
         colors=None
     else:
@@ -123,25 +168,24 @@ def plot_polar_factors(EFA, c, color_by_group=True, plot_dir=None):
     fig = visualize_factors(loadings, n_rows=2, groups=groups, colors=colors)
     if plot_dir is not None:
         save_figure(fig, path.join(plot_dir, filename),
-                    {'bbox_inches': 'tight'})
+                    {'bbox_inches': 'tight', 'dpi': dpi})
 
-    # plot factor tree around optimal metric
-    filename2 = None
-    if plot_dir is not None:
-        filename2 = 'factor_tree_EFA%s.png' % c
-        filename2 = path.join(plot_dir, filename2)
     
-    plot_factor_tree({i: EFA.results['factor_tree'][i] for i in [c-1,c,c+1]},
-                      groups=groups, filename = filename2)
+def plot_task_factors(results, c, task_sublists=None, figsize=10,
+                      dpi=300, ext='png', plot_dir=None):
+    """ Plots factor analytic results as bars
     
-def plot_task_factors(EFA, c, task_sublists=None, plot_dir=None):
-    """
     Args:
-        EFA: EFA_Analysis object
-        c: number of components for EFA
+        results: a dimensional structure results object
+        c: the number of components to use
         task_sublists: a dictionary whose values are sets of tasks, and 
                         whose keywords are labels for those lists
+        dpi: the final dpi for the image
+        figsize: scalar - a width multiplier for the plot
+        ext: the extension for the saved figure
+        plot_dir: the directory to save the figure. If none, do not save
     """
+    EFA = results.EFA
     # plot task factor loading
     entropies = EFA.results['entropies']
     loadings = EFA.results['factor_tree'][c]
@@ -159,7 +203,7 @@ def plot_task_factors(EFA, c, task_sublists=None, plot_dir=None):
         # plot loading distributions. Each measure is scaled so absolute
         # comparisons are impossible. Only the distributions can be compared
         f, axes = plt.subplots(nrows, adjusted_cols, 
-                               figsize=(adjusted_cols*10,nrows*(8+nrows)),
+                               figsize=(adjusted_cols*figsize,nrows*(figsize*.8+nrows)),
                                subplot_kw={'projection': 'polar'})
         axes = f.get_axes()
         for i, task in enumerate(task_sublist):
@@ -180,12 +224,26 @@ def plot_task_factors(EFA, c, task_sublists=None, plot_dir=None):
         for j in range(i+1, len(axes)):
             axes[j].set_visible(False)
         plt.subplots_adjust(hspace=.5, wspace=.5)
-        filename = 'factor_DVdistributions_EFA%s_subset-%s.png' % (c, sublist_name)
+        filename = 'factor_DVdistributions_EFA%s_subset-%s.%s' % (c, sublist_name, ext)
         if plot_dir is not None:
             save_figure(f, path.join(plot_dir, filename),
-                        {'bbox_inches': 'tight'})
+                        {'bbox_inches': 'tight', 'dpi': dpi})
             
-def plot_entropies(EFA, plot_dir=None): 
+def plot_entropies(results, dpi=300, figsize=(20,8), ext='png', plot_dir=None): 
+    """ Plots factor analytic results as bars
+    
+    Args:
+        results: a dimensional structure results object
+        c: the number of components to use
+        task_sublists: a dictionary whose values are sets of tasks, and 
+                        whose keywords are labels for those lists
+        dpi: the final dpi for the image
+        figsize: scalar - the width of the plot. The height is determined
+            by the number of factors
+        ext: the extension for the saved figure
+        plot_dir: the directory to save the figure. If none, do not save
+    """
+    EFA = results.EFA
     # plot entropies
     entropies = EFA.results['entropies'].copy()
     null_entropies = EFA.results['null_entropies'].copy()
@@ -196,29 +254,28 @@ def plot_entropies(EFA, plot_dir=None):
                                          var_name = 'EFA',
                                          value_name = 'entropy')
     with sns.plotting_context('notebook', font_scale=1.8):
-        f = plt.figure(figsize=(20,8))
+        f = plt.figure(figsize=figsize)
         sns.boxplot(x='EFA', y='entropy', data=plot_entropies, hue='group')
         plt.xlabel('# Factors')
         plt.ylabel('Entropy')
         plt.title('Distribution of Measure Specificity across Factor Solutions')
         if plot_dir is not None:
-            f.savefig(path.join(plot_dir, 'entropies_across_factors.png'), 
-                      bbox_inches='tight')
+            f.savefig(path.join(plot_dir, 'entropies_across_factors.%s' % ext), 
+                      bbox_inches='tight', dpi=dpi)
             
-def plot_EFA(results, plot_dir=None, verbose=False,
+def plot_EFA(results, plot_dir=None, verbose=False, dpi=300, ext='png',
              plot_task_kws={}):
 
-    EFA = results.EFA
     c = results.EFA.get_metric_cs()['c_metric-BIC']
     #if verbose: print("Plotting BIC/SABIC")
     #plot_BIC_SABIC(EFA, plot_dir)
     if verbose: print("Plotting nesting")
-    plot_nesting(EFA, plot_dir=plot_dir)
+    plot_nesting(results, plot_dir=plot_dir, dpi=dpi, ext=ext)
     if verbose: print("Plotting entropies")
-    plot_entropies(EFA, plot_dir=plot_dir)
+    plot_entropies(results, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting factor bars")
-    plot_bar_factors(EFA, c, plot_dir=plot_dir)
+    plot_bar_factors(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting factor polar")
-    plot_polar_factors(EFA, c=c, plot_dir=plot_dir)
+    plot_polar_factors(results, c=c, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting task factors")
-    plot_task_factors(EFA, c, plot_dir=plot_dir, **plot_task_kws)
+    plot_task_factors(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)

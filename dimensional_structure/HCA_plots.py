@@ -4,19 +4,16 @@ from utils import abs_pdist, save_figure, set_seed, plot_loadings
 from itertools import combinations
 from math import ceil
 import matplotlib.pyplot as plt
-from matplotlib import patches
 import numpy as np
 from os import makedirs, path
 import pandas as pd
 import seaborn as sns
 from scipy.cluster.hierarchy import dendrogram
 from scipy.spatial.distance import pdist, squareform
-from selfregulation.utils.plot_utils import dendroheatmap
+from selfregulation.utils.plot_utils import dendroheatmap, get_dendrogram_color_fun
 from sklearn.manifold import MDS
 from sklearn.metrics import adjusted_mutual_info_score, adjusted_rand_score
 from sklearn.preprocessing import MinMaxScaler, scale
-
-import subprocess
 
 # parse arguments
 parser = argparse.ArgumentParser()
@@ -28,25 +25,37 @@ rerun = args.rerun
 plot_on = not args.no_plot
 
 
-def plot_clusterings(HCA, plot_dir=None, verbose=False):    
+def plot_clusterings(results, plot_dir=None, inp='data', figsize=(50,50),
+                     titles=None, show_clusters=True, verbose=False, ext='png'):    
+    HCA = results.HCA
     # get all clustering solutions
     clusterings = [(k ,v) for k,v in 
-                    HCA.results.items() if 'clustering' in k]
+                    HCA.results.items() if inp in k]
     
     # plot dendrogram heatmaps
     for name, clustering in clusterings:
-        title = name.split('-')[1] + '_metric-' + HCA.dist_metric
+        if titles is None:
+            title = name.split('-')[1] + '_metric-' + HCA.dist_metric
+        else:
+            title=titles.pop(0)
         filename = None
         if plot_dir is not None:
-            filename = path.join(plot_dir, '%s.png' % name)
-        fig = dendroheatmap(clustering['linkage'], clustering['distance_df'], 
-                            clustering['clustering']['labels'],
-                            figsize=(50,50), title=title,
-                            filename = filename)
+            filename = path.join(plot_dir, '%s.%s' % (name, ext))
+        if show_clusters == True:
+            fig = dendroheatmap(clustering['linkage'], clustering['distance_df'], 
+                                clustering['labels'],
+                                figsize=figsize, title=title,
+                                filename = filename)
+        else:
+            fig = dendroheatmap(clustering['linkage'], clustering['distance_df'], 
+                                figsize=figsize, title=title,
+                                filename = filename)
+            
     
     
     
-def plot_clustering_similarity(HCA, plot_dir=None, verbose=False):   
+def plot_clustering_similarity(results, plot_dir=None, verbose=False, ext='png'):  
+    HCA = results.HCA
     # get all clustering solutions
     clusterings = [(k ,v) for k,v in 
                     HCA.results.items() if 'clustering' in k]
@@ -71,8 +80,8 @@ def plot_clustering_similarity(HCA, plot_dir=None, verbose=False):
         distance_similarity.loc[name1, name2] = dist_corr
         distance_similarity.loc[name2, name1] = dist_corr
         # record similarity of clustering of dendrogram
-        clusters1 = clustering1[1]['clustering']['labels']
-        clusters2 = clustering2[1]['clustering']['labels']
+        clusters1 = clustering1[1]['labels']
+        clusters2 = clustering2[1]['labels']
         rand_score = adjusted_rand_score(clusters1, clusters2)
         MI_score = adjusted_mutual_info_score(clusters1, clusters2)
         cluster_similarity.loc[name1, name2] = rand_score
@@ -91,10 +100,10 @@ def plot_clustering_similarity(HCA, plot_dir=None, verbose=False):
         
     if plot_dir is not None:
         save_figure(clust_fig, path.join(plot_dir, 
-                                   'cluster_similarity_across_measures.png'),
+                                   'cluster_similarity_across_measures.%s' % ext),
                     {'bbox_inches': 'tight'})
         save_figure(dist_fig, path.join(plot_dir, 
-                                   'distance_similarity_across_measures.png'),
+                                   'distance_similarity_across_measures.%s' % ext),
                     {'bbox_inches': 'tight'})
     
     if verbose:
@@ -107,71 +116,93 @@ def plot_clustering_similarity(HCA, plot_dir=None, verbose=False):
         
     
     
-def plot_dendrograms(HCA, label_top_percent=.2, 
-                     centrality_thresh=.1, plot_dir=None):
+def plot_dendrograms(results, c, display_labels=False, inp=None, titles=None,
+                     figsize=(20,12), dpi=300, ext='png', plot_dir=None):
+    """ Plots HCA results as dendrogram with loadings underneath
+    
+    Args:
+        results: results object
+        c: number of components to use for loadings
+        display_labels: whether to print x labels (individual variables)
+        plot_dir: if set, where to save the plot
+        inp: by default, plots all clusterings in results. Inp selects
+            one. Clusterings are saved in the form "clustering_input-{inp}"
+        titles: list of titles. Should correspond to number of clusters in
+                results object if "inp" is not set. Otherwise should be a list of length 1.
+    """
+    subset = results.ID.split('_')[0]
+    HCA = results.HCA
+    EFA = results.EFA
+    loading = EFA.get_loading(c)
     # get all clustering solutions
+    if inp is None:
+        inp = ''
     clusterings = [(k ,v) for k,v in 
-                    HCA.results.items() if 'clustering' in k]
+                    HCA.results.items() if inp in k]
 
         
     for name, clustering in clusterings:
-        title = name.split('-')[1] + '_metric-' + HCA.dist_metric
+        if titles is None:
+            title = subset.title() + " " + name.split('-')[1] + ' metric-' + HCA.dist_metric
+        else:
+            title=titles.pop(0)
         # extract cluster vars
         link = clustering['linkage']
-        distance_df = clustering['distance_df']
-        # check if graphs exist
-        if 'graphs' in clustering.keys() and len(distance_df)>120:
-            graph_vars = HCA.get_graph_vars(clustering['graphs'])
-            # extract variables that are in the top_n most central for each cluster
-            label_vars = []
-            for i in graph_vars:
-                top_n = ceil(len(i)*label_top_percent)
-                top_n = i[-(top_n+1):-1]
-                label_vars += [v[0] for v in top_n if v[1]>centrality_thresh]
-            labels = [i if i in label_vars else '' for i in distance_df.columns]
-        else:
-            labels = distance_df.columns
+        labels = clustering['clustered_df'].columns
+        ordered_loading = loading.loc[labels]
         # get cluster sizes
         cluster_labels = HCA.get_cluster_labels(inp=name.split('-')[1])
         cluster_sizes = [len(i) for i in cluster_labels]
-        # plot dendrogram
-        color_palette = [[.4,.4, .4], [.8,.8,.8]]
+        link_function, colors = get_dendrogram_color_fun(link, clustering['reorder_vec'],
+                                                         clustering['labels'])
+
         with sns.axes_style('white'):
-            fig = plt.figure(figsize=(34,14))
-            ax1 = fig.add_axes([0,.4,1,.55]) 
-            dendrogram(link, labels=labels, color_threshold=-1,
-                       above_threshold_color='black', ax=ax1)
+            fig = plt.figure(figsize=figsize)
+            ax1 = fig.add_axes([0,.3,1,.55]) 
+            dendrogram(link, ax=ax1, link_color_func=link_function)
             # change axis properties
             ax1.tick_params(axis='x', which='major', labelsize=14)
-            # add background color to distinguish clusters
-            ax2 = fig.add_axes([0,0,1,1]) 
-            ax2.patch.set_alpha(0)
-            xlim = ax2.get_xlim(); step = xlim[1]/len(distance_df)
+
+            # plot loadings as heatmap below
+            ax2 = fig.add_axes([0,.05,1,.25])
+            sns.heatmap(ordered_loading.T, ax=ax2, cbar=False,
+                        xticklabels=False)
+            ax2.tick_params(labelsize=figsize[0]*.75)
+           # add background color to distinguish clusters
+            xlim = ax2.get_xlim(); step = xlim[1]/len(labels)
+            ylim = ax2.get_ylim()
             ymin, ymax = ax1.get_ylim()
-            begin = 0
-            for i, size in enumerate(cluster_sizes):
-                patch = patches.Rectangle((begin, .4), size*step, ymax,
-                                          color=color_palette[i%2],
-                                          alpha=.3)
-                ax2.add_patch(patch)
-                begin+=size*step
+            cluster_breaks = [i*step for i in np.cumsum(cluster_sizes)]
+            ax2.vlines(cluster_breaks[:-1], ylim[0], ylim[1], linestyles='dashed',
+                       linewidth=3, colors=[.5,.5,.5])
             # add title
-            plt.title(title, fontsize=40, y=1.05)
-            # invert axes
-            ax2.get_xaxis().set_visible(False)
-            for ax in [ax1, ax2]:
+            ax1.set_title(title, fontsize=40, y=1.05)
+            for ax in [ax1]:
                 ax.get_yaxis().set_visible(False)
                 ax.spines['top'].set_visible(False)
                 ax.spines['right'].set_visible(False)
                 ax.spines['bottom'].set_visible(False)
                 ax.spines['left'].set_visible(False)
-                ax.invert_xaxis()
+            # set labels
+            if display_labels == True:
+                ax1.set_xticklabels(labels)
+            else:
+                ax1.tick_params(labelbottom='off')  
+    
+        # add labels for each cluster
+        mid_points = np.array(cluster_breaks) - np.array(cluster_sizes)/2
+        clusters = clustering['labels'][clustering['reorder_vec']]
+        for i, mid in enumerate(mid_points):
+            color_index = clusters[int(mid)]
+            ax2.text(mid, -1-(1.5*(i%2==0)), 'Cluster', ha='center',  fontsize=16,
+                     color=colors[color_index-1])
+        
         if plot_dir is not None:
             save_figure(fig, path.join(plot_dir, 
-                                             '%s_dendrogram.png' % name),
-                        {'bbox_inches': 'tight'})
+                                             '%s_dendrogram.%s' % (name, ext)),
+                        {'bbox_inches': 'tight', 'dpi': dpi})
         
-def plot_graphs(HCA_graphs, plot_dir=None):
+def plot_graphs(HCA_graphs, plot_dir=None, ext='png'):
     if plot_dir is not None:
         makedirs(path.join(plot_dir, 'graphs'))
     plot_options = {'inline': False,  'target': None}
@@ -179,7 +210,7 @@ def plot_graphs(HCA_graphs, plot_dir=None):
         if plot_dir is not None:
             plot_options['target'] = path.join(plot_dir, 
                                                 'graphs', 
-                                                'graph%s.png' % i)
+                                                'graph%s.%s' % (i, ext))
         GA.set_visual_style()
         GA.display(plot_options)
     
@@ -187,7 +218,7 @@ def plot_graphs(HCA_graphs, plot_dir=None):
     
 @set_seed(seed=15)
 def MDS_visualization(results, c, plot_dir=None, 
-                      dist_metric='abs_correlation', **plot_kws):
+                      dist_metric='abs_correlation', ext='png', **plot_kws):
     """ visualize EFA loadings and compares to raw space """
     def scale_plot(input_data, data_colors=None, cluster_colors=None,
                    cluster_sizes=None, dissimilarity='euclidean', filey=None):
@@ -276,7 +307,7 @@ def MDS_visualization(results, c, plot_dir=None,
     for label, space in distances.items():
         if plot_dir is not None:
             filey = path.join(plot_dir, 
-                              'MDS_%s_metric-%s.png' % (label, dist_metric))
+                              'MDS_%s_metric-%s.%s' % (label, dist_metric, ext))
         scale_plot(space, data_colors=colors,
                    cluster_colors=color_palette,
                    cluster_sizes=sizes,
@@ -315,7 +346,7 @@ def visualize_importance(importance, ax, xticklabels=True,
     if legend:
         ax.legend(loc='upper center', bbox_to_anchor=(.5,-.15))
         
-def plot_cluster_factors(results, c,  plot_dir=None):
+def plot_cluster_factors(results, c,  ext='png', plot_dir=None):
     """
     Args:
         EFA: EFA_Analysis object
@@ -356,102 +387,27 @@ def plot_cluster_factors(results, c,  plot_dir=None):
         axes[j].set_visible(False)
     plt.subplots_adjust(hspace=.5, wspace=.5)
     
-    filename = 'clustering_polar_factors_EFA%s.png' % c
+    filename = 'clustering_polar_factors_EFA%s.%s' % (c, ext)
     if plot_dir is not None:
         save_figure(f, path.join(plot_dir, filename),
                     {'bbox_inches': 'tight'})
         
             
-def plot_HCA(results, plot_dir=None,verbose=False):
-    HCA = results.HCA
+def plot_HCA(results, plot_dir=None, verbose=False, ext='png'):
     c = results.EFA.get_metric_cs()['c_metric-BIC']
     # plots, woo
     if verbose: print("Plotting dendrogram heatmaps")
-    plot_clusterings(HCA, plot_dir=plot_dir, verbose=verbose)
+    plot_clusterings(results, plot_dir=plot_dir, verbose=verbose, ext=ext)
     if verbose: print("Plotting dendrograms")
-    plot_dendrograms(HCA, plot_dir=plot_dir)
+    plot_dendrograms(results, c, plot_dir=plot_dir, ext=ext)
     if verbose: print("Plotting clustering similarity")
-    plot_clustering_similarity(HCA, plot_dir=plot_dir, verbose=verbose)
+    plot_clustering_similarity(results, plot_dir=plot_dir, verbose=verbose, ext=ext)
     if verbose: print("Plotting cluster polar plots")
-    plot_cluster_factors(results, c, plot_dir=plot_dir)
+    plot_cluster_factors(results, c, plot_dir=plot_dir, ext=ext)
     if verbose: print("Plotting MDS space")
     for metric in ['abs_correlation']:
         MDS_visualization(results, c, plot_dir=plot_dir,
-                          dist_metric=metric)
-
-
-"""      
-    # plot distance correlation for factor solutions in the same order as the
-    # clustered solution
-    clustered_df = results['HCA']['clustering_metric-distcorr_input-data']['clustered_df']
-    cluster_order = clustered_df.index
-    
-    fig = plt.figure(figsize=(12,12))
-    sns.heatmap(clustered_df, square=True, xticklabels=False,
-                yticklabels=False, cbar=False)
-    plt.title('Data', fontsize=20, y=1.02)
-    fig.savefig(path.join(plot_file,  'heatmap_metric-distcorr.png'), 
-                bbox_inches='tight')
-    factor_distances = {}
-    for c, loadings in results['EFA']['factor_tree'].items():
-        if c>2:
-            loadings = loadings.copy().loc[cluster_order, :]
-            distances = squareform(pdist(loadings, metric=distcorr))
-            distances = pd.DataFrame(distances, 
-                                     index=loadings.index, 
-                                     columns=loadings.index)
-            factor_distances[c] = squareform(distances)
-            # plot
-            fig = plt.figure(figsize=(12,12))
-            sns.heatmap(distances, square=True, xticklabels=False,
-                yticklabels=False, cbar=False)
-            plt.title('EFA %s' % c, fontsize=20, y=1.02)
-            fig.savefig(path.join(plot_file,
-                                  'heatmap_metric-distcorr_c-%02d.png' % c), 
-                        bbox_inches='tight')
-    factor_distances = pd.DataFrame(factor_distances)
-    factor_distances.loc[:, 'raw'] = squareform(clustered_df)
-    # create gif from files
-    cmd = 'convert -delay 80 -loop 1 %s %s' % (path.join(plot_file, 'heatmap*'),
-                                                path.join(plot_file, 'EFA_heatmaps.gif'))
-    subprocess.call(cmd, shell=True)
-    # delete still files
-    for filey in glob(path.join(plot_file, 'heatmap*')):
-        remove(filey)
-    
-    # repeat factor analysis above using PCA
-    scaled_data = scale(data.loc[:, cluster_order]).T
-    pca_distances = {}
-    for c in results['EFA']['factor_tree'].keys():
-        if c>2:
-            pca = PCA(c)
-            pca_out = pca.fit_transform(scaled_data)
-            distances = pdist(pca_out, metric=distcorr)
-            pca_distances[c] = distances
-    pca_distances = pd.DataFrame(pca_distances)
-    pca_distances.loc[:, 'raw'] = squareform(clustered_df)
-    
-    # plot correlations between distance matrices
-    with sns.plotting_context('notebook', font_scale=1.8):
-        f = plt.figure(figsize=(12,8))
-        pca_distances.corr()['raw'][:-1].plot(label = 'PCA')
-        factor_distances.corr()['raw'][:-1].plot(label = 'EFA')
-        plt.xlabel('Components in Decomposition')
-        plt.ylabel('Correlation with Raw Values')
-        plt.title('Distance Matrix Correlations')
-        plt.legend()
-        f.savefig(path.join(plot_file, 
-                            'distance_correlations_across_components_metric-distcorr.png'))
-    
-"""    
-    
-    
-    
-
-
-
-
-
+                          dist_metric=metric, ext=ext)
 
 
 

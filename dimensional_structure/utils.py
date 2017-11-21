@@ -2,6 +2,7 @@ from collections import OrderedDict as odict
 from dynamicTreeCut import cutreeHybrid
 import fancyimpute
 import functools
+import hdbscan
 from itertools import combinations
 from glob import glob
 from matplotlib import pyplot as plt
@@ -10,10 +11,11 @@ import os
 import pandas as pd
 import pickle
 import seaborn as sns
-from scipy.cluster.hierarchy import dendrogram, linkage, cut_tree
+from scipy.cluster.hierarchy import leaves_list, linkage, cut_tree
 from scipy.spatial.distance import pdist, squareform
 from selfregulation.utils.plot_utils import dendroheatmap
 from selfregulation.utils.r_to_py_utils import psychFA
+from selfregulation.utils.utils import get_info
 from sklearn.decomposition import FactorAnalysis
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
@@ -88,15 +90,19 @@ def distcorr(X, Y, flip=True):
         dcor = 1-dcor
     return dcor
 
-def abs_pdist(mat):
+def abs_pdist(mat, square=False):
     correlation_dist = pdist(mat, metric='correlation')
     correlations = 1-correlation_dist
     absolute_distance = 1-abs(correlations)
+    if square == True:
+        absolute_distance = squareform(absolute_distance)
     return absolute_distance
 
-def load_results(datafile):
+def load_results(datafile, results_dir=None):
+    if results_dir is None:
+        results_dir = get_info('results_directory')
     results = {}
-    result_files = glob('Output/%s/*/results*.pkl' % (datafile))
+    result_files = glob(results_dir+'/dimensional_structure/%s/Output/*/results*.pkl' % (datafile))
     for filey in result_files:
         name = os.path.basename(os.path.dirname(filey))
         results[name] = pickle.load(open(filey,'rb'))
@@ -146,9 +152,8 @@ def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None,
     #clustering
     link = linkage(dist_vec, method='ward')    
     #dendrogram
-    row_dendr = dendrogram(link, labels=df.index, no_plot = True)
-    reorder_vec = row_dendr['leaves']
-    rowclust_df = dist_df.iloc[reorder_vec, reorder_vec]
+    reorder_vec = leaves_list(link)
+    clustered_df = dist_df.iloc[reorder_vec, reorder_vec]
     # clustering
     if cluster_kws is None:
         cluster_kws = {'minClusterSize': 1}
@@ -160,10 +165,67 @@ def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None,
         
     return {'linkage': link, 
             'distance_df': dist_df, 
-            'clustered_df': rowclust_df,
+            'clustered_df': clustered_df,
             'reorder_vec': reorder_vec,
-            'clustering': clustering}
+            'clustering': clustering,
+            'labels': clustering['labels']}
+
+
+def hdbscan_cluster(df, compute_dist=True,  pdist_kws=None, 
+                    plot=False, cluster_kws=None, plot_kws=None):
+    """
+    plot hierarchical clustering and heatmap
+    :df: a correlation matrix
+    parse_heatmap: int (optional). If defined, devides the columns of the 
+                    heatmap based on cutting the dendrogram
+    """
     
+    # if compute_dist = False, assume df is a distance matrix. Otherwise
+    # compute distance on df rows
+    if compute_dist == True:
+        if pdist_kws is None:
+            pdist_kws= {'metric': 'correlation'}
+        if pdist_kws['metric'] == 'abscorrelation':
+            # convert to absolute correlations
+            dist_vec = abs_pdist(df)
+        else:
+            dist_vec = pdist(df, **pdist_kws)
+        dist_df = pd.DataFrame(squareform(dist_vec), 
+                               index=df.index, 
+                               columns=df.index)
+    else:
+        assert df.shape[0] == df.shape[1]
+        dist_df = df
+        dist_vec = squareform(df.values)
+    #clustering
+    if cluster_kws is None:
+        cluster_kws = {'min_cluster_size': 4,
+                       'min_samples': 4}
+    clusterer = hdbscan.HDBSCAN(metric='precomputed',
+                                cluster_selection_method='leaf',
+                                **cluster_kws)
+    clusterer.fit(dist_df)  
+    link = clusterer.single_linkage_tree_.to_pandas().iloc[:,1:]   
+    labels = clusterer.labels_
+    probs = clusterer.probabilities_
+    #dendrogram
+    reorder_vec = leaves_list(link)
+    clustered_df = dist_df.iloc[reorder_vec, reorder_vec]
+    
+    # clustering
+    if plot == True:
+        if plot_kws is None:
+            plot_kws = {}
+        dendroheatmap(link, dist_df, labels, **plot_kws)
+        
+    return {'clusterer': clusterer,
+            'distance_df': dist_df,
+            'clustered_df': clustered_df,
+            'labels': labels,
+            'probs': probs,
+            'link': link}
+
+
 # ****************************************************************************
 # helper functions for dealing with factor analytic results
 # ****************************************************************************
