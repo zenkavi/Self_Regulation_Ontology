@@ -222,7 +222,7 @@ def drop_vars(data, drop_vars = [], saved_vars = []):
                     "shift_task.fail_to_maintain_set", 'shift_task.perseverative_responses', # shift task continued
                      "go_acc","stop_acc","go_rt_error","go_rt_std_error", "go_rt","go_rt_std", # stop signal
                      "stop_rt_error","stop_rt_error_std","SS_delay", "^stop_signal.SSRT$", # stop signal continue
-                     "stop_signal.*errors", # stop signal continued
+                     "stop_signal.*errors", "inhibition_slope", # stop signal continued
                      "stroop.*errors", # stroop
                      "threebytwo.*inhibition", # threebytwo
                      "num_correct", "weighted_performance_score", # tower of london
