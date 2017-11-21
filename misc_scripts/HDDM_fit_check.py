@@ -109,7 +109,7 @@ mc = m.mc
 # in the mc object are nodes corresponding to each variables
 mc_nodes = mc.nodes
 # you can get the trace if you know the name of the variable
-trace = mc.trace('a')
+trace = list(mc.trace('a'))
 
 # ok, back to hddm stuff
 
@@ -149,10 +149,8 @@ plt.xlabel('Data'); plt.ylabel('Model')
 plt.text(.6,.8, 'RT r = %s' % corr_rt)
 plt.legend()
 # we can also plot the poster predictive
-m.plot_posterior_predictive(figsize=(12,8), num_subjs=4)
+m.plot_posterior_predictive(figsize=(12,80), num_subjs=20)
 plt.suptitle('Posterior Predictives')
-
-
 
 # clean up
 for f in glob('*.model'):
@@ -163,4 +161,74 @@ for f in glob('*_traces.db'):
     
 for f in glob('*.csv'):
     remove(f)
+    
+# ************************************************************************
+# Example of getting log likelihood (recreating plot_posterior_predictive)
+# *************************************************************************
 
+from kabuki.analyze import _parents_to_random_posterior_sample
+from kabuki.analyze import _plot_posterior_pdf_node
+from scipy.stats import entropy
+
+observeds = m.get_observeds()
+plot_func = _plot_posterior_pdf_node
+required_method = 'pdf'
+figsize = (12,12)
+num_subjs=4
+columns=2
+value_range = np.linspace(-5, 5, 100)
+kwargs = {'value_range': value_range}
+
+for tag, nodes in observeds.groupby('tag'):
+    fig = plt.figure(figsize=figsize)
+    fig.suptitle(tag, fontsize=12)
+    fig.subplots_adjust(top=0.9, hspace=.4, wspace=.3)
+
+    # Plot individual subjects (if present)
+    i = 0
+    for subj_i, (node_name, bottom_node) in enumerate(nodes.iterrows()):
+        i += 1
+        if not hasattr(bottom_node['node'], required_method):
+            continue # skip nodes that do not define the required_method
+
+        nrows = num_subjs or len(nodes)/columns     
+        ax = fig.add_subplot(np.ceil(nrows), columns, subj_i+1)
+        if 'subj_idx' in bottom_node:
+            ax.set_title(str(bottom_node['subj_idx']))
+
+        plot_func(bottom_node['node'], ax, **kwargs)
+
+# how do you get the likelihood? 
+samples=10
+node = bottom_node['node']
+like = np.empty((samples, len(value_range)), dtype=np.float32)
+for sample in range(samples):
+    _parents_to_random_posterior_sample(node)
+    # Generate likelihood for parents parameters
+    like[sample,:] = node.pdf(value_range)
+
+y = like.mean(axis=0)
+plt.plot(value_range,y)
+plt.hist(node.value.values, normed=True, color='r')
+
+
+def get_likelihood(model, samples=10):
+    value_range = np.linspace(-5,5,100)
+    observeds = m.get_observeds()
+    like = np.empty((samples, len(value_range)), dtype=np.float32)
+    KLs = {}
+    for subj_i, (node_name, bottom_node) in enumerate(observeds.iterrows()):
+        node = bottom_node['node']
+        for sample in range(samples):
+            _parents_to_random_posterior_sample(node)
+            # Generate likelihood for parents parameters
+            like[sample,:] = node.pdf(value_range)
+        y = like.mean(axis=0)
+        data_bins = np.histogram(node.value, value_range, density=True)[0]
+        plt.plot(value_range[:-1], data_bins)
+        plt.plot(value_range[:-1], y[:-1])
+        KL_divergence = entropy(y[1:]+1E-10, data_bins+1E-10)
+        KLs[subj_i] = KL_divergence
+    return KLs
+
+KLs = get_likelihood(m)
