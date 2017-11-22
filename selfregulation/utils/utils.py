@@ -68,10 +68,10 @@ def get_behav_data(dataset=None, file=None, filter_regex=None,
         datadir = files[-1]
     else:
         datadir = os.path.join(basedir,'Data',dataset)
-    if verbose:
-        print('Getting datasets...:\n', '\n '.join(datadir))
     if file == None:
         file = 'meaningful_variables.csv'
+    if verbose:
+        print('Getting dataset: %s...:\n' 'file: %s \n ' % (datadir, file))
     datafile=os.path.join(datadir,file)
     if os.path.exists(datafile):
         data=pandas.read_csv(datafile,index_col=0)
