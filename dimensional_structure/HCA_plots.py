@@ -116,14 +116,17 @@ def plot_clustering_similarity(results, plot_dir=None, verbose=False, ext='png')
         
     
     
-def plot_dendrograms(results, c, display_labels=False, inp=None, titles=None,
-                     figsize=(20,12), dpi=300, ext='png', plot_dir=None):
+def plot_dendrograms(results, c, display_labels='cluster', inp=None, titles=None,
+                     figsize=(20,12), orientation='horizonta',
+                     dpi=300, ext='png', plot_dir=None):
     """ Plots HCA results as dendrogram with loadings underneath
     
     Args:
         results: results object
         c: number of components to use for loadings
         display_labels: whether to print x labels (individual variables)
+        orientation: horizontal or vertical, which determines the direction
+            the dendrogram leaves should be spread out on
         plot_dir: if set, where to save the plot
         inp: by default, plots all clusterings in results. Inp selects
             one. Clusterings are saved in the form "clustering_input-{inp}"
@@ -155,26 +158,47 @@ def plot_dendrograms(results, c, display_labels=False, inp=None, titles=None,
         cluster_sizes = [len(i) for i in cluster_labels]
         link_function, colors = get_dendrogram_color_fun(link, clustering['reorder_vec'],
                                                          clustering['labels'])
-
+        # set up axes' size based on orientation
+        if orientation == 'horizontal':
+            dendro_size = [0,.3,1,.55]
+            heatmap_size = [0,.05,1,.25]
+            dendro_orient='top'
+            ordered_loading = ordered_loading.T
+        elif orientation == 'vertical':
+            dendro_size = [.3, 0, .55, 1]
+            heatmap_size = [.05, 0, .25, 1]
+            dendro_orient='right'
         with sns.axes_style('white'):
             fig = plt.figure(figsize=figsize)
-            ax1 = fig.add_axes([0,.3,1,.55]) 
-            dendrogram(link, ax=ax1, link_color_func=link_function)
+            ax1 = fig.add_axes(dendro_size) 
+            dendrogram(link, ax=ax1, link_color_func=link_function,
+                       orientation=dendro_orient)
             # change axis properties
-            ax1.tick_params(axis='x', which='major', labelsize=14)
-
+            ax1.tick_params(axis='x', which='major', labelsize=14,
+                            labelbottom='off')
             # plot loadings as heatmap below
-            ax2 = fig.add_axes([0,.05,1,.25])
-            sns.heatmap(ordered_loading.T, ax=ax2, cbar=False,
-                        xticklabels=False)
+            ax2 = fig.add_axes(heatmap_size)
+            sns.heatmap(ordered_loading, ax=ax2, cbar=False)
             ax2.tick_params(labelsize=figsize[0]*.75)
-           # add background color to distinguish clusters
-            xlim = ax2.get_xlim(); step = xlim[1]/len(labels)
+            # add lines to heatmap to distinguish clusters
+            xlim = ax2.get_xlim(); 
             ylim = ax2.get_ylim()
-            ymin, ymax = ax1.get_ylim()
-            cluster_breaks = [i*step for i in np.cumsum(cluster_sizes)]
-            ax2.vlines(cluster_breaks[:-1], ylim[0], ylim[1], linestyles='dashed',
-                       linewidth=3, colors=[.5,.5,.5])
+            if orientation == 'horizontal':
+                step = xlim[1]/len(labels)
+                cluster_breaks = [i*step for i in np.cumsum(cluster_sizes)]
+                ax2.vlines(cluster_breaks[:-1], ylim[0], ylim[1], linestyles='dashed',
+                           linewidth=3, colors=[.5,.5,.5])
+            elif orientation == 'vertical':
+                step = ylim[1]/len(labels)
+                cluster_breaks = [ylim[1]-i*step for i in np.cumsum(cluster_sizes)]
+                ax2.hlines(cluster_breaks[:-1], xlim[0], xlim[1], linestyles='dashed',
+                           linewidth=2, colors=[.5,.5,.5])
+            # change axis properties based on orientation
+            if orientation == 'horizontal':
+                ax2.tick_params(labelsize=figsize[0]*12/10)
+            elif orientation == 'vertical':
+                ax1.invert_yaxis()
+                ax2.tick_params(labelsize=figsize[1]*12/10)
             # add title
             ax1.set_title(title, fontsize=40, y=1.05)
             for ax in [ax1]:
@@ -183,19 +207,28 @@ def plot_dendrograms(results, c, display_labels=False, inp=None, titles=None,
                 ax.spines['right'].set_visible(False)
                 ax.spines['bottom'].set_visible(False)
                 ax.spines['left'].set_visible(False)
-            # set labels
-            if display_labels == True:
-                ax1.set_xticklabels(labels)
-            else:
-                ax1.tick_params(labelbottom='off')  
-    
-        # add labels for each cluster
-        mid_points = np.array(cluster_breaks) - np.array(cluster_sizes)/2
-        clusters = clustering['labels'][clustering['reorder_vec']]
-        for i, mid in enumerate(mid_points):
-            color_index = clusters[int(mid)]
-            ax2.text(mid, -1-(1.5*(i%2==0)), 'Cluster', ha='center',  fontsize=16,
-                     color=colors[color_index-1])
+            # set label visibility
+            if display_labels == False or 'cluster':
+                if orientation == 'horizontal':
+                    ax2.tick_params(labelbottom='off')  
+                else:
+                    ax2.tick_params(labelleft='off') 
+            if display_labels == 'cluster':
+                # add labels for each cluster
+                clusters = clustering['labels'][clustering['reorder_vec']]
+                if orientation == 'horizontal':
+                    mid_points = np.array(cluster_breaks) - np.array(cluster_sizes)/2
+                    for i, mid in enumerate(mid_points):
+                        color_index = clusters[int(mid)]
+                        ax2.text(mid, -1-(1.5*(i%2==0)), 'Cluster', ha='center',  fontsize=16,
+                                 color=colors[color_index-1])
+                elif orientation == 'vertical':
+                    mid_points = np.array(cluster_breaks) \
+                                    + np.array(cluster_sizes)/2 + 1
+                    for i, mid in enumerate(mid_points):
+                        color_index = clusters[::-1][int(mid)]
+                        ax2.text(-1-(1.5*(i%2==0)), mid, 'Cluster', ha='center',  fontsize=16,
+                                 color=colors[color_index-1], rotation=90)
         
         if plot_dir is not None:
             save_figure(fig, path.join(plot_dir, 
