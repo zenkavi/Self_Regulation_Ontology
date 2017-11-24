@@ -68,13 +68,18 @@ for subset in subsets:
         pickle.dump(results, open(id_file,'wb'))
         # copy latest results and prediction to higher directory
         copyfile(id_file, path.join(path.dirname(results.output_file), 
-                                    'results_%s.pkl' % name))
+                                    '%s_results.pkl' % name))
         prediction_dir = path.join(results.output_file, 'prediction_outputs')
-        base_prediction_dir = path.join(path.dirname(results.output_file), 
-                                           'prediction_outputs')
-        if path.exists(base_prediction_dir):
-            rmtree(base_prediction_dir)
-        copytree(prediction_dir, base_prediction_dir)
+        prediction_files = glob(path.join(prediction_dir, '*'))
+        # sort by creation time and get last two files
+        prediction_files = sorted(prediction_files, key = path.getmtime)[-2:]
+        for filey in prediction_files:
+            if 'shuffle' in filey:
+                copyfile(filey, path.join(path.dirname(results.output_file), 
+                                          '%s_prediction_shuffle.pkl' % name))
+            else:
+                copyfile(filey, path.join(path.dirname(results.output_file), 
+                                          '%s_prediction.pkl' % name))
     
     # ****************************************************************************
     # Bootstrap run

@@ -383,8 +383,8 @@ class Results(EFA_Analysis, HCA_Analysis):
         # set up output files
         if results_dir is None:
             results_dir = get_info('results_directory')
-        self.plot_file = path.join(results_dir, 'dimensional_structure', datafile, 'Plots', name, self.ID)
-        self.output_file = path.join(results_dir, 'dimensional_structure', datafile, 'Output', name, self.ID)
+        self.plot_file = path.join(results_dir, 'dimensional_structure', datafile, 'Plots', self.ID)
+        self.output_file = path.join(results_dir, 'dimensional_structure', datafile, 'Output', self.ID)
         makedirs(self.plot_file, exist_ok = True)
         makedirs(self.output_file, exist_ok = True)
         # set vars

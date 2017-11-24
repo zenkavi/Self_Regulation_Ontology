@@ -102,9 +102,9 @@ def load_results(datafile, results_dir=None):
     if results_dir is None:
         results_dir = get_info('results_directory')
     results = {}
-    result_files = glob(results_dir+'/dimensional_structure/%s/Output/*/results*.pkl' % (datafile))
+    result_files = glob(path.join(results_dir, 'dimensional_structure/%s/Output/*results.pkl' % (datafile)))
     for filey in result_files:
-        name = os.path.basename(os.path.dirname(filey))
+        name = os.path.basename(filey).split('_')[0]
         results[name] = pickle.load(open(filey,'rb'))
     return results
 

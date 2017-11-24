@@ -48,10 +48,6 @@ if not os.path.exists(setupfile):
         f.write('expfactory_token:/dev/null\n')
         f.write('base_directory:%s\n'%basedir)
         f.write('results_directory:%s\n'%os.path.join(basedir,'Results'))
-<<<<<<< HEAD
-=======
-        f.write('dataset:%s\n'%dates[newest_dataset])
->>>>>>> 983472fd9f5273a1d890becf98c96c5c2d31968c
 
 print("copying Self_Regulation_Settings.txt into distribution")
 
