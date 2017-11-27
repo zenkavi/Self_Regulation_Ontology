@@ -9,6 +9,6 @@
 #SBATCH --mem=16000
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=zenkavi@stanford.edu
-source /home/users/zenkavi/.bash_profile
+source /home/zenkavi/.bash_profile
 source activate SRO
 python calculate_retest_exp_DVs.py {EXP_ID} retest
