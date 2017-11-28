@@ -12,4 +12,4 @@
 #SBATCH --mail-user=ieisenbe@stanford.edu
 source activate SRO
 cd ../data_preparation
-python fmri_followup_download_data.py
+python fmri_followup_download_data.py --job all

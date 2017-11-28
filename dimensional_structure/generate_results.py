@@ -12,7 +12,7 @@ from os import makedirs, path
 import pickle
 from shutil import copyfile, copytree, rmtree
 import time
-from utils import not_regex
+from utils import load_results
 
 # parse arguments
 parser = argparse.ArgumentParser()
@@ -25,18 +25,19 @@ run_plot = not args.no_plot
 print('Running Analysis? %s, Plotting? %s' % (['No', 'Yes'][run_analysis], 
                                               ['No', 'Yes'][run_plot]))
 
-datafile = 'Complete_10-08-2017'
+datafile = 'Complete_11-22-2017'
 subsets = [{'name': 'all', 
             'regex': '.',
             'factor_names': ['Pros Plan', 'Sensation Seeking', 'Mind Over Matter', 'Info Processing', 'Discounting', 'Stim Processing', 'Caution', 'Planning/WM', 'Env Resp']},
            {'name': 'task', 
-            'regex': not_regex('survey')+'|cognitive_reflection',
+            'regex': 'task',
             'factor_names': ['Info Processing1', 'Info Processing2', 'WM/IQ', 'Movement Speed', 'Risk', 'Stim Processing', 'Caution', 'Discount']},
             {'name': 'survey',
-             'regex': not_regex(not_regex('survey')+'|cognitive_reflection'),
+             'regex': 'survey',
              'factor_names': ['Immediacy', 'Future', 'Sensation Seeking', 'DOSPERT', 'DOSPERT_fin', 'Agreeableness', 'DOSPERT_RP', 'Hedonism', 'Social', 'Emotional Control', 'Eating', 'Mindfulness']}]
 
 ID = None # ID will be created
+results = None
 # create/run results for each subset
 for subset in subsets:
     name = subset['name']
@@ -69,21 +70,18 @@ for subset in subsets:
         pickle.dump(results, open(id_file,'wb'))
         # copy latest results and prediction to higher directory
         copyfile(id_file, path.join(path.dirname(results.output_file), 
-                                    'results_%s.pkl' % name))
+                                    '%s_results.pkl' % name))
         prediction_dir = path.join(results.output_file, 'prediction_outputs')
-        base_prediction_dir = path.join(path.dirname(results.output_file), 
-                                           'prediction_outputs')
-        if path.exists(base_prediction_dir):
-            rmtree(base_prediction_dir)
-        copytree(prediction_dir, base_prediction_dir)
-        
-    
-    # ***************************** loading ****************************************
-    result_file = glob('Output/%s/%s/results_%s.pkl' % (datafile, name, name))[0]
-    results = pickle.load(open(result_file, 'rb'))
-    
-    # add function to existing class
-    # results.fun = fun.__get__(results)
+        prediction_files = glob(path.join(prediction_dir, '*'))
+        # sort by creation time and get last two files
+        prediction_files = sorted(prediction_files, key = path.getmtime)[-2:]
+        for filey in prediction_files:
+            if 'shuffle' in filey:
+                copyfile(filey, path.join(path.dirname(results.output_file), 
+                                          '%s_prediction_shuffle.pkl' % name))
+            else:
+                copyfile(filey, path.join(path.dirname(results.output_file), 
+                                          '%s_prediction.pkl' % name))
     
     # ****************************************************************************
     # Bootstrap run
@@ -92,8 +90,6 @@ for subset in subsets:
     #for _ in range(10):
     #    results.run_bootstrap(verbose=True, save=True)
     #boot_time = time.time()-start
-    
-    
     
     #def eval_data_clusters(results, boot_results):
     #    orig_data_clusters = results.HCA.results['clustering_metric-abscorrelation_input-data']['clustering']['labels']
@@ -118,6 +114,8 @@ for subset in subsets:
     # Plotting
     # ****************************************************************************
     if run_plot==True:
+        if results is None or name not in results.ID:
+            results = load_results(datafile, name=name)[name]
         EFA_plot_dir = path.join(results.plot_file, 'EFA')
         HCA_plot_dir = path.join(results.plot_file, 'HCA')
         prediction_plot_dir = path.join(results.plot_file, 'prediction')
