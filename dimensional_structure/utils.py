@@ -98,11 +98,13 @@ def abs_pdist(mat, square=False):
         absolute_distance = squareform(absolute_distance)
     return absolute_distance
 
-def load_results(datafile, results_dir=None):
+def load_results(datafile, name=None, results_dir=None):
     if results_dir is None:
         results_dir = get_info('results_directory')
     results = {}
-    result_files = glob(path.join(results_dir, 'dimensional_structure/%s/Output/*results.pkl' % (datafile)))
+    result_files = glob(os.path.join(results_dir, 'dimensional_structure/%s/Output/*results.pkl' % (datafile)))
+    if name is not None:
+        result_files = [i for i in result_files if name in i]
     for filey in result_files:
         name = os.path.basename(filey).split('_')[0]
         results[name] = pickle.load(open(filey,'rb'))

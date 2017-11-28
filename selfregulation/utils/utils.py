@@ -114,7 +114,7 @@ def get_info(item,infile=None):
         raise Exception('infodict does not include requested item: %s' % item)
     return infodict[item]
 
-def get_metadata(survey, dataset=None):
+def get_item_metadata(survey, dataset=None):
     data = get_behav_data(dataset=dataset, file=os.path.join('Individual_Measures',
                                                              '%s.csv.gz' % survey))
     metadata = []

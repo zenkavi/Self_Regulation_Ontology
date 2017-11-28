@@ -117,7 +117,7 @@ def plot_clustering_similarity(results, plot_dir=None, verbose=False, ext='png')
     
     
 def plot_dendrograms(results, c, display_labels='cluster', inp=None, titles=None,
-                     figsize=(20,12), orientation='horizonta',
+                     figsize=(20,12), orientation='horizontal',
                      dpi=300, ext='png', plot_dir=None):
     """ Plots HCA results as dendrogram with loadings underneath
     

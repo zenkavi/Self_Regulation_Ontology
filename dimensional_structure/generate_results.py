@@ -12,6 +12,7 @@ from os import makedirs, path
 import pickle
 from shutil import copyfile, copytree, rmtree
 import time
+from utils import load_results
 
 # parse arguments
 parser = argparse.ArgumentParser()
@@ -24,7 +25,7 @@ run_plot = not args.no_plot
 print('Running Analysis? %s, Plotting? %s' % (['No', 'Yes'][run_analysis], 
                                               ['No', 'Yes'][run_plot]))
 
-datafile = 'Complete_10-08-2017'
+datafile = 'Complete_11-22-2017'
 subsets = [{'name': 'all', 
             'regex': '.',
             'factor_names': ['Pros Plan', 'Sensation Seeking', 'Mind Over Matter', 'Info Processing', 'Discounting', 'Stim Processing', 'Caution', 'Planning/WM', 'Env Resp']},
@@ -36,6 +37,7 @@ subsets = [{'name': 'all',
              'factor_names': ['Immediacy', 'Future', 'Sensation Seeking', 'DOSPERT', 'DOSPERT_fin', 'Agreeableness', 'DOSPERT_RP', 'Hedonism', 'Social', 'Emotional Control', 'Eating', 'Mindfulness']}]
 
 ID = None # ID will be created
+results = None
 # create/run results for each subset
 for subset in subsets:
     name = subset['name']
@@ -89,8 +91,6 @@ for subset in subsets:
     #    results.run_bootstrap(verbose=True, save=True)
     #boot_time = time.time()-start
     
-    
-    
     #def eval_data_clusters(results, boot_results):
     #    orig_data_clusters = results.HCA.results['clustering_metric-abscorrelation_input-data']['clustering']['labels']
     #    boot_clusters = []
@@ -114,6 +114,8 @@ for subset in subsets:
     # Plotting
     # ****************************************************************************
     if run_plot==True:
+        if results is None or name not in results.ID:
+            results = load_results(datafile, name=name)[name]
         EFA_plot_dir = path.join(results.plot_file, 'EFA')
         HCA_plot_dir = path.join(results.plot_file, 'HCA')
         prediction_plot_dir = path.join(results.plot_file, 'prediction')
