@@ -1,6 +1,4 @@
 import sys
-#sys.path.append('/Users/zeynepenkavi/Dropbox/PoldrackLab/expfactory-analysis')
-#sys.path.append('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/data_preparation')
 import numpy as np
 from os import path, chdir
 import pandas as pd
@@ -16,9 +14,9 @@ from selfregulation.utils.r_to_py_utils import missForest
 
 #data_dir=path.join('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Data/','Retest_'+release_date)
 
-release_date = '09-27-2017'
+release_date = '11-27-2017'
 
-data_dir = '/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_09-27-2017'
+data_dir = '/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_11-27-2017'
 
 #Read in DVs and valence
 label = 'retest'
