@@ -213,6 +213,7 @@ def drop_vars(data, drop_vars = [], saved_vars = []):
                     "discount_titrate.hyp_discount_rate", "discount_titrate.hyp_discount_rate_(glm|nm)"  #delay discounting
                     "kirby.percent_patient","kirby.hyp_discount_rate$",  "kirby.exp_discount.*", 
                     "\.warnings$", "_notnow$", "_now$", #kirby and delay discounting
+                    "auc", # bickel
                     "local_global_letter.*error.*", # local global errors
                     "PRP_slowing", # PRP_two_choices
                     "shape_matching.*prim.*", # shape matching prime measures
