@@ -7,6 +7,7 @@ import pandas,numpy
 import re
 from sklearn.metrics import confusion_matrix
 import pkg_resources
+from collections import OrderedDict
 
 # Regex filtering helper functions
 
@@ -124,13 +125,19 @@ def get_item_metadata(survey, dataset=None):
         item = data[data['question_num'] == i].iloc[0].to_dict()
         # drop unnecessary variables
         for drop in ['battery_name', 'finishtime', 'required', 'response',
-                     'response_text', 'worker_id']:
+                     'response_text', 'worker_id','experiment_exp_id']:
             try:
                 item.pop(drop)
             except KeyError:
                 continue
         if type(item['options']) != list:
             item['options'] = eval(item['options'])
+        # turn options into an ordered dict, indexed by option number
+        item['responseOptions']=OrderedDict()
+        for o in item['options']:
+            option_num=int(o['id'].split('_')[-1])
+            o.pop('id')
+            item['responseOptions'][option_num]=o
         # scoring
         values = [int(i['value']) for i in item['options']]
         sorted_values = list(range(1,len(values)+1))
@@ -142,6 +149,10 @@ def get_item_metadata(survey, dataset=None):
             item['scoring'] = 'Misc'
         # convert from numpy.int64 since it's not json serializable
         item['question_num']=int(item['question_num'])
+        item_s=item['id'].replace('_options','').split('_')
+        item['expFactoryName']='_'.join(item_s[:-1])+'.'+item_s[-1]
+        item.pop('id')
+        item.pop('options')
         metadata.append(item)
     return metadata
 
