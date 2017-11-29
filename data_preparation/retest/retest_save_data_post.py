@@ -88,7 +88,7 @@ readme_lines += ["meaningful_variables.csv: Same as meaningful_variables_hddm.cs
 # DO NOT remove outliers from this sample and transform based on what was done for test data
 #meaningful_variables_clean_test = pd.read_csv('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Data/Complete_10-08-2017/meaningful_variables_clean.csv')
 
-meaningful_variables_clean_test = pd.read_csv('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Complete_10-08-2017/meaningful_variables_clean.csv')
+meaningful_variables_clean_test = pd.read_csv('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Complete_11-22-2017/meaningful_variables_clean.csv')
 
 transformed_variables = [col for col in meaningful_variables_clean_test.columns if 'logTr' in col]
 
