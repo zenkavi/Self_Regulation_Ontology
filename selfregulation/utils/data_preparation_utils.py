@@ -226,7 +226,9 @@ def drop_vars(data, drop_vars = [], saved_vars = []):
                      "stroop.*errors", # stroop
                      "threebytwo.*inhibition", # threebytwo
                      "num_correct", "weighted_performance_score", # tower of london
-                     "sentiment_label" # writing task
+                     "sentiment_label" ,# writing task
+                     "log_ll", "match_pct", "min_rss", #fit indices
+                     "num_trials", "num_stop_trials"#num trials
                     ]
         drop_vars = basic_vars + exploratory_vars + task_vars + ddm_vars
     drop_vars = '|'.join(drop_vars)
