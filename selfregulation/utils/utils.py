@@ -12,7 +12,7 @@ import pkg_resources
 
 def not_regex(txt):
         return '^((?!%s).)*$' % txt
-    
+
 def filter_behav_data(data, filter_regex):
     """ filters dataframe using regex
     Args:
@@ -29,8 +29,8 @@ def filter_behav_data(data, filter_regex):
     return data.filter(regex=regex)
 
 def get_var_category(var):
-    ''' Return "task" or "survey" classification for variable 
-    
+    ''' Return "task" or "survey" classification for variable
+
     var: variable name passed as a string
     '''
     m = re.match(not_regex('survey')+'|cognitive_reflection|holt', var)
@@ -38,15 +38,15 @@ def get_var_category(var):
         return 'survey'
     else:
         return 'task'
-    
+
 # Data get methods
 
 def get_behav_data(dataset=None, file=None, filter_regex=None,
                 flip_valence=False, verbose=False, full_dataset=None):
-    '''Retrieves a file from a data release. 
-    
+    '''Retrieves a file from a data release.
+
     By default extracts meaningful_variables from the most recent Complete dataset.
-    
+
     Args:
         dataset: optional, string indicating discovery, validation, or complete dataset of interest
         file: optional, string indicating the file of interest
@@ -78,7 +78,8 @@ def get_behav_data(dataset=None, file=None, filter_regex=None,
     else:
         data = pandas.DataFrame()
         print('Error: %s not found in %s' % (file, datadir))
-        
+        return None
+
     def valence_flip(data, flip_list):
         for c in data.columns:
             try:
@@ -101,7 +102,7 @@ def get_info(item,infile=None):
                         'data/Self_Regulation_Settings.txt')
     config=str(config,'utf-8').strip()
     infodict={}
-    
+
     for l in config.split('\n'):
         if l.find('#')==0:
             continue
@@ -117,11 +118,12 @@ def get_info(item,infile=None):
 def get_item_metadata(survey, dataset=None):
     data = get_behav_data(dataset=dataset, file=os.path.join('Individual_Measures',
                                                              '%s.csv.gz' % survey))
+
     metadata = []
     for i in data.question_num.unique():
         item = data[data['question_num'] == i].iloc[0].to_dict()
         # drop unnecessary variables
-        for drop in ['battery_name', 'finishtime', 'required', 'response', 
+        for drop in ['battery_name', 'finishtime', 'required', 'response',
                      'response_text', 'worker_id']:
             try:
                 item.pop(drop)
@@ -138,7 +140,8 @@ def get_item_metadata(survey, dataset=None):
             item['scoring'] = 'Reverse'
         else:
             item['scoring'] = 'Misc'
-            
+        # convert from numpy.int64 since it's not json serializable
+        item['question_num']=int(item['question_num'])
         metadata.append(item)
     return metadata
 
