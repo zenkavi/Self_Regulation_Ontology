@@ -3,10 +3,6 @@
 FROM python:3.5.3
 MAINTAINER Russ Poldrack <poldrack@gmail.com>
 
-
-WORKDIR /SRO
-ENTRYPOINT ["python"]
-
 RUN apt-get update && apt-get install -y default-jre gfortran
 
 # installing R
@@ -16,15 +12,16 @@ RUN cd R-3.4.2 && ./configure --enable-R-shlib=yes && make && make install
 
 # installing R packages
 RUN echo 'install.packages(c( \
-  "doParallel",
-  "dplyr",
-  "mpath", \
-  "glmnet", \
+  "doParallel", \
+  "dplyr", \
   "foreach", \
   "iterators", \
-  "psych",
+  "glmnet", \
+  "missForest", \
+  "mpath", \
+  "numDeriv", \
+  "psych", \
   "pscl", \
-  "numDeriv",
   "tidyr" \
   ), \
   repos="http://cran.us.r-project.org", dependencies=TRUE)' > /tmp/packages.R && \
@@ -64,17 +61,22 @@ RUN pip install \
     rpy2==2.8.5
 
   
-  
-RUN echo "xxxxxxxxxxssfoo"
-
 # Copy the directory (except Data and Results) into the docker container
-RUN mkdir /SRO
-COPY * /SRO
-RUN mkdir /SRO/Data
-RUN mkdir /SRO/Results
+ADD . /SRO
+RUN mkdir /Data
+RUN mkdir /Results
+RUN mkdir /expfactory_token
+
+# Create a settings file
+RUN echo "expfactory_token:/expfactory_token/expfactory_token.txt" >> /SRO/selfregulation/data/Self_Regulation_Settings.txt
+RUN echo "base_directory:/SRO" >> /SRO/selfregulation/data/Self_Regulation_Settings.txt
+RUN echo "results_directory:/Results" >> /SRO/selfregulation/data/Self_Regulation_Settings.txt
+RUN echo "data_directory:/Data" >> /SRO/selfregulation/data/Self_Regulation_Settings.txt
 
 RUN jupyter notebook --generate-config
 RUN echo "c.NotebookApp.ip = '0.0.0.0'" >> ~/.jupyter/jupyter_notebook_config.py
 RUN echo "c.NotebookApp.token = ''" >> ~/.jupyter/jupyter_notebook_config.py
 RUN echo "c.NotebookApp.allow_root = True" >> ~/.jupyter/jupyter_notebook_config.py
 
+WORKDIR /SRO
+ENTRYPOINT ["python"]
