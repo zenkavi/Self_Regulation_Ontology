@@ -114,77 +114,32 @@ def get_info(item,infile=None):
         raise Exception('infodict does not include requested item: %s' % item)
     return infodict[item]
 
-def get_demographics(dataset,var_subset=None,full_dataset=False):
-    """
-    misnomer - actually get demographics, alc/drug, and health
-    """
-    basedir=get_info('base_directory')
-    if not full_dataset:
-        datasets=[dataset]
-    else:
-        if dataset.find('Discovery')==0:
-            datasets=[dataset,dataset.replace('Discovery','Validation')]
+def get_item_metadata(survey, dataset=None):
+    data = get_behav_data(dataset=dataset, file=os.path.join('Individual_Measures',
+                                                             '%s.csv.gz' % survey))
+    metadata = []
+    for i in data.question_num.unique():
+        item = data[data['question_num'] == i].iloc[0].to_dict()
+        # drop unnecessary variables
+        for drop in ['battery_name', 'finishtime', 'required', 'response', 
+                     'response_text', 'worker_id']:
+            try:
+                item.pop(drop)
+            except KeyError:
+                continue
+        if type(item['options']) != list:
+            item['options'] = eval(item['options'])
+        # scoring
+        values = [int(i['value']) for i in item['options']]
+        sorted_values = list(range(1,len(values)+1))
+        if values == sorted_values:
+            item['scoring'] = 'Forward'
+        elif values == sorted_values[::-1]:
+            item['scoring'] = 'Reverse'
         else:
-            datasets=[dataset,dataset.replace('Validation','Discovery')]
-        print('using datasets:',datasets)
-    ds_all={}
-    for ds in datasets:
-      for i,survey in enumerate(['demographics_ordinal','alcohol_drugs_ordinal','health_ordinal']):
-        infile=os.path.join(basedir,'Data/%s/%s.csv'%(ds,survey))
-        if i==0:
-            ds_all[ds]=pandas.DataFrame.from_csv(infile,index_col=0,sep=',')
-        else:
-            data=pandas.DataFrame.from_csv(infile,index_col=0,sep=',')
-            ds_all[ds]=ds_all[ds].merge(data,'inner',right_index=True,left_index=True)
-    if len(ds_all)==1:
-        alldata=ds_all[ds]
-    else:
-        alldata=pandas.concat([ds_all[ds] for ds in ds_all.keys()])
-    badweight=alldata['WeightPounds']<80
-    badheight=alldata['HeightInches']<36
-    alldata.loc[badweight,'WeightPounds']=numpy.nan
-    alldata.loc[badheight,'HeightInches']=numpy.nan
-    alldata['BMI']=alldata['WeightPounds']*0.45 / (alldata['HeightInches']*0.025)**2
-
-    if not var_subset is None:
-        for c in alldata.columns:
-            if not c in var_subset:
-                del alldata[c]
-
-    return(alldata)
-
-def get_single_dataset(dataset,survey):
-    basedir=get_info('base_directory')
-    infile=os.path.join(basedir,'data/Derived_Data/%s/surveydata/%s.tsv'%(dataset,survey))
-    print(infile)
-    assert os.path.exists(infile)
-    if survey.find('ordinal')>-1:
-        survey=survey.replace('_ordinal','')
-    mdfile=os.path.join(basedir,'data/Derived_Data/%s/metadata/%s.json'%(dataset,survey))
-    print(mdfile)
-    assert os.path.exists(mdfile)
-    data=pandas.read_csv(infile,index_col=0,sep='\t')
-    metadata=load_metadata(survey,os.path.join(basedir,
-        'data/Derived_Data/%s/metadata'%dataset))
-    return data,metadata
-
-
-def get_survey_data(dataset):
-    basedir=get_info('base_directory')
-    infile=os.path.join(basedir,'Data/Derived_Data/%s/surveydata.csv'%dataset)
-    surveydata=pandas.read_csv(infile,index_col=0)
-    keyfile=os.path.join(basedir,'Data/Derived_Data/%s/surveyitem_key.txt'%dataset)
-    with open(keyfile) as f:
-        keylines=[i.strip().split('\t') for i in f.readlines()]
-    surveykey={}
-    for k in keylines:
-        surveykey[k[0]]=k[2]
-    return surveydata,surveykey
-
-def load_metadata(variable,basedir):
-
-    with open(os.path.join(basedir,'%s.json'%variable)) as outfile:
-            metadata=json.load(outfile)
+            item['scoring'] = 'Misc'
+            
+        metadata.append(item)
     return metadata
 
 def print_confusion_matrix(y_true,y_pred,labels=[0,1]):
