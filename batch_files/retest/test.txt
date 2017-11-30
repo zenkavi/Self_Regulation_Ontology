@@ -1,4 +1,1 @@
-dot_pattern_expectancy.AY.BY_acc
-selection_optimization_compensation_survey.compensation
-stroop.hddm_drift
 stim_selective_stop_signal.hddm_non_decision
