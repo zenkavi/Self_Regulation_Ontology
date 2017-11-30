@@ -116,7 +116,7 @@ def get_info(item,infile=None):
         raise Exception('infodict does not include requested item: %s' % item)
     return infodict[item]
 
-def get_item_metadata(survey, dataset=None):
+def get_item_metadata(survey, dataset=None,verbose=False):
     data = get_behav_data(dataset=dataset, file=os.path.join('Individual_Measures',
                                                              '%s.csv.gz' % survey))
 
@@ -131,13 +131,21 @@ def get_item_metadata(survey, dataset=None):
             except KeyError:
                 continue
         if type(item['options']) != list:
+            if verbose:
+                print(item['options'])
             item['options'] = eval(item['options'])
         # turn options into an ordered dict, indexed by option number
         item['responseOptions']=OrderedDict()
         for o in item['options']:
             option_num=int(o['id'].split('_')[-1])
             o.pop('id')
-            item['responseOptions'][option_num]=o
+            o['valueOrig']=option_num
+            try:
+                v=int(o['value'])
+            except ValueError:
+                v=o['value']
+            item['responseOptions'][v]=o.copy()
+            item['responseOptions'][v].pop('value')
         # scoring
         values = [int(i['value']) for i in item['options']]
         sorted_values = list(range(1,len(values)+1))
