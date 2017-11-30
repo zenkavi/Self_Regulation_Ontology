@@ -1,25 +1,19 @@
-import sys
-sys.path.append('/Users/zeynepenkavi/Dropbox/PoldrackLab/expfactory-analysis')
-sys.path.append('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/data_preparation')
 import numpy as np
 from os import path, makedirs, chdir
 import pandas as pd
+import sys
+sys.path.append('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/data_preparation')
 
 from selfregulation.utils.data_preparation_utils import save_task_data
 from expanalysis.experiments.processing import extract_experiment
 from process_demographics import process_demographics
 from process_alcohol_drug import process_alcohol_drug
 from process_health import process_health
-from selfregulation.utils.data_preparation_utils import get_items
-from selfregulation.utils.data_preparation_utils import convert_var_names
+from selfregulation.utils.data_preparation_utils import get_items, convert_var_names
 
+release_date = '11-27-2017'
 
-try: 
-    release_date
-except NameError:
-    release_date = input('Enter release_ date:')
-
-data_dir = path.join('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Data/','Retest_'+release_date)
+data_dir = '/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_11-27-2017'
 
 #load data (in case anything broke)
 data = pd.read_json(path.join(data_dir, 'Local/mturk_retest_data_post.json'))
@@ -68,7 +62,8 @@ items_df.to_csv(path.join(data_dir, 'items.csv.gz'), compression = 'gzip')
 #subject_x_items.csv
 subjectsxitems.to_csv(path.join(data_dir, 'subject_x_items.csv'))
 
-chdir('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Data')
+#chdir('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Data')
+chdir('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data')
 convert_var_names(subjectsxitems)
 assert np.max([len(name) for name in subjectsxitems.columns])<=8, "Found column names longer than 8 characters in short version"
 

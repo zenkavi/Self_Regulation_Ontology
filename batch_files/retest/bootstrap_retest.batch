@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=bootstrap_retest_{VAR_ID}
-#SBATCH --output=/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_09-27-2017/batch_output/bootstrap_output/.out/bootstrap_retest_{VAR_ID}.job.out
-#SBATCH --error=/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_09-27-2017/batch_output/bootstrap_output/.err/bootstrap_retest_{VAR_ID}.job.err
+#SBATCH --output=/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_11-27-2017/batch_output/bootstrap_output/.out/bootstrap_retest_{VAR_ID}.job.out
+#SBATCH --error=/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_11-27-2017/batch_output/bootstrap_output/.err/bootstrap_retest_{VAR_ID}.job.err
 #SBATCH --time=40:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -10,4 +10,4 @@
 # #SBATCH --mail-type=FAIL
 #SBATCH --mail-user=zenkavi@stanford.edu
 source activate SRO
-Rscript --vanilla bootstrap_retest.R /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_09-27-2017/ variables_exhaustive.csv /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_09-27-2017/batch_output/bootstrap_output/ 1000 {VAR_ID}
+Rscript --vanilla bootstrap_retest.R /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_11-27-2017/ variables_exhaustive.csv /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_11-27-2017/batch_output/bootstrap_output/ 1000 {VAR_ID}
