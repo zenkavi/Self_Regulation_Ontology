@@ -36,6 +36,7 @@ RUN pip install \
   ipdb \ 
   IPython==6.2.1 \
   Jinja2==2.9.6 \
+  marshmallow==3.0.0b4 \
   matplotlib==2.1.0 \
   networkx==2.0 \
   nilearn==0.3.0 \
@@ -78,4 +79,8 @@ RUN echo "c.NotebookApp.token = ''" >> ~/.jupyter/jupyter_notebook_config.py
 RUN echo "c.NotebookApp.allow_root = True" >> ~/.jupyter/jupyter_notebook_config.py
 
 WORKDIR /SRO
+
+# install the selfregulation directory 
+RUN python setup.py install
+
 ENTRYPOINT ["python"]

@@ -38,3 +38,13 @@ missForest
 psych
 lme4
 qgraph
+
+### Docker usage
+
+to build run:
+`docker build --rm -t sro .`
+
+Mount the Data and Results directory from the host into the container at /SRO/Data and /SRO/Results respectively
+
+To start bash in the docker container with the appropriate mounts run:
+`docker run --entrypoint /bin/bash -v /home/ian/Experiments/expfactory/Self_Regulation_Ontology/Data:/SRO/Data -it sro`
