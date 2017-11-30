@@ -3,10 +3,12 @@ Data/Retest_Data_NewApi
 Data/Retest_02-11-2017/Local
 Data/Retest_03-21-2017/Local
 Data/Retest_09-27-2017/Local
+Data/Retest_11-27-2017/Local
 Data/Complete_10-27-2017/Local
 Data/Retest_02-11-2017/batch_output
 Data/Retest_03-21-2017/batch_output
 Data/Retest_09-27-2017/batch_output
+Data/Retest_11-27-2017/batch_output
 Data/Complete_10-27-2017/batch_output
 data_preparation/old
 Plots
@@ -21,8 +23,9 @@ Plots
 *.pkl
 *.pdf
 *.Rdata
+.eggs
 internal_settings.json
-Self_Regulation_Settings.txt
+Self_Regulation_*Settings.txt
 dimensional_structure/Output/*/*ID*
 # directories
 .spyproject/

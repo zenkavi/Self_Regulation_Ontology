@@ -11,9 +11,9 @@ In order to use the code, you first need to create a version of the settings fil
 
 2. Using your favorite text editor, edit the file to specify the location of the project directory on the line 
 starting with "base directory".  For example, on my computer it looks like:
-
 base_directory:/Users/poldrack/code/Self_Regulation_Ontology/
 
+Note: If you do not create a settings file, one will be created by the setup.py file (see below) with default values
 
 ### Organization of the repository
 
@@ -28,13 +28,8 @@ other directories are specific to particular analyses - for any analysis you wis
 
 ### Setting up python environment
 
-Use the environment.yml file with anaconda: conda env create -f environment.yml
-
-After doing that, you must install expanalysis in the same environment.
-- Clone expanalysis from: https://github.com/IanEisenberg/expfactory-analysis
-- Enter expanalysis and enter "pip install -e ."
-
-Finally you must install the selfregulation python: python setup.py install
+python setup.py install
+rp2 needs to be installed
 
 ### R setup
 install:
@@ -43,3 +38,13 @@ missForest
 psych
 lme4
 qgraph
+
+### Docker usage
+
+to build run:
+`docker build --rm -t sro .`
+
+Mount the Data and Results directory from the host into the container at /SRO/Data and /SRO/Results respectively
+
+To start bash in the docker container with the appropriate mounts run:
+`docker run --entrypoint /bin/bash -v /home/ian/Experiments/expfactory/Self_Regulation_Ontology/Data:/SRO/Data -it sro`

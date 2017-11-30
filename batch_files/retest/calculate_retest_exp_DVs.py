@@ -4,7 +4,7 @@ from expanalysis.experiments.processing import get_exp_DVs
 from os import path
 import pandas as pd
 
-data_dir='/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_09-27-2017/Local'
+data_dir='/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_11-27-2017/Local'
 
 #parse arguments
 exp_id = sys.argv[1]
@@ -14,7 +14,7 @@ data = sys.argv[2]
 #else:
  #   out_dir = data_dir
 
-out_dir = '/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_09-27-2017/batch_output'
+out_dir = '/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_11-27-2017/batch_output'
 
 #discovery
 #load Data
