@@ -57,14 +57,13 @@ ENV IPYTHONDIR /tmp
 # install more python packages that failed in first install
 RUN pip install \
     fancyimpute==0.2.0 \
-    hdbscan==0.8.10 \
     rpy2==2.8.5
 
   
 # Copy the directory (except Data and Results) into the docker container
 ADD . /SRO
-RUN mkdir /Data
-RUN mkdir /Results
+RUN mkdir /SRO/Data
+RUN mkdir /SRO/Results
 RUN mkdir /expfactory_token
 
 # Create a settings file
