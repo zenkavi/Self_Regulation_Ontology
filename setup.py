@@ -60,7 +60,8 @@ setup(
     package_data={'selfregulation': ['data/*']},
     #scripts=['bin/stowe-towels.py','bin/wash-towels.py'],
     long_description=open('README.md').read(),
-    setup_requires=["cython==0.27.3"],
+    setup_requires=["cython==0.27.3",
+                    "numpy==1.11.3"],
     install_requires=[
         "fancyimpute==0.2.0",
         "imbalanced-learn==0.3.0",
@@ -72,7 +73,6 @@ setup(
         "matplotlib==2.1.0",
         "networkx==2.0",
         "nilearn==0.3.0",
-        "numpy==1.11.3",
         "pandas==0.20.3",
         "python-igraph==0.7.1.post6",
         "scipy==0.19.1",
