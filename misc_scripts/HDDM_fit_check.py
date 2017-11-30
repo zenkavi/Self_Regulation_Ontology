@@ -21,11 +21,14 @@ def run_model(task, data):
     group_dvs = hddm_fun_dict[task](data)
     # load models
     base_files = glob('%s*_base.model' % task)
-    m_base = hddm.load(base_files[0])
+    #m_base = hddm.load(base_files[0])
+    m_base = pickle.load(open(base_files[0], 'rb'))
+    #Try: m_base = pickle.load(open(base_files[0], 'rb')) if you get a unicode error
     m_condition = None
     condition_files = glob('%s*_condition.model' % task)
     if len(condition_files)>0:
-        m_condition = hddm.load(condition_files[0])
+        #m_condition = hddm.load(condition_files[0])
+        m_condition = pickle.load(open(condition_files[0], 'rb'))
     return (m_base, m_condition)
 
 def assess_convergence(task, reps=5):
@@ -54,6 +57,7 @@ for d in mp_results:
     results.update(d)
 
 # save plots of traces
+# make sure the output directory exists
 for k,v in results.items():
     gelman_vals[k+'_base'] = gelman_rubin([i[0] for i in v])
     # plot posteriors
@@ -128,7 +132,7 @@ print(ppc_compare)
 ppc_summary = hddm.utils.post_pred_stats(data, ppc, call_compare=False)
 print(ppc_summary)
 
-# we can not compare that summary to the real data
+# we can now compare that summary to the real data
 # accuracy
 sim_acc = ppc_summary.groupby(level=0).accuracy.mean()
 sim_acc.index = [int(i.split('.')[1]) for i in sim_acc.index]
@@ -144,6 +148,7 @@ corr_rt = np.corrcoef(data_rt, sim_rt.mean_ub)[0,1].round(4)
 # Plotting!
 plt.scatter(data_acc, sim_acc, label='Accuracy'); 
 plt.text(.9,.9, 'Acc r = %s' % corr_acc)
+
 plt.scatter(data_rt, sim_rt.mean_ub, label='Upper Bound RT'); 
 plt.xlabel('Data'); plt.ylabel('Model')
 plt.text(.6,.8, 'RT r = %s' % corr_rt)

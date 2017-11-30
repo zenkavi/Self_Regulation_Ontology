@@ -114,6 +114,21 @@ get_var_breakdown <- function(dv_var, t1_df = retest_subs_test_data, t2_df = ret
   return(var_breakdown)
   }
 
+get_partial_eta <- function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_data, merge_var = 'sub_id', sample='full', sample_vec){
+  if(sample=='full'){
+    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var)
+  }
+  else if(sample=='bootstrap'){
+    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var, sample='bootstrap', sample_vec = sample_vec)
+  }
+
+  mod = summary(aov(score~Error(sub_id)+time, df))
+  ss_time = as.data.frame(unlist(mod$`Error: Within`))['Sum Sq1',]
+  ss_error = as.data.frame(unlist(mod$`Error: Within`))['Sum Sq2',]
+  partial_eta = ss_time/(ss_time+ss_error)
+  return(partial_eta)
+}
+
 get_eta <- function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_data, merge_var = 'sub_id', sample='full', sample_vec){
   if(sample=='full'){
     df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var)
@@ -125,8 +140,27 @@ get_eta <- function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_data, 
   mod = summary(aov(score~Error(sub_id)+time, df))
   ss_time = as.data.frame(unlist(mod$`Error: Within`))['Sum Sq1',]
   ss_error = as.data.frame(unlist(mod$`Error: Within`))['Sum Sq2',]
-  eta = ss_time/(ss_time+ss_error)
+  ss_between = as.data.frame(unlist(mod$`Error: sub_id`))['Sum Sq',]
+  eta = ss_time/(ss_time+ss_error+ss_between)
   return(eta)
+}
+
+get_omega <- function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_data, merge_var = 'sub_id', sample='full', sample_vec){
+  if(sample=='full'){
+    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var)
+  }
+  else if(sample=='bootstrap'){
+    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var, sample='bootstrap', sample_vec = sample_vec)
+  }
+
+  mod = summary(aov(score~Error(sub_id)+time, df))
+  ss_time = as.data.frame(unlist(mod$`Error: Within`))['Sum Sq1',]
+  ss_error = as.data.frame(unlist(mod$`Error: Within`))['Sum Sq2',]
+  ss_between = as.data.frame(unlist(mod$`Error: sub_id`))['Sum Sq',]
+  df_time = as.data.frame(unlist(mod$`Error: Within`))['Df1',]
+  ms_error = as.data.frame(unlist(mod$`Error: Within`))['Mean Sq2',]
+  omega = (ss_time - (df_time*ms_error)) / (ms_error + ss_time + ss_error + ss_between)
+  return(omega)
 }
 
 get_sem <- function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_data, merge_var = 'sub_id', sample='full', sample_vec){
@@ -146,7 +180,7 @@ sample_workers = function(N = 150, repl= TRUE, df=retest_data, worker_col = "sub
   return(sample(df[,worker_col], N, replace = repl))
 }
 
-bootstrap_relialibility = function(metric = c('icc', 'spearman','pearson', 'eta_sq', 'sem', 'var_breakdown'), dv_var, worker_col="sub_id"){
+bootstrap_relialibility = function(metric = c('icc', 'spearman','pearson', 'partial_eta_sq', 'eta_sq', 'omega_sq', 'sem', 'var_breakdown'), dv_var, worker_col="sub_id"){
   tmp_sample = sample_workers(worker_col = worker_col)
   out_df = data.frame(dv = dv_var)
   if('icc' %in% metric){
@@ -156,10 +190,16 @@ bootstrap_relialibility = function(metric = c('icc', 'spearman','pearson', 'eta_
     out_df$spearman = get_spearman(dv_var, sample = 'bootstrap', sample_vec = tmp_sample, merge_var = worker_col)
   }
   if('pearson' %in% metric){
-    out_df$spearman = get_spearman(dv_var, sample = 'bootstrap', sample_vec = tmp_sample, merge_var = worker_col)
+    out_df$pearson = get_pearson(dv_var, sample = 'bootstrap', sample_vec = tmp_sample, merge_var = worker_col)
+  }
+  if('partial_eta_sq' %in% metric){
+    out_df$partial_eta_sq = get_partial_eta(dv_var, sample = 'bootstrap', sample_vec = tmp_sample, merge_var = worker_col)
   }
   if('eta_sq' %in% metric){
     out_df$eta_sq = get_eta(dv_var, sample = 'bootstrap', sample_vec = tmp_sample, merge_var = worker_col)
+  }
+  if('omega_sq' %in% metric){
+    out_df$omega_sq = get_omega(dv_var, sample = 'bootstrap', sample_vec = tmp_sample, merge_var = worker_col)
   }
   if('sem' %in% metric){
     out_df$sem = get_sem(dv_var, sample = 'bootstrap', sample_vec = tmp_sample, merge_var = worker_col)

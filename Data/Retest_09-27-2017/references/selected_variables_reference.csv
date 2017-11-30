@@ -72,8 +72,12 @@ dospert_rt_survey.financial,NA
 dospert_rt_survey.health_safety,NA
 dospert_rt_survey.recreational,NA
 dospert_rt_survey.social,NA
+dot_pattern_expectancy.AX_errors,Neg
 dot_pattern_expectancy.AY-BY_hddm_drift,NA
+dot_pattern_expectancy.AY_errors,Neg
 dot_pattern_expectancy.BX-BY_hddm_drift,NA
+dot_pattern_expectancy.BX_errors,Neg
+dot_pattern_expectancy.BY_errors,Neg
 dot_pattern_expectancy.bias,NA
 dot_pattern_expectancy.dprime,Pos
 dot_pattern_expectancy.hddm_drift,Pos
@@ -81,6 +85,7 @@ dot_pattern_expectancy.hddm_non_decision,NA
 dot_pattern_expectancy.hddm_thresh,Pos
 eating_survey.cognitive_restraint,Pos
 eating_survey.emotional_eating,Neg
+eating_survey.total,Pos
 eating_survey.uncontrolled_eating,Neg
 erq_survey.reappraisal,NA
 erq_survey.suppression,NA
@@ -89,6 +94,7 @@ five_facet_mindfulness_survey.describe,Pos
 five_facet_mindfulness_survey.nonjudge,Pos
 five_facet_mindfulness_survey.nonreact,Pos
 five_facet_mindfulness_survey.observe,Pos
+five_facet_mindfulness_survey.total,Pos
 future_time_perspective_survey.future_time_perspective,Pos
 go_nogo.bias,NA
 go_nogo.commission_errors,Neg
@@ -220,6 +226,9 @@ tower_of_london.avg_move_time,NA
 tower_of_london.num_extra_moves,Neg
 tower_of_london.num_optimal_solutions,Pos
 tower_of_london.planning_time,NA
+two_stage_decision.model_based,Pos
+two_stage_decision.model_free,NA
+two_stage_decision.perseverance,Neg
 upps_impulsivity_survey.lack_of_perseverance,Neg
 upps_impulsivity_survey.lack_of_premeditation,Neg
 upps_impulsivity_survey.negative_urgency,Neg
