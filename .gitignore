@@ -24,7 +24,7 @@ Plots
 *.pdf
 *.Rdata
 internal_settings.json
-Self_Regulation_Settings.txt
+Self_Regulation_*Settings.txt
 dimensional_structure/Output/*/*ID*
 # directories
 .spyproject/
