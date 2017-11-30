@@ -1,2 +1,0 @@
-expfactory_token:/oak/stanford/groups/russpold/users/zenkavi/expfactory_token.txt
-base_directory:/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/

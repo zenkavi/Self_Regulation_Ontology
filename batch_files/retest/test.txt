@@ -1,1 +1,1 @@
-directed_forgetting.avg_rt
+stim_selective_stop_signal.hddm_non_decision

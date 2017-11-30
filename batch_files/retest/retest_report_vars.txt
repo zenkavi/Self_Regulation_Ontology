@@ -306,11 +306,9 @@ shift_task.model_beta
 shift_task.model_decay
 shift_task.model_learning_rate
 shift_task.nonperseverative_errors
-shift_task.num_cat_achieved
 shift_task.perseverative_errors
 shift_task.perseverative_responses
 shift_task.total_errors
-shift_task.trials_pre_first_cat
 simon.acc
 simon.avg_rt
 simon.congruent_acc

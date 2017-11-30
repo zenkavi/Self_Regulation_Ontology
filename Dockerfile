@@ -32,6 +32,7 @@ RUN echo 'install.packages(c( \
 RUN pip install \
   cython==0.27.3 \ 
   git+https://github.com/IanEisenberg/dynamicTreeCut#eb822ebb32482a81519e32e944fd631fb9176b67 \
+  git+https://github.com/IanEisenberg/expfactory-analysis \
   imbalanced-learn==0.3.0 \
   ipdb \ 
   IPython==6.2.1 \
