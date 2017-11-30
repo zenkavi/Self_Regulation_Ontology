@@ -159,7 +159,7 @@ get_omega <- function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_data
   ss_between = as.data.frame(unlist(mod$`Error: sub_id`))['Sum Sq',]
   df_time = as.data.frame(unlist(mod$`Error: Within`))['Df1',]
   ms_error = as.data.frame(unlist(mod$`Error: Within`))['Mean Sq2',]
-  omega = (ss_time – (df_time*ms_error)) / (ms_error + ss_time + ss_error + ss_between)
+  omega = (ss_time - (df_time*ms_error)) / (ms_error + ss_time + ss_error + ss_between)
   return(omega)
 }
 
