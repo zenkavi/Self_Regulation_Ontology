@@ -23,6 +23,7 @@ Plots
 *.pkl
 *.pdf
 *.Rdata
+.eggs
 internal_settings.json
 Self_Regulation_*Settings.txt
 dimensional_structure/Output/*/*ID*
