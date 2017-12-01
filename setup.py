@@ -63,6 +63,8 @@ setup(
     setup_requires=["cython==0.27.3",
                     "numpy==1.11.3"],
     install_requires=[
+        "dynamicTreeCut",
+        "expfactory-analysis",
         "fancyimpute==0.2.0",
         "imbalanced-learn==0.3.0",
         "ipdb",
@@ -81,6 +83,11 @@ setup(
         "statsmodels==0.8.0",
         "svgutils==0.3.0",
         "jupyter"],
+    dependency_links = [
+        "git+https://github.com/IanEisenberg/dynamicTreeCut@eb822ebb32482a81519e32e944fd631fb9176b67#egg=dynamicTreeCut=0.1.0",
+        "git+https://github.com/IanEisenberg/expfactory-analysis#egg=expfactory-analysis=0.0.0"
+
+    ],
     classifiers=['Intended Audience :: Science/Research',
                  'Programming Language :: Python :: 3.4',
                  'License :: OSI Approved :: BSD License',
