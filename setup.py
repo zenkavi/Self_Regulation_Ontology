@@ -64,7 +64,7 @@ setup(
                     "numpy==1.11.3"],
     install_requires=[
         "dynamicTreeCut",
-        "expfactory-analysis",
+        "expanalysis",
         "fancyimpute==0.2.0",
         "imbalanced-learn==0.3.0",
         "ipdb",
@@ -85,7 +85,7 @@ setup(
         "jupyter"],
     dependency_links = [
         "git+https://github.com/IanEisenberg/dynamicTreeCut@eb822ebb32482a81519e32e944fd631fb9176b67#egg=dynamicTreeCut=0.1.0",
-        "git+https://github.com/IanEisenberg/expfactory-analysis#egg=expfactory-analysis=0.0.0"
+        "git+https://github.com/IanEisenberg/expfactory-analysis#egg=expanalysis=0.0.0"
 
     ],
     classifiers=['Intended Audience :: Science/Research',
