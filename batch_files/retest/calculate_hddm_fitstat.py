@@ -11,7 +11,7 @@ sub_id_dir = sys.argv[2]
 
 out_dir = '/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_11-27-2017/batch_output/hddm_models/'
 
-m = pickle.load(open('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/batch_files/retest/stroop_base.model', 'rb'))
+m = pickle.load(open('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_11-27-2017/batch_output/hddm_models/'+model, 'rb'))
 
 ddm_task_lookup = {'adaptive_n_back_base.model':'adaptive_n_back',
                    'ANT_cue_condition.model': 'attention_network_task',
