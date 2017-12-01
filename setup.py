@@ -81,8 +81,6 @@ setup(
         "statsmodels==0.8.0",
         "svgutils==0.3.0",
         "jupyter"],
-    dependency_links=["git+https://github.com/IanEisenberg/dynamicTreeCut/tarball/master#egg=private_package_name-1.1",
-    "git+https://github.com/IanEisenberg/expfactory-analysis/tarball/master#egg=private_package_name-1.1"],
     classifiers=['Intended Audience :: Science/Research',
                  'Programming Language :: Python :: 3.4',
                  'License :: OSI Approved :: BSD License',

@@ -30,7 +30,11 @@ other directories are specific to particular analyses - for any analysis you wis
 
 python setup.py install
 rp2 needs to be installed
+The package below needs to be installed:
+git+https://github.com/IanEisenberg/dynamicTreeCut#eb822ebb32482a81519e32e944fd631fb9176b67 
 
+The package below needs to be installed if you want to download/process raw data
+git+https://github.com/IanEisenberg/expfactory-analysis
 ### R setup
 install:
 
