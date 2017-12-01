@@ -61,7 +61,8 @@ setup(
     #scripts=['bin/stowe-towels.py','bin/wash-towels.py'],
     long_description=open('README.md').read(),
     setup_requires=["cython==0.27.3",
-                    "numpy==1.11.3"],
+                    "numpy==1.11.3",
+                    "scipy==0.19.1"],
     install_requires=[
         "dynamicTreeCut",
         "expanalysis",
@@ -77,7 +78,6 @@ setup(
         "nilearn==0.3.0",
         "pandas==0.20.3",
         "python-igraph==0.7.1.post6",
-        "scipy==0.19.1",
         "scikit-learn==0.19.0",
         "seaborn==0.7.1",
         "statsmodels==0.8.0",
