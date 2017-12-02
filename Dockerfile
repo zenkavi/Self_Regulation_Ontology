@@ -41,7 +41,7 @@ RUN pip install \
   matplotlib==2.1.0 \
   networkx==2.0 \
   nilearn==0.3.0 \
-  numpy==1.13.3 \
+  numpy==1.11.3 \
   pandas==0.20.3 \
   python-igraph==0.7.1.post6 \
   scipy==0.19.1 \

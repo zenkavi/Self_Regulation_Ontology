@@ -28,6 +28,8 @@ other directories are specific to particular analyses - for any analysis you wis
 
 ### Setting up python environment
 
+pip install -r requirements.txt
+pip install -r requirements2.txt
 python setup.py install
 rp2 needs to be installed
 
