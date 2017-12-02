@@ -7,12 +7,13 @@ import pandas,numpy
 import re
 from sklearn.metrics import confusion_matrix
 import pkg_resources
+from collections import OrderedDict
 
 # Regex filtering helper functions
 
 def not_regex(txt):
         return '^((?!%s).)*$' % txt
-    
+
 def filter_behav_data(data, filter_regex):
     """ filters dataframe using regex
     Args:
@@ -29,8 +30,8 @@ def filter_behav_data(data, filter_regex):
     return data.filter(regex=regex)
 
 def get_var_category(var):
-    ''' Return "task" or "survey" classification for variable 
-    
+    ''' Return "task" or "survey" classification for variable
+
     var: variable name passed as a string
     '''
     m = re.match(not_regex('survey')+'|cognitive_reflection|holt', var)
@@ -38,15 +39,15 @@ def get_var_category(var):
         return 'survey'
     else:
         return 'task'
-    
+
 # Data get methods
 
 def get_behav_data(dataset=None, file=None, filter_regex=None,
                 flip_valence=False, verbose=False, full_dataset=None):
-    '''Retrieves a file from a data release. 
-    
+    '''Retrieves a file from a data release.
+
     By default extracts meaningful_variables from the most recent Complete dataset.
-    
+
     Args:
         dataset: optional, string indicating discovery, validation, or complete dataset of interest
         file: optional, string indicating the file of interest
@@ -78,7 +79,8 @@ def get_behav_data(dataset=None, file=None, filter_regex=None,
     else:
         data = pandas.DataFrame()
         print('Error: %s not found in %s' % (file, datadir))
-        
+        return None
+
     def valence_flip(data, flip_list):
         for c in data.columns:
             try:
@@ -101,7 +103,7 @@ def get_info(item,infile=None):
                         'data/Self_Regulation_Settings.txt')
     config=str(config,'utf-8').strip()
     infodict={}
-    
+
     for l in config.split('\n'):
         if l.find('#')==0:
             continue
@@ -114,31 +116,56 @@ def get_info(item,infile=None):
         raise Exception('infodict does not include requested item: %s' % item)
     return infodict[item]
 
-def get_item_metadata(survey, dataset=None):
+def get_item_metadata(survey, dataset=None,verbose=False):
     data = get_behav_data(dataset=dataset, file=os.path.join('Individual_Measures',
                                                              '%s.csv.gz' % survey))
+
     metadata = []
     for i in data.question_num.unique():
         item = data[data['question_num'] == i].iloc[0].to_dict()
         # drop unnecessary variables
-        for drop in ['battery_name', 'finishtime', 'required', 'response', 
-                     'response_text', 'worker_id']:
+        for drop in ['battery_name', 'finishtime', 'required', 'response',
+                     'response_text', 'worker_id','experiment_exp_id']:
             try:
                 item.pop(drop)
             except KeyError:
                 continue
         if type(item['options']) != list:
+            if verbose:
+                print(item['options'])
             item['options'] = eval(item['options'])
+        # turn options into an ordered dict, indexed by option number
+        item['responseOptions']=OrderedDict()
+        for o in item['options']:
+            option_num=int(o['id'].split('_')[-1])
+            o.pop('id')
+            o['valueOrig']=option_num
+            try:
+                v=int(o['value'])
+            except ValueError:
+                v=o['value']
+            if v in item['responseOptions']:
+                item['responseOptions'][v]['valueOrig']=[item['responseOptions'][v]['valueOrig'],o['valueOrig']]
+                item['responseOptions'][v]['text']=[item['responseOptions'][v]['text'],o['text']]
+            else:
+                item['responseOptions'][v]=o.copy()
+                item['responseOptions'][v].pop('value')
         # scoring
         values = [int(i['value']) for i in item['options']]
         sorted_values = list(range(1,len(values)+1))
-        if values == sorted_values:
+        cc=numpy.corrcoef(values,sorted_values)[0,1]
+        if cc>0.5:
             item['scoring'] = 'Forward'
-        elif values == sorted_values[::-1]:
+        elif cc<0.5:
             item['scoring'] = 'Reverse'
         else:
-            item['scoring'] = 'Misc'
-            
+            item['scoring'] = 'other'
+        # convert from numpy.int64 since it's not json serializable
+        item['question_num']=int(item['question_num'])
+        item_s=item['id'].replace('_options','').split('_')
+        item['expFactoryName']='_'.join(item_s[:-1])+'.'+item_s[-1]
+        item.pop('id')
+        item.pop('options')
         metadata.append(item)
     return metadata
 
@@ -208,7 +235,7 @@ def get_survey_data(dataset):
     for k in keylines:
         surveykey[k[0]]=k[2]
     return surveydata,surveykey
-    
+
 def print_confusion_matrix(y_true,y_pred,labels=[0,1]):
     cm=confusion_matrix(y_true,y_pred)
     print('Confusion matrix')
