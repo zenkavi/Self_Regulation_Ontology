@@ -18,7 +18,7 @@ def validate_exp(data):
             "title" : {"type" : "string"},
             "expFactoryName" : {"type" : "string"},
             "shortName" : {"type" : "string"},
-            "dataElements" : {"type":"array"},
+            "dataElements" : {"type":"object"},
             "URL" : {"type" : "object"},
             "description" : {"type" : "string"},
             },
@@ -38,12 +38,13 @@ def validate_exp(data):
             "variableUnits" : {"enum" : ['ordinal','seconds',
                                         'milliseconds',
                                         'probability','percentage',
-                                        'rate','count','other']},
+                                        'rate','count',
+                                        'arbitrary','other']},
             "variableClass" : {'enum':['surveyResponse','surveySummary',
                                 'responseTime','accuracy',
                                 'DDMDriftRate','DDMNondecisionTime',
                                 'DDMThreshold','learningRate',
-                                'load','discountRate','span']},
+                                'load','discountRate','span','other']},
             "variableModel": {'type':'string',
                             'description':'name of model used to generate variable (e.g. "HDDM")'},
             "dataElements" : {"type":"object"},
@@ -52,7 +53,7 @@ def validate_exp(data):
             "description" : {"type" : "string"},
             "valueRange" : {"type" : "string"},
             },
-            "required": ["expFactoryName",'varType']
+            "required": ["expFactoryName"]
         }
     validate(data,schema['Instrument'])
     for i in data['dataElements']:
