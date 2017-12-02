@@ -144,17 +144,22 @@ def get_item_metadata(survey, dataset=None,verbose=False):
                 v=int(o['value'])
             except ValueError:
                 v=o['value']
-            item['responseOptions'][v]=o.copy()
-            item['responseOptions'][v].pop('value')
+            if v in item['responseOptions']:
+                item['responseOptions'][v]['valueOrig']=[item['responseOptions'][v]['valueOrig'],o['valueOrig']]
+                item['responseOptions'][v]['text']=[item['responseOptions'][v]['text'],o['text']]
+            else:
+                item['responseOptions'][v]=o.copy()
+                item['responseOptions'][v].pop('value')
         # scoring
         values = [int(i['value']) for i in item['options']]
         sorted_values = list(range(1,len(values)+1))
-        if values == sorted_values:
+        cc=numpy.corrcoef(values,sorted_values)[0,1]
+        if cc>0.5:
             item['scoring'] = 'Forward'
-        elif values == sorted_values[::-1]:
+        elif cc<0.5:
             item['scoring'] = 'Reverse'
         else:
-            item['scoring'] = 'Misc'
+            item['scoring'] = 'other'
         # convert from numpy.int64 since it's not json serializable
         item['question_num']=int(item['question_num'])
         item_s=item['id'].replace('_options','').split('_')
@@ -230,7 +235,7 @@ def get_survey_data(dataset):
     for k in keylines:
         surveykey[k[0]]=k[2]
     return surveydata,surveykey
-    
+
 def print_confusion_matrix(y_true,y_pred,labels=[0,1]):
     cm=confusion_matrix(y_true,y_pred)
     print('Confusion matrix')
