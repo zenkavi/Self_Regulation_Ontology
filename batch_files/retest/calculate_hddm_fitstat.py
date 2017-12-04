@@ -21,7 +21,11 @@ ddm_task_lookup = {'adaptive_n_back_base.model':'adaptive_n_back',
                    'ANT_cue_condition.model': 'attention_network_task',
                    'ANT_flanker_base.model': 'attention_network_task',
                    'ANT_flanker_condition.model': 'attention_network_task',
+                   'attention_network_task_flanker_base.model': 'attention_network_task',
+                   'attention_network_task_cue_condition.model': 'attention_network_task',
+                   'attention_network_task_flanker_condition.model' : 'attention_network_task',
                    'choice_RT_base.model': 'choice_reaction_time',
+                   'choice_reaction_time_base.model': 'choice_reaction_time',
                    'directed_forgetting_base.model': 'directed_forgetting',
                    'directed_forgetting_condition.model': 'directed_forgetting',
                    'dot_pattern_expectancy_base.model': 'dot_pattern_expectancy',
@@ -31,7 +35,11 @@ ddm_task_lookup = {'adaptive_n_back_base.model':'adaptive_n_back',
                    'local_global_base.model': 'local_global_letter',
                    'local_global_conflict_condition.model':'local_global_letter',
                    'local_global_switch_condition.model':'local_global_letter',
+                   'local_global_letter_base.model': 'local_global_letter',
+                   'local_global_letter_conflict_condition.model':'local_global_letter',
+                   'local_global_letter_switch_condition.model':'local_global_letter',
                    'motor_SS_base.model':'motor_selective_stop_signal',
+                   'motor_selective_stop_signal_base.model': 'motor_selective_stop_signal',
                    'recent_probes_base.model':'recent_probes',
                    'recent_probes_condition.model':'recent_probes',
                    'shape_matching_base.model':'shape_matching',
@@ -46,7 +54,7 @@ ddm_task_lookup = {'adaptive_n_back_base.model':'adaptive_n_back',
                    'threebytwo_base.model':'threebytwo',
                    'threebytwo_cue_condition.model':'threebytwo',
                    'threebytwo_task_condition.model':'threebytwo'}
-
+                   
 task_name = ddm_task_lookup.get(model)
 
 sub_ids = pd.read_csv(sub_id_dir + task_name +'.csv.gz' , compression = 'gzip')
