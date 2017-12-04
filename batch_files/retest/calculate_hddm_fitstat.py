@@ -55,7 +55,7 @@ sub_ids = sub_ids.worker_id.unique()
 
 def get_likelihood(model, samples=10):
     value_range = np.linspace(-5,5,100)
-    observeds = m.get_observeds()
+    observeds = model.get_observeds()
     like = np.empty((samples, len(value_range)), dtype=np.float32)
     KLs = {}
     for subj_i, (node_name, bottom_node) in enumerate(observeds.iterrows()):
