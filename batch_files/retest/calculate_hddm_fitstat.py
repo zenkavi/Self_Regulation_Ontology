@@ -1,5 +1,6 @@
 from kabuki.analyze import _parents_to_random_posterior_sample
 import numpy as np
+import os
 import pandas as pd
 import pickle
 from scipy.stats import entropy
@@ -11,6 +12,8 @@ sub_id_dir = sys.argv[2]
 release = sys.argv[3]
 
 out_dir = '/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/'+release+'/batch_output/hddm_models/'
+
+os.chdir(out_dir)
 
 m = pickle.load(open('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/'+release+'/batch_output/hddm_models/'+model, 'rb'))
 
