@@ -32,7 +32,6 @@ RUN echo 'install.packages(c( \
 RUN pip install \
   cython==0.27.3 \ 
   git+https://github.com/IanEisenberg/dynamicTreeCut#eb822ebb32482a81519e32e944fd631fb9176b67 \
-  git+https://github.com/IanEisenberg/expfactory-analysis \
   imbalanced-learn==0.3.0 \
   ipdb \ 
   IPython==6.2.1 \
@@ -41,7 +40,7 @@ RUN pip install \
   matplotlib==2.1.0 \
   networkx==2.0 \
   nilearn==0.3.0 \
-  numpy==1.11.3 \
+  numpy==1.13.1 \
   pandas==0.20.3 \
   python-igraph==0.7.1.post6 \
   scipy==0.19.1 \
