@@ -1,5 +1,5 @@
 #!/bin/bash
-docker build --rm -t sro
+docker build --rm -t sro .
 rm -f singularity_images/*img
 docker run -v /var/run/docker.sock:/var/run/docker.sock -v /home/ian/Experiments/expfactory/Self_Regulation_Ontology/singularity_images:/output --privileged -t --rm singularityware/docker2singularity sro
 echo Finished Conversion
