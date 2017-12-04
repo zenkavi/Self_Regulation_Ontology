@@ -1,7 +1,5 @@
 set -e
 for exp_id in stroop 
 do
-sed "s/{EXP_ID}/$exp_id/g" calculate_complete_DVs.batch | sbatch -p russpold
-#sed "s/{EXP_ID}/$exp_id/g" calculate_validation_DVs.batch | sbatch -p russpold
-#sed "s/{EXP_ID}/$exp_id/g" calculate_discovery_DVs.batch | sbatch -p russpold
+sed -e "s/{EXP_ID}/$exp_id/g" -e "s/{SUIBSET}/mturk_complete/g" calculate_exp_DVs.batch | sbatch -p russpold
 done
