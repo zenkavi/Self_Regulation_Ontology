@@ -10,4 +10,4 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ieisenbe@stanford.edu
 source activate SRO
-python calculate_exp_DVs.py {EXP_ID} {SUBSET} --out_dir output
+python helper_funcs/calculate_exp_DVs.py {EXP_ID} {SUBSET} --out_dir output

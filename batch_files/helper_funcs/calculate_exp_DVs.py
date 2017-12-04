@@ -1,5 +1,6 @@
 import argparse
 from expanalysis.experiments.processing import get_exp_DVs
+from glob import glob
 from os import path
 import pandas as pd
 import sys
@@ -37,3 +38,10 @@ if not DV_df is None:
     valence_df.to_json(path.join(out_dir, exp_id + '_' + data + '_DV_valence.json'))
 print('completed %s %s' % (data, exp_id))
 
+# move hddm generated files to output dir
+for filey in glob('*.pcc'):
+    rename(filey, path.join(out_dir, filey))
+for filey in glob('*.db'):
+    rename(filey, path.join(out_dir, filey))
+for filey in glob('*.model'):
+    rename(filey, path.join(out_dir, filey))

@@ -12,10 +12,10 @@
 module load singularity
 export PYTHONPATH=""
 # scratch is automatically mounted
-singularity_loc=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/singularity_images/nipype_image-2017-07-12-406a6c1665cf.img 
+singularity_loc=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/singularity_images/sro-2017-12-04-279f1f75ceb7.img
 data_loc=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data
 output=/home/ieisenbe/Self_Regulation_Ontology/batch_files/container_scripts/output
 
-singularity run  -B $data_loc:/Data -B $output /output $singularity_loc \
-    batch_files/calculate_exp_DVs.py {EXP_ID} {SUBSET} --out_dir /output 
+singularity run -B ${data_loc}:/Data ${singularity_loc} \
+    batch_files/calculate_exp_DVs.py {EXP_ID} {SUBSET} --out_dir $output
 
