@@ -56,7 +56,7 @@ RUN pip install hdbscan==0.8.10
 # install hddm
 RUN apt-get install -y liblapack-dev
 Run apt-get install -y libopenblas-dev
-RUN pip install git+https://github.com/hddm-devs/kabuki#df8b748bd455e06f29fe88391e6d936eb90a562c
+RUN pip install git+https://github.com/IanEisenberg/kabuki#4119a4c38fd7587109e86b5d12154df017903f7f
 RUN pip install hddm==0.6.1
 
 # set up rpy2
