@@ -28,8 +28,14 @@ other directories are specific to particular analyses - for any analysis you wis
 
 ### Setting up python environment
 
+# for all analyses besides data_preparation
+pip install -r requirements.txt
+pip install -r requirements2.txt
 python setup.py install
 rp2 needs to be installed
+
+# data preparation requires install expfactory-analysis, as below:
+git+https://github.com/IanEisenberg/expfactory-analysis
 
 ### R setup
 install:

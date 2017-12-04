@@ -42,7 +42,7 @@ def get_importances(v,dt,features,nfeats=3):
     #print(dt,'importances for:',v)
     imp=pandas.DataFrame({'importance':(features[dt][v].abs()>0).mean(0)})
     imp['mean']=features[dt][v].mean(0)
-    imp=imp.sort_values(by='importance',ascending=False)
+    imp=imp.sort_values(by=['importance','mean'],ascending=False)
 
     if nfeats>(imp.shape[0]):
         nfeats=imp.shape[0]

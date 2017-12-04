@@ -152,8 +152,7 @@ class BehavPredict:
 
     def load_demog_data(self,cleanup=True,binarize=False,
                         drop_categorical=True):
-        self.demogdata=get_behav_data(self.dataset,'demographic_health.csv',
-                        full_dataset=self.use_full_dataset)
+        self.demogdata=get_behav_data(self.dataset,'demographic_health.csv')
         if cleanup:
             q=self.demogdata.query('WeightPounds<50')
             for i in q.index:
@@ -206,11 +205,10 @@ class BehavPredict:
                         add_baseline_vars=False,
                         cognitive_vars=['cognitive_reflection',
                         'holt_laury']):
+        self.predictor_set=datasubset
         if datasubset=='survey':
             self.behavdata=get_behav_data(self.dataset,
-                                    'meaningful_variables_clean.csv',
-                                    full_dataset=self.use_full_dataset)
-            self.predictor_set=datasubset
+                                    'meaningful_variables_clean.csv')
             for v in self.behavdata.columns:
                 dropvar=True
                 if v.find('survey')>-1:
@@ -225,9 +223,7 @@ class BehavPredict:
 
         elif datasubset=='task':
             self.behavdata=get_behav_data(self.dataset,
-                                    'meaningful_variables_clean.csv',
-                                    full_dataset=self.use_full_dataset)
-            self.predictor_set=datasubset
+                                    'meaningful_variables_clean.csv')
             for v in self.behavdata.columns:
                 dropvar=False
                 if v.find('survey')>-1:
@@ -248,9 +244,7 @@ class BehavPredict:
             self.behavdata.index=self.demogdata.index
         elif datasubset in self.varsets.keys():
             self.behavdata=get_behav_data(self.dataset,
-                                    'meaningful_variables_clean.csv',
-                                    full_dataset=self.use_full_dataset)
-            self.predictor_set=datasubset
+                                    'meaningful_variables_clean.csv')
             for v in self.behavdata.columns:
                 if not v in self.varsets[datasubset]:
                     del self.behavdata[v]
@@ -260,8 +254,7 @@ class BehavPredict:
 
         elif datasubset=='survey_items':
             self.behavdata=get_behav_data(self.dataset,
-                                    'subject_x_items.csv',
-                                    full_dataset=self.use_full_dataset)
+                                    'subject_x_items.csv')
 
         else:
             raise ValueError('datasubset %s is not defined'%datasubset)
@@ -467,7 +460,7 @@ class BehavPredict:
                     else:
                         self.clf=Lasso(alpha=self.lambda_optim)
                 else:
-                    self.clf=LassoCV()
+                    self.clf=LassoCV(max_iter=5000)
         else:
             raise ValueError('classfier not in approved list!')
         # set up crossvalidation
@@ -633,7 +626,7 @@ class BehavPredict:
                                             nlambda=nlambda)
 
             else:
-                clf=LassoCV()
+                clf=LassoCV(max_iter=5000)
         else:
             raise ValueError('classfier not in approved list!')
         # set up crossvalidation

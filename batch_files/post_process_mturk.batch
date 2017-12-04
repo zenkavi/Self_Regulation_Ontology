@@ -13,3 +13,4 @@
 source activate SRO
 cd ../data_preparation
 python mturk_download_data.py
+python helper_funcs/concat_mturk_data.py
