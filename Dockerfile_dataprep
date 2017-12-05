@@ -94,4 +94,4 @@ WORKDIR /SRO
 # install the selfregulation directory 
 RUN python setup.py install
 
-ENTRYPOINT ["/bin/bash"]
+CMD ["/bin/bash"]
