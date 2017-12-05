@@ -16,8 +16,8 @@ img=`sed '2q;d' singularity_config.txt`
 base_singularity=`sed '6q;d' singularity_config.txt`
 singularity_loc=${base_singularity}/$img
 data_loc=`sed '8q;d' singularity_config.txt`
-output=~/Self_Regulation_Ontology/batch_files/container_scripts/output
+output_loc=~/Self_Regulation_Ontology/batch_files/container_scripts/output
 
 singularity run -B ${data_loc}:/Data ${singularity_loc} \
-    python batch_files/calculate_exp_DVs.py {EXP_ID} {SUBSET} --out_dir $output
+    python batch_files/calculate_exp_DVs.py {EXP_ID} {SUBSET} --out_dir ${output_loc}
 
