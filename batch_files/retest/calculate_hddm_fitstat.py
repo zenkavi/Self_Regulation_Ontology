@@ -65,19 +65,33 @@ def get_likelihood(model, samples=10):
     value_range = np.linspace(-5,5,100)
     observeds = model.get_observeds()
     like = np.empty((samples, len(value_range)), dtype=np.float32)
-    KLs = {}
-    for subj_i, (node_name, bottom_node) in enumerate(observeds.iterrows()):
-        node = bottom_node['node']
-        for sample in range(samples):
-            _parents_to_random_posterior_sample(node)
-            # Generate likelihood for parents parameters
-            like[sample,:] = node.pdf(value_range)
-        y = like.mean(axis=0)
-        data_bins = np.histogram(node.value, value_range, density=True)[0]
-        KL_divergence = entropy(y[1:]+1E-10, data_bins+1E-10)
-        KLs[subj_i] = KL_divergence
-    tr = dict(zip(KLs.keys(), sub_ids))
-    KLs = {tr[k]: v for k, v in KLs.items()}
+    
+    def KL_loop(obs):
+        KLs = {}
+        for subj_i, (node_name, bottom_node) in enumerate(obs.iterrows()):
+            node = bottom_node['node']
+            for sample in range(samples):
+                _parents_to_random_posterior_sample(node)
+                # Generate likelihood for parents parameters
+                like[sample,:] = node.pdf(value_range)
+                y = like.mean(axis=0)
+                data_bins = np.histogram(node.value, value_range, density=True)[0]
+            KL_divergence = entropy(y[1:]+1E-10, data_bins+1E-10)
+            KLs[subj_i] = KL_divergence
+        return KLs
+    
+    def KL_translate(KLs):
+        tr = dict(zip(KLs.keys(), sub_ids))
+        KLs = {tr[k]: v for k, v in KLs.items()}
+        return KLs
+        
+    if 'condition' in model:
+        KLs = observeds.groupby('condition').apply(KL_loop)
+        KLs = KLs.groupby('condition').apply(KL_translate)
+    else:
+        KLs = KL_loop(observeds)
+        KLs = KL_translate(KLs)
+    
     return KLs
 
 KLs = get_likelihood(m)
