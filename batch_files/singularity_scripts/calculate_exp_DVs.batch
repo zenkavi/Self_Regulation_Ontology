@@ -12,9 +12,10 @@
 module load singularity
 export PYTHONPATH=""
 # scratch is automatically mounted
-img=$(head -n 1 sro_prep_image.txt)
-singularity_loc=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/singularity_images/$img
-data_loc=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data
+img=`sed '2q;d' singularity_config.txt`
+base_singularity=`sed '6q;d' singularity_config.txt`
+singularity_loc=${base_singularity}/$img
+data_loc=`sed '8q;d' singularity_config.txt`
 output=~/Self_Regulation_Ontology/batch_files/container_scripts/output
 
 singularity run -B ${data_loc}:/Data ${singularity_loc} \

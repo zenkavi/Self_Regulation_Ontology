@@ -1,4 +1,4 @@
-# Dockerfile for Self Regulation Ontology repo
+# Dockerfile for Self Regulation Ontology repo - Data Preperation
 
 FROM python:3.5.3
 MAINTAINER Russ Poldrack <poldrack@gmail.com>
@@ -93,5 +93,3 @@ WORKDIR /SRO
 
 # install the selfregulation directory 
 RUN python setup.py install
-
-ENTRYPOINT ["python"]

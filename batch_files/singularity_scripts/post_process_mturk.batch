@@ -1,0 +1,16 @@
+#!/bin/bash
+#SBATCH --job-name=mturk_post
+#SBATCH --output=.out/mturk_post.job.out
+#SBATCH --error=.err/mturk_post.job.err
+#SBATCH --time=8:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH -p russpold
+#SBATCH --cpus-per-task=16
+# SBATCH --mem=64000
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=ieisenbe@stanford.edu
+source activate SRO
+cd ../data_preparation
+python mturk_download_data.py
+python helper_funcs/concat_mturk_data.py
