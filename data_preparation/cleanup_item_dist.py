@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 function to clean up item distribution for surveys
 collapsing any categories that do not have sufficient responses

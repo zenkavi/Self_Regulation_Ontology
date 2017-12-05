@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 save all survey data to single file and generate variable key
 for MIRT anlayses

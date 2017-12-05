@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import datetime
 from expanalysis.experiments.processing import  extract_experiment
 from glob import glob
