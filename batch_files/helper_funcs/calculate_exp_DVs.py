@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import argparse
 from expanalysis.experiments.processing import get_exp_DVs
 from glob import glob

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from os import path
 import pandas as pd
 from selfregulation.utils.utils import get_info
