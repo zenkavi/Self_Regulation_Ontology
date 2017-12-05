@@ -1,7 +1,7 @@
 import argparse
 from expanalysis.experiments.processing import get_exp_DVs
 from glob import glob
-from os import path
+from os import path, rename
 import pandas as pd
 import sys
 
