@@ -61,9 +61,9 @@ sub_ids = pd.read_csv(sub_id_dir + task_name +'.csv.gz' , compression = 'gzip')
 
 sub_ids = sub_ids.worker_id.unique()
 
-def get_likelihood(model, samples=10):
+def get_likelihood(m, samples=10, model = model):
     value_range = np.linspace(-5,5,100)
-    observeds = model.get_observeds()
+    observeds = m.get_observeds()
     like = np.empty((samples, len(value_range)), dtype=np.float32)
     
     def KL_loop(obs):
@@ -80,22 +80,29 @@ def get_likelihood(model, samples=10):
             KLs[subj_i] = KL_divergence
         return KLs
     
-    def KL_translate(KLs):
-        tr = dict(zip(KLs.keys(), sub_ids))
-        KLs = {tr[k]: v for k, v in KLs.items()}
-        return KLs
+    def KL_translate(KLs_cond):
+        tr = dict(zip(KLs_cond.keys(), sub_ids))
+        KLs_cond = {tr[k]: v for k, v in KLs_cond.items()}
+        return KLs_cond
         
     if 'condition' in model:
         KLs = observeds.groupby('condition').apply(KL_loop)
-        KLs = KLs.groupby('condition').apply(KL_translate)
+        out_df = pd.DataFrame()
+        for i in range(KLs.keys().shape[0]):
+            tmp_dict = KL_translate(KLs[KLs.keys()[i]])
+            tmp_df = pd.DataFrame.from_dict(tmp_dict, orient="index").rename(index=str, columns={0: model.replace(".model",".KL")})
+            tmp_df['condition']=KLs.keys()[i]
+            out_df = out_df.append(tmp_df)
+        KLs = out_df
+    
     else:
         KLs = KL_loop(observeds)
         KLs = KL_translate(KLs)
+        KLs = pd.DataFrame.from_dict(KLs, orient="index").rename(index=str, columns={0: model.replace(".model",".KL")})
+        KLs['condition'] = 'all'
     
     return KLs
 
 KLs = get_likelihood(m)
-
-KLs = pd.DataFrame.from_dict(KLs, orient="index").rename(index=str, columns={0: model.replace(".model",".KL")})
 
 KLs.to_csv(out_dir + model.replace('.model', '_KLs.csv'))
