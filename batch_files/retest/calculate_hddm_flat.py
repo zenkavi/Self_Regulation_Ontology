@@ -2,6 +2,11 @@ import hddm
 import numpy
 import pandas
 import pickle
+import sys
+
+task = sys.argv[1]
+input_dir = sys.argv[2]
+output_dir = sys.argv[3]
 
 def fit_HDDM(df, response_col = 'correct', condition = None, fixed= ['t','a'], 
              estimate_task_vars = True, outfile = None, samples=40000):
@@ -28,7 +33,7 @@ def fit_HDDM(df, response_col = 'correct', condition = None, fixed= ['t','a'],
     if condition:
         data.insert(0, 'condition', df[condition])
         conditions = [i for i in data.condition.unique() if i]
-        
+    
     # add subject ids 
     data.insert(0,'subj_idx', df['worker_id'])
     # remove missed responses and extremely short response
@@ -94,7 +99,62 @@ def fit_HDDM(df, response_col = 'correct', condition = None, fixed= ['t','a'],
         group_dvs[subj].update(hddm_vals)
     return group_dvs
 
+
 def SS_HDDM(df, samples):
     x = df.query('SS_trial_type == "go" \
                  and exp_stage not in ["practice","NoSS_practice"]')
     return fit_HDDM(x, outfile = 'stop_signal', samples=samples)
+
+def get_HDDM_fun(task=None, samples=40000):
+    hddm_fun_dict = \
+    {
+        'adaptive_n_back': lambda df: fit_HDDM(df.query('load == 2'), 
+                                               outfile='adaptive_n_back',
+                                               samples=samples),
+        'attention_network_task': lambda x: ANT_HDDM(x, samples),
+        'choice_reaction_time': lambda x: fit_HDDM(x, 
+                                        outfile = 'choice_reaction_time', 
+                                        samples=samples),
+        'directed_forgetting': lambda x: fit_HDDM(x.query('trial_id == "probe"'), 
+                                                  condition = 'probe_type', 
+                                                  outfile = 'directed_forgetting',
+                                                  samples=samples),
+        'dot_pattern_expectancy': lambda x: fit_HDDM(x, 
+                                  condition =  'condition', 
+                                  outfile = 'dot_pattern_expectancy',
+                                  samples=samples), 
+        'local_global_letter': lambda x: local_global_HDDM(x, samples),
+        'motor_selective_stop_signal': lambda x: motor_SS_HDDM(x, samples),
+        'recent_probes': lambda x: fit_HDDM(x, 
+                                            condition = 'probeType', 
+                                            outfile = 'recent_probes',
+                                            samples=samples),
+        'shape_matching': lambda x: fit_HDDM(x, 
+                                             condition = 'condition', 
+                                             outfile = 'shape_matching',
+                                             samples=samples),
+        'simon': lambda x: fit_HDDM(x, 
+                                    condition = 'condition', 
+                                    outfile = 'simon',
+                                    samples=samples),
+        'stim_selective_stop_signal': lambda x: stim_SS_HDDM(x, samples),
+        'stop_signal': lambda x: SS_HDDM(x, samples),
+        'stroop': lambda x: fit_HDDM(x, 
+                                     condition = 'condition', 
+                                     outfile = 'stroop',
+                                     samples=samples),
+        'threebytwo': lambda x: threebytwo_HDDM(x, samples),
+        'twobytwo': lambda x: twobytwo_HDDM(x, samples)
+    }
+    if task is None:
+        return hddm_fun_dict
+    else:
+        return hddm_fun_dict[task]
+
+#read data in
+all_data = pandas.read_csv(input_dir+task+'.csv', compression='gzip')
+
+for i in range(all_data.worker_id.unique().shape[0]):
+    sub_id = all_data.worker_id.unique()[i]
+    df = all_data.query('worker_id == %s' % sub_id)
+
