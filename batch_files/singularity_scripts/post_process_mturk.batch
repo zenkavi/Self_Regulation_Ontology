@@ -10,6 +10,7 @@
 # SBATCH --mem=64000
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ieisenbe@stanford.edu
+module load system
 module load singularity
 export PYTHONPATH=""
 # scratch is automatically mounted

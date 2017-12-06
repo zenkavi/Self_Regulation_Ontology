@@ -9,6 +9,7 @@
 # SBATCH --mem=64000
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ieisenbe@stanford.edu
+module load system
 module load singularity
 export PYTHONPATH=""
 # scratch is automatically mounted
@@ -18,7 +19,7 @@ singularity_loc=${base_singularity}/$img
 data_loc=`sed '8q;d' singularity_config.txt`
 output_loc=~/Self_Regulation_Ontology/Data/
 
-singularity run -B ${data_loc}:/Data ${singularity_loc} -B ${output_loc}:/SRO/Data \
+singularity exec -B ${data_loc}:/Data ${singularity_loc} -B ${output_loc}:/SRO/Data \
     python data_preparation/mturk_save_data.py
 
 
