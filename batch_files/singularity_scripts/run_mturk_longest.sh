@@ -1,5 +1,5 @@
 set -e
 for exp_id in attention_network_task shape_matching threebytwo 
 do
-sed -e "s/{EXP_ID}/$exp_id/g" -e "s/{SUBSET}/mturk_complete/g" calculate_exp_DVs.batch | sbatch --task 80:00:00 --qos=long
+sed -e "s/{EXP_ID}/$exp_id/g" -e "s/{SUBSET}/mturk_complete/g" calculate_exp_DVs.batch | sbatch --time=80:00:00 --qos=long
 done
