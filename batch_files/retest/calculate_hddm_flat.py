@@ -100,10 +100,103 @@ def fit_HDDM(df, response_col = 'correct', condition = None, fixed= ['t','a'],
     return group_dvs
 
 
+def ANT_HDDM(df, samples):
+    df = df.query('rt != -1').reset_index(drop = True)
+    flanker_dvs = fit_HDDM(df, condition = 'flanker_type', 
+                           outfile = 'attention_network_task_flanker', samples=samples)
+    group_dvs = fit_HDDM(df, condition = 'cue', estimate_task_vars = False, 
+                         outfile = 'attention_network_task_cue', samples=samples)
+    for key in group_dvs.keys():    
+        group_dvs[key].update(flanker_dvs[key])
+    return group_dvs
+
+def local_global_HDDM(df, samples):
+    df = df.copy()
+    df.insert(0, 'correct_shift', df.correct.shift(1))
+    df = df.query('rt != -1').reset_index(drop = True)
+    group_dvs = fit_HDDM(df, outfile = 'local_global_letter', samples=samples)
+    conflict_dvs = fit_HDDM(df, condition = 'conflict_condition', 
+                            estimate_task_vars = False, 
+                            outfile = 'local_global_letter_conflict', 
+                            samples=samples)
+    switch_dvs = fit_HDDM(df.query('correct_shift == 1'), 
+                          condition = 'switch', estimate_task_vars = False, 
+                          outfile = 'local_global_letter_switch', samples=samples)
+    for key in group_dvs.keys():    
+        group_dvs[key].update(conflict_dvs[key])
+        group_dvs[key].update(switch_dvs[key])
+    return group_dvs
+
+def motor_SS_HDDM(df, samples):
+    x = df.query('SS_trial_type == "go" and \
+                 exp_stage not in ["practice","NoSS_practice"]')
+    return fit_HDDM(x, outfile='motor_selective_stop_signal', samples=samples)
+
+def stim_SS_HDDM(df, samples):
+    x = df.query('SS_trial_type == "go" and \
+                 exp_stage not in ["practice","NoSS_practice"]')
+    return fit_HDDM(x, outfile = 'stim_selective_stop_signal', samples=samples)
+
 def SS_HDDM(df, samples):
     x = df.query('SS_trial_type == "go" \
                  and exp_stage not in ["practice","NoSS_practice"]')
     return fit_HDDM(x, outfile = 'stop_signal', samples=samples)
+
+def threebytwo_HDDM(df, samples):
+    group_dvs = fit_HDDM(df, outfile = 'threebytwo', samples=samples)
+    for CTI in df.CTI.unique():
+        CTI_df = df.query('CTI == %s' % CTI)
+        CTI_df.loc[:,'cue_switch_binary'] = CTI_df.cue_switch.map(lambda x: ['cue_stay','cue_switch'][x!='stay'])
+        CTI_df.loc[:,'task_switch_binary'] = CTI_df.task_switch.map(lambda x: ['task_stay','task_switch'][x!='stay'])
+        
+        cue_switch = fit_HDDM(CTI_df.query('cue_switch in ["switch","stay"]'), 
+                                           condition = 'cue_switch_binary', 
+                                           estimate_task_vars = False, 
+                                           outfile = 'threebytwo_cue', 
+                                           samples=samples)
+        task_switch = fit_HDDM(CTI_df, condition = 'task_switch_binary', 
+                               estimate_task_vars = False, 
+                               outfile = 'threebytwo_task', samples=samples)
+        for key in cue_switch.keys():   
+            if key not in group_dvs.keys():
+                group_dvs[key] = {}
+            cue_dvs = cue_switch[key]
+            task_dvs = task_switch[key]
+            for ckey in list(cue_dvs.keys()):
+                cue_dvs[ckey + '_%s' % CTI] = cue_dvs.pop(ckey)
+            for tkey in list(task_dvs.keys()):
+                task_dvs[tkey + '_%s' % CTI] = task_dvs.pop(tkey)
+            group_dvs[key].update(cue_dvs)
+            group_dvs[key].update(task_dvs)
+    return group_dvs
+
+def twobytwo_HDDM(df, samples):
+    group_dvs = fit_HDDM(df, outfile = 'twobytwo', samples=samples)
+    for CTI in df.CTI.unique():
+        CTI_df = df.query('CTI == %s' % CTI)
+        CTI_df.loc[:,'cue_switch_binary'] = CTI_df.cue_switch.map(lambda x: ['cue_stay','cue_switch'][x!='stay'])
+        CTI_df.loc[:,'task_switch_binary'] = CTI_df.task_switch.map(lambda x: ['task_stay','task_switch'][x!='stay'])
+        
+        cue_switch = fit_HDDM(CTI_df.query('cue_switch in ["switch","stay"]'), 
+                                           condition = 'cue_switch_binary', 
+                                           estimate_task_vars = False, 
+                                           outfile = 'twobytwo_cue', 
+                                           samples=samples)
+        task_switch = fit_HDDM(CTI_df, condition = 'task_switch_binary', 
+                               estimate_task_vars = False, 
+                               outfile = 'twobytwo_task', samples=samples)
+        for key in cue_switch.keys():   
+            if key not in group_dvs.keys():
+                group_dvs[key] = {}
+            cue_dvs = cue_switch[key]
+            task_dvs = task_switch[key]
+            for ckey in list(cue_dvs.keys()):
+                cue_dvs[ckey + '_%s' % CTI] = cue_dvs.pop(ckey)
+            for tkey in list(task_dvs.keys()):
+                task_dvs[tkey + '_%s' % CTI] = task_dvs.pop(tkey)
+            group_dvs[key].update(cue_dvs)
+            group_dvs[key].update(task_dvs)
+    return group_dvs
 
 def get_HDDM_fun(task=None, samples=40000):
     hddm_fun_dict = \
@@ -154,7 +247,13 @@ def get_HDDM_fun(task=None, samples=40000):
 #read data in
 all_data = pandas.read_csv(input_dir+task+'.csv', compression='gzip')
 
+#loop through all subjsect individually
+all_subs_dvs = {}
+func = get_HDDM_fun(task=task)
 for i in range(all_data.worker_id.unique().shape[0]):
     sub_id = all_data.worker_id.unique()[i]
-    df = all_data.query('worker_id == %s' % sub_id)
+    df = all_data.loc[all_data['worker_id'] == sub_id]
+    sub_dvs = func(df)
+    all_subs_dvs.update(sub_dvs)
+    
 
