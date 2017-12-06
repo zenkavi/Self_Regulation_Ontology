@@ -2,7 +2,7 @@
 #SBATCH --job-name=mturk_save
 #SBATCH --output=.out/mturk_save.job.out
 #SBATCH --error=.err/mturk_save.job.err
-#SBATCH --time=8:00:00
+#SBATCH --time=4:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=8
