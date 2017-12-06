@@ -255,5 +255,15 @@ for i in range(all_data.worker_id.unique().shape[0]):
     df = all_data.loc[all_data['worker_id'] == sub_id]
     sub_dvs = func(df)
     all_subs_dvs.update(sub_dvs)
-    
 
+#spread dictionary to df    
+all_subs_dvs = pandas.DataFrame.from_dict({(i,j): all_subs_dvs[i][j] 
+                           for i in all_subs_dvs.keys() 
+                           for j in all_subs_dvs[i].keys()},
+                       orient='index').drop(['valence'], axis=1).unstack()
+
+#drop extra column level
+all_subs_dvs.columns = all_subs_dvs.columns.droplevel()
+
+#save output
+all_subs_dvs.to_csv(output_dir+task+'_hddm_flat.csv')
