@@ -245,7 +245,7 @@ def get_HDDM_fun(task=None, samples=40000):
         return hddm_fun_dict[task]
 
 #read data in
-all_data = pandas.read_csv(input_dir+task+'.csv', compression='gzip')
+all_data = pandas.read_csv(input_dir+task+'.csv.gz', compression='gzip')
 
 #loop through all subjsect individually
 all_subs_dvs = {}
