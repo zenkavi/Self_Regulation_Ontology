@@ -1,0 +1,13 @@
+#!/bin/bash
+#SBATCH --job-name=calculate_hddm_fitstat_complete_{MODEL}
+#SBATCH --output=/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_11-27-2017/batch_output/hddm_models/.out/calculate_hddm_fitstat_complete_{MODEL}.job.out
+#SBATCH --error=/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_11-27-2017/batch_output/hddm_models/.err/calculate_hddm_fitstat_complete_{MODEL}.job.err
+#SBATCH --time=40:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=48000
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=zenkavi@stanford.edu
+source activate SRO
+python calculate_hddm_fitstat.py /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_hddm/hddm_models/ {MODEL} /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Complete_11-22-2017/Individual_Measures/ /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_11-27-2017/batch_output/hddm_models/ complete

@@ -7,15 +7,15 @@ from scipy.stats import entropy
 import sys
 
 
-model = sys.argv[1]
-sub_id_dir = sys.argv[2]
-release = sys.argv[3]
+model_dir = sys.argv[1]
+model = sys.argv[2]
+sub_id_dir = sys.argv[3]
+out_dir = sys.argv[4]
+sample = sys.argv[5]
 
-out_dir = '/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/'+release+'/batch_output/hddm_models/'
+os.chdir(model_dir)
 
-os.chdir(out_dir)
-
-m = pickle.load(open('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/'+release+'/batch_output/hddm_models/'+model, 'rb'))
+m = pickle.load(open(model_dir+model, 'rb'))
 
 ddm_task_lookup = {'adaptive_n_back_base.model':'adaptive_n_back',
                    'ANT_cue_condition.model': 'attention_network_task',
@@ -105,4 +105,4 @@ def get_likelihood(m, samples=10, model = model):
 
 KLs = get_likelihood(m)
 
-KLs.to_csv(out_dir + model.replace('.model', '_KLs.csv'))
+KLs.to_csv(out_dir + model.replace('.model', '_'+sample+'_KLs.csv'))

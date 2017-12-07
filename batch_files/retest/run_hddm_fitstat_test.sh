@@ -1,5 +1,5 @@
 set -e
-for model in adaptive_n_back_base.model
+for model in simon_base.model
 do
-sed "s/{MODEL}/$model/g" calculate_hddm_fitstat.batch | sbatch -p russpold
+sed "s/{MODEL}/$model/g" calculate_hddm_fitstat_complete.batch | sbatch -p russpold
 done
