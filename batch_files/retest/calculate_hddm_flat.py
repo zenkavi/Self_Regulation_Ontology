@@ -81,7 +81,7 @@ def fit_HDDM(df, response_col = 'correct', condition = None, fixed= ['t','a'],
             except Exception:
                 print('Saving condition model failed')
     for var in depends_dict.keys():
-        dvs[var + '_conditions'] = m_depends.nodes_db.loc[m_depends.nodes_db.index.str.contains(var + '_subj'),'mean']
+        dvs[var + '_conditions'] = m_depends.nodes_db.loc[m_depends.nodes_db.index.str.contains(var),'mean']
     
     for i,subj in enumerate(subj_ids):
         group_dvs[subj] = {}
