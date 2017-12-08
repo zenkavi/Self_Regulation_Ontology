@@ -1,6 +1,3 @@
-import sys
-sys.path.append('/Users/zeynepenkavi/Dropbox/PoldrackLab/expfactory-analysis')
-sys.path.append('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/data_preparation')
 from os import path
 import pandas as pd
 
@@ -9,7 +6,7 @@ try:
 except NameError:
     release_date = input('Enter release_ date:')
     
-data_dir = data_dir=path.join('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Data/','Retest_'+release_date)
+data_dir = path.join('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Data/','Retest_'+release_date)
 
 #Read in DVs and valence
 label = 'hddm_refit'
