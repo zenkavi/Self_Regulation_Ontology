@@ -1,14 +1,19 @@
-docker run --rm  \
---mount type=bind,src=/media/Data/Ian/Experiments/expfactory/Self_Regulation_Ontology/Data,dst=/SRO/Data \
---mount type=bind,src=/media/Data/Ian/Experiments/expfactory/Self_Regulation_Ontology/batch_files/container_scripts/output,dst=/output \
---entrypoint /bin/bash \
--ti sro
+docker run --rm  -ti sro_dataprep
 
 
 # calculate exp dvs
 data_loc=/home/ian/tmp/
-output=/media/Data/Ian/Experiments/expfactory/Self_Regulation_Ontology/batch_files/container_scripts/output
+output=/home/ian/tmp
 docker run --rm  \
 --mount type=bind,src=$data_loc,dst=/Data \
 --mount type=bind,src=$output,dst=/output \
--ti sro batch_files/calculate_exp_DVs.py stim_selective_stop_signal mturk_complete --out_dir /output 
+-ti sro_dataprep \
+python batch_files/helper_funcs/calculate_exp_DVs.py grit_scale_survey mturk_complete --out_dir /output
+
+# save data
+data_loc=/home/ian/tmp
+output=/home/ian/tmp
+docker run --rm  \
+--mount type=bind,src=$data_loc,dst=/Data \
+--mount type=bind,src=$output,dst=/SRO/Data \
+-ti sro_dataprep python data_preparation/mturk_save_data.py

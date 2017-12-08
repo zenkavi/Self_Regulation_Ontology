@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 create metadata in json format for all measures
 

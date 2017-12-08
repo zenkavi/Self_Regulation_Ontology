@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python3
 measure_longnames={'eating_survey':'Eating survey',
     'selection_optimization_compensation_survey':'Selection-Optimization-Compensation survey',
     'sensation_seeking_survey':'Sensation seeking survey',
