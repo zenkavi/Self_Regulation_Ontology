@@ -10,6 +10,6 @@
 # SBATCH --mem=64000
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ieisenbe@stanford.edu
-source activate SRO
+source activate $HOME/conda_envs/SRO
 cd ../data_preparation
 python fmri_followup_save_data.py

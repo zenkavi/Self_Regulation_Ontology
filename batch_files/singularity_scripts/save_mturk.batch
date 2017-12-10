@@ -17,9 +17,9 @@ img=`sed '2q;d' singularity_config.txt`
 base_singularity=`sed '6q;d' singularity_config.txt`
 singularity_loc=${base_singularity}/$img
 data_loc=`sed '8q;d' singularity_config.txt`
-output_loc=~/Self_Regulation_Ontology/Data/
+output_loc=../../Data/
 
-singularity exec -B ${data_loc}:/Data ${singularity_loc} -B ${output_loc}:/SRO/Data \
-    python data_preparation/mturk_save_data.py
+singularity exec -B ${data_loc}:/Data -B ${output_loc}:/SRO/Data ${singularity_loc} \
+    python /SRO/data_preparation/mturk_save_data.py
 
 
