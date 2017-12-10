@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import argparse
 from expanalysis.experiments.jspsych import calc_time_taken, get_post_task_responses
 from expanalysis.experiments.processing import post_process_data
