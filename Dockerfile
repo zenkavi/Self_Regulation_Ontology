@@ -29,7 +29,6 @@ RUN echo 'install.packages(c( \
 
 # installing python packages
 RUN pip install \
-  cython==0.27.3 \ 
   git+https://github.com/IanEisenberg/dynamicTreeCut#eb822ebb32482a81519e32e944fd631fb9176b67 \
   imbalanced-learn==0.3.0 \
   ipdb \ 
@@ -64,7 +63,6 @@ ENV LD_LIBRARY_PATH /usr/local/lib/R/lib
 ENV IPYTHONDIR /tmp
 # install more python packages that failed in first install
 RUN pip install \
-    git+https://github.com/IanEisenberg/expfactory-analysis \
     fancyimpute==0.2.0 \
     rpy2==2.8.5
 
