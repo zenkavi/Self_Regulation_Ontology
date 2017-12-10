@@ -41,6 +41,10 @@ def get_var_category(var):
         return 'task'
 
 # Data get methods
+def sorting(L):
+    date = L.split('_')[-1]
+    month,day,year = date.split('-')
+    return year, month, day
 
 def get_behav_data(dataset=None, file=None, filter_regex=None,
                 flip_valence=False, verbose=False, full_dataset=None):
@@ -57,10 +61,6 @@ def get_behav_data(dataset=None, file=None, filter_regex=None,
     '''
     if full_dataset is not None:
         print("Full dataset is deprecrated and no longer functional")
-    def sorting(L):
-        date = L.split('_')[-1]
-        month,day,year = date.split('-')
-        return year, month, day
 
     basedir=get_info('base_directory')
     if dataset == None:
@@ -103,13 +103,18 @@ def get_info(item,infile=None):
                         'data/Self_Regulation_Settings.txt')
     config=str(config,'utf-8').strip()
     infodict={}
-
     for l in config.split('\n'):
         if l.find('#')==0:
             continue
         l_s=l.rstrip('\n').split(':')
         if len(l_s)>1:
                 infodict[l_s[0]]=l_s[1]
+    if not 'dataset' in infodict:
+        files = glob(os.path.join(infodict['base_directory'],'Data/Complete*'))
+        files.sort(key=sorting)
+        datadir = files[-1]
+        infodict['dataset']=os.path.basename(datadir)
+
     try:
         assert item in infodict
     except:
