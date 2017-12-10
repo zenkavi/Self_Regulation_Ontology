@@ -6,7 +6,7 @@ import hddm
 import numpy as np
 
 # test HDDM calculation from processed task
-task = 'stroop'
+task = 'local_global_letter'
 df = get_behav_data(file='Individual_Measures/%s.csv.gz' % task)
 df = df.query('worker_id in %s' % list(df.worker_id.unique()[0:15]))
 
@@ -23,20 +23,6 @@ for var in ['hddm_drift', 'hddm_thresh', 'hddm_non_decision']:
 
 
 
-tasks = ['adaptive_n_back', 'attention_network_task', 'choice_reaction_time',
-'directed_forgetting', 'dot_pattern_expectancy', 'local_global_letter', 
-'motor_selective_stop_signal', 'recent_probes', 'shape_matching',
-'simon', 'stim_selective_stop_signal', 'stop_signal' ,'stroop' ,'threebytwo']
-outs = {}
-for task in tasks:
-    df = get_behav_data(file='Individual_Measures/%s.csv.gz' % task)
-    df = df.query('worker_id in %s' % list(df.worker_id.unique()[0:10]))
-    
-    fun = get_HDDM_fun(task, samples=500, burn=100, outfile='/home/ian/tmp/%s' % task)
-    try:
-        outs[task] = fun(df)
-    except:
-        print('%s failed' % task ) 
     
 
 # massage data into HDDM format
