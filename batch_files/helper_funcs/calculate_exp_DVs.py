@@ -29,6 +29,8 @@ out_dir = args.out_dir
 use_group = args.no_group
 model_file = args.hddm_model_file
 hddm_samples = args.hddm_samples
+if hddm_samples is not None:
+    hddm_samples = int(hddm_samples)
 
 #load Data
 dataset = pd.read_pickle(path.join(data_dir, data + '_data_post.pkl'))
@@ -41,7 +43,7 @@ if hddm_samples is None:
                                                  outfile = path.join(out_dir, exp_id),
                                                  loadfile = model_file)
 else:
-    burn = min(hddm_samples/10, 10000)
+    burn = min(hddm_samples//10, 10000)
     DV_df, valence_df, description = get_exp_DVs(dataset, exp_id, 
                                                  use_group_fun = use_group,
                                                  outfile = path.join(out_dir, exp_id),
