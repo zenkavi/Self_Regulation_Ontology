@@ -109,12 +109,11 @@ def get_info(item,infile=None):
         l_s=l.rstrip('\n').split(':')
         if len(l_s)>1:
                 infodict[l_s[0]]=l_s[1]
-    if not 'dataset' in infodict:
+    if (item == 'dataset') and (not 'dataset' in infodict):
         files = glob(os.path.join(infodict['base_directory'],'Data/Complete*'))
         files.sort(key=sorting)
         datadir = files[-1]
-        infodict['dataset']=os.path.basename(datadir)
-
+        return os.path.basename(datadir)
     try:
         assert item in infodict
     except:
