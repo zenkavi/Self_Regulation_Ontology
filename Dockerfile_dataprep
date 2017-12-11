@@ -64,7 +64,7 @@ ENV LD_LIBRARY_PATH /usr/local/lib/R/lib
 ENV IPYTHONDIR /tmp
 # install more python packages that failed in first install
 RUN pip install \
-    git+https://github.com/IanEisenberg/expfactory-analysis#7200810a99d136de76a66baaf87cf00be27b6e2f \
+    git+https://github.com/IanEisenberg/expfactory-analysis#c290c553091b348b4c1ba752828a08177e517924 \
     fancyimpute==0.2.0 \
     joblib==0.11 \
     multiprocess==0.70.05 \
