@@ -10,6 +10,8 @@ task = 'local_global_letter'
 df = get_behav_data(file='Individual_Measures/%s.csv.gz' % task)
 df = df.query('worker_id in %s' % list(df.worker_id.unique()[0:15]))
 
+
+
 fun = get_HDDM_fun(task, samples=4000, burn=1000)
 out = fun(df)
 
@@ -24,7 +26,8 @@ for var in ['hddm_drift', 'hddm_thresh', 'hddm_non_decision']:
 
 
     
-
+samples = 20; burn = 10; thin = 1; 
+response_col = 'correct'
 # massage data into HDDM format
 response_col='correct'
 # set up data

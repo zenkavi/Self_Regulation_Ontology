@@ -201,7 +201,6 @@ def drop_vars(data, drop_vars = [], saved_vars = []):
         # task variables that are irrelevent to second stage analysis, either because they are correlated
         # with other DV's or are just of no interest. Each row is a task
         task_vars = ["demographics", # demographics
-                     "hddm_(drift|thresh)_adaptive", "hddm_(drift|thresh)_control", # adaptive_n_back
                     ".first_order", "bis11_survey.total", # bis11
                     "bis_bas_survey.BAS_total", 
                     "dietary_decision.prop_healthy_choice", # dietary decision
@@ -235,6 +234,8 @@ def drop_vars(data, drop_vars = [], saved_vars = []):
                     ]
         drop_vars = basic_vars + exploratory_vars + task_vars + ddm_vars
     drop_vars = '|'.join(drop_vars)
+    if len(saved_vars) == 0:
+        saved_vars = ['adaptive_n_back.hddm_(thresh|drift)_load']
     if len(saved_vars) > 0 :
         saved_vars = '|'.join(saved_vars)
         saved_columns = data.filter(regex=saved_vars)

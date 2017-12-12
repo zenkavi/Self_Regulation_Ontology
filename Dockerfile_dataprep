@@ -40,7 +40,7 @@ RUN pip install \
   matplotlib==2.1.0 \
   networkx==2.0 \
   nilearn==0.3.0 \
-  numpy==1.13.1 \
+  numpy==1.11.1 \
   pandas==0.20.3 \
   python-igraph==0.7.1.post6 \
   requests==2.14.2 \
@@ -64,7 +64,7 @@ ENV LD_LIBRARY_PATH /usr/local/lib/R/lib
 ENV IPYTHONDIR /tmp
 # install more python packages that failed in first install
 RUN pip install \
-    git+https://github.com/IanEisenberg/expfactory-analysis#c290c553091b348b4c1ba752828a08177e517924 \
+    git+https://github.com/IanEisenberg/expfactory-analysis#3d79ebdb7a07a20e8fecd7747b629ea10049eb68 \
     fancyimpute==0.2.0 \
     joblib==0.11 \
     multiprocess==0.70.05 \
@@ -78,6 +78,7 @@ RUN mkdir /SRO/Results
 RUN mkdir /expfactory_token
 RUN mkdir /Data
 RUN mkdir /output
+COPY example_data /Data/
 
 # Create a settings file
 RUN echo "expfactory_token:/expfactory_token/expfactory_token.txt" >> /SRO/Self_Regulation_Settings.txt
