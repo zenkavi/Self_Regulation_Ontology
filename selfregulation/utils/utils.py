@@ -76,6 +76,7 @@ def get_behav_data(dataset=None, file=None, filter_regex=None,
     datafile=os.path.join(datadir,file)
     if os.path.exists(datafile):
         data=pandas.read_csv(datafile,index_col=0)
+        print('Getting %s from %s' % (file, datadir))
     else:
         data = pandas.DataFrame()
         print('Error: %s not found in %s' % (file, datadir))

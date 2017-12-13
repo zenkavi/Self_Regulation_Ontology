@@ -47,7 +47,10 @@ class EFA_Analysis:
                   ['No', 'Yes'][adequate])
         return adequate, {'Barlett_p': Barlett_p, 'KMO': KMO_MSA}
     
-    def get_attr(self, c, attribute):
+    def get_attr(self, attribute, c=None):
+        if c is None:
+            c = self.get_metric_cs()['c_metric-BIC']
+            print('# of components not specified, using BIC determined #')
         return get_attr(self.results['factor_tree_Rout'][c],
                         attribute)
         
@@ -86,14 +89,20 @@ class EFA_Analysis:
         if verbose:
                 print('Best Components: ', best_cs)
     
-    def get_loading(self, c):
+    def get_loading(self, c=None):
+        if c is None:
+            c = self.get_metric_cs()['c_metric-BIC']
+            print('# of components not specified, using BIC determined #')
         return self.results['factor_tree'][c]
     
     def get_metric_cs(self):
         metric_cs = {k:v for k,v in self.results.items() if 'c_metric-' in k}
         return metric_cs
     
-    def get_loading_entropy(self, c):
+    def get_loading_entropy(self, c=None):
+        if c is None:
+            c = self.get_metric_cs()['c_metric-BIC']
+            print('# of components not specified, using BIC determined #')
         assert c>1
         loading = self.get_loading(c)
         # calculate entropy of each variable
@@ -101,7 +110,10 @@ class EFA_Analysis:
         max_entropy = entropy([1/loading.shape[1]]*loading.shape[1])
         return loading_entropy/max_entropy
     
-    def get_null_loading_entropy(self, c, reps=50):
+    def get_null_loading_entropy(self, c=None, reps=50):
+        if c is None:
+            c = self.get_metric_cs()['c_metric-BIC']
+            print('# of components not specified, using BIC determined #')
         assert c>1
         # get absolute loading
         loading = abs(self.get_loading(c))
@@ -156,18 +168,27 @@ class EFA_Analysis:
         self.results['entropies'] = pd.DataFrame(entropies)
         self.results['null_entropies'] = pd.DataFrame(null_entropies)
     
-    def get_factor_names(self, c):
+    def get_factor_names(self, c=None):
+        if c is None:
+            c = self.get_metric_cs()['c_metric-BIC']
+            print('# of components not specified, using BIC determined #')
         return self.get_loading(c).columns
     
-    def get_scores(self, c):
-        scores = self.get_attr(c, 'scores')
+    def get_scores(self, c=None):
+        if c is None:
+            c = self.get_metric_cs()['c_metric-BIC']
+            print('# of components not specified, using BIC determined #')
+        scores = self.get_attr('scores', c)
         names = self.get_factor_names(c)
         scores = pd.DataFrame(scores, index=self.data.index,
                               columns=names)
         return scores
         
-    def get_task_representations(self, tasks, c):
-        """Take a list of tasks and reconstructs factor scores"""            
+    def get_task_representations(self, tasks, c=None):
+        """Take a list of tasks and reconstructs factor scores"""   
+        if c is None:
+            c = self.get_metric_cs()['c_metric-BIC']
+            print('# of components not specified, using BIC determined #')         
         fa_output = self.results['factor_tree_Rout'][c]
         output = {'weights': get_attr(fa_output, 'weights'),
                   'scores': get_attr(fa_output, 'scores')}
@@ -189,7 +210,10 @@ class EFA_Analysis:
             sum_explained[key[1]-1, key[0]-1] = (np.sum(adequately_explained/key[0]))
         return explained_scores, sum_explained
     
-    def name_factors(self, c, labels):
+    def name_factors(self, labels, c=None):
+        if c is None:
+            c = self.get_metric_cs()['c_metric-BIC']
+            print('# of components not specified, using BIC determined #')
         loading = self.get_loading(c)
         loading.columns = labels
     
@@ -372,7 +396,7 @@ class Results(EFA_Analysis, HCA_Analysis):
         self.data = get_behav_data(dataset=datafile, 
                                   file='meaningful_variables_imputed.csv',
                                   filter_regex=filter_regex)
-        self.data_no_impute = get_behav_data(dataset=datafile, 
+        self.data_no_impute = get_behav_data(dataset=datafile,
                                              file='meaningful_variables_clean.csv',
                                              filter_regex=filter_regex)
         self.dataset = datafile
