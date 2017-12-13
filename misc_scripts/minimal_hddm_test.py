@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 
-from expanalysis.experiments.ddm_utils import get_HDDM_fun
+from expanalysis.experiments.ddm_utils import get_HDDM_fun, load_model
 from selfregulation.utils.utils import get_behav_data
 import hddm
 import numpy as np
 
 # test HDDM calculation from processed task
-task = 'local_global_letter'
+task = 'stroop'
 df = get_behav_data(file='Individual_Measures/%s.csv.gz' % task)
 df = df.query('worker_id in %s' % list(df.worker_id.unique()[0:15]))
 
 
 
-fun = get_HDDM_fun(task, samples=4000, burn=1000)
+fun = get_HDDM_fun(task, samples=20, burn=10, outfile = '/home/ian/tmp/stroop', db_loc = '/home/ian/hddm_models')
 out = fun(df)
 
 acc = df.groupby('worker_id').correct.mean()

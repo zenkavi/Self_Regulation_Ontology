@@ -16,9 +16,10 @@ except Exception:
 parser = argparse.ArgumentParser()
 parser.add_argument('exp_id')
 parser.add_argument('data')
-parser.add_argument('--out_dir', default=data_dir)
 parser.add_argument('--no_group', action='store_false')
-parser.add_argument('--hddm_model_file', default=None)
+# HDDM params
+parser.add_argument('--out_dir', default=data_dir)
+parser.add_argument('--local_out_dir', default=None)
 parser.add_argument('--hddm_samples', default=None, type=int)
 parser.add_argument('--hddm_burn', default=None, type=int)
 parser.add_argument('--hddm_thin', default=None, type=int)
@@ -31,8 +32,10 @@ exp_id = args.exp_id
 data = args.data
 out_dir = args.out_dir
 use_group = args.no_group
+# local out_dir is passed to fit_HDDM's db_loc parameter and resets
+# the HDDM model's db location to be relative to the local environment
+local_out_dir = args.local_out_dir
 # HDDM variables
-model_file = args.hddm_model_file
 hddm_samples = args.hddm_samples
 hddm_burn= args.hddm_burn
 hddm_thin= args.hddm_thin
@@ -48,7 +51,7 @@ if hddm_samples is None:
     DV_df, valence_df, description = get_exp_DVs(dataset, exp_id, 
                                                  use_group_fun = use_group,
                                                  outfile = path.join(out_dir, exp_id),
-                                                 loadfile = model_file,
+                                                 db_loc=local_out_dir,
                                                  parallel=parallel,
                                                  num_cores=num_cores)
 else:
@@ -56,7 +59,7 @@ else:
     DV_df, valence_df, description = get_exp_DVs(dataset, exp_id, 
                                                  use_group_fun = use_group,
                                                  outfile = path.join(out_dir, exp_id),
-                                                 loadfile = model_file,
+                                                 db_loc=local_out_dir,
                                                  samples = hddm_samples,
                                                  burn = burn,
                                                  parallel=parallel,

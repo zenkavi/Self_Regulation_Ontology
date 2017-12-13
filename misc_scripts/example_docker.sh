@@ -28,7 +28,7 @@ exp_id=simon
 subset=example
 docker run --rm  \
 --mount type=bind,src=$output_loc,dst=/output \
--ti sro_dataprep python /SRO/batch_files/helper_funcs/calculate_exp_DVs.py ${exp_id} ${subset} --out_dir /output --hddm_samples 100 --hddm_burn 50 # --no_parallel 
+-ti sro_dataprep python /SRO/batch_files/helper_funcs/calculate_exp_DVs.py ${exp_id} ${subset} --out_dir /output --hddm_samples 100 --hddm_burn 50 --local_out_dir ${output_loc} 
 
 # run analysis with mounted data
 data_loc=$HOME/tmp
@@ -38,4 +38,4 @@ subset=mturk_complete # replace with subset name
 docker run --rm  \
 --mount type=bind,src=$data_loc,dst=/Data \
 --mount type=bind,src=$output_loc,dst=/output \
--ti sro_dataprep python /SRO/batch_files/helper_funcs/calculate_exp_DVs.py ${exp_id} ${subset} --out_dir /output --hddm_samples 100 --hddm_burn 50
+-ti sro_dataprep python /SRO/batch_files/helper_funcs/calculate_exp_DVs.py ${exp_id} ${subset} --out_dir /output --hddm_samples 1000 --hddm_burn 500 --local_out_dir ${output_loc}
