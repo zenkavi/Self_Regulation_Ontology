@@ -11,8 +11,7 @@ df = get_behav_data(file='Individual_Measures/%s.csv.gz' % task)
 df = df.query('worker_id in %s' % list(df.worker_id.unique()[0:15]))
 
 
-
-fun = get_HDDM_fun(task, samples=20, burn=10, outfile = '/home/ian/tmp/stroop', db_loc = '/home/ian/hddm_models')
+fun = get_HDDM_fun(task, samples=20, burn=10, outfile = '/home/ian/tmp/stroop', parallel=True)
 out = fun(df)
 
 acc = df.groupby('worker_id').correct.mean()
