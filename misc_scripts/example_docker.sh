@@ -24,18 +24,18 @@ docker run --rm  \
 
 # run analysis with example data
 output_loc=$HOME/tmp 
-exp_id=simon
+exp_id=adaptive_n_back
 subset=example
 docker run --rm  \
 --mount type=bind,src=$output_loc,dst=/output \
--ti sro_dataprep python /SRO/batch_files/helper_funcs/calculate_exp_DVs.py ${exp_id} ${subset} --out_dir /output --hddm_samples 100 --hddm_burn 50 --local_out_dir ${output_loc} 
+-ti sro_dataprep python /SRO/batch_files/helper_funcs/calculate_exp_DVs.py ${exp_id} ${subset} --out_dir /output --hddm_samples 100 --hddm_burn 50 
 
 # run analysis with mounted data
 data_loc=$HOME/tmp
 output_loc=$HOME/tmp
-exp_id=simon
+exp_id=adaptive_n_back
 subset=mturk_complete # replace with subset name
 docker run --rm  \
 --mount type=bind,src=$data_loc,dst=/Data \
 --mount type=bind,src=$output_loc,dst=/output \
--ti sro_dataprep python /SRO/batch_files/helper_funcs/calculate_exp_DVs.py ${exp_id} ${subset} --out_dir /output --hddm_samples 1000 --hddm_burn 500 --local_out_dir ${output_loc}
+-ti sro_dataprep python /SRO/batch_files/helper_funcs/calculate_exp_DVs.py ${exp_id} ${subset} --out_dir /output --hddm_samples 100 --hddm_burn 50
