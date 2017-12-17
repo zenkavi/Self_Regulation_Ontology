@@ -50,12 +50,12 @@ if hddm_samples is None:
                                                  parallel=parallel,
                                                  num_cores=num_cores)
 else:
-    burn = min(hddm_samples//2, 20000)
     DV_df, valence_df, description = get_exp_DVs(dataset, exp_id, 
                                                  use_group_fun = use_group,
                                                  outfile = path.join(out_dir, exp_id),
                                                  samples = hddm_samples,
-                                                 burn = burn,
+                                                 burn = hddm_burn,
+                                                 hddm_thin = hddm_thin,
                                                  parallel=parallel,
                                                  num_cores=num_cores)
     
