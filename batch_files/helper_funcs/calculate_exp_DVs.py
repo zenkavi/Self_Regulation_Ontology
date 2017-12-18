@@ -55,7 +55,7 @@ else:
                                                  outfile = path.join(out_dir, exp_id),
                                                  samples = hddm_samples,
                                                  burn = hddm_burn,
-                                                 hddm_thin = hddm_thin,
+                                                 thin = hddm_thin,
                                                  parallel=parallel,
                                                  num_cores=num_cores)
     
