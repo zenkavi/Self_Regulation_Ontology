@@ -48,12 +48,17 @@ def plot_subset_hddm_subjs(m, params, n=4):
 Example Code
 
 task = 'stroop'
-output_loc = '/mnt/Sherlock_Holmes/Self_Regulation_Ontology/batch_files/singularity_scripts/output_test/'
-db_path = path.join(output_loc, '%s_parallel_output' % task, '*trace*')
+output_loc = '/mnt/OAK/mturk_output/'
+db_path = path.join(output_loc, '%s_parallel_output' % task, '*traces*')
 empty_path = path.join(output_loc, '%s_empty.model' % task)
-m = load_model(empty_path, db_path)
+m, models = load_model(empty_path, db_path)
+dvs = pd.read_json(path.join(output_loc, '%s_mturk_complete_DV.json' % task))
 # plot group level main DDM statistics (a, v, t)
 plot_posteriors(m)
 # plot random 4 subjects for all ddm statistics
 plot_subset_hddm_subjs(m, ['^a', '^v', '^t'], n=4)
+#gelman rubin statistic
+from kabuki.analyze import gelman_rubin
+gelman_rubin(models[1:])
+
 """
