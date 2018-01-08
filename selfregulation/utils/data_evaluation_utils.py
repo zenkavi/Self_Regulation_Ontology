@@ -2,6 +2,7 @@ from expanalysis.experiments.ddm_utils import load_model
 import hddm
 import numpy as np
 from os import path
+import pandas as pd
 import pymc as pm
 
 
@@ -37,28 +38,34 @@ def plot_posteriors(model, params=None, plot_subjs=False, save=False, **kwargs):
 
 
 def plot_subset_hddm_subjs(m, params, n=4):
+    shuffle = None
     subj_params = []
     for param in params:
         subjs = list(m.nodes_db.filter(regex='%s.*subj' % param, axis=0).index)
-        np.random.shuffle(subjs)
+        if shuffle is None:
+            shuffle = list(range(len(subjs)))
+            np.random.shuffle(shuffle)
+        subjs = [subjs[i] for i in shuffle]
         subj_params+=subjs[0:n]
     plot_posteriors(m, subj_params)
 
 """ 
 Example Code
 
-task = 'stroop'
-output_loc = '/mnt/OAK/mturk_output/'
-db_path = path.join(output_loc, '%s_parallel_output' % task, '*traces*')
+task = 'local_global_letter'
+output_loc = '/mnt/Sherlock_Holmes/Self_Regulation_Ontology/batch_files/singularity_scripts/output/'
+db_path = path.join(output_loc, '%s_parallel_output' % task, '*traces*.db')
 empty_path = path.join(output_loc, '%s_empty.model' % task)
-m, models = load_model(empty_path, db_path)
+#load dvs
 dvs = pd.read_json(path.join(output_loc, '%s_mturk_complete_DV.json' % task))
+# load model
+m, models = load_model(empty_path, db_path)
 # plot group level main DDM statistics (a, v, t)
 plot_posteriors(m)
 # plot random 4 subjects for all ddm statistics
-plot_subset_hddm_subjs(m, ['^a', '^v', '^t'], n=4)
-#gelman rubin statistic
+plot_subset_hddm_subjs(m, ['^a', '^v', '^t'], n=2)
+# test for convergence
 from kabuki.analyze import gelman_rubin
-gelman_rubin(models[1:])
+out = gelman_rubin(models[1:]) # the first model has the 
 
 """
