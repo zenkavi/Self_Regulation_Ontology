@@ -10,7 +10,7 @@
 # SBATCH --mem=64000
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ieisenbe@stanford.edu
-module load system
+#module load system
 module load singularity
 export PYTHONPATH=""
 # scratch is automatically mounted
@@ -19,8 +19,8 @@ base_singularity=`sed '6q;d' singularity_config.txt`
 singularity_loc=${base_singularity}/$img
 data_loc=`sed '8q;d' singularity_config.txt`
 
-singularity exec -B ${data_loc}:/Data  ${singularity_loc}\
-    python /SRO/data_preparation/mturk_download_data.py
+#singularity exec -B ${data_loc}:/Data  ${singularity_loc}\
+#    python /SRO/data_preparation/mturk_download_data.py
 
 singularity exec -B ${data_loc}:/Data ${singularity_loc}  \
     python /SRO/batch_files/helper_funcs/concat_mturk_data.py

@@ -1,3 +1,3 @@
-/bin/bash helper_run_files/run_mturk_DDM.sh
-/bin/bash helper_run_files/run_mturk_short.sh
-/bin/bash helper_run_files/run_mturk_long.sh
+/bin/bash .run_mturk_complete_DDM.sh
+/bin/bash .run_mturk_complete_short.sh
+/bin/bash .run_mturk_complete_long.sh
