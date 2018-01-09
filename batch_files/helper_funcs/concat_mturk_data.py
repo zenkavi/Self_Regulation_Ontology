@@ -8,12 +8,12 @@ try:
 except Exception:
     data_dir=path.join(get_info('base_directory'),'Data')
 
-complete=None
+complete = None
 # concatenate discovery and validation data into one complete
 discovery_path = path.join(data_dir, 'mturk_discovery_data_post.pkl')
 validation_path = path.join(data_dir, 'mturk_validation_data_post.pkl')
 complete_path = path.join(data_dir, 'mturk_complete_data_post.pkl')
-if path.exists(discovery_path) and path.exists(validation_path)
+if path.exists(discovery_path) and path.exists(validation_path):
     discovery = pd.read_pickle(discovery_path)
     validation = pd.read_pickle(validation_path)
     complete = pd.concat([discovery, validation])
