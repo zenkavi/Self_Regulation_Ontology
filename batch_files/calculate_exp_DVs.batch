@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=calculate_complete_DV_{EXP_ID}
-#SBATCH --output=.out/calculate_complete_DV_{EXP_ID}.job.out
-#SBATCH --error=.err/calculate_complete_DV_{EXP_ID}.job.err
+#SBATCH --job-name=calculate_complete_DV_{EXP_ID}_{SUBSET}
+#SBATCH --output=.out/calculate_complete_DV_{EXP_ID}_{SUBSET}.job.out
+#SBATCH --error=.err/calculate_complete_DV_{EXP_ID}_{SUBSET}.job.err
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=16
@@ -21,7 +21,7 @@ output_loc=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology
 
 
 singularity exec -B ${data_loc}:/Data ${singularity_loc} \
-    python /SRO/batch_files/helper_funcs/calculate_exp_DVs.py {EXP_ID} {SUBSET} --out_dir ${output_loc} --hddm_samples 900 --hddm_burn 100 --hddm_thin 1 --num_cores 16
+    python /SRO/batch_files/helper_funcs/calculate_exp_DVs.py {EXP_ID} {SUBSET} --out_dir ${output_loc} --hddm_samples 9000 --hddm_burn 10000 --hddm_thin 1 --num_cores 13
 
 
 
