@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=calculate_complete_DV_{EXP_ID}_{SUBSET}
-#SBATCH --output=.out/calculate_complete_DV_{EXP_ID}_{SUBSET}.job.out
-#SBATCH --error=.err/calculate_complete_DV_{EXP_ID}_{SUBSET}.job.err
+#SBATCH --job-name=calc_DV_{EXP_ID}_{SUBSET}
+#SBATCH --output=.out/calc_DV_{EXP_ID}_{SUBSET}.job.out
+#SBATCH --error=.err/calc_DV_{EXP_ID}_{SUBSET}.job.err
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=16
