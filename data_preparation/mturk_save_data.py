@@ -26,8 +26,7 @@ data_dir=get_info('data_directory')
 
 
 # read preprocessed data
-data_labels = ['mturk_complete', 'mturk_discovery', 'mturk_validation', 
-                'mturk_failed', 'mturk_incomplete']
+data_labels = ['mturk_complete', 'mturk_retest', 'mturk_failed', 'mturk_incomplete']
 datasets = []
 for label in data_labels:
     directory = path.join(output_dir,label.lstrip('mturk_').title() + '_' + date)

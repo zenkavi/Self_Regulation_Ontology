@@ -1,4 +1,5 @@
 from expanalysis.experiments.ddm_utils import load_model
+from kabuki.analyze import gelman_rubin
 import hddm
 import numpy as np
 from os import path
@@ -38,22 +39,27 @@ def plot_posteriors(model, params=None, plot_subjs=False, save=False, **kwargs):
 
 
 def plot_subset_hddm_subjs(m, params, n=4):
-    shuffle = None
+    subjs = list(m.nodes_db.filter(regex='^t.*subj', axis=0).index)
+    shuffle = list(range(len(subjs)))
+    np.random.shuffle(shuffle)
     subj_params = []
     for param in params:
         subjs = list(m.nodes_db.filter(regex='%s.*subj' % param, axis=0).index)
-        if shuffle is None:
-            shuffle = list(range(len(subjs)))
-            np.random.shuffle(shuffle)
-        subjs = [subjs[i] for i in shuffle]
-        subj_params+=subjs[0:n]
+        assert len(subjs) <= len(shuffle)*2
+        if len(subjs) == len(shuffle)*2:
+            tmp = [subjs[i+len(shuffle)] for i in shuffle]
+            subjs = [subjs[i] for i in shuffle] + tmp
+            subj_params += subjs[len(shuffle):len(shuffle)+n]
+        else:
+            subjs = [subjs[i] for i in shuffle]
+        subj_params += subjs[0:n]
     plot_posteriors(m, subj_params)
 
 """ 
 Example Code
 
-task = 'local_global_letter'
-output_loc = '/mnt/Sherlock_Holmes/Self_Regulation_Ontology/batch_files/singularity_scripts/output/'
+task = 'threebytwo'
+output_loc = '/mnt/OAK/behavioral_data/mturk_complete_output'
 db_path = path.join(output_loc, '%s_parallel_output' % task, '*traces*.db')
 empty_path = path.join(output_loc, '%s_empty.model' % task)
 #load dvs
@@ -65,7 +71,6 @@ plot_posteriors(m)
 # plot random 4 subjects for all ddm statistics
 plot_subset_hddm_subjs(m, ['^a', '^v', '^t'], n=2)
 # test for convergence
-from kabuki.analyze import gelman_rubin
 out = gelman_rubin(models[1:]) # the first model has the 
 
 """
