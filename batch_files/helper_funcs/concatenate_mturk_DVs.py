@@ -7,11 +7,14 @@ import pandas
 output_loc = '/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/'
 
 for subset in ['mturk_complete', 'mturk_retest']:
+    print('*'*79)
+    print('Extrracting Subset %s' % subset)
+    print('*'*79)
     DVs = pandas.DataFrame()
     valence = pandas.DataFrame()
-    for exp_file in glob.glob(os.path.join(output_loc, '%s_output' % subset, '*complete*DV.json')):
+    for exp_file in glob.glob(os.path.join(output_loc, '%s_output' % subset, '*DV.json')):
         base_name = os.path.basename(exp_file)
-        exp = base_name.replace('_mturk_complete_DV.json','')
+        exp = base_name.replace('_%s_DV.json' % subset,'')
         print('Complete: Extracting %s DVs' % exp)
         exp_DVs = pandas.read_json(exp_file)
         exp_valence = pandas.read_json(exp_file.replace('.json','_valence.json'))
