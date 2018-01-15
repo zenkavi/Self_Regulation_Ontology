@@ -25,7 +25,7 @@ run_plot = not args.no_plot
 print('Running Analysis? %s, Plotting? %s' % (['No', 'Yes'][run_analysis], 
                                               ['No', 'Yes'][run_plot]))
 """
-datafile = 'Complete_11-22-2017'
+datafile = 'Complete_01-15-2018'
 subsets = [{'name': 'all', 
             'regex': '.',
             'factor_names': ['Pros Plan', 'Sensation Seeking', 'Mind Over Matter', 'Info Processing', 'Discounting', 'Stim Processing', 'Caution', 'Planning/WM', 'Env Resp']},
@@ -36,7 +36,7 @@ subsets = [{'name': 'all',
              'regex': 'survey',
              'factor_names': ['Immediacy', 'Future', 'Sensation Seeking', 'DOSPERT', 'DOSPERT_fin', 'Agreeableness', 'DOSPERT_RP', 'Hedonism', 'Social', 'Emotional Control', 'Eating', 'Mindfulness']}]
 """
-datafile = 'Complete_12-05-2017'
+datafile = 'Complete_01-15-2018'
 subsets = [{'name': 'task',
            'regex': 'task'}]
           
