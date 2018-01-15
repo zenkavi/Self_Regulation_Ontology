@@ -1,13 +1,13 @@
 #!/bin/bash
 #SBATCH --job-name=calc_DV_{EXP_ID}_{SUBSET}
-#SBATCH --output=.out/calc_DV_{EXP_ID}_{SUBSET}.job.out
-#SBATCH --error=.err/calc_DV_{EXP_ID}_{SUBSET}.job.err
+#SBATCH --output=.out/calc_DV_{EXP_ID}_{SUBSET}.out
+#SBATCH --error=.err/calc_DV_{EXP_ID}_{SUBSET}.err
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ieisenbe@stanford.edu
-#module load system
+# SBATCH -p russpold
 module load singularity
 export PYTHONPATH=""
 # scratch is automatically mounted
@@ -21,7 +21,7 @@ output_loc=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology
 
 
 singularity exec -B ${data_loc}:/Data ${singularity_loc} \
-    python /SRO/batch_files/helper_funcs/calculate_exp_DVs.py {EXP_ID} {SUBSET} --out_dir ${output_loc} --hddm_samples 9000 --hddm_burn 10000 --hddm_thin 1 --num_cores 13
+    python /SRO/batch_files/helper_funcs/calculate_exp_DVs.py {EXP_ID} {SUBSET} --out_dir ${output_loc} --hddm_samples 90000 --hddm_burn 10000 --hddm_thin 1 --num_cores 13
 
 
 
