@@ -1,13 +1,12 @@
 from os import path
 import pandas as pd
 
-    
-data_dir = path.join('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/','Retest_11-27-2017')
+data_dir = path.join('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data','Retest_11-27-2017/Local')
 
 #Read in DVs and valence
 label = 'hddm_refit'
-DV_df = pd.read_json(path.join(data_dir,'Local/mturk_' + label + '_DV.json'))
-valence_df = pd.read_json(path.join(data_dir,'Local/mturk_' + label + '_DV_valence.json'))
+DV_df = pd.read_json(path.join(data_dir,'mturk_' + label + '_DV.json'))
+valence_df = pd.read_json(path.join(data_dir,'mturk_' + label + '_DV_valence.json'))
 
 readme_lines = []
 
