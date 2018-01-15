@@ -1,6 +1,3 @@
-import sys
-sys.path.append('/Users/zeynepenkavi/Dropbox/PoldrackLab/expfactory-analysis')
-sys.path.append('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/data_preparation')
 from expanalysis.experiments.jspsych import calc_time_taken, get_post_task_responses
 from expanalysis.experiments.processing import post_process_data
 import json
