@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 import datetime
 from expanalysis.experiments.processing import  extract_experiment
 from glob import glob
@@ -15,6 +16,13 @@ from selfregulation.utils.utils import get_info
 from selfregulation.utils.r_to_py_utils import missForest
 from selfregulation.utils.reference_utils import gen_reference_item_text
 
+
+parser = argparse.ArgumentParser(description='fMRI Analysis Entrypoint Script.')
+parser.add_argument('--labels', help="labels of the datasets",
+                    nargs='+', default=['mturk_complete', 'mturk_retest'])
+args = parser.parse_args()
+data_labels = args.labels
+
 #******************************
 #*** Save Data *********
 #******************************
@@ -26,11 +34,9 @@ data_dir=get_info('data_directory')
 
 
 # read preprocessed data
-data_labels = ['mturk_complete', 'mturk_discovery', 'mturk_validation', 
-                'mturk_failed', 'mturk_incomplete']
 datasets = []
 for label in data_labels:
-    directory = path.join(output_dir,label.lstrip('mturk_').title() + '_' + date)
+    directory = path.join(output_dir,label.split('mturk_')[1].title() + '_' + date)
     if not path.exists(directory):
         makedirs(directory)
     data = pd.read_pickle(path.join(data_dir,label + '_data_post.pkl')).reset_index(drop = True)

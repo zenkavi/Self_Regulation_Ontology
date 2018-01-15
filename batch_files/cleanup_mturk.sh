@@ -1,5 +1,13 @@
+source activate $HOME/conda_envs/SRO
 python helper_funcs/concatenate_mturk_DVs.py
-mv output/*.model /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/Data/mturk_hddm/hddm_models
-mv output/*.db /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/Data/mturk_hddm/hddm_models
-mv output/*pcc.csv /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/Data/mturk_hddm/hddm_models
-mv output/mturk*.json /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/
+
+# cleanup output of post processing and concatenation
+behavioral_loc=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/
+
+mv ${behavioral_loc}/*discovery* ${behavioral_loc}/derivatives
+mv ${behavioral_loc}/*validation* ${behavioral_loc}/derivatives
+mv ${behavioral_loc}/*extras* ${behavioral_loc}/derivatives
+mv ${behavioral_loc}/*incomplete* ${behavioral_loc}/derivatives
+mv ${behavioral_loc}/*failed* ${behavioral_loc}/derivatives
+
+

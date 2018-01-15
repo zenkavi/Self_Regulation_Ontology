@@ -116,7 +116,7 @@ def plot_clustering_similarity(results, plot_dir=None, verbose=False, ext='png')
         
     
     
-def plot_dendrograms(results, c, display_labels='cluster', inp=None, titles=None,
+def plot_dendrograms(results, c=None, display_labels='cluster', inp=None, titles=None,
                      figsize=(20,12), orientation='horizontal',
                      dpi=300, ext='png', plot_dir=None):
     """ Plots HCA results as dendrogram with loadings underneath
@@ -178,7 +178,8 @@ def plot_dendrograms(results, c, display_labels='cluster', inp=None, titles=None
                             labelbottom='off')
             # plot loadings as heatmap below
             ax2 = fig.add_axes(heatmap_size)
-            sns.heatmap(ordered_loading, ax=ax2, cbar=False)
+            sns.heatmap(ordered_loading, ax=ax2, cbar=False, 
+                        cmap=sns.diverging_palette(220, 20, n=100))
             ax2.tick_params(labelsize=figsize[0]*.75)
             # add lines to heatmap to distinguish clusters
             xlim = ax2.get_xlim(); 
@@ -189,8 +190,8 @@ def plot_dendrograms(results, c, display_labels='cluster', inp=None, titles=None
                 ax2.vlines(cluster_breaks[:-1], ylim[0], ylim[1], linestyles='dashed',
                            linewidth=3, colors=[.5,.5,.5])
             elif orientation == 'vertical':
-                step = ylim[1]/len(labels)
-                cluster_breaks = [ylim[1]-i*step for i in np.cumsum(cluster_sizes)]
+                step = ylim[0]/len(labels)
+                cluster_breaks = [ylim[1]+i*step for i in np.cumsum(cluster_sizes)]
                 ax2.hlines(cluster_breaks[:-1], xlim[0], xlim[1], linestyles='dashed',
                            linewidth=2, colors=[.5,.5,.5])
             # change axis properties based on orientation
@@ -220,15 +221,15 @@ def plot_dendrograms(results, c, display_labels='cluster', inp=None, titles=None
                     mid_points = np.array(cluster_breaks) - np.array(cluster_sizes)/2
                     for i, mid in enumerate(mid_points):
                         color_index = clusters[int(mid)]
-                        ax2.text(mid, -1-(1.5*(i%2==0)), 'Cluster', ha='center',  fontsize=16,
+                        ax2.text(mid, ylim[0]+.5+(1*(i%2==0)), 'Cluster', ha='center',  fontsize=16,
                                  color=colors[color_index-1])
                 elif orientation == 'vertical':
                     mid_points = np.array(cluster_breaks) \
-                                    + np.array(cluster_sizes)/2 + 1
+                                    - np.array(cluster_sizes)/2 +.5
                     for i, mid in enumerate(mid_points):
-                        color_index = clusters[::-1][int(mid)]
-                        ax2.text(-1-(1.5*(i%2==0)), mid, 'Cluster', ha='center',  fontsize=16,
-                                 color=colors[color_index-1], rotation=90)
+                        color_index = clusters[int(mid)]
+                        ax2.text((xlim[1]-xlim[0])/2*3.5, mid, 'Cluster', ha='center',  fontsize=16,
+                                 color=colors[color_index-1])
         
         if plot_dir is not None:
             save_figure(fig, path.join(plot_dir, 

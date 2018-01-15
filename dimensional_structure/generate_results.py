@@ -24,7 +24,7 @@ run_analysis = not args.no_analysis
 run_plot = not args.no_plot
 print('Running Analysis? %s, Plotting? %s' % (['No', 'Yes'][run_analysis], 
                                               ['No', 'Yes'][run_plot]))
-
+"""
 datafile = 'Complete_11-22-2017'
 subsets = [{'name': 'all', 
             'regex': '.',
@@ -35,6 +35,12 @@ subsets = [{'name': 'all',
             {'name': 'survey',
              'regex': 'survey',
              'factor_names': ['Immediacy', 'Future', 'Sensation Seeking', 'DOSPERT', 'DOSPERT_fin', 'Agreeableness', 'DOSPERT_RP', 'Hedonism', 'Social', 'Emotional Control', 'Eating', 'Mindfulness']}]
+"""
+datafile = 'Complete_12-05-2017'
+subsets = [{'name': 'task',
+           'regex': 'task'}]
+          
+           
 
 ID = None # ID will be created
 results = None

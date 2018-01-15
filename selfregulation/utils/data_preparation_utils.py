@@ -234,6 +234,8 @@ def drop_vars(data, drop_vars = [], saved_vars = []):
                     ]
         drop_vars = basic_vars + exploratory_vars + task_vars + ddm_vars
     drop_vars = '|'.join(drop_vars)
+    if len(saved_vars) == 0:
+        saved_vars = ['adaptive_n_back.hddm_(thresh|drift)_load']
     if len(saved_vars) > 0 :
         saved_vars = '|'.join(saved_vars)
         saved_columns = data.filter(regex=saved_vars)

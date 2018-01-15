@@ -21,6 +21,7 @@ Plots
 *.egg-info
 .spyproject/
 *.pkl
+!example_data_post.pkl
 *.pdf
 *.Rdata
 .eggs

@@ -1,8 +1,0 @@
-# sro_prep singularity image
-sro_dataprep-2017-12-06-c25fbbdb32d2.img
-# sro singularity image (for full analysis)
-N/A
-# location of singularity images
-/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/singularity_images
-# location of data (raw and post processed) that aren't directly included in Self_Regulation_Ontology repo
-/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data
