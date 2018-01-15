@@ -36,7 +36,7 @@ data_dir=get_info('data_directory')
 # read preprocessed data
 datasets = []
 for label in data_labels:
-    directory = path.join(output_dir,label.lstrip('mturk_').title() + '_' + date)
+    directory = path.join(output_dir,label.split('mturk_')[1].title() + '_' + date)
     if not path.exists(directory):
         makedirs(directory)
     data = pd.read_pickle(path.join(data_dir,label + '_data_post.pkl')).reset_index(drop = True)
