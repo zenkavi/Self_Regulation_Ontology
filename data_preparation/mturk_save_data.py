@@ -36,10 +36,14 @@ data_dir=get_info('data_directory')
 # read preprocessed data
 datasets = []
 for label in data_labels:
+    try:
+        data = pd.read_pickle(path.join(data_dir,label + '_data_post.pkl')).reset_index(drop = True)
+    except FileNotFoundError:
+        print("Couldn't find %s" % label + '_data_post.pkl')
+        continue
     directory = path.join(output_dir,label.split('mturk_')[1].title() + '_' + date)
     if not path.exists(directory):
         makedirs(directory)
-    data = pd.read_pickle(path.join(data_dir,label + '_data_post.pkl')).reset_index(drop = True)
     try:
         DVs = pd.read_json(path.join(data_dir,label + '_DV.json'))
         DVs_valence = pd.read_json(path.join(data_dir,label + '_DV_valence.json'))
