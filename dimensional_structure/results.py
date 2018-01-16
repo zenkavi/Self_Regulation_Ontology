@@ -3,7 +3,7 @@
 # imports
 from utils import (
         abs_pdist, create_factor_tree, distcorr,  find_optimal_components, 
-        get_scores_from_subset, hdbscan_cluster, hierarchical_cluster, 
+        get_scores_from_subset, get_top_factors, hdbscan_cluster, hierarchical_cluster, 
         quantify_lower_nesting, run_EFA_prediction
         )
 import glob
@@ -214,9 +214,15 @@ class EFA_Analysis:
         if c is None:
             c = self.get_metric_cs()['c_metric-BIC']
             print('# of components not specified, using BIC determined #')
-        loading = self.get_loading(c)
+        loading = self.get_loading(len(labels))
         loading.columns = labels
     
+    def print_top_factors(self, c=None, n=5):
+        if c is None:
+            c = self.get_metric_cs()['c_metric-BIC']
+            print('# of components not specified, using BIC determined #')
+        tmp = get_top_factors(self.get_loading(c), n=n, verbose=True)
+        
     def thresh_loading(loading, threshold=.2):
         over_thresh = loading.max(1)>threshold
         rejected = loading.index[~over_thresh]
