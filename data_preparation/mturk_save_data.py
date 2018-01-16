@@ -36,10 +36,14 @@ data_dir=get_info('data_directory')
 # read preprocessed data
 datasets = []
 for label in data_labels:
+    try:
+        data = pd.read_pickle(path.join(data_dir,label + '_data_post.pkl')).reset_index(drop = True)
+    except FileNotFoundError:
+        print("Couldn't find %s" % label + '_data_post.pkl')
+        continue
     directory = path.join(output_dir,label.split('mturk_')[1].title() + '_' + date)
     if not path.exists(directory):
         makedirs(directory)
-    data = pd.read_pickle(path.join(data_dir,label + '_data_post.pkl')).reset_index(drop = True)
     try:
         DVs = pd.read_json(path.join(data_dir,label + '_DV.json'))
         DVs_valence = pd.read_json(path.join(data_dir,label + '_DV_valence.json'))
@@ -75,7 +79,9 @@ for data,directory, DV_df, valence_df in datasets:
     print('Saving items...')
     subjectsxitems = items_df.pivot('worker','item_ID','coded_response')
     # ensure there are the correct number of items
-    assert subjectsxitems.shape[1] == 593, "Wrong number of items found"
+    if subjectsxitems.shape[1] != 593:
+        print('Wrong number of items found for label: %s' % label)
+        continue
     # save items
     items_df.to_csv(path.join(directory, 'items.csv.gz'), compression = 'gzip')
     subjectsxitems.to_csv(path.join(directory, 'subject_x_items.csv'))
@@ -120,7 +126,7 @@ for data,directory, DV_df, valence_df in datasets:
         readme_lines += ["variables_exhaustive.csv: all variables calculated for each measure\n\n"]
           
         # drop other columns of no interest
-        subset = drop_vars(DV_df, saved_vars = ['simple_reaction_time.avg_rt', 'shift_task.acc'])
+        subset = drop_vars(DV_df, saved_vars = ['adaptive_n_back.hddm_(thresh|drift)_load', 'simple_reaction_time.avg_rt', 'shift_task.acc'])
         # make subset without EZ variables
         noDDM_subset = drop_vars(DV_df, saved_vars = ["\.acc$", "\.avg_rt$"])
         noDDM_subset = drop_vars(noDDM_subset, drop_vars = ['EZ', 'hddm'])
