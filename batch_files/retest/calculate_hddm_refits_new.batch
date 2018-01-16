@@ -7,7 +7,7 @@
 #SBATCH --cpus-per-task=16
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=zenkavi@stanford.edu
-# SBATCH -p russpold
+#SBATCH -p russpold
 module load singularity
 export PYTHONPATH=""
 # scratch is automatically mounted
