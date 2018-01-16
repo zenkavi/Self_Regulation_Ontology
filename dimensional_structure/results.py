@@ -210,10 +210,7 @@ class EFA_Analysis:
             sum_explained[key[1]-1, key[0]-1] = (np.sum(adequately_explained/key[0]))
         return explained_scores, sum_explained
     
-    def name_factors(self, labels, c=None):
-        if c is None:
-            c = self.get_metric_cs()['c_metric-BIC']
-            print('# of components not specified, using BIC determined #')
+    def name_factors(self, labels):
         loading = self.get_loading(len(labels))
         loading.columns = labels
     

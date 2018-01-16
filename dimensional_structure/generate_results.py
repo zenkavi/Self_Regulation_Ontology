@@ -60,7 +60,7 @@ for subset in subsets:
         # name factors
         factor_names = subset.get('factor_names', None)
         if factor_names is not None:
-            results.EFA.name_factors(len(factor_names), factor_names)
+            results.EFA.name_factors(factor_names)
         # run behavioral prediction using the factor results determined by BIC
         c = results.EFA.get_metric_cs()['c_metric-BIC']
         results.run_prediction(c=c)
