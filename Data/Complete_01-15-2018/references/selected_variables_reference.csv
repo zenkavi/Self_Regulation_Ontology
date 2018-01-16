@@ -1,6 +1,8 @@
 adaptive_n_back.hddm_drift,Pos
+adaptive_n_back.hddm_drift_load,Pos
 adaptive_n_back.hddm_non_decision,NA
 adaptive_n_back.hddm_thresh,Pos
+adaptive_n_back.hddm_thresh_load,Pos
 adaptive_n_back.mean_load,Pos
 angling_risk_task_always_sunny.keep_adjusted_clicks,Neg
 angling_risk_task_always_sunny.keep_loss_percent,Neg
