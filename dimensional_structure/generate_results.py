@@ -24,22 +24,18 @@ run_analysis = not args.no_analysis
 run_plot = not args.no_plot
 print('Running Analysis? %s, Plotting? %s' % (['No', 'Yes'][run_analysis], 
                                               ['No', 'Yes'][run_plot]))
-"""
+
 datafile = 'Complete_01-15-2018'
 subsets = [{'name': 'all', 
             'regex': '.',
             'factor_names': ['Pros Plan', 'Sensation Seeking', 'Mind Over Matter', 'Info Processing', 'Discounting', 'Stim Processing', 'Caution', 'Planning/WM', 'Env Resp']},
            {'name': 'task', 
             'regex': 'task',
-            'factor_names': ['Info Processing1', 'Info Processing2', 'WM/IQ', 'Movement Speed', 'Risk', 'Stim Processing', 'Caution', 'Discount']},
+            'factor_names': ['Decision Speed', 'DPX', 'WM/IQ', 'ART', 'Stim Processing', 'Strategic Flexibility', 'Discounting']},
             {'name': 'survey',
              'regex': 'survey',
              'factor_names': ['Immediacy', 'Future', 'Sensation Seeking', 'DOSPERT', 'DOSPERT_fin', 'Agreeableness', 'DOSPERT_RP', 'Hedonism', 'Social', 'Emotional Control', 'Eating', 'Mindfulness']}]
-"""
-datafile = 'Complete_01-15-2018'
-subsets = [{'name': 'task',
-           'regex': 'task'}]
-          
+
            
 
 ID = None # ID will be created
@@ -64,7 +60,7 @@ for subset in subsets:
         # name factors
         factor_names = subset.get('factor_names', None)
         if factor_names is not None:
-            results.EFA.name_factors(len(factor_names), factor_names)
+            results.EFA.name_factors(factor_names)
         # run behavioral prediction using the factor results determined by BIC
         c = results.EFA.get_metric_cs()['c_metric-BIC']
         results.run_prediction(c=c)
@@ -150,11 +146,9 @@ for subset in subsets:
         plot_prediction(results, prediction_plot_dir)
         
         # copy latest results and prediction to higher directory
-        for plot_type in ['EFA','HCA','prediction']:
-            plot_dir = path.join(results.plot_file, plot_type)
-            base_plot_dir = path.join(path.dirname(results.plot_file), 
-                                               plot_type)
-            if path.exists(base_plot_dir):
-                rmtree(base_plot_dir)
-            copytree(plot_dir, base_plot_dir)
-            
+        plot_dir = results.plot_file
+        generic_dir = '_'.join(plot_dir.split('_')[0:-1])
+        if path.exists(generic_dir):
+            rmtree(generic_dir)
+        copytree(plot_dir, generic_dir)
+        
