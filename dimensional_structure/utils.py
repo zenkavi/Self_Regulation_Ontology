@@ -356,7 +356,7 @@ def create_factor_tree(data, component_range=(1,13), component_list=None):
     else:
         components = component_list
     for c in components:
-        fa, output = psychFA(data, c)
+        fa, output = psychFA(data, c, method='ml')
         tmp_loading_df = get_loadings(output, labels=data.columns)
         if (c-1) in EFA_results.keys():
             reorder_index = get_similarity_order(tmp_loading_df, EFA_results[c-1])
@@ -379,34 +379,6 @@ def get_factor_groups(loading_df):
         factor_groups.append([name, assignment_vars])
     return factor_groups
 
-def get_hierarchical_groups(loading_df, n_groups=8):
-    # helper function
-    def remove_adjacent(nums):
-        result = []
-        for num in nums:
-            if len(result) == 0 or num != result[-1]:
-                result.append(num)
-        return result
-    # distvec
-    dist_vec = pdist(loading_df, metric=distcorr)
-    # create linkage matrix for variables projected into a component loading
-    row_clusters = linkage(dist_vec, method='ward')   
-    # use the dendorgram function to order the leaves appropriately
-    row_dendr = dendrogram(row_clusters, labels=loading_df.T.columns, no_plot = True)
-    cluster_reorder_index = row_dendr['leaves']
-    # cut the linkage graph such that there are only n groups
-    n_groups = n_groups
-    index_assignments = [i[0] for i in cut_tree(row_clusters, n_groups)]
-    # relabel groups such that 0 is the 'left' most in the dendrogram
-    group_order = remove_adjacent([index_assignments[i] for i in cluster_reorder_index])
-    index_assignments = [group_order.index(i) for i in index_assignments]
-    # using the groups and the dendrogram ordering, create a number of groups
-    hierarchical_groups = []
-    for assignment in np.unique(index_assignments):
-        # get variables that are in the correct group
-        assignment_vars = [var for i,var in enumerate(loading_df.index) if index_assignments[i] == assignment]
-        hierarchical_groups.append([assignment,assignment_vars])
-    return cluster_reorder_index, hierarchical_groups
 
 def get_scores_from_subset(data, fa_output, task_subset):
     match_cols = []

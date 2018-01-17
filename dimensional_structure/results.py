@@ -2,8 +2,9 @@
 
 # imports
 from utils import (
-        abs_pdist, create_factor_tree, distcorr,  find_optimal_components, 
-        get_scores_from_subset, get_top_factors, hdbscan_cluster, hierarchical_cluster, 
+        create_factor_tree, distcorr,  find_optimal_components, 
+        get_loadings, get_scores_from_subset, get_top_factors, 
+        hdbscan_cluster, hierarchical_cluster, 
         quantify_lower_nesting, run_EFA_prediction
         )
 import glob
@@ -33,7 +34,7 @@ class EFA_Analysis:
         if data_no_impute is not None:
             self.data_no_impute = data_no_impute
         # global variables to hold certain aspects of the analysis
-        self.max_factors = 0
+        self.num_factors = 0
         
     def adequacy_test(self, verbose=False):
         data = self.data
@@ -84,8 +85,7 @@ class EFA_Analysis:
                       "data_no_impute not found.")
         # record max_factors
         best_cs = {k:v for k,v in self.results.items() if 'c_metric-' in k}
-        metric_cs = best_cs.values()
-        self.max_factors = int(max(metric_cs))+5
+        self.num_factors = BIC_c
         if verbose:
                 print('Best Components: ', best_cs)
     
@@ -93,7 +93,11 @@ class EFA_Analysis:
         if c is None:
             c = self.get_metric_cs()['c_metric-BIC']
             print('# of components not specified, using BIC determined #')
-        return self.results['factor_tree'][c]
+        if c in self.results['factor_tree'].keys():
+            return self.results['factor_tree'][c]
+        else:
+            fa, output = psychFA(self.data, c, method='ml')
+            return get_loadings(fa, labels=self.data.columns)
     
     def get_metric_cs(self):
         metric_cs = {k:v for k,v in self.results.items() if 'c_metric-' in k}
@@ -145,9 +149,9 @@ class EFA_Analysis:
         # create factor tree
         if verbose: print('Creating Factor Tree')
         run_FA = self.results.get('factor_tree', [])
-        if len(run_FA) < self.max_factors:
+        if len(run_FA) < self.num_factors+5:
             ftree, ftree_rout = create_factor_tree(self.data,
-                                                   (1,self.max_factors))
+                                                   (1,self.num_factors+5))
             self.results['factor_tree'] = ftree
             self.results['factor_tree_Rout'] = ftree_rout
         # optional threshold
@@ -161,7 +165,7 @@ class EFA_Analysis:
         # calculate entropy for each measure at different c's
         entropies = {}
         null_entropies = {}
-        for c in range(self.max_factors):
+        for c in range(self.num_factors+5):
             if c > 1:
                 entropies[c] = self.get_loading_entropy(c)
                 null_entropies[c] = self.get_null_loading_entropy(c)
