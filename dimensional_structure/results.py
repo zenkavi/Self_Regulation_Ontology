@@ -50,7 +50,7 @@ class EFA_Analysis:
     
     def get_attr(self, attribute, c=None):
         if c is None:
-            c = self.get_metric_cs()['c_metric-BIC']
+            c = self.num_factors
             print('# of components not specified, using BIC determined #')
         return get_attr(self.results['factor_tree_Rout'][c],
                         attribute)
@@ -91,13 +91,13 @@ class EFA_Analysis:
     
     def get_loading(self, c=None):
         if c is None:
-            c = self.get_metric_cs()['c_metric-BIC']
+            c = self.num_factors
             print('# of components not specified, using BIC determined #')
         if c in self.results['factor_tree'].keys():
             return self.results['factor_tree'][c]
         else:
             fa, output = psychFA(self.data, c, method='ml')
-            return get_loadings(fa, labels=self.data.columns)
+            return get_loadings(output, labels=self.data.columns)
     
     def get_metric_cs(self):
         metric_cs = {k:v for k,v in self.results.items() if 'c_metric-' in k}
@@ -105,7 +105,7 @@ class EFA_Analysis:
     
     def get_loading_entropy(self, c=None):
         if c is None:
-            c = self.get_metric_cs()['c_metric-BIC']
+            c = self.num_factors
             print('# of components not specified, using BIC determined #')
         assert c>1
         loading = self.get_loading(c)
@@ -116,7 +116,7 @@ class EFA_Analysis:
     
     def get_null_loading_entropy(self, c=None, reps=50):
         if c is None:
-            c = self.get_metric_cs()['c_metric-BIC']
+            c = self.num_factors
             print('# of components not specified, using BIC determined #')
         assert c>1
         # get absolute loading
@@ -174,13 +174,13 @@ class EFA_Analysis:
     
     def get_factor_names(self, c=None):
         if c is None:
-            c = self.get_metric_cs()['c_metric-BIC']
+            c = self.num_factors
             print('# of components not specified, using BIC determined #')
         return self.get_loading(c).columns
     
     def get_scores(self, c=None):
         if c is None:
-            c = self.get_metric_cs()['c_metric-BIC']
+            c = self.num_factors
             print('# of components not specified, using BIC determined #')
         scores = self.get_attr('scores', c)
         names = self.get_factor_names(c)
@@ -191,7 +191,7 @@ class EFA_Analysis:
     def get_task_representations(self, tasks, c=None):
         """Take a list of tasks and reconstructs factor scores"""   
         if c is None:
-            c = self.get_metric_cs()['c_metric-BIC']
+            c = self.num_factors
             print('# of components not specified, using BIC determined #')         
         fa_output = self.results['factor_tree_Rout'][c]
         output = {'weights': get_attr(fa_output, 'weights'),
@@ -220,7 +220,7 @@ class EFA_Analysis:
     
     def print_top_factors(self, c=None, n=5):
         if c is None:
-            c = self.get_metric_cs()['c_metric-BIC']
+            c = self.num_factors
             print('# of components not specified, using BIC determined #')
         tmp = get_top_factors(self.get_loading(c), n=n, verbose=True)
         
@@ -277,13 +277,12 @@ class HDBScan_Analysis():
             cluster_loadings.append((cluster, cluster_vec))
         return cluster_loadings
     
-    def run(self, data, EFA, cluster_EFA=False, verbose=False):
+    def run(self, data, EFA, cluster_EFA=False, c=None, verbose=False):
         if verbose: print("Clustering data")
         self.cluster_data(data)
         if cluster_EFA:
             if verbose: print("Clustering EFA")
-            for c in EFA.get_metric_cs().values():
-                self.cluster_EFA(EFA, c)
+            self.cluster_EFA(EFA, c)
             
 class HCA_Analysis():
     """ Runs Hierarchical Clustering Analysis """
