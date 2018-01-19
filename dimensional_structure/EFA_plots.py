@@ -11,6 +11,7 @@ from os import path
 import pandas as pd
 import seaborn as sns
 sns.set_context('notebook', font_scale=1.4)
+sns.set_palette("Set1", 8, .75)
 
 
 
@@ -126,16 +127,24 @@ def plot_bar_factors(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):
             ax2.set_xticklabels('')
             labels = ax1.get_xticklabels()
             locs = ax1.xaxis.get_ticklocs()
-            ax1.set_ylabel(k)
+            # add factor label to plot
+            DV_fontsize = figsize/(len(labels)//2)*45
+            ax1.set_ylabel(k, rotation=0, ha='right', fontsize=DV_fontsize*1.5)
+            # add labels of measures to top and bottom
             if i == 0:
                 ax_copy = ax1.twiny()
                 ax_copy.set_xticks(locs[::2])
-                ax_copy.set_xticklabels(labels[::2], rotation=90)
-                ax2.set_title('Factor Loading Distribution', fontsize=14)
+                ax_copy.set_xticklabels(labels[::2], 
+                                        rotation=90,
+                                        fontsize=DV_fontsize)
+                ax2.set_title('Factor Loading Distribution', 
+                              fontsize=DV_fontsize*1.5)
             if i == len(sorted_vars)-1:
                 # and other half on bottom
                 ax1.set_xticks(locs[1::2])
-                ax1.set_xticklabels(labels[1::2], rotation=90)
+                ax1.set_xticklabels(labels[1::2], 
+                                    rotation=90, 
+                                    fontsize=DV_fontsize)
             else:
                 ax1.set_xticklabels('')
     if plot_dir:
@@ -173,7 +182,7 @@ def plot_polar_factors(results, c, color_by_group=True,
     
 def plot_task_factors(results, c, task_sublists=None, figsize=10,
                       dpi=300, ext='png', plot_dir=None):
-    """ Plots factor analytic results as bars
+    """ Plots task factors as polar plots
     
     Args:
         results: a dimensional structure results object
@@ -266,7 +275,7 @@ def plot_entropies(results, dpi=300, figsize=(20,8), ext='png', plot_dir=None):
 def plot_EFA(results, plot_dir=None, verbose=False, dpi=300, ext='png',
              plot_task_kws={}):
 
-    c = results.EFA.get_metric_cs()['c_metric-BIC']
+    c = results.EFA.num_factors
     #if verbose: print("Plotting BIC/SABIC")
     #plot_BIC_SABIC(EFA, plot_dir)
     if verbose: print("Plotting nesting")

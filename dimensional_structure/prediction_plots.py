@@ -4,6 +4,7 @@ from os import path
 import pandas as pd
 import seaborn as sns
 from utils import plot_loadings, save_figure
+sns.set_palette("Set1", 8, .75)
 
 def visualize_importance(importance, ax, xticklabels=True, 
                            yticklabels=True, pad=0, ymax=None, legend=True):
