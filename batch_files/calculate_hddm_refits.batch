@@ -11,10 +11,10 @@
 module load singularity
 export PYTHONPATH=""
 # scratch is automatically mounted
-img=`sed '2q;d' ../singularity_config.txt`
-base_singularity=`sed '6q;d' ../singularity_config.txt`
+img=`sed '2q;d' singularity_config.txt`
+base_singularity=`sed '6q;d' singularity_config.txt`
 singularity_loc=${base_singularity}/$img
-data_loc=`sed '8q;d' ../singularity_config.txt`
+data_loc=`sed '8q;d' singularity_config.txt`
 # on OAK
 output_loc=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/{SUBSET}_output/hddm_refits
 
