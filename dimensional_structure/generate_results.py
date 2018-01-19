@@ -62,7 +62,7 @@ for subset in subsets:
         if factor_names is not None:
             results.EFA.name_factors(factor_names)
         # run behavioral prediction using the factor results determined by BIC
-        c = results.EFA.get_metric_cs()['c_metric-BIC']
+        c = results.EFA.num_factors
         results.run_prediction(c=c)
         results.run_prediction(c=c, shuffle=True) # shuffled
         run_time = time.time()-start
