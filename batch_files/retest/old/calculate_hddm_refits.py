@@ -1,5 +1,4 @@
 import sys
-sys.path.append('/scratch/users/zenkavi/expfactory-analysis')
 from expanalysis.experiments.processing import get_exp_DVs
 from os import path
 import pandas as pd
@@ -7,10 +6,10 @@ import pandas as pd
 exp_id = sys.argv[1]
 data = sys.argv[2]
 
-out_dir = '/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_11-27-2017/batch_output/hddm_refits'
+out_dir = '/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_01-15-2018/batch_output/hddm_refits'
 
 #load Data
-dataset = pd.read_json('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_11-27-2017/Local/retest_subs_test_data_post.json')
+dataset = pd.read_json('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_01-15-2018/Local/retest_subs_test_data_post.json')
 
 #calculate DVs
 DV_df, valence_df, description = get_exp_DVs(dataset, exp_id, use_group_fun = True)

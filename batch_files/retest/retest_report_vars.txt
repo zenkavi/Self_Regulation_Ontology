@@ -7,6 +7,8 @@ adaptive_n_back.hddm_drift
 adaptive_n_back.hddm_non_decision
 adaptive_n_back.hddm_thresh
 adaptive_n_back.mean_load
+adaptive_n_back.hddm_drift_load
+adaptive_n_back.hddm_thresh_load
 angling_risk_task_always_sunny.keep_adjusted_clicks
 angling_risk_task_always_sunny.keep_loss_percent
 angling_risk_task_always_sunny.keep_score
@@ -233,6 +235,7 @@ local_global_letter.switch_cost_EZ_non_decision
 local_global_letter.switch_cost_EZ_thresh
 local_global_letter.switch_cost_hddm_drift
 local_global_letter.switch_cost_rt
+local_global_letter.global_bias_hddm_drift
 mindful_attention_awareness_survey.mindfulness
 motor_selective_stop_signal.EZ_drift
 motor_selective_stop_signal.EZ_non_decision
@@ -246,6 +249,7 @@ motor_selective_stop_signal.ignore_rt_error_std
 motor_selective_stop_signal.reactive_control
 motor_selective_stop_signal.selective_proactive_control
 motor_selective_stop_signal.SSRT
+motor_selective_stop_signal.condition_sensitivity_hddm_drift
 mpq_control_survey.control
 probabilistic_selection.approach_trial_acc
 probabilistic_selection.approach_trial_rt
@@ -342,6 +346,7 @@ stim_selective_stop_signal.ignore_acc
 stim_selective_stop_signal.ignore_rt_error
 stim_selective_stop_signal.ignore_rt_error_std
 stim_selective_stop_signal.SSRT
+stim_selective_stop_signal.condition_sensitivity_hddm_drift
 stop_signal.commission_errors
 stop_signal.EZ_drift
 stop_signal.EZ_non_decision
@@ -361,6 +366,8 @@ stop_signal.SSRT_low
 stop_signal.stop_acc
 stop_signal.stop_rt_error
 stop_signal.total_errors
+stop_signal.condition_sensitivity_hddm_drift
+stop_signal.condition_sensitivity_hddm_thresh
 stroop.acc
 stroop.avg_rt
 stroop.congruent_errors
@@ -394,8 +401,6 @@ threebytwo.cue_switch_cost_EZ_non_decision_100.0
 threebytwo.cue_switch_cost_EZ_non_decision_900.0
 threebytwo.cue_switch_cost_EZ_thresh_100.0
 threebytwo.cue_switch_cost_EZ_thresh_900.0
-threebytwo.cue_switch_cost_hddm_drift_100.0
-threebytwo.cue_switch_cost_hddm_drift_900.0
 threebytwo.cue_switch_cost_rt_100.0
 threebytwo.cue_switch_cost_rt_900.0
 threebytwo.EZ_drift
@@ -410,10 +415,10 @@ threebytwo.task_switch_cost_EZ_non_decision_100.0
 threebytwo.task_switch_cost_EZ_non_decision_900.0
 threebytwo.task_switch_cost_EZ_thresh_100.0
 threebytwo.task_switch_cost_EZ_thresh_900.0
-threebytwo.task_switch_cost_hddm_drift_100.0
-threebytwo.task_switch_cost_hddm_drift_900.0
 threebytwo.task_switch_cost_rt_100.0
 threebytwo.task_switch_cost_rt_900.0
+threebytwo.cue_switch_cost_hddm_drift
+threebytwo.task_switch_cost_hddm_drift
 time_perspective_survey.future
 time_perspective_survey.past_negative
 time_perspective_survey.past_positive

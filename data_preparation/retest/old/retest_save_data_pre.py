@@ -15,8 +15,9 @@ release_date = '11-27-2017'
 
 data_dir = '/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_11-27-2017'
 
-#load data (in case anything broke)
-data = pd.read_json(path.join(data_dir, 'Local/mturk_retest_data_post.json'))
+#load data 
+#data = pd.read_json(path.join(data_dir, 'Local/mturk_retest_data_post.json'))
+data = pd.read_pickle(path.join(data_dir, 'Local/mturk_retest_data_post.pkl')).reset_index(drop = True)
     
 # Individual_Measures/
 save_task_data(data_dir, data)

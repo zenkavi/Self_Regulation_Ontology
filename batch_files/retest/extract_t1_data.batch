@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=extract_t1_data_{DATASET}
-#SBATCH --output=/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_11-27-2017/batch_output/.out/extract_t1_data_{DATASET}.job.out
-#SBATCH --error=/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_11-27-2017/batch_output/.err/extract_t1_data_{DATASET}.job.err
+#SBATCH --output=/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_01-17-2018/batch_output/.out/extract_t1_data_{DATASET}.job.out
+#SBATCH --error=/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_01-17-2018/batch_output/.err/extract_t1_data_{DATASET}.job.err
 #SBATCH --time=40:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -10,4 +10,4 @@
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-user=zenkavi@stanford.edu
 source activate SRO
-Rscript --vanilla extract_t1_data.R /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Complete_11-22-2017/ /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_11-27-2017/t1_data/ {DATASET}
+Rscript --vanilla extract_t1_data.R /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Complete_01-17-2018/ /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_01-17-2018/t1_data/ {DATASET}
