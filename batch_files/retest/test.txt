@@ -1,1 +1,2 @@
-stim_selective_stop_signal.hddm_non_decision
+shift_task.acc
+shift_task.avg_rt
