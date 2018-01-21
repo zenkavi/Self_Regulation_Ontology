@@ -1,7 +1,7 @@
 from os import path
 import pandas as pd
 
-data_dir = path.join('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data','Retest_11-27-2017/Local')
+data_dir = path.join('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data','Retest_01-17-2018/Local')
 
 #Read in DVs and valence
 label = 'hddm_refit'
