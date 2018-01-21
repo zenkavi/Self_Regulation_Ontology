@@ -1,13 +1,2 @@
 shift_task.acc
 shift_task.avg_rt
-shift_task.conceptual_responses
-shift_task.fail_to_maintain_set
-shift_task.learning_rate
-shift_task.learning_to_learn
-shift_task.model_beta
-shift_task.model_decay
-shift_task.model_learning_rate
-shift_task.nonperseverative_errors
-shift_task.perseverative_errors
-shift_task.perseverative_responses
-shift_task.total_errors
