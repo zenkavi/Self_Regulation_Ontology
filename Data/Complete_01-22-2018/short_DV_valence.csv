@@ -5,10 +5,10 @@ NBAC,1.0
 NBAVRT,-1.0
 NBAVRTE,1.0
 NBHD,1.0
-adaptive_n_back.hddm_drift_load,1.0
+NBHDL,1.0
 NBHN,1.0
 NBHT,1.0
-adaptive_n_back.hddm_thresh_load,1.0
+NBHTL,1.0
 NBMEANLD,1.0
 NBMSPRC,-1.0
 NBPES,1.0
@@ -386,7 +386,7 @@ LOGCGSRT,1.0
 LOGCFCAC,1.0
 LOGCFCRT,-1.0
 local_global_letter.congruent_rt,-1.0
-local_global_letter.global_bias_hddm_drift,1.0
+LOGGBHD,1.0
 local_global_letter.global_conflict_rt,-1.0
 local_global_letter.global_congruent_errors,-1.0
 local_global_letter.global_congruent_rt,-1.0
@@ -428,7 +428,7 @@ MOSZN,-1.0
 MOSZT,1.0
 MOSSSRT,-1.0
 MOSSSDLY,1.0
-motor_selective_stop_signal.condition_sensitivity_hddm_drift,1.0
+MOSCSHD,1.0
 MOSGAC,1.0
 MOSGRT,-1.0
 MOSGRTE,-1.0
@@ -622,7 +622,7 @@ STSZN,-1.0
 STSZT,1.0
 STSSSRT,-1.0
 STSSSDLY,1.0
-stim_selective_stop_signal.condition_sensitivity_hddm_drift,1.0
+STSCSHD,1.0
 STSGAC,1.0
 STSGRT,-1.0
 STSGRTE,-1.0
@@ -647,8 +647,8 @@ SSSSRTHI,-1.0
 SSSSRTLO,-1.0
 SSSSSDLY,1.0
 stop_signal.commission_errors,-1.0
-stop_signal.condition_sensitivity_hddm_drift,1.0
-stop_signal.condition_sensitivity_hddm_thresh,1.0
+SSCSHD,1.0
+SSCSHT,1.0
 SSGAC,1.0
 SSGRT,-1.0
 SSGRTE,-1.0
@@ -741,7 +741,7 @@ TWILLELR,-1.0
 32CSCZN9,1.0
 32CSCZT1,1.0
 32CSCZT9,1.0
-threebytwo.cue_switch_cost_hddm_drift,1.0
+32CSCHD,1.0
 32CSCRT1,-1.0
 32CSCRT9,-1.0
 32HD,1.0
@@ -765,7 +765,7 @@ threebytwo.hddm_drift_task_switch,1.0
 32TSCZN9,1.0
 32TSCZT1,1.0
 32TSCZT9,1.0
-threebytwo.task_switch_cost_hddm_drift,1.0
+32TSCHD,1.0
 32TSCRT1,-1.0
 32TSCRT9,-1.0
 ZTPIFUTR,1.0
