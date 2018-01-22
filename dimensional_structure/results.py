@@ -35,8 +35,23 @@ class EFA_Analysis:
             self.data_no_impute = data_no_impute
         # global variables to hold certain aspects of the analysis
         self.num_factors = 0
-        
+    
+    # private methods
+    def _get_attr(self, attribute, c=None):
+        if c is None:
+            c = self.num_factors
+            print('# of components not specified, using BIC determined #')
+        return get_attr(self.results['factor_tree_Rout'][c],
+                        attribute)
+    
+    def _thresh_loading(loading, threshold=.2):
+        over_thresh = loading.max(1)>threshold
+        rejected = loading.index[~over_thresh]
+        return loading.loc[over_thresh,:], rejected
+    
+    # public methods
     def adequacy_test(self, verbose=False):
+        """ Determine whether data is adequate for EFA """
         data = self.data
         # KMO test should be > .6
         KMO_MSA = psych.KMO(data.corr())[0][0]
@@ -48,14 +63,13 @@ class EFA_Analysis:
                   ['No', 'Yes'][adequate])
         return adequate, {'Barlett_p': Barlett_p, 'KMO': KMO_MSA}
     
-    def get_attr(self, attribute, c=None):
-        if c is None:
-            c = self.get_metric_cs()['c_metric-BIC']
-            print('# of components not specified, using BIC determined #')
-        return get_attr(self.results['factor_tree_Rout'][c],
-                        attribute)
-        
     def get_dimensionality(self, metrics=None, verbose=False):
+        """ Use multiple methods to determine EFA dimensionality
+        
+        Args
+            Metrics: A list including a subset of the following strings:
+                BIC, parallel, SABIC, and CV. Default [BIC, parallel]
+        """
         if metrics is None:
             metrics = ['BIC', 'parallel']
         if 'BIC' in metrics:
@@ -90,22 +104,20 @@ class EFA_Analysis:
                 print('Best Components: ', best_cs)
     
     def get_loading(self, c=None):
+        """ Return the loading for an EFA solution at the specified c """
         if c is None:
-            c = self.get_metric_cs()['c_metric-BIC']
+            c = self.num_factors
             print('# of components not specified, using BIC determined #')
-        if c in self.results['factor_tree'].keys():
+        if ('factor_tree' in self.results.keys() and 
+            c in self.results['factor_tree'].keys()):
             return self.results['factor_tree'][c]
         else:
             fa, output = psychFA(self.data, c, method='ml')
-            return get_loadings(fa, labels=self.data.columns)
-    
-    def get_metric_cs(self):
-        metric_cs = {k:v for k,v in self.results.items() if 'c_metric-' in k}
-        return metric_cs
+            return get_loadings(output, labels=self.data.columns)
     
     def get_loading_entropy(self, c=None):
         if c is None:
-            c = self.get_metric_cs()['c_metric-BIC']
+            c = self.num_factors
             print('# of components not specified, using BIC determined #')
         assert c>1
         loading = self.get_loading(c)
@@ -116,7 +128,7 @@ class EFA_Analysis:
     
     def get_null_loading_entropy(self, c=None, reps=50):
         if c is None:
-            c = self.get_metric_cs()['c_metric-BIC']
+            c = self.num_factors
             print('# of components not specified, using BIC determined #')
         assert c>1
         # get absolute loading
@@ -134,55 +146,21 @@ class EFA_Analysis:
                                            (loading_entropy/max_entropy).values)
         return permuted_entropies
     
-    def run(self, loading_thresh=None, verbose=False):
-        # check adequacy
-        adequate, adequacy_stats = self.adequacy_test(verbose)
-        assert adequate, "Data is not adequate for EFA!"
-        self.results['EFA_adequacy'] = {'adequate': adequate, 
-                                            'adequacy_stats': adequacy_stats}
-        
-        # get optimal dimensionality
-        if 'c_metric-parallel' not in self.results.keys():
-            if verbose: print('Determining Optimal Dimensionality')
-            self.get_dimensionality(verbose=verbose)
-            
-        # create factor tree
-        if verbose: print('Creating Factor Tree')
-        run_FA = self.results.get('factor_tree', [])
-        if len(run_FA) < self.num_factors+5:
-            ftree, ftree_rout = create_factor_tree(self.data,
-                                                   (1,self.num_factors+5))
-            self.results['factor_tree'] = ftree
-            self.results['factor_tree_Rout'] = ftree_rout
-        # optional threshold
-        if loading_thresh is not None:
-            for c, loading in self.results['factor_tree'].items():
-                thresh_loading = self.thresh_loading(loading, loading_thresh)
-                self.results['factor_tree'][c], rejected = thresh_loading
-        # quantify lower nesting
-        self.results['lower_nesting'] = quantify_lower_nesting(self.results['factor_tree'])
-        
-        # calculate entropy for each measure at different c's
-        entropies = {}
-        null_entropies = {}
-        for c in range(self.num_factors+5):
-            if c > 1:
-                entropies[c] = self.get_loading_entropy(c)
-                null_entropies[c] = self.get_null_loading_entropy(c)
-        self.results['entropies'] = pd.DataFrame(entropies)
-        self.results['null_entropies'] = pd.DataFrame(null_entropies)
+    def get_metric_cs(self):
+        metric_cs = {k:v for k,v in self.results.items() if 'c_metric-' in k}
+        return metric_cs
     
     def get_factor_names(self, c=None):
         if c is None:
-            c = self.get_metric_cs()['c_metric-BIC']
+            c = self.num_factors
             print('# of components not specified, using BIC determined #')
         return self.get_loading(c).columns
     
     def get_scores(self, c=None):
         if c is None:
-            c = self.get_metric_cs()['c_metric-BIC']
+            c = self.num_factors
             print('# of components not specified, using BIC determined #')
-        scores = self.get_attr('scores', c)
+        scores = self._get_attr('scores', c)
         names = self.get_factor_names(c)
         scores = pd.DataFrame(scores, index=self.data.index,
                               columns=names)
@@ -191,7 +169,7 @@ class EFA_Analysis:
     def get_task_representations(self, tasks, c=None):
         """Take a list of tasks and reconstructs factor scores"""   
         if c is None:
-            c = self.get_metric_cs()['c_metric-BIC']
+            c = self.num_factors
             print('# of components not specified, using BIC determined #')         
         fa_output = self.results['factor_tree_Rout'][c]
         output = {'weights': get_attr(fa_output, 'weights'),
@@ -220,14 +198,9 @@ class EFA_Analysis:
     
     def print_top_factors(self, c=None, n=5):
         if c is None:
-            c = self.get_metric_cs()['c_metric-BIC']
+            c = self.num_factors
             print('# of components not specified, using BIC determined #')
         tmp = get_top_factors(self.get_loading(c), n=n, verbose=True)
-        
-    def thresh_loading(loading, threshold=.2):
-        over_thresh = loading.max(1)>threshold
-        rejected = loading.index[~over_thresh]
-        return loading.loc[over_thresh,:], rejected
         
     def verify_factor_solution(self):
         fa, output = psychFA(self.data, 10)
@@ -236,7 +209,45 @@ class EFA_Analysis:
         redone_scores = scaled_data.dot(output['weights'])
         redone_score_diff = np.mean(scores-redone_scores)
         assert(redone_score_diff < 1e-5)
-
+    
+    def run(self, loading_thresh=None, verbose=False):
+        # check adequacy
+        adequate, adequacy_stats = self.adequacy_test(verbose)
+        assert adequate, "Data is not adequate for EFA!"
+        self.results['EFA_adequacy'] = {'adequate': adequate, 
+                                            'adequacy_stats': adequacy_stats}
+        
+        # get optimal dimensionality
+        if 'c_metric-parallel' not in self.results.keys():
+            if verbose: print('Determining Optimal Dimensionality')
+            self.get_dimensionality(verbose=verbose)
+            
+        # create factor tree
+        if verbose: print('Creating Factor Tree')
+        run_FA = self.results.get('factor_tree', [])
+        if len(run_FA) < self.num_factors+5:
+            ftree, ftree_rout = create_factor_tree(self.data,
+                                                   (1,self.num_factors+5))
+            self.results['factor_tree'] = ftree
+            self.results['factor_tree_Rout'] = ftree_rout
+        # optional threshold
+        if loading_thresh is not None:
+            for c, loading in self.results['factor_tree'].items():
+                thresh_loading = self._thresh_loading(loading, loading_thresh)
+                self.results['factor_tree'][c], rejected = thresh_loading
+        # quantify lower nesting
+        self.results['lower_nesting'] = quantify_lower_nesting(self.results['factor_tree'])
+        
+        # calculate entropy for each measure at different c's
+        entropies = {}
+        null_entropies = {}
+        for c in range(self.num_factors+5):
+            if c > 1:
+                entropies[c] = self.get_loading_entropy(c)
+                null_entropies[c] = self.get_null_loading_entropy(c)
+        self.results['entropies'] = pd.DataFrame(entropies)
+        self.results['null_entropies'] = pd.DataFrame(null_entropies)
+        
 class HDBScan_Analysis():
     """ Runs Hierarchical Clustering Analysis """
     def __init__(self, dist_metric):
@@ -277,13 +288,12 @@ class HDBScan_Analysis():
             cluster_loadings.append((cluster, cluster_vec))
         return cluster_loadings
     
-    def run(self, data, EFA, cluster_EFA=False, verbose=False):
+    def run(self, data, EFA, cluster_EFA=False, c=None, verbose=False):
         if verbose: print("Clustering data")
         self.cluster_data(data)
         if cluster_EFA:
             if verbose: print("Clustering EFA")
-            for c in EFA.get_metric_cs().values():
-                self.cluster_EFA(EFA, c)
+            self.cluster_EFA(EFA, c)
             
 class HCA_Analysis():
     """ Runs Hierarchical Clustering Analysis """

@@ -1,20 +1,12 @@
-import sys
-sys.path.append('/Users/zeynepenkavi/Dropbox/PoldrackLab/expfactory-analysis')
-sys.path.append('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/data_preparation')
 from os import path
 import pandas as pd
 
-try: 
-    release_date
-except NameError:
-    release_date = input('Enter release_ date:')
-    
-data_dir = data_dir=path.join('/Users/zeynepenkavi/Documents/PoldrackLabLocal/Self_Regulation_Ontology/Data/','Retest_'+release_date)
+data_dir = path.join('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data','Retest_01-17-2018/Local')
 
 #Read in DVs and valence
 label = 'hddm_refit'
-DV_df = pd.read_json(path.join(data_dir,'Local/mturk_' + label + '_DV.json'))
-valence_df = pd.read_json(path.join(data_dir,'Local/mturk_' + label + '_DV_valence.json'))
+DV_df = pd.read_json(path.join(data_dir,'mturk_' + label + '_DV.json'))
+valence_df = pd.read_json(path.join(data_dir,'mturk_' + label + '_DV_valence.json'))
 
 readme_lines = []
 

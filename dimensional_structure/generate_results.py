@@ -25,7 +25,7 @@ run_plot = not args.no_plot
 print('Running Analysis? %s, Plotting? %s' % (['No', 'Yes'][run_analysis], 
                                               ['No', 'Yes'][run_plot]))
 
-datafile = 'Complete_01-15-2018'
+datafile = 'Complete_01-17-2018'
 subsets = [{'name': 'all', 
             'regex': '.',
             'factor_names': ['Pros Plan', 'Sensation Seeking', 'Mind Over Matter', 'Info Processing', 'Discounting', 'Stim Processing', 'Caution', 'Planning/WM', 'Env Resp']},
@@ -62,7 +62,7 @@ for subset in subsets:
         if factor_names is not None:
             results.EFA.name_factors(factor_names)
         # run behavioral prediction using the factor results determined by BIC
-        c = results.EFA.get_metric_cs()['c_metric-BIC']
+        c = results.EFA.num_factors
         results.run_prediction(c=c)
         results.run_prediction(c=c, shuffle=True) # shuffled
         run_time = time.time()-start
