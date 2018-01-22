@@ -4,7 +4,7 @@
 #SBATCH --error=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/{SUBSET}_output/hddm_refits/.err/calc_DV_{EXP_ID}_{SUBSET}_refit.err
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --time=40:00:00
+#SBATCH --time=168:00:00
 #SBATCH --cpus-per-task=16
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=zenkavi@stanford.edu
