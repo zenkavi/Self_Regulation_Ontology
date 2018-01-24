@@ -5,7 +5,7 @@ import pandas
 #retest
 DVs = pandas.DataFrame()
 valence = pandas.DataFrame()
-for exp_file in glob.glob(os.path.join('/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_refits', '*hddm_refit*DV.json')):
+for exp_file in glob.glob(os.path.join('/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_refits', '*retest_subs_test*DV.json')):
     base_name = os.path.basename(exp_file)
     exp = base_name.replace('_hddm_refit_DV.json','')
     print('Hddm refit: Extracting %s DVs' % exp)
