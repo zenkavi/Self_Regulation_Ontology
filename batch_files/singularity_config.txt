@@ -1,5 +1,5 @@
 # sro_prep singularity image
-sro_dataprep-2018-01-15-bb75a75462f9.img
+sro_dataprep-2018-01-21-24f71e2e8451.img
 # sro singularity image (for full analysis)
 N/A
 # location of singularity images
