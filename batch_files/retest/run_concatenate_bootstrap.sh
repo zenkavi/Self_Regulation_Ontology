@@ -1,6 +1,6 @@
 cd /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/bootstrap_output
-cat *.csv > /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_01-17-2018/Local/bootstrap_merged.csv
-cd /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_01-17-2018/Local
+cat *.csv > /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_01-23-2018/Local/bootstrap_merged.csv
+cd /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_01-23-2018/Local
 awk '!a[$0]++' bootstrap_merged.csv > bootstrap_merged_clean.csv
 rm bootstrap_merged.csv
 mv bootstrap_merged_clean.csv ./bootstrap_merged.csv
