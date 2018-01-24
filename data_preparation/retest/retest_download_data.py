@@ -9,7 +9,7 @@ from selfregulation.utils.utils import get_info
 #set token and data directory
 token = get_info('expfactory_token', infile='/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Self_Regulation_Retest_Settings.txt')
 
-data_dir=path.join('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/','Retest_01-17-2018', 'Local')
+data_dir=path.join('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/','Retest_01-23-2018', 'Local')
 
 if not path.exists(data_dir):
     makedirs(data_dir)

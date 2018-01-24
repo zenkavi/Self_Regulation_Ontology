@@ -10,7 +10,7 @@ from selfregulation.utils.retest_data_utils import anonymize_retest_data
 
 #set token and data directory
 
-data_dir=path.join('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/','Retest_01-17-2018', 'Local')
+data_dir=path.join('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/','Retest_01-23-2018', 'Local')
 
 #load data 
 #data = pd.read_json(path.join(data_dir, 'mturk_retest_data.json'))
