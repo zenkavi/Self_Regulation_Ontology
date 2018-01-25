@@ -4,3 +4,4 @@ cd /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Ret
 awk '!a[$0]++' refits_bootstrap_merged.csv > refits_bootstrap_merged_clean.csv
 rm refits_bootstrap_merged.csv
 mv refits_bootstrap_merged_clean.csv ./refits_bootstrap_merged.csv
+gzip refits_bootstrap_merged.csv
