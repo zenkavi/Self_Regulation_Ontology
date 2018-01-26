@@ -11,4 +11,4 @@
 #SBATCH --mail-user=zenkavi@stanford.edu
 source /home/zenkavi/.bash_profile
 source activate SRO
-python calculate_hddm_flat.py {EXP_ID} /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_01-17-2017/Individual_Measures/ /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat
+python calculate_hddm_flat.py {EXP_ID} /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_01-23-2018/Individual_Measures/ /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat
