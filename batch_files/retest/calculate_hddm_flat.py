@@ -13,7 +13,8 @@ from expanalysis.experiments.ddm_utils import not_regex, unique, parallel_sample
 
 task = sys.argv[1]
 input_dir = sys.argv[2]
-output_dir = sys.argv[3]
+subset = sys.argv[3]
+output_dir = sys.argv[4]
 
 def fit_HDDM(df, 
              response_col = 'correct', 
@@ -422,4 +423,4 @@ all_subs_dvs = pandas.DataFrame.from_dict({(i,j): all_subs_dvs[i][j]
 all_subs_dvs.columns = all_subs_dvs.columns.droplevel()
 
 #save output
-all_subs_dvs.to_csv(output_dir+task+'_hddm_flat.csv')
+all_subs_dvs.to_csv(output_dir+task+'_hddm_flat'+subset+'.csv')

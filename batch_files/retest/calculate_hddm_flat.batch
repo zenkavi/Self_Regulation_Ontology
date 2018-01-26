@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=calculate_hddm_flat_{EXP_ID}
-#SBATCH --output=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/.out/calculate_hddm_flat_{EXP_ID}.job.out
-#SBATCH --error=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/.err/calculate_hddm_flat_{EXP_ID}.job.err
+#SBATCH --job-name=calculate_hddm_flat_{EXP_ID}_{SUBSET}
+#SBATCH --output=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/.out/calculate_hddm_flat_{EXP_ID}_{SUBSET}.job.out
+#SBATCH --error=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/.err/calculate_hddm_flat_{EXP_ID}_{SUBSET}.job.err
 #SBATCH --time=80:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -11,4 +11,4 @@
 #SBATCH --mail-user=zenkavi@stanford.edu
 source /home/zenkavi/.bash_profile
 source activate SRO
-python calculate_hddm_flat.py {EXP_ID} /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_01-23-2018/Individual_Measures/ /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/
+python calculate_hddm_flat.py {EXP_ID} {DATA_PATH} {SUBSET} /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/
