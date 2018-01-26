@@ -159,7 +159,8 @@ def fit_HDDM(df,
     # regex match to find the correct rows
     dvs = {}
     for var in ['a','v','t']:
-        match = '^'+var+'(_subj|_Intercept_subj)'
+        #match = '^'+var+'(_subj|_Intercept_subj)'
+        match = '^'+var+'($|_Intercept)'
         dvs[var] = m.nodes_db.filter(regex=match, axis=0)['mean']
     
     # output of regression (no interactions)
@@ -172,7 +173,8 @@ def fit_HDDM(df,
             included_vals = [i for i in data[col].unique() if i != dropped]
             for val in included_vals:
                 # regex match to find correct rows
-                match='^'+ddm_var+'.*S.'+str(val)+']_subj' 
+                #match='^'+ddm_var+'.*S.'+str(val)+']_subj'
+                match='^'+ddm_var+'.*S.'+str(val)
                 # get the individual diff values and convert to list
                 ddm_vals = m.nodes_db.filter(regex=match, axis=0).filter(regex=not_regex(':'), axis=0)['mean'].tolist()
                 if len(ddm_vals) > 0:
@@ -188,7 +190,8 @@ def fit_HDDM(df,
         for col in parametric_cols:
             col_dvs = {}
             # regex match to find correct rows
-            match='^'+ddm_var+'_'+col+'_subj' 
+            #match='^'+ddm_var+'_'+col+'_subj'
+            match='^'+ddm_var+'_'+col
             # get the individual diff values and convert to list
             ddm_vals = m.nodes_db.filter(regex=match, axis=0).filter(regex=not_regex(':'), axis=0)['mean'].tolist()
             if len(ddm_vals) > 0:
@@ -206,7 +209,8 @@ def fit_HDDM(df,
         var_dvs = {}
         for x, y in itertools.permutations(all_levels,2):
             # regex match to find correct rows
-            match='^'+ddm_var+'.*'+str(x)+'].*:.*'+str(y)+']_subj'
+            #match='^'+ddm_var+'.*'+str(x)+'].*:.*'+str(y)+']_subj'
+            match='^'+ddm_var+'.*'+str(x)+'].*:.*'+str(y)
             # get the individual diff values and convert to list
             ddm_vals = m.nodes_db.filter(regex=match, axis=0)['mean'].tolist()
             if len(ddm_vals) > 0:
@@ -356,7 +360,7 @@ def twobytwo_HDDM(df, outfile=None, **kwargs):
 
 def get_HDDM_fun(task=None, outfile=None, **kwargs):
     if outfile is None:
-        outfile=task
+        outfile=task+'_flat'
     hddm_fun_dict = \
     {
         'adaptive_n_back': lambda df: fit_HDDM(df.query('exp_stage == "adaptive"'), 
@@ -405,7 +409,6 @@ func = get_HDDM_fun(task=task)
 for i in range(all_data.worker_id.unique().shape[0]):
     sub_id = all_data.worker_id.unique()[i]
     df = all_data.loc[all_data['worker_id'] == sub_id]
-    #df = df.query('exp_stage == "test"') #is this needed?
     sub_dvs = func(df)
     all_subs_dvs.update(sub_dvs)
 
