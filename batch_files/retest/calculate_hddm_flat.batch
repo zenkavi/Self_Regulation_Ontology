@@ -2,7 +2,7 @@
 #SBATCH --job-name=calculate_hddm_flat_{EXP_ID}_{SUBSET}
 #SBATCH --output=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/.out/calculate_hddm_flat_{EXP_ID}_{SUBSET}.job.out
 #SBATCH --error=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/.err/calculate_hddm_flat_{EXP_ID}_{SUBSET}.job.err
-#SBATCH --time=80:00:00
+#SBATCH --time=168:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=4

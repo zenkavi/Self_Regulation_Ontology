@@ -423,4 +423,4 @@ all_subs_dvs = pandas.DataFrame.from_dict({(i,j): all_subs_dvs[i][j]
 all_subs_dvs.columns = all_subs_dvs.columns.droplevel()
 
 #save output
-all_subs_dvs.to_csv(output_dir+task+'_hddm_flat'+subset+'.csv')
+all_subs_dvs.to_csv(output_dir+task+'_hddm_flat_'+subset+'.csv')
