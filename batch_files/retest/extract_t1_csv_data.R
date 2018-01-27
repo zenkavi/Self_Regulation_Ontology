@@ -33,7 +33,7 @@ names(retest_t1_data) <- gsub('_mturk', '', names(retest_t1_data))
 if(substr(dataset,(nchar(dataset)+1)-3,nchar(dataset)) == "csv"){
   write.csv(retest_t1_data, paste0(out_dir, dataset), row.names = F)
 } else if(substr(dataset,(nchar(dataset)+1)-3,nchar(dataset)) == ".gz"){
-  write.csv(retest_t1_data, paste0(out_dir, gzfile(dataset)), row.names = F)
+  write.table(retest_t1_data, gzfile(paste0(out_dir, dataset)), row.names = F, sep = ",")
 }
 
 
