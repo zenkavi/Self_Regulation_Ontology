@@ -278,8 +278,6 @@ def plot_EFA(results, plot_dir=None, verbose=False, dpi=300, ext='png',
     c = results.EFA.num_factors
     #if verbose: print("Plotting BIC/SABIC")
     #plot_BIC_SABIC(EFA, plot_dir)
-    if verbose: print("Plotting nesting")
-    plot_nesting(results, plot_dir=plot_dir, dpi=dpi, ext=ext)
     if verbose: print("Plotting entropies")
     plot_entropies(results, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting factor bars")

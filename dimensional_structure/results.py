@@ -34,7 +34,7 @@ class EFA_Analysis:
         if data_no_impute is not None:
             self.data_no_impute = data_no_impute
         # global variables to hold certain aspects of the analysis
-        self.num_factors = 0
+        self.num_factors = 1
     
     # private methods
     def _get_attr(self, attribute, c=None):
@@ -63,6 +63,13 @@ class EFA_Analysis:
                   ['No', 'Yes'][adequate])
         return adequate, {'Barlett_p': Barlett_p, 'KMO': KMO_MSA}
     
+    def create_factor_tree(self, start=1, end=None):
+        if end is None:
+            end = max(self.num_factors, start)
+        ftree, ftree_rout = create_factor_tree(self.data,  (start, end))
+        self.results['factor_tree'] = ftree
+        self.results['factor_tree_Rout'] = ftree_rout
+        
     def get_dimensionality(self, metrics=None, verbose=False):
         """ Use multiple methods to determine EFA dimensionality
         
@@ -113,7 +120,10 @@ class EFA_Analysis:
             return self.results['factor_tree'][c]
         else:
             fa, output = psychFA(self.data, c, method='ml')
-            return get_loadings(output, labels=self.data.columns)
+            loadings = get_loadings(output, labels=self.data.columns)
+            self.results['factor_tree'][c] = loadings
+            self.results['factor_tree_Rout'][c] = fa
+            return loadings
     
     def get_loading_entropy(self, c=None):
         if c is None:
@@ -146,6 +156,17 @@ class EFA_Analysis:
                                            (loading_entropy/max_entropy).values)
         return permuted_entropies
     
+    def get_factor_entropies(self):
+        # calculate entropy for each measure at different c's
+        entropies = {}
+        null_entropies = {}
+        for c in self.results['factor_tree'].keys():
+            if c > 1:
+                entropies[c] = self.get_loading_entropy(c)
+                null_entropies[c] = self.get_null_loading_entropy(c)
+        self.results['entropies'] = pd.DataFrame(entropies)
+        self.results['null_entropies'] = pd.DataFrame(null_entropies)
+        
     def get_metric_cs(self):
         metric_cs = {k:v for k,v in self.results.items() if 'c_metric-' in k}
         return metric_cs
@@ -224,12 +245,7 @@ class EFA_Analysis:
             
         # create factor tree
         if verbose: print('Creating Factor Tree')
-        run_FA = self.results.get('factor_tree', [])
-        if len(run_FA) < self.num_factors+5:
-            ftree, ftree_rout = create_factor_tree(self.data,
-                                                   (1,self.num_factors+5))
-            self.results['factor_tree'] = ftree
-            self.results['factor_tree_Rout'] = ftree_rout
+        self.create_factor_tree(self.num_factors, self.num_factors)
         # optional threshold
         if loading_thresh is not None:
             for c, loading in self.results['factor_tree'].items():
@@ -237,16 +253,8 @@ class EFA_Analysis:
                 self.results['factor_tree'][c], rejected = thresh_loading
         # quantify lower nesting
         self.results['lower_nesting'] = quantify_lower_nesting(self.results['factor_tree'])
-        
-        # calculate entropy for each measure at different c's
-        entropies = {}
-        null_entropies = {}
-        for c in range(self.num_factors+5):
-            if c > 1:
-                entropies[c] = self.get_loading_entropy(c)
-                null_entropies[c] = self.get_null_loading_entropy(c)
-        self.results['entropies'] = pd.DataFrame(entropies)
-        self.results['null_entropies'] = pd.DataFrame(null_entropies)
+        # get entropies
+        self.get_factor_entropies()
         
 class HDBScan_Analysis():
     """ Runs Hierarchical Clustering Analysis """
@@ -384,8 +392,7 @@ class HCA_Analysis():
         self.cluster_data(data)
         if cluster_EFA:
             if verbose: print("Clustering EFA")
-            for c in EFA.get_metric_cs().values():
-                self.cluster_EFA(EFA, c)
+            self.cluster_EFA(EFA, EFA.num_factors)
         if run_graphs == True:
             # run graph analysis on raw data
             graphs = self.build_graphs('data', data)

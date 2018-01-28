@@ -25,16 +25,16 @@ run_plot = not args.no_plot
 print('Running Analysis? %s, Plotting? %s' % (['No', 'Yes'][run_analysis], 
                                               ['No', 'Yes'][run_plot]))
 
-datafile = 'Complete_01-17-2018'
-subsets = [{'name': 'all', 
-            'regex': '.',
-            'factor_names': ['Pros Plan', 'Sensation Seeking', 'Mind Over Matter', 'Info Processing', 'Discounting', 'Stim Processing', 'Caution', 'Planning/WM', 'Env Resp']},
-           {'name': 'task', 
+datafile = 'Complete_01-22-2018'
+subsets = [{'name': 'task', 
             'regex': 'task',
             'factor_names': ['Decision Speed', 'DPX', 'WM/IQ', 'ART', 'Stim Processing', 'Strategic Flexibility', 'Discounting']},
             {'name': 'survey',
              'regex': 'survey',
-             'factor_names': ['Immediacy', 'Future', 'Sensation Seeking', 'DOSPERT', 'DOSPERT_fin', 'Agreeableness', 'DOSPERT_RP', 'Hedonism', 'Social', 'Emotional Control', 'Eating', 'Mindfulness']}]
+             'factor_names': ['Immediacy', 'Future', 'Sensation Seeking', 'DOSPERT', 'DOSPERT_fin', 'Agreeableness', 'DOSPERT_RP', 'Hedonism', 'Social', 'Emotional Control', 'Eating', 'Mindfulness']},
+             {'name': 'all', 
+            'regex': '.',
+            'factor_names': []}]
 
            
 
@@ -59,7 +59,7 @@ for subset in subsets:
         ID = results.ID.split('_')[1]
         # name factors
         factor_names = subset.get('factor_names', None)
-        if factor_names is not None:
+        if factor_names:
             results.EFA.name_factors(factor_names)
         # run behavioral prediction using the factor results determined by BIC
         c = results.EFA.num_factors

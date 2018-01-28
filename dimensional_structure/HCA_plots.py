@@ -116,7 +116,7 @@ def plot_clustering_similarity(results, plot_dir=None, verbose=False, ext='png')
         
     
     
-def plot_dendrograms(results, c=None, display_labels='cluster', inp=None, titles=None,
+def plot_dendrograms(results, c=None,  inp=None, titles=None,
                      figsize=(20,12), orientation='horizontal',
                      dpi=300, ext='png', plot_dir=None):
     """ Plots HCA results as dendrogram with loadings underneath
@@ -124,7 +124,6 @@ def plot_dendrograms(results, c=None, display_labels='cluster', inp=None, titles
     Args:
         results: results object
         c: number of components to use for loadings
-        display_labels: whether to print x labels (individual variables)
         orientation: horizontal or vertical, which determines the direction
             the dendrogram leaves should be spread out on
         plot_dir: if set, where to save the plot
@@ -178,8 +177,8 @@ def plot_dendrograms(results, c=None, display_labels='cluster', inp=None, titles
                             labelbottom='off')
             # plot loadings as heatmap below
             ax2 = fig.add_axes(heatmap_size)
-            sns.heatmap(ordered_loading, ax=ax2, cbar=False, 
-                        cmap=sns.diverging_palette(220, 20, n=100))
+            with sns.diverging_palette(220, 20, n=100):
+                sns.heatmap(ordered_loading, ax=ax2, cbar=False)
             ax2.tick_params(labelsize=figsize[0]*.75)
             # add lines to heatmap to distinguish clusters
             xlim = ax2.get_xlim(); 
@@ -190,8 +189,8 @@ def plot_dendrograms(results, c=None, display_labels='cluster', inp=None, titles
                 ax2.vlines(cluster_breaks[:-1], ylim[0], ylim[1], linestyles='dashed',
                            linewidth=3, colors=[.5,.5,.5])
             elif orientation == 'vertical':
-                step = ylim[0]/len(labels)
-                cluster_breaks = [ylim[1]+i*step for i in np.cumsum(cluster_sizes)]
+                step = max(ylim)/len(labels)
+                cluster_breaks = [ylim[1]-i*step for i in np.cumsum(cluster_sizes)]
                 ax2.hlines(cluster_breaks[:-1], xlim[0], xlim[1], linestyles='dashed',
                            linewidth=2, colors=[.5,.5,.5])
             # change axis properties based on orientation
@@ -209,27 +208,10 @@ def plot_dendrograms(results, c=None, display_labels='cluster', inp=None, titles
                 ax.spines['bottom'].set_visible(False)
                 ax.spines['left'].set_visible(False)
             # set label visibility
-            if display_labels == False or 'cluster':
-                if orientation == 'horizontal':
-                    ax2.tick_params(labelbottom='off')  
-                else:
-                    ax2.tick_params(labelleft='off') 
-            if display_labels == 'cluster':
-                # add labels for each cluster
-                clusters = clustering['labels'][clustering['reorder_vec']]
-                if orientation == 'horizontal':
-                    mid_points = np.array(cluster_breaks) - np.array(cluster_sizes)/2
-                    for i, mid in enumerate(mid_points):
-                        color_index = clusters[int(mid)]
-                        ax2.text(mid, ylim[0]+.5+(1*(i%2==0)), 'Cluster', ha='center',  fontsize=16,
-                                 color=colors[color_index-1])
-                elif orientation == 'vertical':
-                    mid_points = np.array(cluster_breaks) \
-                                    - np.array(cluster_sizes)/2 +.5
-                    for i, mid in enumerate(mid_points):
-                        color_index = clusters[int(mid)]
-                        ax2.text((xlim[1]-xlim[0])/2*3.5, mid, 'Cluster', ha='center',  fontsize=16,
-                                 color=colors[color_index-1])
+            if orientation == 'horizontal':
+                ax2.tick_params(labelbottom='off')  
+            else:
+                ax2.tick_params(labelleft='off') 
         
         if plot_dir is not None:
             save_figure(fig, path.join(plot_dir, 
@@ -428,12 +410,14 @@ def plot_cluster_factors(results, c,  ext='png', plot_dir=None):
         
             
 def plot_HCA(results, plot_dir=None, verbose=False, ext='png'):
-    c = results.EFA.get_metric_cs()['c_metric-BIC']
+    c = results.EFA.num_factors
     # plots, woo
     if verbose: print("Plotting dendrogram heatmaps")
-    plot_clusterings(results, plot_dir=plot_dir, verbose=verbose, ext=ext)
+    plot_clusterings(results, inp='data', plot_dir=plot_dir, verbose=verbose, ext=ext)
+    plot_clusterings(results, inp='EFA%s' % c, plot_dir=plot_dir, verbose=verbose, ext=ext)
     if verbose: print("Plotting dendrograms")
-    plot_dendrograms(results, c, plot_dir=plot_dir, ext=ext)
+    plot_dendrograms(results, c, inp='data', plot_dir=plot_dir, ext=ext)
+    plot_dendrograms(results, c, inp='EFA%s' % c, plot_dir=plot_dir, ext=ext)
     if verbose: print("Plotting clustering similarity")
     plot_clustering_similarity(results, plot_dir=plot_dir, verbose=verbose, ext=ext)
     if verbose: print("Plotting cluster polar plots")
