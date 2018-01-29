@@ -12,9 +12,10 @@ import sys
 from expanalysis.experiments.ddm_utils import not_regex, unique, parallel_sample
 
 task = sys.argv[1]
-input_dir = sys.argv[2]
-subset = sys.argv[3]
-output_dir = sys.argv[4]
+sub_id = sys.argv[2]
+input_dir = sys.argv[3]
+subset = sys.argv[4]
+output_dir = sys.argv[5]
 
 def fit_HDDM(df, 
              response_col = 'correct', 
@@ -361,7 +362,7 @@ def twobytwo_HDDM(df, outfile=None, **kwargs):
 
 def get_HDDM_fun(task=None, outfile=None, **kwargs):
     if outfile is None:
-        outfile=task+'_'+ subset + '_flat'
+        outfile=task + '_' + subset + '_' + sub_id + '_flat'
     hddm_fun_dict = \
     {
         'adaptive_n_back': lambda df: fit_HDDM(df.query('exp_stage == "adaptive"'), 
@@ -404,23 +405,21 @@ def get_HDDM_fun(task=None, outfile=None, **kwargs):
 #read data in
 all_data = pandas.read_csv(input_dir+task+'.csv.gz', compression='gzip')
 
-#loop through all subjsect individually
-all_subs_dvs = {}
+#extract subject data
+sub_data = all_data.loc[all_data['worker_id'] == sub_id]
+
+#fit model to subject data
 func = get_HDDM_fun(task=task)
-for i in range(all_data.worker_id.unique().shape[0]):
-    sub_id = all_data.worker_id.unique()[i]
-    df = all_data.loc[all_data['worker_id'] == sub_id]
-    sub_dvs = func(df)
-    all_subs_dvs.update(sub_dvs)
+sub_dvs = func(sub_data)
 
 #spread dictionary to df    
-all_subs_dvs = pandas.DataFrame.from_dict({(i,j): all_subs_dvs[i][j] 
-                           for i in all_subs_dvs.keys() 
-                           for j in all_subs_dvs[i].keys()},
+sub_dvs = pandas.DataFrame.from_dict({(i,j): sub_dvs[i][j] 
+                           for i in sub_dvs.keys() 
+                           for j in sub_dvs[i].keys()},
                        orient='index').drop(['valence'], axis=1).unstack()
 
 #drop extra column level
-all_subs_dvs.columns = all_subs_dvs.columns.droplevel()
+sub_dvs.columns = sub_dvs.columns.droplevel()
 
 #save output
-all_subs_dvs.to_csv(output_dir+task+ '_'+ subset +'_hddm_flat.csv')
+sub_dvs.to_csv(output_dir + task + '_' + subset + '_' + sub_id + '_hddm_flat.csv')
