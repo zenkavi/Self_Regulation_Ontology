@@ -361,7 +361,7 @@ def twobytwo_HDDM(df, outfile=None, **kwargs):
 
 def get_HDDM_fun(task=None, outfile=None, **kwargs):
     if outfile is None:
-        outfile=task+'_flat'
+        outfile=task+'_'+ subset + '_flat'
     hddm_fun_dict = \
     {
         'adaptive_n_back': lambda df: fit_HDDM(df.query('exp_stage == "adaptive"'), 
@@ -423,4 +423,4 @@ all_subs_dvs = pandas.DataFrame.from_dict({(i,j): all_subs_dvs[i][j]
 all_subs_dvs.columns = all_subs_dvs.columns.droplevel()
 
 #save output
-all_subs_dvs.to_csv(output_dir+task+'_hddm_flat_'+subset+'.csv')
+all_subs_dvs.to_csv(output_dir+task+ '_'+ subset +'_hddm_flat.csv')
