@@ -120,7 +120,7 @@ def fit_HDDM(df,
 
     if outfile:
         empty_path = outfile + '_empty.model'
-        m.save(empty_path)
+        m.save(output_dir+empty_path)
     # run model
     if parallel==True:
         if num_cores is None:
@@ -143,7 +143,7 @@ def fit_HDDM(df,
     else:
         # find a good starting point which helps with the convergence.
         m.find_starting_values()
-        m.sample(samples, burn=burn, thin=thin, dbname=db, db='pickle')
+        m.sample(samples, burn=burn, thin=thin, dbname=output_dir+db, db='pickle')
     if outfile:
         try:
             if parallel==True:
@@ -152,7 +152,7 @@ def fit_HDDM(df,
                     save_loc = os.path.join(parallel_dir, base)
                     pickle.dump(sub_m, open(save_loc, 'wb'))
             else:
-                pickle.dump(m, open(outfile + '.model', 'wb'))
+                pickle.dump(m, open(output_dir + outfile + '.model', 'wb'))
         except Exception:
             print('Saving model failed')
             
