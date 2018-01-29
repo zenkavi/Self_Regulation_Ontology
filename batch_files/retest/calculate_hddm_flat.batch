@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH --job-name=calculate_hddm_flat_{EXP_ID}_{SUBSET}
-#SBATCH --output=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/.out/calculate_hddm_flat_{EXP_ID}_{SUBSET}.job.out
-#SBATCH --error=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/.err/calculate_hddm_flat_{EXP_ID}_{SUBSET}.job.err
-#SBATCH --time=168:00:00
+#SBATCH --job-name=calculate_hddm_flat_{EXP_ID}_{SUBSET}_{SUB_ID}
+#SBATCH --output=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/.out/calculate_hddm_flat_{EXP_ID}_{SUBSET}_{SUB_ID}.job.out
+#SBATCH --error=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/.err/calculate_hddm_flat_{EXP_ID}_{SUBSET}_{SUB_ID}.job.err
+#SBATCH --time=4:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=4
@@ -11,4 +11,4 @@
 #SBATCH --mail-user=zenkavi@stanford.edu
 source /home/zenkavi/.bash_profile
 source activate SRO
-python calculate_hddm_flat.py {EXP_ID} {DATA_PATH} {SUBSET} /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/
+python calculate_hddm_flat.py {EXP_ID} {SUB_ID} {DATA_PATH} {SUBSET} /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/
