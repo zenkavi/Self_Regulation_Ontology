@@ -5,8 +5,9 @@ from utils import (
         create_factor_tree, distcorr,  find_optimal_components, 
         get_loadings, get_scores_from_subset, get_top_factors, 
         hdbscan_cluster, hierarchical_cluster, 
-        quantify_lower_nesting, run_EFA_prediction
+        quantify_lower_nesting
         )
+from prediction_utils import run_EFA_prediction
 import glob
 from os import makedirs, path
 import pandas as pd
@@ -376,20 +377,8 @@ class HCA_Analysis():
         labels = cluster['clustered_df'].index
         reorder_vec = cluster['reorder_vec']
         cluster_index = cluster['labels'][reorder_vec]
-        # reindex so the clusters are in order based on their proximity
-        # in the dendrogram
-        cluster_reindex = []
-        last_group = 1
-        for i in cluster_index:
-            if len(cluster_reindex) == 0:
-                cluster_reindex.append(1)
-            elif i == last_group:
-                cluster_reindex.append(cluster_reindex[-1])
-            else:
-                cluster_reindex.append(cluster_reindex[-1]+1)
-            last_group = i
-        cluster_labels = [[labels[i] for i,index in enumerate(cluster_reindex) \
-                           if index == j] for j in np.unique(cluster_reindex)]
+        cluster_labels = [[labels[i] for i,index in enumerate(cluster_index) \
+                           if index == j] for j in np.unique(cluster_index)]
         return cluster_labels
     
     def build_graphs(self, inp, graph_data):

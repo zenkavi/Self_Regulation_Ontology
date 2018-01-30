@@ -36,8 +36,6 @@ subsets = [{'name': 'task',
             'regex': '.',
             'factor_names': []}]
 
-           
-
 ID = None # ID will be created
 results = None
 # create/run results for each subset

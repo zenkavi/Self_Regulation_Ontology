@@ -7,7 +7,7 @@ from utils import (get_factor_groups, plot_factor_tree, get_top_factors,
         )
 import matplotlib.pyplot as plt
 import numpy as np
-from os import path
+from os import makedirs, path
 import pandas as pd
 import seaborn as sns
 from selfregulation.utils.r_to_py_utils import get_attr
@@ -92,20 +92,21 @@ def plot_factor_correlation(results, c, figsize=12, dpi=300, ext='png', plot_dir
     ax1 = f.add_axes([0,0,.75,.75])
     sns.heatmap(phi, ax=ax1, cbar=False, 
                 cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
+    plt.title('1st-Level Factor Correlations')
     # get higher order correlations
     if 'factor2_tree' in EFA.results.keys() and c in EFA.results['factor2_tree'].keys():
         higher_loading = EFA.results['factor2_tree'][c].iloc[reorder_vec]
-        higher_loading.columns = ['HF%s' % int(i) for i in higher_loading.columns]
         ax2 = f.add_axes([.8,0,.05*higher_loading.shape[1],.75])
         sns.heatmap(higher_loading, ax=ax2, cbar=False,
                     yticklabels=False,
                     cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
+        plt.ylabel('2nd-Order Factor Loadings', rotation=-90, labelpad=20)
+        ax2.yaxis.set_label_position('right')
     if plot_dir:
         filename = 'factor_correlations_EFA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
         
-    
     
 def plot_bar_factors(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):
     """ Plots factor analytic results as bars
@@ -129,36 +130,30 @@ def plot_bar_factors(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):
         flattened_factor_order += sublist
         
     n_factors = len(sorted_vars)
-    f = plt.figure(figsize=(n_factors*(figsize/12), figsize))
-    axes = []
-    for i in range(n_factors):
-        axes.append(plt.subplot2grid((4, n_factors), (0,i), rowspan=3))
-        axes.append(plt.subplot2grid((4, n_factors), (3,i), rowspan=1))
-    with sns.plotting_context(font_scale=1.3) and sns.axes_style('white'):
+    f, axes = plt.subplots(1, n_factors, figsize=(n_factors*(figsize/12), figsize))
+    sns.set_style('white')
+    with sns.plotting_context(font_scale=1.3):
         # plot optimal factor breakdown in bar format to better see labels
         for i, (k,v) in list(enumerate(sorted_vars.items())):
-            ax1 = axes[2*i]
-            ax2 = axes[2*i+1]
-            # plot distribution of factors
-            colors = [['r','b'][int(i)] for i in (np.sign(v)+1)/2]
-            abs(v).plot(kind='barh', ax=ax2, color=colors)
+            ax1 = axes[i]
             # plot actual values
+            colors = sns.diverging_palette(220,15,n=2)
             ordered_v = v[flattened_factor_order]
-            ordered_colors = [['r','b'][int(i)] for i in (np.sign(ordered_v)+1)/2]
-            abs(ordered_v).plot(kind='barh', ax=ax1, color=ordered_colors)
+            ordered_colors = [colors[int(i)] for i in (np.sign(ordered_v)+1)/2]
+            abs(ordered_v).plot(kind='barh', ax=ax1, color=ordered_colors,
+                                width=.7)
             # draw lines separating groups
-            for y_val in np.cumsum([len(i[1]) for i in grouping]):
+            for y_val in np.cumsum([len(i[1]) for i in grouping])[:-1]:
                 ax1.hlines(y_val-.5, 0, 1.1, lw=2, color='grey', linestyle='dashed')
             # set axes properties
-            ax1.set_xlim(0,1.1); ax2.set_xlim(0,1.1)
-            ax1.set_yticklabels(''); ax2.set_yticklabels('')
+            ax1.set_xlim(0,1.1); 
+            ax1.set_yticklabels(''); 
             ax1.set_xticklabels('')
-            ax2.set_xticklabels('')
             labels = ax1.get_yticklabels()
             locs = ax1.yaxis.get_ticklocs()
             # add factor label to plot
             DV_fontsize = figsize/(len(labels)//2)*45
-            ax1.set_title(k, ha='center', fontsize=DV_fontsize*1.5)
+            ax1.set_title(k, ha='center', fontsize=DV_fontsize*1.5, y=1+(i%2)*.03)
             # add labels of measures to top and bottom
             if i == len(sorted_vars)-1:
                 ax_copy = ax1.twinx()
@@ -170,8 +165,6 @@ def plot_bar_factors(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):
                 ax1.set_yticks(locs[1::2])
                 ax1.set_yticklabels(labels[1::2], 
                                     fontsize=DV_fontsize)
-                ax2.set_ylabel('Factor Loading Distribution', 
-                              fontsize=DV_fontsize*1.5)
             else:
                 ax1.set_yticklabels('')
     if plot_dir:
@@ -227,43 +220,32 @@ def plot_task_factors(results, c, task_sublists=None, figsize=10,
     loadings = EFA.get_loading(c)
     max_loading = abs(loadings).max().max()
     tasks = np.unique([i.split('.')[0] for i in loadings.index])
-    ncols = 6
     
     if task_sublists is None:
         task_sublists = {'surveys': [t for t in tasks if 'survey' in t],
                         'tasks': [t for t in tasks if 'survey' not in t]}
 
     for sublist_name, task_sublist in task_sublists.items():
-        nrows = ceil(len(task_sublist)/ncols)
-        adjusted_cols = min(ncols, len(task_sublist))
-        # plot loading distributions. Each measure is scaled so absolute
-        # comparisons are impossible. Only the distributions can be compared
-        f, axes = plt.subplots(nrows, adjusted_cols, 
-                               figsize=(adjusted_cols*figsize,nrows*(figsize*.8+nrows)),
-                               subplot_kw={'projection': 'polar'})
-        axes = f.get_axes()
         for i, task in enumerate(task_sublist):
+            # plot loading distributions. Each measure is scaled so absolute
+            # comparisons are impossible. Only the distributions can be compared
+            f, ax = plt.subplots(1,1, subplot_kw={'projection': 'polar'})
             task_loadings = loadings.filter(regex='^%s' % task, axis=0)
             # add entropy to index
             task_entropies = entropies[c][task_loadings.index]
             task_loadings.index = [i+'(%.2f)' % task_entropies.loc[i] for i in task_loadings.index]
             # plot
-            if i%(ncols*2)==0 or i%(ncols*2)==5:
-                visualize_task_factors(task_loadings, axes[i], ymax=max_loading,
-                                       xticklabels=True)
-            else:
-                visualize_task_factors(task_loadings, axes[i], ymax=max_loading,
-                                       xticklabels=False)
-            axes[i].set_title(' '.join(task.split('_')), 
+            visualize_task_factors(task_loadings, ax, ymax=max_loading,
+                                   xticklabels=True)
+            ax.set_title(' '.join(task.split('_')), 
                               y=1.14, fontsize=25)
             
-        for j in range(i+1, len(axes)):
-            axes[j].set_visible(False)
-        plt.subplots_adjust(hspace=.5, wspace=.5)
-        filename = 'factor_DVdistributions_EFA%s_subset-%s.%s' % (c, sublist_name, ext)
-        if plot_dir is not None:
-            save_figure(f, path.join(plot_dir, filename),
-                        {'bbox_inches': 'tight', 'dpi': dpi})
+            if plot_dir is not None:
+                function_directory = 'factor_DVdistributions_EFA%s_subset-%s' % (c, sublist_name)
+                makedirs(path.join(plot_dir, function_directory), exist_ok=True)
+                filename = '%s.%s' % (task, ext)
+                save_figure(f, path.join(plot_dir, function_directory, filename),
+                            {'bbox_inches': 'tight', 'dpi': dpi})
             
 def plot_entropies(results, dpi=300, figsize=(20,8), ext='png', plot_dir=None): 
     """ Plots factor analytic results as bars
@@ -314,4 +296,4 @@ def plot_EFA(results, plot_dir=None, verbose=False, dpi=300, ext='png',
     if verbose: print("Plotting task factors")
     plot_task_factors(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)
     if verbose: print("Plotting factor correlations")
-    plot_factor_correlation(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)
+    plot_factor_correlation(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext)

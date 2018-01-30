@@ -11,7 +11,7 @@ import os
 import pandas as pd
 import pickle
 import seaborn as sns
-from scipy.cluster.hierarchy import leaves_list, linkage, cut_tree
+from scipy.cluster.hierarchy import leaves_list, linkage
 from scipy.spatial.distance import pdist, squareform
 from selfregulation.utils.plot_utils import dendroheatmap
 from selfregulation.utils.r_to_py_utils import psychFA
@@ -22,12 +22,7 @@ from sklearn.metrics import r2_score
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, scale
-# imports for behavior prediction
-import sys
-import importlib
-import traceback
-import selfregulation.prediction.behavpredict as behavpredict
-importlib.reload(behavpredict)
+
 
 def set_seed(seed):
     def seeded_fun_decorator(fun):
@@ -160,6 +155,16 @@ def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None,
     if cluster_kws is None:
         cluster_kws = {'minClusterSize': 1}
     clustering = cutreeHybrid(link, dist_vec, **cluster_kws)
+    # reorder labels based on dendrogram position
+    # reindex so the clusters are in order based on their proximity
+    # in the dendrogram
+    cluster_swap = {}
+    last_group = 1
+    for i in clustering['labels'][reorder_vec]:
+        if i not in cluster_swap.keys():
+            cluster_swap[i] = last_group
+            last_group += 1
+    cluster_reindex = np.array([cluster_swap[i] for i in clustering['labels']])
     if plot == True:
         if plot_kws is None:
             plot_kws = {}
@@ -170,7 +175,7 @@ def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None,
             'clustered_df': clustered_df,
             'reorder_vec': reorder_vec,
             'clustering': clustering,
-            'labels': clustering['labels']}
+            'labels': cluster_reindex}
 
 
 def hdbscan_cluster(df, compute_dist=True,  pdist_kws=None, 
@@ -631,99 +636,5 @@ def plot_factor_tree(factor_tree, groups=None, filename=None):
 
 
 
-# ****************************************************************************
-# Helper functions for prediction
-# ****************************************************************************
-from sklearn.linear_model import RidgeCV
-from sklearn.pipeline import make_pipeline
-from selfregulation.utils.utils import get_behav_data
 
-def survey_task_prediction(datafile):
-    # assess survey task independence
-    data = get_behav_data(datafile, file='meaningful_variables_imputed.csv')
-    task_data = data.filter(regex=not_regex('survey')+'|cognitive_reflection')
-    survey_data = data.filter(regex= not_regex(not_regex('survey')+'|cognitive_reflection'))
-    
-    pipe = make_pipeline(StandardScaler(),RidgeCV())
-    #fit survey to task and task to survey
-    st_score = np.mean(cross_val_score(pipe, survey_data, scale(task_data), cv=10))
-    ts_score = np.mean(cross_val_score(pipe, task_data, scale(survey_data), cv=10))
-    # without cross validation
-    pipe.fit(survey_data, scale(task_data))
-    st_score_within = pipe.score(survey_data, scale(task_data))
-    pipe.fit(task_data, scale(survey_data))
-    ts_score_within = pipe.score(task_data, scale(survey_data))
-    return {'st_scores_within': st_score_within,
-            'ts_scores_within': ts_score_within,
-            'st_scores_cv': st_score,
-            'ts_scores_cv': ts_score}
-    
-
-def run_EFA_prediction(dataset, factor_scores, output_base, save=True,
-                       verbose=False, classifier='lasso',
-                       shuffle=False, n_jobs=2, imputer="SimpleFill",
-                       smote_threshold=.05, freq_threshold=.1, icc_threshold=.25,
-                       no_baseline_vars=True, singlevar=None):
-    
-    output_dir=os.path.join(output_base,'prediction_outputs')
-    if dataset is 'baseline' or no_baseline_vars:
-        baselinevars=False
-        if verbose:
-            print("turning off inclusion of baseline vars")
-    else:
-        baselinevars=True
-        if verbose:
-            print("including baseline vars in prediction models")
-            
-    # skip several variables because they crash the estimation tool
-    bp=behavpredict.BehavPredict(verbose=verbose,
-                                 dataset=dataset,
-         drop_na_thresh=100,n_jobs=n_jobs,
-         skip_vars=['RetirementPercentStocks',
-         'HowOftenFailedActivitiesDrinking',
-         'HowOftenGuiltRemorseDrinking',
-         'AlcoholHowOften6Drinks'],
-         output_dir=output_dir,shuffle=shuffle,
-         classifier=classifier,
-         add_baseline_vars=baselinevars,
-         smote_cutoff=smote_threshold,
-         freq_threshold=freq_threshold,
-         imputer=imputer)
-    
-    bp.load_demog_data()
-    bp.get_demogdata_vartypes()
-    bp.remove_lowfreq_vars()
-    bp.binarize_ZI_demog_vars()
-    bp.behavdata = factor_scores
-    #bp.filter_by_icc(icc_threshold)
-    bp.get_joint_datasets()
-    
-    if not singlevar:
-        vars_to_test=[v for v in bp.demogdata.columns if not v in bp.skip_vars]
-    else:
-        vars_to_test=singlevar
-    
-    vars_to_test = ['BMI', 'AlcoholHowManyDrinksDay', 'SmokeEveryDay', 'CannabisHowOften', 'DaysLostLastMonth']
-    for v in vars_to_test:
-        bp.lambda_optim=None
-        print('RUNNING:',v,bp.data_models[v],dataset)
-        try:
-            bp.scores[v],bp.importances[v]=bp.run_crossvalidation(v,nlambda=100)
-            bp.scores_insample[v],_=bp.run_lm(v,nlambda=100)
-            # fit model with no regularization
-            if bp.data_models[v]=='binary':
-                bp.lambda_optim=[0]
-            else:
-                bp.lambda_optim=[0,0]
-            bp.scores_insample_unbiased[v],_=bp.run_lm(v,nlambda=100)
-        except:
-            e = sys.exc_info()
-            print('error on',v,':',e)
-            bp.errors[v]=traceback.format_tb(e[2])
-    if save == True:
-        if singlevar:
-            bp.write_data(vars_to_test,listvar=True)
-        else:
-            bp.write_data(vars_to_test)
-    return bp
 

@@ -1,5 +1,4 @@
 # imports
-import argparse
 from utils import abs_pdist, save_figure, set_seed, plot_loadings
 from itertools import combinations
 from math import ceil
@@ -14,16 +13,6 @@ from selfregulation.utils.plot_utils import dendroheatmap, get_dendrogram_color_
 from sklearn.manifold import MDS
 from sklearn.metrics import adjusted_mutual_info_score, adjusted_rand_score
 from sklearn.preprocessing import MinMaxScaler, scale
-
-# parse arguments
-parser = argparse.ArgumentParser()
-parser.add_argument('-rerun', action='store_true')
-parser.add_argument('-no_plot', action='store_true')
-args = parser.parse_args()
-
-rerun = args.rerun
-plot_on = not args.no_plot
-
 
 def plot_clusterings(results, plot_dir=None, inp='data', figsize=(50,50),
                      titles=None, show_clusters=True, verbose=False, ext='png'):    
@@ -51,9 +40,6 @@ def plot_clusterings(results, plot_dir=None, inp='data', figsize=(50,50),
                                 figsize=figsize, title=title,
                                 filename = filename)
             
-    
-    
-    
 def plot_clustering_similarity(results, plot_dir=None, verbose=False, ext='png'):  
     HCA = results.HCA
     # get all clustering solutions
