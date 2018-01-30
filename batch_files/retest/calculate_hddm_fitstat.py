@@ -8,14 +8,16 @@ import sys
 
 
 model_dir = sys.argv[1]
-model = sys.argv[2]
+task = sys.argv[2]
 sub_id_dir = sys.argv[3]
 out_dir = sys.argv[4]
 sample = sys.argv[5]
+parallel = sys.argv[6]
 
 os.chdir(model_dir)
 
-m = pickle.load(open(model_dir+model, 'rb'))
+#if parallel strip task name and read from task_parallel_output directory
+m = pickle.load(open(model_dir+task, 'rb'))
 
 ddm_task_lookup = {'adaptive_n_back_base.model':'adaptive_n_back',
                    'ANT_cue_condition.model': 'attention_network_task',
