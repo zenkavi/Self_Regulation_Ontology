@@ -10,6 +10,7 @@ import numpy as np
 from os import path
 import pandas as pd
 import seaborn as sns
+from selfregulation.utils.r_to_py_utils import get_attr
 sns.set_context('notebook', font_scale=1.4)
 sns.set_palette("Set1", 8, .75)
 
@@ -78,6 +79,33 @@ def plot_nesting(results, thresh=.5, dpi=300, figsize=12, ext='png', plot_dir=No
         filename = 'lower_nesting_heatmap.%s' % ext
         save_figure(fig, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
+ 
+def plot_factor_correlation(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):
+    EFA = results.EFA
+    loading = EFA.get_loading(c)
+    # get factor correlation matrix
+    reorder_vec = EFA._get_factor_reorder(c)
+    phi = get_attr(EFA.results['factor_tree_Rout'][c],'Phi')
+    phi = pd.DataFrame(phi, columns=loading.columns, index=loading.columns)
+    phi = phi.iloc[reorder_vec, reorder_vec]
+    f = plt.figure(figsize=(figsize*5/4, figsize))
+    ax1 = f.add_axes([0,0,.75,.75])
+    sns.heatmap(phi, ax=ax1, cbar=False, 
+                cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
+    # get higher order correlations
+    if 'factor2_tree' in EFA.results.keys() and c in EFA.results['factor2_tree'].keys():
+        higher_loading = EFA.results['factor2_tree'][c].iloc[reorder_vec]
+        higher_loading.columns = ['HF%s' % int(i) for i in higher_loading.columns]
+        ax2 = f.add_axes([.8,0,.05*higher_loading.shape[1],.75])
+        sns.heatmap(higher_loading, ax=ax2, cbar=False,
+                    yticklabels=False,
+                    cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
+    if plot_dir:
+        filename = 'factor_correlations_EFA%s.%s' % (c, ext)
+        save_figure(f, path.join(plot_dir, filename), 
+                    {'bbox_inches': 'tight', 'dpi': dpi})
+        
+    
     
 def plot_bar_factors(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):
     """ Plots factor analytic results as bars
@@ -92,7 +120,7 @@ def plot_bar_factors(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):
         plot_dir: the directory to save the figure. If none, do not save
     """
     EFA = results.EFA
-    loadings = EFA.results['factor_tree'][c]
+    loadings = EFA.get_loading(c)
     sorted_vars = get_top_factors(loadings) # sort by loading
             
     grouping = get_factor_groups(loadings)
@@ -101,11 +129,11 @@ def plot_bar_factors(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):
         flattened_factor_order += sublist
         
     n_factors = len(sorted_vars)
-    f = plt.figure(figsize=(figsize, n_factors*(figsize/10)))
+    f = plt.figure(figsize=(n_factors*(figsize/12), figsize))
     axes = []
     for i in range(n_factors):
-        axes.append(plt.subplot2grid((n_factors, 4), (i,0), colspan=3))
-        axes.append(plt.subplot2grid((n_factors, 4), (i,3), colspan=1))
+        axes.append(plt.subplot2grid((4, n_factors), (0,i), rowspan=3))
+        axes.append(plt.subplot2grid((4, n_factors), (3,i), rowspan=1))
     with sns.plotting_context(font_scale=1.3) and sns.axes_style('white'):
         # plot optimal factor breakdown in bar format to better see labels
         for i, (k,v) in list(enumerate(sorted_vars.items())):
@@ -113,40 +141,39 @@ def plot_bar_factors(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):
             ax2 = axes[2*i+1]
             # plot distribution of factors
             colors = [['r','b'][int(i)] for i in (np.sign(v)+1)/2]
-            abs(v).plot(kind='bar', ax=ax2, color=colors)
+            abs(v).plot(kind='barh', ax=ax2, color=colors)
             # plot actual values
             ordered_v = v[flattened_factor_order]
             ordered_colors = [['r','b'][int(i)] for i in (np.sign(ordered_v)+1)/2]
-            abs(ordered_v).plot(kind='bar', ax=ax1, color=ordered_colors)
+            abs(ordered_v).plot(kind='barh', ax=ax1, color=ordered_colors)
             # draw lines separating groups
-            for x_val in np.cumsum([len(i[1]) for i in grouping]):
-                ax1.vlines(x_val-.5, 0, 1.1, lw=2, color='grey', linestyle='dashed')
+            for y_val in np.cumsum([len(i[1]) for i in grouping]):
+                ax1.hlines(y_val-.5, 0, 1.1, lw=2, color='grey', linestyle='dashed')
             # set axes properties
-            ax1.set_ylim(0,1.1); ax2.set_ylim(0,1.1)
+            ax1.set_xlim(0,1.1); ax2.set_xlim(0,1.1)
             ax1.set_yticklabels(''); ax2.set_yticklabels('')
+            ax1.set_xticklabels('')
             ax2.set_xticklabels('')
-            labels = ax1.get_xticklabels()
-            locs = ax1.xaxis.get_ticklocs()
+            labels = ax1.get_yticklabels()
+            locs = ax1.yaxis.get_ticklocs()
             # add factor label to plot
             DV_fontsize = figsize/(len(labels)//2)*45
-            ax1.set_ylabel(k, rotation=0, ha='right', fontsize=DV_fontsize*1.5)
+            ax1.set_title(k, ha='center', fontsize=DV_fontsize*1.5)
             # add labels of measures to top and bottom
-            if i == 0:
-                ax_copy = ax1.twiny()
-                ax_copy.set_xticks(locs[::2])
-                ax_copy.set_xticklabels(labels[::2], 
-                                        rotation=90,
-                                        fontsize=DV_fontsize)
-                ax2.set_title('Factor Loading Distribution', 
-                              fontsize=DV_fontsize*1.5)
             if i == len(sorted_vars)-1:
+                ax_copy = ax1.twinx()
+                ax_copy.set_yticks(locs[::2])
+                ax_copy.set_yticklabels(labels[::2], 
+                                        fontsize=DV_fontsize)
+            if i == 0:
                 # and other half on bottom
-                ax1.set_xticks(locs[1::2])
-                ax1.set_xticklabels(labels[1::2], 
-                                    rotation=90, 
+                ax1.set_yticks(locs[1::2])
+                ax1.set_yticklabels(labels[1::2], 
                                     fontsize=DV_fontsize)
+                ax2.set_ylabel('Factor Loading Distribution', 
+                              fontsize=DV_fontsize*1.5)
             else:
-                ax1.set_xticklabels('')
+                ax1.set_yticklabels('')
     if plot_dir:
         filename = 'factor_bars_EFA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
@@ -166,7 +193,7 @@ def plot_polar_factors(results, c, color_by_group=True,
         plot_dir: the directory to save the figure. If none, do not save
     """
     EFA = results.EFA
-    loadings = EFA.results['factor_tree'][c]
+    loadings = EFA.get_loading(c)
     groups = get_factor_groups(loadings)    
     # plot polar plot factor visualization for metric loadings
     filename =  'factor_polar_EFA%s.%s' % (c, ext)
@@ -197,7 +224,7 @@ def plot_task_factors(results, c, task_sublists=None, figsize=10,
     EFA = results.EFA
     # plot task factor loading
     entropies = EFA.results['entropies']
-    loadings = EFA.results['factor_tree'][c]
+    loadings = EFA.get_loading(c)
     max_loading = abs(loadings).max().max()
     tasks = np.unique([i.split('.')[0] for i in loadings.index])
     ncols = 6
@@ -286,3 +313,5 @@ def plot_EFA(results, plot_dir=None, verbose=False, dpi=300, ext='png',
     plot_polar_factors(results, c=c, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting task factors")
     plot_task_factors(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)
+    if verbose: print("Plotting factor correlations")
+    plot_factor_correlation(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)

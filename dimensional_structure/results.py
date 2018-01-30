@@ -13,6 +13,8 @@ import pandas as pd
 import numpy as np
 import pickle
 import random
+from scipy.cluster.hierarchy import leaves_list, linkage
+from scipy.spatial.distance import squareform
 from scipy.stats import entropy
 from selfregulation.utils.graph_utils import  (get_adj, Graph_Analysis)
 from selfregulation.utils.utils import get_behav_data, get_info
@@ -35,6 +37,10 @@ class EFA_Analysis:
             self.data_no_impute = data_no_impute
         # global variables to hold certain aspects of the analysis
         self.num_factors = 1
+        self.results['factor_tree'] = {}
+        self.results['factor_tree_Rout'] = {}
+        self.results['factor2_tree'] = {}
+        self.results['factor2_tree_Rout'] = {}
     
     # private methods
     def _get_attr(self, attribute, c=None):
@@ -49,6 +55,12 @@ class EFA_Analysis:
         rejected = loading.index[~over_thresh]
         return loading.loc[over_thresh,:], rejected
     
+    def _get_factor_reorder(self, c):
+        # reorder factors based on correlation matrix
+        phi=get_attr(self.results['factor_tree_Rout'][c],'Phi')
+        new_order = list(leaves_list(linkage(squareform(np.round(1-phi,3)))))
+        return new_order[::-1] # reversing because it works better for task EFA
+            
     # public methods
     def adequacy_test(self, verbose=False):
         """ Determine whether data is adequate for EFA """
@@ -110,6 +122,27 @@ class EFA_Analysis:
         if verbose:
                 print('Best Components: ', best_cs)
     
+    def get_higher_order_factors(self, c=None):
+        """ Return higher order EFA """
+        if c is None:
+            c = self.num_factors
+            print('# of components not specified, using BIC determined #')
+        if ('factor_tree' in self.results.keys() and 
+            c in self.results['factor_tree_Rout'].keys()):
+            # get factor correlation matrix
+            phi = pd.DataFrame(get_attr(self.results['factor_tree_Rout'][c], 'Phi'))
+            n_obs = self.data.shape[0]
+            labels = list(self.results['factor_tree'][c].columns)
+            BIC_c, BICs = find_optimal_components(phi, 
+                                                  metric='BIC', 
+                                                  nobs=n_obs)
+            Rout, higher_order_out = psychFA(phi, BIC_c, nobs=n_obs)
+            loadings = get_loadings(higher_order_out, labels)
+            self.results['factor2_tree'][c] = loadings
+            self.results['factor2_tree_Rout'][c] = Rout
+        else:
+            print('No %s factor solution computed yet!' % c)
+            
     def get_loading(self, c=None):
         """ Return the loading for an EFA solution at the specified c """
         if c is None:
@@ -119,6 +152,7 @@ class EFA_Analysis:
             c in self.results['factor_tree'].keys()):
             return self.results['factor_tree'][c]
         else:
+            print('No %s factor solution computed yet! Computing...' % c)
             fa, output = psychFA(self.data, c, method='ml')
             loadings = get_loadings(output, labels=self.data.columns)
             self.results['factor_tree'][c] = loadings
@@ -222,14 +256,15 @@ class EFA_Analysis:
             c = self.num_factors
             print('# of components not specified, using BIC determined #')
         tmp = get_top_factors(self.get_loading(c), n=n, verbose=True)
-        
-    def verify_factor_solution(self):
-        fa, output = psychFA(self.data, 10)
-        scores = output['scores'] # factor scores per subjects derived from psychFA
-        scaled_data = scale(self.data)
-        redone_scores = scaled_data.dot(output['weights'])
-        redone_score_diff = np.mean(scores-redone_scores)
-        assert(redone_score_diff < 1e-5)
+      
+    def reorder_factors(self, mat):
+        c = mat.shape[1]
+        reorder_vec = self._get_factor_reorder(c)
+        if type(mat) == pd.core.frame.DataFrame:
+            mat = mat.iloc[:, reorder_vec]
+        else:
+            mat = mat[reorder_vec][:, reorder_vec]
+        return mat
     
     def run(self, loading_thresh=None, verbose=False):
         # check adequacy
@@ -245,16 +280,27 @@ class EFA_Analysis:
             
         # create factor tree
         if verbose: print('Creating Factor Tree')
-        self.create_factor_tree(self.num_factors, self.num_factors)
+        self.get_loading(c=self.num_factors)
         # optional threshold
         if loading_thresh is not None:
             for c, loading in self.results['factor_tree'].items():
                 thresh_loading = self._thresh_loading(loading, loading_thresh)
                 self.results['factor_tree'][c], rejected = thresh_loading
+        # get higher level factor solution
+        if verbose: print('Determining Higher Order Factors')
+        self.get_higher_order_factors()
         # quantify lower nesting
         self.results['lower_nesting'] = quantify_lower_nesting(self.results['factor_tree'])
         # get entropies
         self.get_factor_entropies()
+    
+    def verify_factor_solution(self):
+        fa, output = psychFA(self.data, 10)
+        scores = output['scores'] # factor scores per subjects derived from psychFA
+        scaled_data = scale(self.data)
+        redone_scores = scaled_data.dot(output['weights'])
+        redone_score_diff = np.mean(scores-redone_scores)
+        assert(redone_score_diff < 1e-5)
         
 class HDBScan_Analysis():
     """ Runs Hierarchical Clustering Analysis """

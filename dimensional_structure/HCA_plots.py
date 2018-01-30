@@ -135,7 +135,7 @@ def plot_dendrograms(results, c=None,  inp=None, titles=None,
     subset = results.ID.split('_')[0]
     HCA = results.HCA
     EFA = results.EFA
-    loading = EFA.get_loading(c)
+    loading = EFA.reorder_factors(EFA.get_loading(c))
     # get all clustering solutions
     if inp is None:
         inp = ''
@@ -177,9 +177,8 @@ def plot_dendrograms(results, c=None,  inp=None, titles=None,
                             labelbottom='off')
             # plot loadings as heatmap below
             ax2 = fig.add_axes(heatmap_size)
-            with sns.diverging_palette(220, 20, n=100):
-                sns.heatmap(ordered_loading, ax=ax2, cbar=False)
-            ax2.tick_params(labelsize=figsize[0]*.75)
+            sns.heatmap(ordered_loading, ax=ax2, cbar=False,
+                        cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
             # add lines to heatmap to distinguish clusters
             xlim = ax2.get_xlim(); 
             ylim = ax2.get_ylim()
@@ -195,7 +194,7 @@ def plot_dendrograms(results, c=None,  inp=None, titles=None,
                            linewidth=2, colors=[.5,.5,.5])
             # change axis properties based on orientation
             if orientation == 'horizontal':
-                ax2.tick_params(labelsize=figsize[0]*12/10)
+                ax2.tick_params(labelsize=figsize[0]*.8)
             elif orientation == 'vertical':
                 ax1.invert_yaxis()
                 ax2.tick_params(labelsize=figsize[1]*12/10)
@@ -362,7 +361,7 @@ def visualize_importance(importance, ax, xticklabels=True,
     if legend:
         ax.legend(loc='upper center', bbox_to_anchor=(.5,-.15))
         
-def plot_cluster_factors(results, c,  ext='png', plot_dir=None):
+def plot_cluster_factors(results, c, inp='data', ext='png', plot_dir=None):
     """
     Args:
         EFA: EFA_Analysis object
@@ -374,28 +373,29 @@ def plot_cluster_factors(results, c,  ext='png', plot_dir=None):
     HCA = results.HCA
     EFA = results.EFA
     
-    cluster_loadings = HCA.get_cluster_loading(EFA, 'data', c)
+    cluster_loadings = HCA.get_cluster_loading(EFA, inp, c)
     max_loading = max([max(abs(i[1])) for i in cluster_loadings])
     # plot
-    ncols = min(6, len(cluster_loadings))
+    colors = sns.hls_palette(len(cluster_loadings))
+    ncols = min(5, len(cluster_loadings))
     nrows = ceil(len(cluster_loadings)/ncols)
     f, axes = plt.subplots(nrows, ncols, 
                                figsize=(ncols*10,nrows*(8+nrows)),
                                subplot_kw={'projection': 'polar'})
     axes = f.get_axes()
     for i, (measures, loading) in enumerate(cluster_loadings):
-        if i%(ncols*2)==0 or i%(ncols*2)==5:
+        if i%(ncols*2)==0 or i%(ncols*2)==(ncols-1):
             plot_loadings(axes[i], loading, kind='line', offset=.5,
-                  plot_kws={'alpha': .8})
+                  plot_kws={'alpha': .8, 'c': colors[i]})
         else:
             plot_loadings(axes[i], loading, kind='line', offset=.5,
-                  plot_kws={'alpha': .8})
+                  plot_kws={'alpha': .8, 'c': colors[i]})
         axes[i].set_title('Cluster %s' % i, y=1.14, fontsize=25)
-        if i%(ncols*2)==0 or i%(ncols*2)==5:
-            # set tick labels
-            xtick_locs = np.arange(0.0, 2*np.pi, 2*np.pi/len(loading))
-            axes[i].set_xticks(xtick_locs)
-            axes[i].set_xticks(xtick_locs+np.pi/len(loading), minor=True)
+        # set tick labels
+        xtick_locs = np.arange(0.0, 2*np.pi, 2*np.pi/len(loading))
+        axes[i].set_xticks(xtick_locs)
+        axes[i].set_xticks(xtick_locs+np.pi/len(loading), minor=True)
+        if i%(ncols*2)==0 or i%(ncols*2)==(ncols-1):
             axes[i].set_xticklabels(loading.index,  y=.08, minor=True)
             # set ylim
             axes[i].set_ylim(top=max_loading)
@@ -403,7 +403,7 @@ def plot_cluster_factors(results, c,  ext='png', plot_dir=None):
         axes[j].set_visible(False)
     plt.subplots_adjust(hspace=.5, wspace=.5)
     
-    filename = 'clustering_polar_factors_EFA%s.%s' % (c, ext)
+    filename = 'clustering_polar_factors_EFA%s_inp-%s.%s' % (c, inp, ext)
     if plot_dir is not None:
         save_figure(f, path.join(plot_dir, filename),
                     {'bbox_inches': 'tight'})
@@ -421,7 +421,8 @@ def plot_HCA(results, plot_dir=None, verbose=False, ext='png'):
     if verbose: print("Plotting clustering similarity")
     plot_clustering_similarity(results, plot_dir=plot_dir, verbose=verbose, ext=ext)
     if verbose: print("Plotting cluster polar plots")
-    plot_cluster_factors(results, c, plot_dir=plot_dir, ext=ext)
+    plot_cluster_factors(results, c, inp='data', plot_dir=plot_dir, ext=ext)
+    plot_cluster_factors(results, c, inp='EFA%s' % c, plot_dir=plot_dir, ext=ext)
     if verbose: print("Plotting MDS space")
     for metric in ['abs_correlation']:
         MDS_visualization(results, c, plot_dir=plot_dir,

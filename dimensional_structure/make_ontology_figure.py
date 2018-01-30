@@ -7,7 +7,7 @@ import seaborn as sns
 import svgutils.transform as sg
 
 # load data
-datafile = 'Complete_12-05-2017'
+datafile = 'Complete_01-22-2018'
 results = load_results(datafile)
 
 # make histogram plot

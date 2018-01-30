@@ -23,38 +23,44 @@ def get_Rpsych():
     psych = importr('psych')
     return psych
 
-def get_attr(fa, attr, is_mat=True):
+def get_attr(fa, attr):
         try:
             index = list(fa.names).index(attr)
             val = list(fa.items())[index][1]
             if len(val) == 1:
                 val = val[0]
-            if is_mat:
+            if type(val)==rpy2.robjects.vectors.Matrix:
                 val = np.matrix(val)
             return val
         except ValueError:
             print('Did not pass a valid attribute')
             
 def psychFA(data, n_components, return_attrs=['BIC', 'SABIC', 'RMSEA'], 
-            rotate='oblimin', method='ml', verbose=False):
+            rotate='oblimin', method='ml', nobs=0, verbose=False):
     
     psych = importr('psych')
-    fa = psych.fa(data, n_components, rotate=rotate, fm=method,
+    fa = psych.fa(data, n_components, rotate=rotate, fm=method, n_obs=nobs,
                   scores='tenBerge')
-    attr_dic = {}
-    # loadings are roughly equivalent to the correlation between each variable
-    # and the factor scores
-    attr_dic['loadings'] = get_attr(fa, 'loadings')
-    # scores are the the factors
-    attr_dic['scores'] = get_attr(fa, 'scores')
-    # weights are the "mixing matrix" such that the final data is
-    # S * W
-    attr_dic['weights'] = get_attr(fa, 'weights')
-    for attr in return_attrs:
-        attr_dic[attr] = get_attr(fa, attr, is_mat=False)
-    if verbose:
-        print(fa)
-    return fa, attr_dic
+    # ensure the model isn't ill-specified
+    if get_attr(fa, 'dof') > 0:
+        attr_dic = {}
+        # loadings are the weights of the linear combination between factors and variables
+        attr_dic['loadings'] = get_attr(fa, 'loadings')
+        # scores are calculated if raw data is passed, rather than a correlation matrix
+        if 'scores' in fa.names:
+            # scores are the the factors
+            attr_dic['scores'] = get_attr(fa, 'scores')
+            # weights are the "mixing matrix" such that the final data is
+            # S * W
+            attr_dic['weights'] = get_attr(fa, 'weights')
+        for attr in return_attrs:
+            attr_dic[attr] = get_attr(fa, attr)
+        if verbose:
+            print(fa)
+        return fa, attr_dic
+    else:
+        if verbose:  print('Too few DOF to specify model!')
+        return None
     
 def glmer(data, formula):
     base = importr('base')

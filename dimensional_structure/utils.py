@@ -249,7 +249,7 @@ def corr_lower_higher(higher_dim, lower_dim, cross_only=True):
     return corr
 
 # functions to fit and extract factor analysis solutions
-def find_optimal_components(data, minc=1, maxc=50, metric='BIC'):
+def find_optimal_components(data, minc=1, maxc=50, nobs=0, metric='BIC'):
     """
     Fit EFA over a range of components and returns the best c. If metric = CV
     uses sklearn. Otherwise uses psych
@@ -258,12 +258,15 @@ def find_optimal_components(data, minc=1, maxc=50, metric='BIC'):
     """
     steps_since_best = 0 # count steps since last best metric.
     metrics = {}
+    maxc = min(maxc, data.shape[1])
     n_components = range(minc,maxc)
     scaler = StandardScaler()
     if metric != 'CV':
-        scaled_data = scaler.fit_transform(data)
         for c in n_components:
-            fa, output = psychFA(scaled_data, c, method='ml')
+            out = psychFA(data, c, method='ml', nobs=nobs)
+            if out is None:
+                break
+            fa, output = out
             last_metric = output[metric]
             # iterate counter if new metric isn't better than previous metric
             if len(metrics) > 0:

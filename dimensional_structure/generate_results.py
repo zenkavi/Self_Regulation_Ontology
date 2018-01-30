@@ -28,10 +28,10 @@ print('Running Analysis? %s, Plotting? %s' % (['No', 'Yes'][run_analysis],
 datafile = 'Complete_01-22-2018'
 subsets = [{'name': 'task', 
             'regex': 'task',
-            'factor_names': ['Decision Speed', 'DPX', 'WM/IQ', 'ART', 'Stim Processing', 'Strategic Flexibility', 'Discounting']},
+            'factor_names': ['Decision Speed', 'Discounting', 'Stim Processing', 'WM/IQ', 'Response Threshold', 'ART', 'N-Back']},
             {'name': 'survey',
              'regex': 'survey',
-             'factor_names': ['Immediacy', 'Future', 'Sensation Seeking', 'DOSPERT', 'DOSPERT_fin', 'Agreeableness', 'DOSPERT_RP', 'Hedonism', 'Social', 'Emotional Control', 'Eating', 'Mindfulness']},
+             'factor_names':  ['Sensation Seeking', 'Mindfulness', 'Emotional Control', 'Immediacy', 'Future', 'Hedonism', 'Dospert-RP', 'Eating', 'Dospert-ethical', 'Dospert-social', 'Dospert-financial', 'Agreeableness']},
              {'name': 'all', 
             'regex': '.',
             'factor_names': []}]
@@ -41,7 +41,7 @@ subsets = [{'name': 'task',
 ID = None # ID will be created
 results = None
 # create/run results for each subset
-for subset in subsets:
+for subset in subsets[0:2]:
     name = subset['name']
     print('Running Subset: %s' % name)
     if run_analysis == True:
