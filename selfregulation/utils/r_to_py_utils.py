@@ -36,11 +36,15 @@ def get_attr(fa, attr):
             print('Did not pass a valid attribute')
             
 def psychFA(data, n_components, return_attrs=['BIC', 'SABIC', 'RMSEA'], 
-            rotate='oblimin', method='ml', nobs=0, verbose=False):
+            rotate='oblimin', method='ml', nobs=0, n_iter=1, verbose=False):
     
     psych = importr('psych')
-    fa = psych.fa(data, n_components, rotate=rotate, fm=method, n_obs=nobs,
-                  scores='tenBerge')
+    if n_iter==1:
+        fa = psych.fa(data, n_components, rotate=rotate, fm=method, n_obs=nobs,
+                      scores='tenBerge')
+    else:
+        fa = psych.fa_sapa(data, n_components, rotate=rotate, fm=method, n_obs=nobs,
+                           scores='tenBerge', n_iter=n_iter, frac=.9)
     # ensure the model isn't ill-specified
     if get_attr(fa, 'dof') > 0:
         attr_dic = {}

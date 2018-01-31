@@ -42,7 +42,8 @@ class EFA_Analysis:
         self.results['factor_tree_Rout'] = {}
         self.results['factor2_tree'] = {}
         self.results['factor2_tree_Rout'] = {}
-    
+        self.results['factor_tree_boot'] = {}
+        self.results['factor_tree_boot_Rout'] = {}
     # private methods
     def _get_attr(self, attribute, c=None):
         if c is None:
@@ -76,6 +77,24 @@ class EFA_Analysis:
                   ['No', 'Yes'][adequate])
         return adequate, {'Barlett_p': Barlett_p, 'KMO': KMO_MSA}
     
+    def bootstrap_EFA(self, c=None, n_iter=500):
+        if c is None:
+            c = self.num_factors
+            print('# of components not specified, using BIC determined #')
+        loadings = self.get_loading(c)
+        bootstrap_out = psychFA(self.data, c, method='ml', n_iter=n_iter)
+        bootstrap_stats = get_attr(bootstrap_out, 'cis')
+        means = pd.DataFrame(get_attr(bootstrap_stats,'means'), 
+                             index=loadings.index,
+                             columns=loadings.columns)
+        sds = pd.DataFrame(get_attr(bootstrap_stats,'sds'), 
+                             index=loadings.index,
+                             columns=loadings.columns)
+        self.results['factor_tree_boot_Rout'][c] = bootstrap_stats
+        self.results['factor_tree_boot'][c] = {'mean_loading': means,
+                                               'sd_loading': sds}
+        
+        
     def create_factor_tree(self, start=1, end=None):
         if end is None:
             end = max(self.num_factors, start)
@@ -290,8 +309,9 @@ class EFA_Analysis:
         # get higher level factor solution
         if verbose: print('Determining Higher Order Factors')
         self.get_higher_order_factors()
-        # quantify lower nesting
-        self.results['lower_nesting'] = quantify_lower_nesting(self.results['factor_tree'])
+        # boostrap
+        if verbose: print('Bootstrap EFA')
+        self.bootstrap_EFA(n_iter=1000)
         # get entropies
         self.get_factor_entropies()
     
