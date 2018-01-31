@@ -423,3 +423,8 @@ sub_dvs.columns = sub_dvs.columns.droplevel()
 
 #save output
 sub_dvs.to_csv(output_dir + task + '_' + subset + '_' + sub_id + '_hddm_flat.csv')
+
+#Change output and error file names
+os.rename('/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/.out/'+os.environ['SLURM_ARRAY_JOB_ID']+'-'+ os.environ['SLURM_ARRAY_TASK_ID']+'.job.out','/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/.out/calculate_hddm_flat_'+ task + '_' + subset + '_' + sub_id +'.job.out')
+
+os.rename('/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/.err/'+os.environ['SLURM_ARRAY_JOB_ID']+'-'+ os.environ['SLURM_ARRAY_TASK_ID']+'.job.err','/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/.err/calculate_hddm_flat_'+ task + '_' + subset + '_' + sub_id +'.job.err')
