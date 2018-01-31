@@ -90,17 +90,19 @@ def plot_factor_correlation(results, c, figsize=12, dpi=300, ext='png', plot_dir
     phi = phi.iloc[reorder_vec, reorder_vec]
     f = plt.figure(figsize=(figsize*5/4, figsize))
     ax1 = f.add_axes([0,0,.75,.75])
-    sns.heatmap(phi, ax=ax1, cbar=False, 
+    sns.heatmap(phi, ax=ax1, cbar=False, square=True,
                 cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
-    plt.title('1st-Level Factor Correlations')
+    plt.title('%s 1st-Level Factor Correlations' % results.ID.split('_')[0],
+              weight='bold')
     # get higher order correlations
     if 'factor2_tree' in EFA.results.keys() and c in EFA.results['factor2_tree'].keys():
         higher_loading = EFA.results['factor2_tree'][c].iloc[reorder_vec]
-        ax2 = f.add_axes([.8,0,.05*higher_loading.shape[1],.75])
+        ax2 = f.add_axes([.77,0,.05*higher_loading.shape[1],.75])
         sns.heatmap(higher_loading, ax=ax2, cbar=False,
                     yticklabels=False,
                     cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
-        plt.ylabel('2nd-Order Factor Loadings', rotation=-90, labelpad=20)
+        plt.ylabel('2nd-Order Factor Loadings', rotation=-90, labelpad=20,
+                   weight='bold')
         ax2.yaxis.set_label_position('right')
     if plot_dir:
         filename = 'factor_correlations_EFA%s.%s' % (c, ext)
@@ -108,7 +110,7 @@ def plot_factor_correlation(results, c, figsize=12, dpi=300, ext='png', plot_dir
                     {'bbox_inches': 'tight', 'dpi': dpi})
         
     
-def plot_bar_factors(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):
+def plot_bar_factors(results, c, figsize=20, dpi=300, ext='png', plot_dir=None):
     """ Plots factor analytic results as bars
     
     Args:
@@ -121,7 +123,7 @@ def plot_bar_factors(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):
         plot_dir: the directory to save the figure. If none, do not save
     """
     EFA = results.EFA
-    loadings = EFA.get_loading(c)
+    loadings = EFA.reorder_factors(EFA.get_loading(c))
     sorted_vars = get_top_factors(loadings) # sort by loading
             
     grouping = get_factor_groups(loadings)
@@ -131,10 +133,10 @@ def plot_bar_factors(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):
         
     n_factors = len(sorted_vars)
     f, axes = plt.subplots(1, n_factors, figsize=(n_factors*(figsize/12), figsize))
-    sns.set_style('white')
-    with sns.plotting_context(font_scale=1.3):
+    with sns.plotting_context(font_scale=1.3) and sns.axes_style('white'):
         # plot optimal factor breakdown in bar format to better see labels
-        for i, (k,v) in list(enumerate(sorted_vars.items())):
+        for i, k in enumerate(loadings.columns):
+            v = sorted_vars[k]
             ax1 = axes[i]
             # plot actual values
             colors = sns.diverging_palette(220,15,n=2)
@@ -143,7 +145,8 @@ def plot_bar_factors(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):
             abs(ordered_v).plot(kind='barh', ax=ax1, color=ordered_colors,
                                 width=.7)
             # draw lines separating groups
-            for y_val in np.cumsum([len(i[1]) for i in grouping])[:-1]:
+            factor_breaks = np.cumsum([len(i[1]) for i in grouping])[:-1]
+            for y_val in factor_breaks:
                 ax1.hlines(y_val-.5, 0, 1.1, lw=2, color='grey', linestyle='dashed')
             # set axes properties
             ax1.set_xlim(0,1.1); 
@@ -153,18 +156,46 @@ def plot_bar_factors(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):
             locs = ax1.yaxis.get_ticklocs()
             # add factor label to plot
             DV_fontsize = figsize/(len(labels)//2)*45
-            ax1.set_title(k, ha='center', fontsize=DV_fontsize*1.5, y=1+(i%2)*.03)
+            if i%2 == 0:
+                ax1.set_title(k, ha='center', fontsize=figsize,
+                              weight='bold')
+            else:
+                ax1.set_xlabel(k, ha='center', fontsize=figsize,
+                               weight='bold')
             # add labels of measures to top and bottom
+            tick_colors = ['#000000','#666666']
             if i == len(sorted_vars)-1:
                 ax_copy = ax1.twinx()
                 ax_copy.set_yticks(locs[::2])
-                ax_copy.set_yticklabels(labels[::2], 
-                                        fontsize=DV_fontsize)
+                labels = ax_copy.set_yticklabels(labels[::2], 
+                                                 fontsize=DV_fontsize)
+                ax_copy.yaxis.set_tick_params(size=5, width=2)
+                # change colors of ticks based on factor group
+                color_i = 1
+                last_group = None
+                for j, label in enumerate(labels):
+                    group = np.digitize(locs[::2][j], factor_breaks)
+                    if last_group is None or group != last_group:
+                        color_i = 1-color_i
+                        last_group = group
+                    color = tick_colors[color_i]
+                    label.set_color(color) 
             if i == 0:
                 # and other half on bottom
                 ax1.set_yticks(locs[1::2])
-                ax1.set_yticklabels(labels[1::2], 
-                                    fontsize=DV_fontsize)
+                labels=ax1.set_yticklabels(labels[1::2], 
+                                           fontsize=DV_fontsize)
+                ax1.yaxis.set_tick_params(size=5, width=2)
+                # change colors of ticks based on factor group
+                color_i = 1
+                last_group = None
+                for j, label in enumerate(labels):
+                    group = np.digitize(locs[1::2][j], factor_breaks)
+                    if last_group is None or group != last_group:
+                        color_i = 1-color_i
+                        last_group = group
+                    color = tick_colors[color_i]
+                    label.set_color(color) 
             else:
                 ax1.set_yticklabels('')
     if plot_dir:
