@@ -123,27 +123,33 @@ def plot_bar_factors(results, c, figsize=20, dpi=300, ext='png', plot_dir=None):
         plot_dir: the directory to save the figure. If none, do not save
     """
     EFA = results.EFA
-    loadings = EFA.reorder_factors(EFA.get_loading(c))
-    sorted_vars = get_top_factors(loadings) # sort by loading
-            
+    loadings = EFA.reorder_factors(EFA.get_loading(c))            
     grouping = get_factor_groups(loadings)
     flattened_factor_order = []
     for sublist in [i[1] for i in grouping]:
         flattened_factor_order += sublist
-        
-    n_factors = len(sorted_vars)
+    loadings = loadings.loc[flattened_factor_order]
+    # bootstrap CI
+    bootstrap_CI = EFA.get_boot_stats(c)['sds'] * 1.96
+    if bootstrap_CI is not None:
+        bootstrap_CI = bootstrap_CI.loc[flattened_factor_order]
+    
+    n_factors = len(loadings.columns)
     f, axes = plt.subplots(1, n_factors, figsize=(n_factors*(figsize/12), figsize))
     with sns.plotting_context(font_scale=1.3) and sns.axes_style('white'):
         # plot optimal factor breakdown in bar format to better see labels
         for i, k in enumerate(loadings.columns):
-            v = sorted_vars[k]
+            loading = loadings[k]
             ax1 = axes[i]
             # plot actual values
             colors = sns.diverging_palette(220,15,n=2)
-            ordered_v = v[flattened_factor_order]
-            ordered_colors = [colors[int(i)] for i in (np.sign(ordered_v)+1)/2]
-            abs(ordered_v).plot(kind='barh', ax=ax1, color=ordered_colors,
-                                width=.7)
+            ordered_colors = [colors[int(i)] for i in (np.sign(loading)+1)/2]
+            if bootstrap_CI is None:
+                abs(loading).plot(kind='barh', ax=ax1, color=ordered_colors,
+                                    width=.7)
+            else:
+                abs(loading).plot(kind='barh', ax=ax1, color=ordered_colors,
+                                    width=.7, xerr=bootstrap_CI[k])
             # draw lines separating groups
             factor_breaks = np.cumsum([len(i[1]) for i in grouping])[:-1]
             for y_val in factor_breaks:
@@ -157,19 +163,19 @@ def plot_bar_factors(results, c, figsize=20, dpi=300, ext='png', plot_dir=None):
             # add factor label to plot
             DV_fontsize = figsize/(len(labels)//2)*45
             if i%2 == 0:
-                ax1.set_title(k, ha='center', fontsize=figsize,
+                ax1.set_title(k, ha='center', fontsize=figsize*.75,
                               weight='bold')
             else:
-                ax1.set_xlabel(k, ha='center', fontsize=figsize,
+                ax1.set_xlabel(k, ha='center', fontsize=figsize*.75,
                                weight='bold')
             # add labels of measures to top and bottom
             tick_colors = ['#000000','#666666']
-            if i == len(sorted_vars)-1:
+            if i == n_factors-1:
                 ax_copy = ax1.twinx()
                 ax_copy.set_yticks(locs[::2])
                 labels = ax_copy.set_yticklabels(labels[::2], 
                                                  fontsize=DV_fontsize)
-                ax_copy.yaxis.set_tick_params(size=5, width=2)
+                ax_copy.yaxis.set_tick_params(size=5, width=2, color='#666666')
                 # change colors of ticks based on factor group
                 color_i = 1
                 last_group = None
@@ -185,7 +191,7 @@ def plot_bar_factors(results, c, figsize=20, dpi=300, ext='png', plot_dir=None):
                 ax1.set_yticks(locs[1::2])
                 labels=ax1.set_yticklabels(labels[1::2], 
                                            fontsize=DV_fontsize)
-                ax1.yaxis.set_tick_params(size=5, width=2)
+                ax1.yaxis.set_tick_params(size=5, width=2, color='#666666')
                 # change colors of ticks based on factor group
                 color_i = 1
                 last_group = None

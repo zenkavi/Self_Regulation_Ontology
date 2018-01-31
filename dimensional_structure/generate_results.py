@@ -16,12 +16,14 @@ from utils import load_results
 
 # parse arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('-no_analysis', action='store_true')
-parser.add_argument('-no_plot', action='store_true')
+parser.add_argument('-no_analysis', action='store_false')
+parser.add_argument('-no_plot', action='store_false')
+parser.add_argument('-bootstrap', action='store_true')
 args = parser.parse_args()
 
-run_analysis = not args.no_analysis
-run_plot = not args.no_plot
+run_analysis = args.no_analysis
+run_plot = args.no_plot
+bootstrap = args.bootstrap
 print('Running Analysis? %s, Plotting? %s' % (['No', 'Yes'][run_analysis], 
                                               ['No', 'Yes'][run_plot]))
 
@@ -31,7 +33,7 @@ subsets = [{'name': 'task',
             'factor_names': ['Decision Speed', 'Discounting', 'Stim Processing', 'WM/IQ', 'Response Threshold', 'ART', 'N-Back']},
             {'name': 'survey',
              'regex': 'survey',
-             'factor_names':  ['Sensation Seeking', 'Mindfulness', 'Emotional Control', 'Immediacy', 'Future', 'Hedonism', 'Dospert-RP', 'Eating', 'Dospert-ethical', 'Dospert-social', 'Dospert-financial', 'Agreeableness']},
+             'factor_names':  ['Sensation Seeking', 'Mindfulness', 'Emotional Control', 'Immediacy', 'perseverance', 'Hedonism', 'Dospert-RP', 'Eating', 'Dospert-ethical', 'Dospert-social', 'Dospert-financial', 'Agreeableness']},
              {'name': 'all', 
             'regex': '.',
             'factor_names': []}]
@@ -52,7 +54,7 @@ for subset in subsets[0:2]:
                           name=subset['name'],
                           filter_regex=subset['regex'],
                           ID=ID)
-        results.run_EFA_analysis(verbose=True)
+        results.run_EFA_analysis(verbose=True, bootstrap=bootstrap)
         results.run_clustering_analysis(verbose=True, run_graphs=False)
         ID = results.ID.split('_')[1]
         # name factors
@@ -82,32 +84,6 @@ for subset in subsets[0:2]:
             else:
                 copyfile(filey, path.join(path.dirname(results.output_file), 
                                           '%s_prediction.pkl' % name))
-    
-    # ****************************************************************************
-    # Bootstrap run
-    # ****************************************************************************
-    #start = time.time()
-    #for _ in range(10):
-    #    results.run_bootstrap(verbose=True, save=True)
-    #boot_time = time.time()-start
-    
-    #def eval_data_clusters(results, boot_results):
-    #    orig_data_clusters = results.HCA.results['clustering_metric-abscorrelation_input-data']['clustering']['labels']
-    #    boot_clusters = []
-    #    for r in boot_results:
-    #        HCA_results = r['HCA_solutions']
-    #        data_HCA = HCA_results['clustering_metric-abscorrelation_input-data']
-    #        data_clusters = data_HCA['clustering']['labels']
-    #        boot_clusters.append(data_clusters)
-    #    boot_consistency = [adjusted_rand_score(a,b) for a,b 
-    #                        in  combinations(boot_clusters,2)]
-    #    data_consistency = [adjusted_rand_score(orig_data_clusters,a) for a
-    #                        in  boot_clusters]
-    #    return {'boot_consistency': np.mean(boot_consistency),  
-    #            'data_consistency': np.mean(data_consistency)}
-    #    
-    #def get_dimensionality_estimates(boot_results):
-    #    return [i['metric_cs'] for i in boot_results]
     
        
     # ****************************************************************************
