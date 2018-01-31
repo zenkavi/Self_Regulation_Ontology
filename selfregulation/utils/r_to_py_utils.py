@@ -43,7 +43,8 @@ def psychFA(data, n_components, return_attrs=['BIC', 'SABIC', 'RMSEA'],
         fa = psych.fa(data, n_components, rotate=rotate, fm=method, n_obs=nobs,
                       scores='tenBerge')
     else:
-        fa = psych.fa_sapa(data, n_components, rotate=rotate, fm=method, n_obs=nobs,
+        assert nobs==0
+        fa = psych.fa_sapa(data, n_components, rotate=rotate, fm=method, 
                            scores='tenBerge', n_iter=n_iter, frac=.9)
     # ensure the model isn't ill-specified
     if get_attr(fa, 'dof') > 0:
