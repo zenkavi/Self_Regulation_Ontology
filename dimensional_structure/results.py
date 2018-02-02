@@ -169,7 +169,7 @@ class EFA_Analysis:
         else:
             print('No %s factor solution computed yet!' % c)
             
-    def get_loading(self, c=None, bootstrap=False):
+    def get_loading(self, c=None, bootstrap=False, recompute=False):
         """ Return the loading for an EFA solution at the specified c """
         if c is None:
             c = self.num_factors
@@ -177,7 +177,7 @@ class EFA_Analysis:
         n_iter = 1
         if bootstrap:
             n_iter = self.boot_iter
-        if ('factor_tree' in self.results.keys() and 
+        if (recompute and 'factor_tree' in self.results.keys() and 
             c in self.results['factor_tree'].keys() and
             (n_iter==1 or 'cis' in self.results['factor_tree_Rout'][c].names)):
             return self.results['factor_tree'][c]

@@ -30,10 +30,11 @@ print('Running Analysis? %s, Plotting? %s' % (['No', 'Yes'][run_analysis],
 datafile = 'Complete_01-22-2018'
 subsets = [{'name': 'task', 
             'regex': 'task',
-            'factor_names': ['Decision Speed', 'Discounting', 'Stim Processing', 'WM/IQ', 'Response Threshold', 'ART', 'N-Back']},
+            'factor_names': ['Speeded IP', 'Discounting', 'Perc/Resp',
+                             'Strategic IP', 'Caution', 'Risk']},
             {'name': 'survey',
              'regex': 'survey',
-             'factor_names':  ['Sensation Seeking', 'Mindfulness', 'Emotional Control', 'Immediacy', 'perseverance', 'Hedonism', 'Dospert-RP', 'Eating', 'Dospert-ethical', 'Dospert-social', 'Dospert-financial', 'Agreeableness']},
+             'factor_names':  ['Sensation Seeking', 'Mindfulness', 'Emotional Control', 'Immediacy', 'Perseverance', 'Hedonism', 'Dospert-RP', 'Eating', 'Dospert-ethical', 'Dospert-social', 'Dospert-financial', 'Agreeableness']},
              {'name': 'all', 
             'regex': '.',
             'factor_names': []}]
