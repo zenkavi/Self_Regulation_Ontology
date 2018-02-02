@@ -78,7 +78,7 @@ def check_timing(df):
 def convert_date(data):
     new_date = data.loc[:,'finishtime'].map(lambda date: datetime.strptime(date[:-8],'%Y-%m-%dT%H:%M:%S'))
     data.loc[:,'finishtime'] = new_date
-
+        
 def convert_fmri_ids(data):
     conversion_lookup = json.load(open('samples/fmri_followup_expfactory_id_conversion.json','r'))
     data.worker_id.replace(conversion_lookup, inplace = True)
@@ -201,6 +201,7 @@ def drop_vars(data, drop_vars = [], saved_vars = []):
         # task variables that are irrelevent to second stage analysis, either because they are correlated
         # with other DV's or are just of no interest. Each row is a task
         task_vars = ["demographics", # demographics
+                    "adaptive_n_back.hddm_thresh_load", # adaptive_n_back
                     ".first_order", "bis11_survey.total", # bis11
                     "bis_bas_survey.BAS_total", 
                     "dietary_decision.prop_healthy_choice", # dietary decision
