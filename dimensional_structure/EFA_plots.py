@@ -139,11 +139,22 @@ def plot_bar_factors(results, c, figsize=20, thresh=75,
     # get threshold for loadings
     if thresh>0:
         thresh_val = np.percentile(abs(loadings).values, thresh)
+        print('Thresholding all loadings less than %s' % np.round(thresh_val, 3))
         loadings = loadings.mask(abs(loadings) <= thresh_val, 0)
+        # remove variables that don't cross the threshold for any factor
+        kept_vars = list(loadings.index[loadings.mean(1)!=0])
+        print('%s Variables out of %s are kept after threshold' % (len(kept_vars), loadings.shape[0]))
+        loadings = loadings.loc[kept_vars]
         if bootstrap_CI is not None:
             bootstrap_CI = bootstrap_CI.mask(abs(loadings) <= thresh_val, 0)
-        
-    
+            bootstrap_CI = bootstrap_CI.loc[kept_vars]
+        # remove masked variabled from grouping
+        threshed_groups = []
+        for factor, group in grouping:
+            group = [x for x in group if x in kept_vars]
+            threshed_groups.append([factor,group])
+        grouping = threshed_groups
+
     n_factors = len(loadings.columns)
     f, axes = plt.subplots(1, n_factors, figsize=(n_factors*(figsize/12), figsize))
     with sns.plotting_context(font_scale=1.3) and sns.axes_style('white'):
@@ -182,6 +193,7 @@ def plot_bar_factors(results, c, figsize=20, thresh=75,
             tick_colors = ['#000000','#58606d']
             if i == n_factors-1:
                 ax_copy = ax1.twinx()
+                ax_copy.set_ybound(ax1.get_ybound())
                 ax_copy.set_yticks(locs[::2])
                 labels = ax_copy.set_yticklabels(labels[::2], 
                                                  fontsize=DV_fontsize)
@@ -214,6 +226,7 @@ def plot_bar_factors(results, c, figsize=20, thresh=75,
                     label.set_color(color) 
             else:
                 ax1.set_yticklabels('')
+                ax1.yaxis.set_tick_params(size=5, width=2, color='#666666')
     if plot_dir:
         filename = 'factor_bars_EFA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
