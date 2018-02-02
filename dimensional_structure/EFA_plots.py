@@ -110,7 +110,8 @@ def plot_factor_correlation(results, c, figsize=12, dpi=300, ext='png', plot_dir
                     {'bbox_inches': 'tight', 'dpi': dpi})
         
     
-def plot_bar_factors(results, c, figsize=20, dpi=300, ext='png', plot_dir=None):
+def plot_bar_factors(results, c, figsize=20, thresh=75,
+                     dpi=300, ext='png', plot_dir=None):
     """ Plots factor analytic results as bars
     
     Args:
@@ -119,6 +120,7 @@ def plot_bar_factors(results, c, figsize=20, dpi=300, ext='png', plot_dir=None):
         dpi: the final dpi for the image
         figsize: scalar - the width of the plot. The height is determined
             by the number of factors
+        thresh: proportion of factor loadings to keep
         ext: the extension for the saved figure
         plot_dir: the directory to save the figure. If none, do not save
     """
@@ -130,9 +132,17 @@ def plot_bar_factors(results, c, figsize=20, dpi=300, ext='png', plot_dir=None):
         flattened_factor_order += sublist
     loadings = loadings.loc[flattened_factor_order]
     # bootstrap CI
-    bootstrap_CI = EFA.get_boot_stats(c)['sds'] * 1.96
+    bootstrap_CI = EFA.get_boot_stats(c)
     if bootstrap_CI is not None:
+        bootstrap_CI = bootstrap_CI['sds'] * 1.96
         bootstrap_CI = bootstrap_CI.loc[flattened_factor_order]
+    # get threshold for loadings
+    if thresh>0:
+        thresh_val = np.percentile(abs(loadings).values, thresh)
+        loadings = loadings.mask(abs(loadings) <= thresh_val, 0)
+        if bootstrap_CI is not None:
+            bootstrap_CI = bootstrap_CI.mask(abs(loadings) <= thresh_val, 0)
+        
     
     n_factors = len(loadings.columns)
     f, axes = plt.subplots(1, n_factors, figsize=(n_factors*(figsize/12), figsize))
@@ -169,7 +179,7 @@ def plot_bar_factors(results, c, figsize=20, dpi=300, ext='png', plot_dir=None):
                 ax1.set_xlabel(k, ha='center', fontsize=figsize*.75,
                                weight='bold')
             # add labels of measures to top and bottom
-            tick_colors = ['#000000','#666666']
+            tick_colors = ['#000000','#58606d']
             if i == n_factors-1:
                 ax_copy = ax1.twinx()
                 ax_copy.set_yticks(locs[::2])
