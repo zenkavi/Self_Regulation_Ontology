@@ -1,6 +1,7 @@
 from kabuki.analyze import _parents_to_random_posterior_sample
 import numpy as np
 import os
+from os import path
 import pandas as pd
 import pickle
 from scipy.stats import entropy
@@ -15,6 +16,16 @@ sample = sys.argv[5]
 parallel = sys.argv[6]
 
 os.chdir(model_dir)
+
+modelfile = path.join(output_loc, '%s_parallel_output' % task, '*.model')
+loadfile = sorted(glob(modelfile))
+if len(loadfile) > 1:
+        models = []
+        for l in loadfile:
+            m = hddm.load(l)
+            m.load_db(l, db='pickle')
+            models.append(m)
+        m = load_concat_models(models)
 
 #if parallel strip task name and read from task_parallel_output directory
 m = pickle.load(open(model_dir+task, 'rb'))
