@@ -154,10 +154,9 @@ def plot_bar_factors(results, c, figsize=20, thresh=75,
             group = [x for x in group if x in kept_vars]
             threshed_groups.append([factor,group])
         grouping = threshed_groups
-
     n_factors = len(loadings.columns)
     f, axes = plt.subplots(1, n_factors, figsize=(n_factors*(figsize/12), figsize))
-    with sns.plotting_context(font_scale=1.3) and sns.axes_style('white'):
+    with sns.plotting_context(font_scale=1.3) and sns.axes_style('dark'):
         # plot optimal factor breakdown in bar format to better see labels
         for i, k in enumerate(loadings.columns):
             loading = loadings[k]
@@ -190,8 +189,12 @@ def plot_bar_factors(results, c, figsize=20, thresh=75,
                 ax1.set_xlabel(k, ha='center', fontsize=figsize*.75,
                                weight='bold')
             # add labels of measures to top and bottom
-            tick_colors = ['#000000','#58606d']
+            tick_colors = ['#000000','#444098']
+            for location in locs[2::3]:
+                ax1.axhline(y=location, xmin=0, xmax=1, color='w', zorder=-1)
             if i == n_factors-1:
+                for i, label in enumerate(labels):
+                    label.set_text('%s  %s' % (i+1, label.get_text()))
                 ax_copy = ax1.twinx()
                 ax_copy.set_ybound(ax1.get_ybound())
                 ax_copy.set_yticks(locs[::2])
@@ -209,6 +212,8 @@ def plot_bar_factors(results, c, figsize=20, thresh=75,
                     color = tick_colors[color_i]
                     label.set_color(color) 
             if i == 0:
+                for i, label in enumerate(labels):
+                    label.set_text('%s  %s' % (label.get_text(), i+1))
                 # and other half on bottom
                 ax1.set_yticks(locs[1::2])
                 labels=ax1.set_yticklabels(labels[1::2], 
@@ -226,7 +231,8 @@ def plot_bar_factors(results, c, figsize=20, thresh=75,
                     label.set_color(color) 
             else:
                 ax1.set_yticklabels('')
-                ax1.yaxis.set_tick_params(size=5, width=2, color='#666666')
+                ax1.yaxis.set_tick_params(size=0)
+                
     if plot_dir:
         filename = 'factor_bars_EFA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
