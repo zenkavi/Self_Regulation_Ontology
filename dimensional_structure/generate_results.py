@@ -24,17 +24,18 @@ args = parser.parse_args()
 run_analysis = args.no_analysis
 run_plot = args.no_plot
 bootstrap = args.bootstrap
-print('Running Analysis? %s, Plotting? %s' % (['No', 'Yes'][run_analysis], 
-                                              ['No', 'Yes'][run_plot]))
+print('Running Analysis? %s, Plotting? %s, Bootstrap? %s' % (['No', 'Yes'][run_analysis], 
+                                                             ['No', 'Yes'][run_plot],
+                                                             ['No', 'Yes'][bootstrap]))
 
 datafile = 'Complete_01-22-2018'
 subsets = [{'name': 'task', 
             'regex': 'task',
             'factor_names': ['Speeded IP', 'Discounting', 'Perc/Resp',
-                             'Strategic IP', 'Caution', 'Risk']},
+                             'Strategic IP', 'Caution']},
             {'name': 'survey',
              'regex': 'survey',
-             'factor_names':  ['Sensation Seeking', 'Mindfulness', 'Emotional Control', 'Immediacy', 'Perseverance', 'Hedonism', 'Dospert-RP', 'Eating', 'Dospert-ethical', 'Dospert-social', 'Dospert-financial', 'Agreeableness']},
+             'factor_names':  ['Sensation Seeking', 'Mindfulness', 'Emotional Control', 'Impulsivity', 'Goal-Directedness', 'Reward Sensitivity', 'Risk Perception', 'Eating Control', 'Ethical Risk Taking', 'Social Risk Taking', 'Financial Risk Taking', 'Agreeableness']},
              {'name': 'all', 
             'regex': '.',
             'factor_names': []}]
