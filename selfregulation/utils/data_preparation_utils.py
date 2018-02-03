@@ -201,7 +201,6 @@ def drop_vars(data, drop_vars = [], saved_vars = []):
         # task variables that are irrelevent to second stage analysis, either because they are correlated
         # with other DV's or are just of no interest. Each row is a task
         task_vars = ["demographics", # demographics
-                    "adaptive_n_back.hddm_thresh_load", # adaptive_n_back
                     "(keep|release)_loss_percent", # angling risk task
                     ".first_order", "bis11_survey.total", # bis11
                     "bis_bas_survey.BAS_total", 
