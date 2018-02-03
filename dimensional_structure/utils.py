@@ -232,7 +232,23 @@ def hdbscan_cluster(df, compute_dist=True,  pdist_kws=None,
             'probs': probs,
             'link': link}
 
+# ****************************************************************************
+# helper functions for hierarchical plotting
+# ****************************************************************************
 
+def plot_tree( P, pos=None ):
+    icoord = scipy.array( P['icoord'] )
+    dcoord = scipy.array( P['dcoord'] )
+    color_list = scipy.array( P['color_list'] )
+    xmin, xmax = icoord.min(), icoord.max()
+    ymin, ymax = dcoord.min(), dcoord.max()
+    if pos:
+        icoord = icoord[pos]
+        dcoord = dcoord[pos]
+        color_list = color_list[pos]
+    for xs, ys, color in zip(icoord, dcoord, color_list):
+        plt.plot(xs, ys,  color)
+        
 # ****************************************************************************
 # helper functions for dealing with factor analytic results
 # ****************************************************************************
