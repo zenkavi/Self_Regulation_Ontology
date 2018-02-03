@@ -126,7 +126,7 @@ for data,directory, DV_df, valence_df in datasets:
         readme_lines += ["variables_exhaustive.csv: all variables calculated for each measure\n\n"]
           
         # drop other columns of no interest
-        subset = drop_vars(DV_df, saved_vars = ['adaptive_n_back.hddm_(thresh|drift)_load', 'simple_reaction_time.avg_rt', 'shift_task.acc'])
+        subset = drop_vars(DV_df, saved_vars = ['adaptive_n_back.hddm_drift_load', 'simple_reaction_time.avg_rt', 'shift_task.acc'])
         # make subset without EZ variables
         noDDM_subset = drop_vars(DV_df, saved_vars = ["\.acc$", "\.avg_rt$"])
         noDDM_subset = drop_vars(noDDM_subset, drop_vars = ['EZ', 'hddm'])
