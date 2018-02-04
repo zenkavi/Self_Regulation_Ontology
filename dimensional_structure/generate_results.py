@@ -10,25 +10,35 @@ from glob import glob
 import numpy as np
 from os import makedirs, path
 import pickle
+from selfregulation.utils.utils import get_info, sorting
 from shutil import copyfile, copytree, rmtree
 import time
 from utils import load_results
 
 # parse arguments
 parser = argparse.ArgumentParser()
+parser.add_argument('-dataset', default=None)
 parser.add_argument('-no_analysis', action='store_false')
 parser.add_argument('-no_plot', action='store_false')
 parser.add_argument('-bootstrap', action='store_true')
 args = parser.parse_args()
 
+dataset = args.dataset
 run_analysis = args.no_analysis
 run_plot = args.no_plot
 bootstrap = args.bootstrap
 print('Running Analysis? %s, Plotting? %s, Bootstrap? %s' % (['No', 'Yes'][run_analysis], 
                                                              ['No', 'Yes'][run_plot],
                                                              ['No', 'Yes'][bootstrap]))
-
-datafile = 'Complete_01-22-2018'
+# get dataset of interest
+basedir=get_info('base_directory')
+if dataset == None:
+    files = glob(path.join(basedir,'Data/Complete*'))
+    files.sort(key=sorting)
+    dataset = files[-1]
+else:
+    dataset = path.join(basedir,'Data',dataset)
+    
 subsets = [{'name': 'task', 
             'regex': 'task',
             'factor_names': ['Speeded IP', 'Discounting', 'Perc/Resp',
@@ -52,7 +62,7 @@ for subset in subsets[0:2]:
         # ****************************************************************************
         # run dimensional analysis
         start = time.time()
-        results = Results(datafile, dist_metric='abscorrelation',
+        results = Results(dataset, dist_metric='abscorrelation',
                           name=subset['name'],
                           filter_regex=subset['regex'],
                           ID=ID)

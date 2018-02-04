@@ -11,6 +11,7 @@ import os
 import pandas as pd
 import pickle
 import seaborn as sns
+from scipy import array as scipyarray
 from scipy.cluster.hierarchy import leaves_list, linkage
 from scipy.spatial.distance import pdist, squareform
 from selfregulation.utils.plot_utils import dendroheatmap
@@ -236,10 +237,18 @@ def hdbscan_cluster(df, compute_dist=True,  pdist_kws=None,
 # helper functions for hierarchical plotting
 # ****************************************************************************
 
-def plot_tree( P, pos=None ):
-    icoord = scipy.array( P['icoord'] )
-    dcoord = scipy.array( P['dcoord'] )
-    color_list = scipy.array( P['color_list'] )
+def plot_tree(tree, pos=None ):
+    """ Plots a subset of a dendrogram 
+    
+    Args:
+        tree: output of dendrogram function
+        pos: which positions from the dendrogram to plot. Doesn't correspond to
+        leaves
+    """
+    
+    icoord = scipyarray( tree['icoord'] )
+    dcoord = scipyarray( tree['dcoord'] )
+    color_list = scipyarray( tree['color_list'] )
     xmin, xmax = icoord.min(), icoord.max()
     ymin, ymax = dcoord.min(), dcoord.max()
     if pos:
