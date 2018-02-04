@@ -1,3 +1,5 @@
+from glob import glob
+import hddm
 from kabuki.analyze import _parents_to_random_posterior_sample
 import numpy as np
 import os
@@ -16,16 +18,6 @@ sample = sys.argv[5]
 parallel = sys.argv[6]
 
 os.chdir(model_dir)
-
-modelfile = path.join(output_loc, '%s_parallel_output' % task, '*.model')
-loadfile = sorted(glob(modelfile))
-if len(loadfile) > 1:
-        models = []
-        for l in loadfile:
-            m = hddm.load(l)
-            m.load_db(l, db='pickle')
-            models.append(m)
-        m = load_concat_models(models)
 
 #if parallel strip task name and read from task_parallel_output directory
 m = pickle.load(open(model_dir+task, 'rb'))
@@ -79,6 +71,10 @@ def get_likelihood(m, samples=10, model = model):
     observeds = m.get_observeds()
     like = np.empty((samples, len(value_range)), dtype=np.float32)
     
+    
+    #we have come up with our own way of doing a posterior predictive check
+    #for each subject we sample from the posterior predictive and compare it to the data
+    #we do this n=samples times and calculate the KL divergence between the posterior predictive and the actual data
     def KL_loop(obs):
         KLs = {}
         for subj_i, (node_name, bottom_node) in enumerate(obs.iterrows()):
