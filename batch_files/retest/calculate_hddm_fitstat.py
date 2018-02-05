@@ -1,8 +1,8 @@
 from glob import glob
 import hddm
 from kabuki.analyze import _parents_to_random_posterior_sample
+from kabuki.utils import concat_models
 import numpy as np
-import os
 from os import path
 import pandas as pd
 import pickle
@@ -10,13 +10,22 @@ import re
 from scipy.stats import entropy
 import sys
 
-from expanalysis.experiments.ddm_utils import load_concat_models, load_model
+from expanalysis.experiments.ddm_utils import load_concat_models
 
 model_dir = sys.argv[1]
 task = sys.argv[2]+'_'
 subset = sys.argv[3] +'_'
 output_dir = sys.argv[4]
 hddm_type = sys.argv[5] #(flat or hierarhical)
+parallel = sys.argv[6]
+
+##############################################
+############ HELPER FUNCTIONS ################
+##############################################
+
+##############################################
+############### For Fitstats #################
+##############################################
 
 # Define helper function to get fitstat
 def get_likelihood(m, samples=10):
@@ -45,14 +54,37 @@ def get_likelihood(m, samples=10):
     #KLs = pd.DataFrame.from_dict(KLs, orient="index").rename(index=str, columns={0: model.replace(".model",".KL")})
     return out
 
+##############################################
+############# For Model Loading ##############
+##############################################
+
+def load_parallel_models(model_path):
+    loadfile = sorted(glob(model_path))
+    models = []
+    for l in loadfile:
+        m = hddm.load(l)
+        #m.load_db(l, db='pickle')
+        models.append(m)
+    m = load_concat_models(models)
+    return m, models
+
+##############################################
+############### Sub Id lookup ################
+##############################################
+
+##############################################
+############### GET FITSTATS #################
+##############################################
+
 #Testing parameters for Case 1:
 #model_dir = '/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/subject_fits/'
 #task = 'choice_reaction_time_'
 #subset = 'retest_'
 #output_dir = '/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/'
+#hddm_type = 'flat'
 
-if hddm_type == 'flat':
 # Case 1: fitstat for all subjects of flat models (no hierarchy)
+if hddm_type == 'flat':
 ## Strategy: looping through all model files for task, subset
     model_path = path.join(model_dir, task+ subset+ '*_flat.model')
     models_list = sorted(glob(model_path))
@@ -73,53 +105,30 @@ if hddm_type == 'flat':
 ### Step 7: Output df with task, subset, model type (flat or hierarchical)
     fitstats.to_csv(path.join(output_dir, task+subset+'flat_fitstats.csv'))
 
+#Testing parameters for Case 2a:
+#model_dir = '/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_refits/'
+#task = 'choice_reaction_time_'
+#subset = 'refits'
+#output_dir = '/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/'
+#hddm_type = 'hierarchical'
+#parallel = 'yes'
+
 # Case 2: fitstat for all subjects for hierarchical models
-
-## Case 2a: without parallelization
-
+if hddm_type == 'hierarchical':
 ## Case 2a: with parallelization
+    if parallel == 'yes':
+### Step 1a: Concatenate all model outputs from parallelization
+        model_path = path.join(model_dir, task+'parallel_output','*.model')
+        loaded_models = load_parallel_models(model_path)
+        m_concat = concat_models(loaded_models[1])
+### Step 2a: Get fitstat for all subjects from concatenated model
+        fitstats = get_likelihood(m_concat)
+## Case 2b: without parallelization
+    elif parallel == 'no':
+### Step 1b: Read model in
+        m = hddm.load(path.join(model_dir+task+'.model'))
+### Step 2b: Get fitstats
+        fitstats = get_likelihood(m)
+### Step 3: Extract sub id from correct df that was used for hddm
+### Step 4: Change keys in fitstats dic
 
-#########
-                   
-
-KLs = get_likelihood(m)
-
-KLs.to_csv(out_dir + model.replace('.model', '_'+sample+'_KLs.csv'))
-
-ddm_task_lookup = {'adaptive_n_back_base.model':'adaptive_n_back',
-                   'ANT_cue_condition.model': 'attention_network_task',
-                   'ANT_flanker_base.model': 'attention_network_task',
-                   'ANT_flanker_condition.model': 'attention_network_task',
-                   'attention_network_task_flanker_base.model': 'attention_network_task',
-                   'attention_network_task_cue_condition.model': 'attention_network_task',
-                   'attention_network_task_flanker_condition.model' : 'attention_network_task',
-                   'choice_RT_base.model': 'choice_reaction_time',
-                   'choice_reaction_time_base.model': 'choice_reaction_time',
-                   'directed_forgetting_base.model': 'directed_forgetting',
-                   'directed_forgetting_condition.model': 'directed_forgetting',
-                   'dot_pattern_expectancy_base.model': 'dot_pattern_expectancy',
-                   'dot_pattern_expectancy_condition.model':'dot_pattern_expectancy',
-                   'DPX_base.model':'dot_pattern_expectancy',
-                   'DPX_condition.model':'dot_pattern_expectancy',
-                   'local_global_base.model': 'local_global_letter',
-                   'local_global_conflict_condition.model':'local_global_letter',
-                   'local_global_switch_condition.model':'local_global_letter',
-                   'local_global_letter_base.model': 'local_global_letter',
-                   'local_global_letter_conflict_condition.model':'local_global_letter',
-                   'local_global_letter_switch_condition.model':'local_global_letter',
-                   'motor_SS_base.model':'motor_selective_stop_signal',
-                   'motor_selective_stop_signal_base.model': 'motor_selective_stop_signal',
-                   'recent_probes_base.model':'recent_probes',
-                   'recent_probes_condition.model':'recent_probes',
-                   'shape_matching_base.model':'shape_matching',
-                   'shape_matching_condition.model':'shape_matching',
-                   'simon_base.model':'simon',
-                   'simon_condition.model':'simon',
-                   'SS_base.model':'stop_signal',
-                   'stim_SS_base.model':'stim_selective_stop_signal',
-                   'stop_signal_base.model': 'stop_signal', 
-                   'stroop_base.model':'stroop',
-                   'stroop_condition.model':'stroop',
-                   'threebytwo_base.model':'threebytwo',
-                   'threebytwo_cue_condition.model':'threebytwo',
-                   'threebytwo_task_condition.model':'threebytwo'}
