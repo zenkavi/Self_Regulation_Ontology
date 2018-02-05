@@ -6,21 +6,85 @@ import os
 from os import path
 import pandas as pd
 import pickle
+import re
 from scipy.stats import entropy
 import sys
 
+from expanalysis.experiments.ddm_utils import load_concat_models, load_model
 
 model_dir = sys.argv[1]
-task = sys.argv[2]
-sub_id_dir = sys.argv[3]
-out_dir = sys.argv[4]
-sample = sys.argv[5]
-parallel = sys.argv[6]
+task = sys.argv[2]+'_'
+subset = sys.argv[3] +'_'
+output_dir = sys.argv[4]
+hddm_type = sys.argv[5] #(flat or hierarhical)
 
-os.chdir(model_dir)
+# Define helper function to get fitstat
+def get_likelihood(m, samples=10):
+    value_range = np.linspace(-5,5,100)
+    observeds = m.get_observeds()
+    like = np.empty((samples, len(value_range)), dtype=np.float32)   
+    
+    #we have come up with our own way of doing a posterior predictive check
+    #for each subject we sample from the posterior predictive and compare it to the data
+    #we do this n=samples times and calculate the KL divergence between the posterior predictive and the actual data
+    def KL_loop(obs):
+        KLs = {}
+        for subj_i, (node_name, bottom_node) in enumerate(obs.iterrows()):
+            node = bottom_node['node']
+            for sample in range(samples):
+                _parents_to_random_posterior_sample(node)
+                # Generate likelihood for parents parameters
+                like[sample,:] = node.pdf(value_range)
+                y = like.mean(axis=0)
+                data_bins = np.histogram(node.value, value_range, density=True)[0]
+            KL_divergence = entropy(y[1:]+1E-10, data_bins+1E-10)
+            KLs[subj_i] = KL_divergence
+        return KLs
+    
+    out = KL_loop(observeds)
+    #KLs = pd.DataFrame.from_dict(KLs, orient="index").rename(index=str, columns={0: model.replace(".model",".KL")})
+    return out
 
-#if parallel strip task name and read from task_parallel_output directory
-m = pickle.load(open(model_dir+task, 'rb'))
+#Testing parameters for Case 1:
+#model_dir = '/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/subject_fits/'
+#task = 'choice_reaction_time_'
+#subset = 'retest_'
+#output_dir = '/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/'
+
+if hddm_type == 'flat':
+# Case 1: fitstat for all subjects of flat models (no hierarchy)
+## Strategy: looping through all model files for task, subset
+    model_path = path.join(model_dir, task+ subset+ '*_flat.model')
+    models_list = sorted(glob(model_path))
+    fitstats = {}
+### Step 1: Read model in for a given subject
+    for model in models_list:
+        m = pickle.load(open(model, 'rb'))
+### Step 2: Get fitstat for read in model
+        fitstat = get_likelihood(m)
+### Step 3: Extract sub id from file name
+        sub_id = re.search(model_dir+task+ subset+'(.+?)_flat.model', model).group(1)
+### Step 4: Update flat fitstat dict with sub_id
+        fitstat[sub_id] = fitstat.pop(0)
+### Step 5: Add individual output to dict with all subjects
+        fitstats.update(fitstat)
+### Step 6: Convert list to df
+    fitstats = pd.DataFrame.from_dict(fitstats, orient='index').rename(index=str, columns={0:"KL"})
+### Step 7: Output df with task, subset, model type (flat or hierarchical)
+    fitstats.to_csv(path.join(output_dir, task+subset+'flat_fitstats.csv'))
+
+# Case 2: fitstat for all subjects for hierarchical models
+
+## Case 2a: without parallelization
+
+## Case 2a: with parallelization
+
+#########
+                   
+
+KLs = get_likelihood(m)
+
+KLs.to_csv(out_dir + model.replace('.model', '_'+sample+'_KLs.csv'))
 
 ddm_task_lookup = {'adaptive_n_back_base.model':'adaptive_n_back',
                    'ANT_cue_condition.model': 'attention_network_task',
@@ -59,59 +123,3 @@ ddm_task_lookup = {'adaptive_n_back_base.model':'adaptive_n_back',
                    'threebytwo_base.model':'threebytwo',
                    'threebytwo_cue_condition.model':'threebytwo',
                    'threebytwo_task_condition.model':'threebytwo'}
-                   
-task_name = ddm_task_lookup.get(model)
-
-sub_ids = pd.read_csv(sub_id_dir + task_name +'.csv.gz' , compression = 'gzip')
-
-sub_ids = sub_ids.worker_id.unique()
-
-def get_likelihood(m, samples=10, model = model):
-    value_range = np.linspace(-5,5,100)
-    observeds = m.get_observeds()
-    like = np.empty((samples, len(value_range)), dtype=np.float32)
-    
-    
-    #we have come up with our own way of doing a posterior predictive check
-    #for each subject we sample from the posterior predictive and compare it to the data
-    #we do this n=samples times and calculate the KL divergence between the posterior predictive and the actual data
-    def KL_loop(obs):
-        KLs = {}
-        for subj_i, (node_name, bottom_node) in enumerate(obs.iterrows()):
-            node = bottom_node['node']
-            for sample in range(samples):
-                _parents_to_random_posterior_sample(node)
-                # Generate likelihood for parents parameters
-                like[sample,:] = node.pdf(value_range)
-                y = like.mean(axis=0)
-                data_bins = np.histogram(node.value, value_range, density=True)[0]
-            KL_divergence = entropy(y[1:]+1E-10, data_bins+1E-10)
-            KLs[subj_i] = KL_divergence
-        return KLs
-    
-    def KL_translate(KLs_cond):
-        tr = dict(zip(KLs_cond.keys(), sub_ids))
-        KLs_cond = {tr[k]: v for k, v in KLs_cond.items()}
-        return KLs_cond
-        
-    if 'condition' in model:
-        KLs = observeds.groupby('condition').apply(KL_loop)
-        out_df = pd.DataFrame()
-        for i in range(KLs.keys().shape[0]):
-            tmp_dict = KL_translate(KLs[KLs.keys()[i]])
-            tmp_df = pd.DataFrame.from_dict(tmp_dict, orient="index").rename(index=str, columns={0: model.replace(".model",".KL")})
-            tmp_df['condition']=KLs.keys()[i]
-            out_df = out_df.append(tmp_df)
-        KLs = out_df
-    
-    else:
-        KLs = KL_loop(observeds)
-        KLs = KL_translate(KLs)
-        KLs = pd.DataFrame.from_dict(KLs, orient="index").rename(index=str, columns={0: model.replace(".model",".KL")})
-        KLs['condition'] = 'all'
-    
-    return KLs
-
-KLs = get_likelihood(m)
-
-KLs.to_csv(out_dir + model.replace('.model', '_'+sample+'_KLs.csv'))
