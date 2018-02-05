@@ -292,22 +292,25 @@ def find_optimal_components(data, minc=1, maxc=50, nobs=0, metric='BIC'):
     n_components = range(minc,maxc)
     scaler = StandardScaler()
     if metric != 'CV':
+        best_metric = float("Inf")
+        best_c = 0
         for c in n_components:
             out = psychFA(data, c, method='ml', nobs=nobs)
             if out is None:
                 break
             fa, output = out
-            last_metric = output[metric]
+            curr_metric = output[metric]
             # iterate counter if new metric isn't better than previous metric
             if len(metrics) > 0:
-                if last_metric > metrics[c-1]:
+                if curr_metric >= (best_metric-2):
                     steps_since_best += 1
                 else:
                     steps_since_best = 0
-            metrics[c] = last_metric
+                    best_c = c
+                    best_metric = curr_metric
+            metrics[c] = curr_metric
             if steps_since_best > 2:
                 break
-        best_c = min(metrics, key=metrics.get)
     else:
         for c in n_components:
             fa = FactorAnalysis(c)
