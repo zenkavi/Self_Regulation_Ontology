@@ -195,7 +195,7 @@ def get_subids_fun(task=None):
 #Testing parameters for Case 1:
 #model_dir = '/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/subject_fits/'
 #task = 'choice_reaction_time_'
-#subset = 'retest_'
+#subset = 'retest'
 #output_dir = '/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/'
 #hddm_type = 'flat'
 
