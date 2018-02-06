@@ -29,7 +29,7 @@ sub_id_dir = sys.argv[7]
 ##############################################
 
 # Define helper function to get fitstat
-def get_likelihood(m, samples=10):
+def get_likelihood(m, samples=100):
     value_range = np.linspace(-5,5,100)
     observeds = m.get_observeds()
     like = np.empty((samples, len(value_range)), dtype=np.float32)   
