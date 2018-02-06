@@ -131,7 +131,7 @@ def plot_bar_factors(results, c, figsize=20, thresh=75,
     flattened_factor_order = []
     for sublist in [i[1] for i in grouping]:
         flattened_factor_order += sublist
-    #loadings = loadings.loc[flattened_factor_order]
+    loadings = loadings.loc[flattened_factor_order]
     # bootstrap CI
     bootstrap_CI = EFA.get_boot_stats(c)
     if bootstrap_CI is not None:

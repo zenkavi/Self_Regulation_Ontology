@@ -132,8 +132,11 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
         loading_start = cumsizes[cluster_i-1]
     subset_loading = loading.T.iloc[:,loading_start:cumsizes[cluster_i]]
     plot_tree(tree, range(start, end), dendro_ax)
-    sns.heatmap(subset_loading, ax=heatmap_ax, cbar=False,
-                vmin=np.min(loading.values), vmax=np.max(loading.values),
+    sns.heatmap(subset_loading, ax=heatmap_ax, 
+                cbar=False,
+                yticklabels=True,
+                vmin=np.min(loading.values), 
+                vmax=np.max(loading.values),
                 cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
     plot_loadings(polar_ax, abs(subset_loading).mean(1), kind='line', offset=.5,
                   plot_kws={'alpha': .8, 'c': tree['color_list'][start]})
@@ -280,7 +283,9 @@ def plot_dendrograms(results, c=None,  inp=None, titles=None, var_labels=False,
             ax2 = fig.add_axes(heatmap_size)
             ax3 = fig.add_axes(cbar_size)
             max_val = np.max(abs(loading.values))
-            sns.heatmap(ordered_loading, ax=ax2, cbar=True, cbar_ax=ax3,
+            sns.heatmap(ordered_loading, ax=ax2, 
+                        cbar=True, cbar_ax=ax3,
+                        yticklabels=True,
                         vmax =  max_val, vmin = -max_val,
                         cbar_kws={'orientation': cbar_orientation},
                         cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
