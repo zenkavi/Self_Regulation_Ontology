@@ -237,7 +237,7 @@ def hdbscan_cluster(df, compute_dist=True,  pdist_kws=None,
 # helper functions for hierarchical plotting
 # ****************************************************************************
 
-def plot_tree(tree, pos=None ):
+def plot_tree(tree, pos=None, ax=None):
     """ Plots a subset of a dendrogram 
     
     Args:
@@ -255,8 +255,11 @@ def plot_tree(tree, pos=None ):
         icoord = icoord[pos]
         dcoord = dcoord[pos]
         color_list = color_list[pos]
+    if ax is None:
+        f, ax = plt.subplots(1,1)
     for xs, ys, color in zip(icoord, dcoord, color_list):
-        plt.plot(xs, ys,  color)
+        ax.plot(xs, ys,  color, linewidth=3)
+    
         
 # ****************************************************************************
 # helper functions for dealing with factor analytic results
@@ -530,7 +533,7 @@ def plot_loadings(ax, component_loadings, groups=None, colors=None,
     ax.set_yticklabels([''])
     
     width = np.pi/(N/2)*width_scale*np.ones(N)
-    theta = np.arange(0.0, 2*np.pi, 2*np.pi/N) + width[0]*offset
+    theta = np.array([2*np.pi/N*i for i in range(N)]) + width[0]*offset
     radii = component_loadings
     if kind == 'bar':
         bars = ax.bar(theta, radii, width=width, bottom=0.0, **plot_kws)

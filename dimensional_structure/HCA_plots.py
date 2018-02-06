@@ -1,5 +1,5 @@
 # imports
-from utils import abs_pdist, save_figure, set_seed, plot_loadings
+from utils import abs_pdist, save_figure, set_seed, plot_loadings, plot_tree
 from itertools import combinations
 from math import ceil
 import matplotlib.pyplot as plt
@@ -29,7 +29,7 @@ def plot_clusterings(results, plot_dir=None, inp='data', figsize=(50,50),
             title=titles.pop(0)
         filename = None
         if plot_dir is not None:
-            filename = path.join(plot_dir, '%s.%s' % (name, ext))
+            filename = path.join(plot_dir, 'dendroheatmap_%s.%s' % (name, ext))
         if show_clusters == True:
             fig = dendroheatmap(clustering['linkage'], clustering['distance_df'], 
                                 clustering['labels'],
@@ -101,8 +101,118 @@ def plot_clustering_similarity(results, plot_dir=None, verbose=False, ext='png')
               % score_consistency)
         
     
+def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
+                   figsize=(6,12), dpi=300, plot_loc=None):
+    # get variables in subbranch based on coloring
+    curr_index = 0
+    curr_color = tree['color_list'][0]
+    start = 0
+    for i, color in enumerate(tree['color_list']):
+        if color != curr_color:
+            end = i
+            if curr_index == cluster_i:
+                break
+            if color != "#808080":
+                curr_index += 1
+                start = i
+            curr_color = color
+    # plotting
+    polar_size = [0,.6,1,.4]
+    dendro_size = [0,.3,1,.2]
+    heatmap_size = [0,.05,1,.25]
+    fig = plt.figure(figsize=figsize)
+    polar_ax = fig.add_axes(polar_size, projection='polar') 
+    dendro_ax = fig.add_axes(dendro_size) 
+    heatmap_ax = fig.add_axes(heatmap_size)
+    # get subset of loading
+    cumsizes = np.cumsum(cluster_sizes)
+    if cluster_i==0:
+        loading_start = 0
+    else:
+        loading_start = cumsizes[cluster_i-1]
+    subset_loading = loading.T.iloc[:,loading_start:cumsizes[cluster_i]]
+    plot_tree(tree, range(start, end), dendro_ax)
+    sns.heatmap(subset_loading, ax=heatmap_ax, cbar=False,
+                vmin=np.min(loading.values), vmax=np.max(loading.values),
+                cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
+    plot_loadings(polar_ax, abs(subset_loading).mean(1), kind='line', offset=.5,
+                  plot_kws={'alpha': .8, 'c': tree['color_list'][start]})
+    # tick properties of polar plot
+    xtick_locs = np.arange(0.0, 2*np.pi, 2*np.pi/len(subset_loading))
+    polar_ax.set_xticks(xtick_locs)
+    polar_ax.set_xticks(xtick_locs+np.pi/len(subset_loading), minor=True)
+    polar_ax.set_xticklabels(subset_loading.index, minor=True)
+    polar_ax.tick_params(axis='x', which='minor', pad=20)
     
-def plot_dendrograms(results, c=None,  inp=None, titles=None,
+    # title and axes styling of dendrogram
+    if title:
+        dendro_ax.set_title(title, fontsize=20, y=1.05, fontweight='bold')
+    dendro_ax.get_yaxis().set_visible(False)
+    dendro_ax.spines['top'].set_visible(False)
+    dendro_ax.spines['right'].set_visible(False)
+    dendro_ax.spines['bottom'].set_visible(False)
+    dendro_ax.spines['left'].set_visible(False)
+    if plot_loc is not None:
+        save_figure(fig, plot_loc, {'bbox_inches': 'tight', 'dpi': dpi})
+    else:
+        return fig
+        
+    
+def plot_subbranches(results, c=None,  inp=None, cluster_range=None,
+                     figsize=(6,10), dpi=300, ext='png', plot_dir=None):
+    """ Plots HCA results as dendrogram with loadings underneath
+    
+    Args:
+        results: results object
+        c: number of components to use for loadings
+        orientation: horizontal or vertical, which determines the direction
+            the dendrogram leaves should be spread out on
+        plot_dir: if set, where to save the plot
+        inp: by default, plots all clusterings in results. Inp selects
+            one. Clusterings are saved in the form "clustering_input-{inp}"
+        titles: list of titles. Should correspond to number of clusters in
+                results object if "inp" is not set. Otherwise should be a list of length 1.
+    """
+    HCA = results.HCA
+    EFA = results.EFA
+    loading = EFA.reorder_factors(EFA.get_loading(c))
+    # get all clustering solutions
+    if inp is None:
+        inp = ''
+    clusterings = [(k ,v) for k,v in 
+                    HCA.results.items() if inp in k]
+    
+    for name, clustering in clusterings:
+        # extract cluster vars
+        link = clustering['linkage']
+        labels = clustering['clustered_df'].columns
+        ordered_loading = loading.loc[labels]
+        # get cluster sizes
+        cluster_labels = HCA.get_cluster_labels(inp=name.split('-')[1])
+        cluster_sizes = [len(i) for i in cluster_labels]
+        link_function, colors = get_dendrogram_color_fun(link, clustering['reorder_vec'],
+                                                         clustering['labels'])
+        tree = dendrogram(link,  link_color_func=link_function, no_plot=True)
+        
+        if plot_dir is not None:
+            function_directory = 'subbranches_input-%s' % inp
+            makedirs(path.join(plot_dir, function_directory), exist_ok=True)
+            
+        plot_loc = None
+        if cluster_range is None:
+            cluster_range = range(len(cluster_labels))
+        figs = []
+        for cluster_i in cluster_range:
+            if plot_dir:
+                filey = 'cluster_%s.%s' % (str(cluster_i).zfill(2), ext)
+                plot_loc = path.join(plot_dir, function_directory, filey)
+            fig = plot_subbranch(cluster_i, tree, ordered_loading, cluster_sizes,
+                                 figsize=figsize, plot_loc=plot_loc)
+            figs.append(fig)
+        return figs
+                           
+
+def plot_dendrograms(results, c=None,  inp=None, titles=None, var_labels=False,
                      figsize=(20,12), orientation='horizontal',
                      dpi=300, ext='png', plot_dir=None):
     """ Plots HCA results as dendrogram with loadings underneath
@@ -145,25 +255,34 @@ def plot_dendrograms(results, c=None,  inp=None, titles=None,
                                                          clustering['labels'])
         # set up axes' size based on orientation
         if orientation == 'horizontal':
-            dendro_size = [0,.3,1,.55]
-            heatmap_size = [0,.05,1,.25]
+            dendro_size = [0,.4,.95,.45]
+            heatmap_size = [0,.05,.95,.35]
+            cbar_size = [.97,.05,.02,.25]
+            cbar_orientation='vertical'
             dendro_orient='top'
             ordered_loading = ordered_loading.T
         elif orientation == 'vertical':
-            dendro_size = [.3, 0, .55, 1]
-            heatmap_size = [.05, 0, .25, 1]
+            dendro_size = [.4, 0, .45, .93]
+            heatmap_size = [.05, 0, .35, .93]
+            cbar_size = [.05,.97,.25,.02]
+            cbar_orientation='horizontal'
             dendro_orient='right'
         with sns.axes_style('white'):
             fig = plt.figure(figsize=figsize)
             ax1 = fig.add_axes(dendro_size) 
-            dendrogram(link, ax=ax1, link_color_func=link_function,
-                       orientation=dendro_orient)
+            with plt.rc_context({'lines.linewidth': 2.5}):
+                dendrogram(link, ax=ax1, link_color_func=link_function,
+                           orientation=dendro_orient)
             # change axis properties
             ax1.tick_params(axis='x', which='major', labelsize=14,
                             labelbottom='off')
             # plot loadings as heatmap below
             ax2 = fig.add_axes(heatmap_size)
-            sns.heatmap(ordered_loading, ax=ax2, cbar=False,
+            ax3 = fig.add_axes(cbar_size)
+            max_val = np.max(abs(loading.values))
+            sns.heatmap(ordered_loading, ax=ax2, cbar=True, cbar_ax=ax3,
+                        vmax =  max_val, vmin = -max_val,
+                        cbar_kws={'orientation': cbar_orientation},
                         cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
             # add lines to heatmap to distinguish clusters
             xlim = ax2.get_xlim(); 
@@ -186,21 +305,21 @@ def plot_dendrograms(results, c=None,  inp=None, titles=None,
                 ax2.tick_params(labelsize=figsize[1]*12/10)
             # add title
             ax1.set_title(title, fontsize=40, y=1.05)
-            for ax in [ax1]:
-                ax.get_yaxis().set_visible(False)
-                ax.spines['top'].set_visible(False)
-                ax.spines['right'].set_visible(False)
-                ax.spines['bottom'].set_visible(False)
-                ax.spines['left'].set_visible(False)
+            ax1.get_yaxis().set_visible(False)
+            ax1.spines['top'].set_visible(False)
+            ax1.spines['right'].set_visible(False)
+            ax1.spines['bottom'].set_visible(False)
+            ax1.spines['left'].set_visible(False)
             # set label visibility
-            if orientation == 'horizontal':
-                ax2.tick_params(labelbottom='off')  
-            else:
-                ax2.tick_params(labelleft='off') 
+            if not var_labels:
+                if orientation == 'horizontal':
+                    ax2.tick_params(labelbottom='off')  
+                else:
+                    ax2.tick_params(labelleft='off') 
         
         if plot_dir is not None:
             save_figure(fig, path.join(plot_dir, 
-                                             '%s_dendrogram.%s' % (name, ext)),
+                                             'dendrogram_%s.%s' % (name, ext)),
                         {'bbox_inches': 'tight', 'dpi': dpi})
         
 def plot_graphs(HCA_graphs, plot_dir=None, ext='png'):
@@ -370,12 +489,8 @@ def plot_cluster_factors(results, c, inp='data', ext='png', plot_dir=None):
                                subplot_kw={'projection': 'polar'})
     axes = f.get_axes()
     for i, (measures, loading) in enumerate(cluster_loadings):
-        if i%(ncols*2)==0 or i%(ncols*2)==(ncols-1):
-            plot_loadings(axes[i], loading, kind='line', offset=.5,
-                  plot_kws={'alpha': .8, 'c': colors[i]})
-        else:
-            plot_loadings(axes[i], loading, kind='line', offset=.5,
-                  plot_kws={'alpha': .8, 'c': colors[i]})
+        plot_loadings(axes[i], loading, kind='line', offset=.5,
+              plot_kws={'alpha': .8, 'c': colors[i]})
         axes[i].set_title('Cluster %s' % i, y=1.14, fontsize=25)
         # set tick labels
         xtick_locs = np.arange(0.0, 2*np.pi, 2*np.pi/len(loading))
@@ -389,7 +504,7 @@ def plot_cluster_factors(results, c, inp='data', ext='png', plot_dir=None):
         axes[j].set_visible(False)
     plt.subplots_adjust(hspace=.5, wspace=.5)
     
-    filename = 'clustering_polar_factors_EFA%s_inp-%s.%s' % (c, inp, ext)
+    filename = 'polar_factors_EFA%s_inp-%s.%s' % (c, inp, ext)
     if plot_dir is not None:
         save_figure(f, path.join(plot_dir, filename),
                     {'bbox_inches': 'tight'})
@@ -404,6 +519,9 @@ def plot_HCA(results, plot_dir=None, verbose=False, ext='png'):
     if verbose: print("Plotting dendrograms")
     plot_dendrograms(results, c, inp='data', plot_dir=plot_dir, ext=ext)
     plot_dendrograms(results, c, inp='EFA%s' % c, plot_dir=plot_dir, ext=ext)
+    if verbose: print("Plotting dendrogram subbranches")
+    plot_subbranches(results, c,  inp='data', plot_dir=plot_dir, ext=ext)
+    plot_subbranches(results, c,  inp='EFA%s' % c, plot_dir=plot_dir, ext=ext)
     if verbose: print("Plotting clustering similarity")
     plot_clustering_similarity(results, plot_dir=plot_dir, verbose=verbose, ext=ext)
     if verbose: print("Plotting cluster polar plots")

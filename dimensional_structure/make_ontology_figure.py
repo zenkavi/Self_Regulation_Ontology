@@ -1,13 +1,19 @@
+import argparse
 from cross_results_plots import plot_corr_hist
-from HCA_plots import plot_dendrograms
+from HCA_plots import plot_dendrograms, plot_subbranches
 import glob
-import os
+from os import path, remove
 from utils import load_results
 import seaborn as sns
 import svgutils.transform as sg
 
 # load data
-datafile = 'Complete_01-22-2018'
+# parse arguments
+parser = argparse.ArgumentParser()
+parser.add_argument('-dataset', default=None)
+args = parser.parse_args()
+
+datafile = args.dataset
 results = load_results(datafile)
 
 # make histogram plot
@@ -20,11 +26,25 @@ for title, subset in [('Behavioral Tasks', 'task'), ('Self-Report Surveys', 'sur
     r = results[subset]
     c = r.EFA.get_metric_cs()['c_metric-BIC']
     inp = 'EFA%s' % c
-    plot_dendrograms(r, c, display_labels=False, inp=inp, titles=[title],
-                     figsize=(12,8), ext='svg',  plot_dir='/tmp/')
+    plot_dendrograms(r, c, inp=inp, titles=[title],
+                     figsize=(12,10), ext='svg',  plot_dir='/tmp/')
     # get scores
     scores[subset] = r.EFA.get_scores(c)
-dendrograms = glob.glob('/tmp/*dendrogram.svg')
+dendrograms = glob.glob('/tmp/dendrogram*.svg')
+
+# get example branch
+cluster_figs = plot_subbranches(results['task'], 
+                               c=5, 
+                               inp='EFA5', 
+                               cluster_range=range(2,4), 
+                               figsize=(4,6),
+                               ext='svg')
+cluster_figs += plot_subbranches(results['task'], 
+                                   c=5, 
+                                   inp='EFA5', 
+                                   cluster_range=range(2,4), 
+                                   figsize=(4,6),
+                                   ext='svg')
 
 # ***************************************************************************
 # Ontology Figure
@@ -40,7 +60,9 @@ dendrograms = glob.glob('/tmp/*dendrogram.svg')
 fig1 = sg.fromfile(dendrograms[0])
 fig2 = sg.fromfile(dendrograms[1])
 fig3 = sg.from_mpl(f, {})
-#fig4 = sg.fromfile('/tmp/clustering_input-data.svg')
+fig4 = sg.from_mpl(cluster_figs[0], {})
+fig5 = sg.from_mpl(cluster_figs[1], {})
+
 #create new SVG figure
 # set height and width based on constituent plots
 size1 = [int(i[:-2]) for i in fig1.get_size()]
@@ -48,6 +70,7 @@ size2 = [int(i[:-2]) for i in fig2.get_size()]
 
 width1 = max([size1[0], size2[0]]) 
 width2 = int(fig3.get_size()[0])
+width3 = int(fig4.get_size()[0])
 wpad = (width1 + width2)*.02
 width = width1 + width2 + wpad
 
@@ -67,6 +90,10 @@ plot2 = fig2.getroot()
 plot2.moveto(0, height1+hpad)
 plot3 = fig3.getroot()
 plot3.moveto(width1+wpad, 0)
+plot4 = fig4.getroot()
+plot4.moveto(width1+wpad*2, height1*.6+hpad)
+plot5 = fig5.getroot()
+plot5.moveto(width1+wpad*3+width3*1.2, height1*.6+hpad)
 #plot4 = fig4.getroot()
 #plot4.moveto(int(fig3.get_size()[0]) + wpad, height1+hpad)
 
@@ -75,14 +102,15 @@ txt1 = sg.TextElement(25,30, "A", size=30, weight="bold")
 txt2 = sg.TextElement(25, 30+hpad+height1, "B", size=30, weight="bold")
 txt3 = sg.TextElement(width1+wpad+25, 30, "C", size=30, weight="bold")
 txt4 = sg.TextElement(width1+wpad+25, 
-                      30+hpad+height1, "D", size=30, weight="bold")
+                      30+hpad+height1*.5, "D", size=30, weight="bold")
 
 # append plots and labels to figure
-fig.append([plot1, plot2, plot3])
+fig.append([plot1, plot2, plot3, plot4, plot5])
 fig.append([txt1, txt2, txt3, txt4])
 
 # save generated SVG files
-fig.save("/home/ian/tmp/fig_final.svg")
+plot_file = path.dirname(results['task'].plot_file)
+fig.save(path.join(plot_file, 'Ontology_Figure.svg'))
 
 for file in dendrograms:
-    os.remove(file)
+    remove(file)

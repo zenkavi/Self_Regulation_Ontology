@@ -77,6 +77,28 @@ class EFA_Analysis:
                   ['No', 'Yes'][adequate])
         return adequate, {'Barlett_p': Barlett_p, 'KMO': KMO_MSA}
     
+    def compute_higher_order_factors(self, c=None):
+        """ Return higher order EFA """
+        if c is None:
+            c = self.num_factors
+            print('# of components not specified, using BIC determined #')
+        if ('factor_tree' in self.results.keys() and 
+            c in self.results['factor_tree_Rout'].keys()):
+            # get factor correlation matrix
+            phi = pd.DataFrame(get_attr(self.results['factor_tree_Rout'][c], 'Phi'))
+            n_obs = self.data.shape[0]
+            labels = list(self.results['factor_tree'][c].columns)
+            BIC_c, BICs = find_optimal_components(phi, 
+                                                  metric='BIC', 
+                                                  nobs=n_obs)
+            Rout, higher_order_out = psychFA(phi, BIC_c, nobs=n_obs)
+            loadings = get_loadings(higher_order_out, labels)
+            self.results['factor2_tree'][c] = loadings
+            self.results['factor2_tree_Rout'][c] = Rout
+        else:
+            print('No %s factor solution computed yet!' % c)
+            
+            
     def create_factor_tree(self, start=1, end=None):
         if end is None:
             end = max(self.num_factors, start)
@@ -107,7 +129,6 @@ class EFA_Analysis:
             print("EFA hasn't been run for %s factors" % c)
             return None
 
-        
     def get_dimensionality(self, metrics=None, verbose=False):
         """ Use multiple methods to determine EFA dimensionality
         
@@ -148,27 +169,6 @@ class EFA_Analysis:
         if verbose:
                 print('Best Components: ', best_cs)
     
-    def get_higher_order_factors(self, c=None):
-        """ Return higher order EFA """
-        if c is None:
-            c = self.num_factors
-            print('# of components not specified, using BIC determined #')
-        if ('factor_tree' in self.results.keys() and 
-            c in self.results['factor_tree_Rout'].keys()):
-            # get factor correlation matrix
-            phi = pd.DataFrame(get_attr(self.results['factor_tree_Rout'][c], 'Phi'))
-            n_obs = self.data.shape[0]
-            labels = list(self.results['factor_tree'][c].columns)
-            BIC_c, BICs = find_optimal_components(phi, 
-                                                  metric='BIC', 
-                                                  nobs=n_obs)
-            Rout, higher_order_out = psychFA(phi, BIC_c, nobs=n_obs)
-            loadings = get_loadings(higher_order_out, labels)
-            self.results['factor2_tree'][c] = loadings
-            self.results['factor2_tree_Rout'][c] = Rout
-        else:
-            print('No %s factor solution computed yet!' % c)
-            
     def get_loading(self, c=None, bootstrap=False, recompute=False):
         """ Return the loading for an EFA solution at the specified c """
         if c is None:
@@ -318,7 +318,7 @@ class EFA_Analysis:
                 self.results['factor_tree'][c], rejected = thresh_loading
         # get higher level factor solution
         if verbose: print('Determining Higher Order Factors')
-        self.get_higher_order_factors()
+        self.compute_higher_order_factors()
         # get entropies
         self.get_factor_entropies()
     
@@ -438,7 +438,15 @@ class HCA_Analysis():
             cluster_vec = subset.mean(0)
             cluster_loadings.append((cluster, cluster_vec))
         return cluster_loadings
-            
+    
+    def get_cluster_names(self, inp):
+        cluster = self.results['clustering_input-%s' % inp]
+        num_clusters = np.max(cluster['labels'])
+        if 'cluster_names' in cluster.keys():
+            return cluster['cluster_names']
+        else:
+            return [str(i+1) for i in range(num_clusters)]
+        
     def get_graph_vars(self, graphs):
         """ returns variables for each cluster sorted by centrality """
         graph_vars = []
@@ -448,6 +456,12 @@ class HCA_Analysis():
             graph_vars.append(sorted_vars)
         return graph_vars
     
+    def name_clusters(self, names, inp):
+        cluster_labels = self.results['clustering_input-%s' % inp]['labels']
+        num_clusters = np.max(cluster_labels)
+        assert len(names) == num_clusters
+        self.results['clustering_input-%s' % inp]['cluster_names'] = names
+        
     def run(self, data, EFA, cluster_EFA=False,
             run_graphs=False, verbose=False):
         if verbose: print("Clustering data")

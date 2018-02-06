@@ -38,14 +38,19 @@ if dataset == None:
     dataset = files[-1]
 else:
     dataset = path.join(basedir,'Data',dataset)
+datafile = dataset.split(path.sep)[-1]
     
 subsets = [{'name': 'task', 
             'regex': 'task',
-            'factor_names': ['Speeded IP', 'Discounting', 'Perc/Resp',
-                             'Strategic IP', 'Caution']},
+            'factor_names': ['Speeded IP', 'Strategic IP', 'Discounting',
+                             'Perc/Resp', 'Caution'],
+            'cluster_names': []},
             {'name': 'survey',
              'regex': 'survey',
-             'factor_names':  ['Sensation Seeking', 'Mindfulness', 'Emotional Control', 'Impulsivity', 'Goal-Directedness', 'Reward Sensitivity', 'Risk Perception', 'Eating Control', 'Ethical Risk Taking', 'Social Risk Taking', 'Financial Risk Taking', 'Agreeableness']},
+             'factor_names':  ['Sensation Seeking', 'Mindfulness', 'Emotional Control', 
+                               'Impulsivity', 'Goal-Directedness', 'Reward Sensitivity',
+                               'Risk Perception', 'Eating Control', 'Ethical Risk Taking', 
+                               'Social Risk Taking', 'Financial Risk Taking', 'Agreeableness']},
              {'name': 'all', 
             'regex': '.',
             'factor_names': []}]
@@ -53,7 +58,7 @@ subsets = [{'name': 'task',
 ID = None # ID will be created
 results = None
 # create/run results for each subset
-for subset in subsets[0:2]:
+for subset in subsets:
     name = subset['name']
     print('Running Subset: %s' % name)
     if run_analysis == True:
@@ -62,17 +67,21 @@ for subset in subsets[0:2]:
         # ****************************************************************************
         # run dimensional analysis
         start = time.time()
-        results = Results(dataset, dist_metric='abscorrelation',
+        results = Results(datafile, dist_metric='abscorrelation',
                           name=subset['name'],
                           filter_regex=subset['regex'],
+                          boot_iter=1000,
                           ID=ID)
         results.run_EFA_analysis(verbose=True, bootstrap=bootstrap)
         results.run_clustering_analysis(verbose=True, run_graphs=False)
         ID = results.ID.split('_')[1]
-        # name factors
+        # name factors and clusters
         factor_names = subset.get('factor_names', None)
+        cluster_names = subset.get('cluster_names', None)
         if factor_names:
             results.EFA.name_factors(factor_names)
+        if cluster_names:
+            results.HCA.name_clusters(cluster_names)
         # run behavioral prediction using the factor results determined by BIC
         c = results.EFA.num_factors
         results.run_prediction(c=c)

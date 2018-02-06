@@ -90,10 +90,11 @@ def plot_factor_correlation(results, c, figsize=12, dpi=300, ext='png', plot_dir
     phi = phi.iloc[reorder_vec, reorder_vec]
     f = plt.figure(figsize=(figsize*5/4, figsize))
     ax1 = f.add_axes([0,0,.75,.75])
-    sns.heatmap(phi, ax=ax1, cbar=False, square=True,
+    sns.heatmap(phi, ax=ax1, square=True, vmax=.5, vmin=-.5,
                 cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
     plt.title('%s 1st-Level Factor Correlations' % results.ID.split('_')[0],
               weight='bold')
+    
     # get higher order correlations
     if 'factor2_tree' in EFA.results.keys() and c in EFA.results['factor2_tree'].keys():
         higher_loading = EFA.results['factor2_tree'][c].iloc[reorder_vec]
@@ -130,7 +131,7 @@ def plot_bar_factors(results, c, figsize=20, thresh=75,
     flattened_factor_order = []
     for sublist in [i[1] for i in grouping]:
         flattened_factor_order += sublist
-    loadings = loadings.loc[flattened_factor_order]
+    #loadings = loadings.loc[flattened_factor_order]
     # bootstrap CI
     bootstrap_CI = EFA.get_boot_stats(c)
     if bootstrap_CI is not None:
@@ -156,7 +157,7 @@ def plot_bar_factors(results, c, figsize=20, thresh=75,
         grouping = threshed_groups
     n_factors = len(loadings.columns)
     f, axes = plt.subplots(1, n_factors, figsize=(n_factors*(figsize/12), figsize))
-    with sns.plotting_context(font_scale=1.3) and sns.axes_style('dark'):
+    with sns.plotting_context(font_scale=1.3):
         # plot optimal factor breakdown in bar format to better see labels
         for i, k in enumerate(loadings.columns):
             loading = loadings[k]
@@ -190,6 +191,7 @@ def plot_bar_factors(results, c, figsize=20, thresh=75,
                                weight='bold')
             # add labels of measures to top and bottom
             tick_colors = ['#000000','#444098']
+            ax1.set_facecolor('#DBDCE7')
             for location in locs[2::3]:
                 ax1.axhline(y=location, xmin=0, xmax=1, color='w', zorder=-1)
             if i == n_factors-1:
