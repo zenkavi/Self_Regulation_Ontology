@@ -90,20 +90,21 @@ def plot_factor_correlation(results, c, figsize=12, dpi=300, ext='png', plot_dir
     phi = phi.iloc[reorder_vec, reorder_vec]
     f = plt.figure(figsize=(figsize*5/4, figsize))
     ax1 = f.add_axes([0,0,.75,.75])
+    ax1_cbar = f.add_axes([.7, .05, .03, .65])
     sns.heatmap(phi, ax=ax1, square=True, vmax=.5, vmin=-.5,
+                cbar_ax = ax1_cbar,
                 cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
-    plt.title('%s 1st-Level Factor Correlations' % results.ID.split('_')[0],
+    ax1.set_title('%s 1st-Level Factor Correlations' % results.ID.split('_')[0],
               weight='bold')
     
     # get higher order correlations
     if 'factor2_tree' in EFA.results.keys() and c in EFA.results['factor2_tree'].keys():
         higher_loading = EFA.results['factor2_tree'][c].iloc[reorder_vec]
-        ax2 = f.add_axes([.77,0,.05*higher_loading.shape[1],.75])
-        sns.heatmap(higher_loading, ax=ax2, cbar=False,
+        ax2 = f.add_axes([.85,0,.04*higher_loading.shape[1],.75])
+        sns.heatmap(higher_loading, ax=ax2, cbar=True,
                     yticklabels=False,
                     cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
-        plt.ylabel('2nd-Order Factor Loadings', rotation=-90, labelpad=20,
-                   weight='bold')
+        ax2.set_title('2nd-Order Factor Loadings', weight='bold')
         ax2.yaxis.set_label_position('right')
     if plot_dir:
         filename = 'factor_correlations_EFA%s.%s' % (c, ext)
