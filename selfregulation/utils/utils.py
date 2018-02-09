@@ -174,45 +174,55 @@ def get_item_metadata(survey, dataset=None,verbose=False):
         metadata.append(item)
     return metadata
 
-def get_demographics(dataset,var_subset=None,full_dataset=False):
+def get_demographics(dataset=None, cleanup=True, 
+                     drop_categorical=True, verbose=False):
+    """ Preprocess and return demographic data
+    
+    Args:
+        dataset: optional, which data release to draw from. The most recent one
+            will be used if not specified
+        cleanup: bool, indicated whether to remove data that is impossible
+            (e.g. really low weights or heights)
+        drop_categorical: bool, whether to drop categorical variables
+    
     """
-    misnomer - actually get demographics, alc/drug, and health
-    """
-    basedir=get_info('base_directory')
-    if not full_dataset:
-        datasets=[dataset]
+    categorical_vars = ['HispanicLatino','Race',
+                        'DiseaseDiagnoses', 'DiseaseDiagnosesOther',
+                        'MotivationForParticipation', 'MotivationOther',
+                        'NeurologicalDiagnoses',
+                        'NeurologicalDiagnosesDescribe',
+                        'OtherDebtSources',
+                        'OtherDrugs', 'OtherRace', 'OtherTobaccoProducts',
+                        'PsychDiagnoses',
+                        'PsychDiagnosesOther']
+        
+    demogdata=get_behav_data(dataset,'demographic_health.csv')
+    if cleanup:
+        q=demogdata.query('WeightPounds<50')
+        for i in q.index:
+            demogdata.loc[i,'WeightPounds']=numpy.nan
+        if verbose and len(q)>0:
+            print('replacing bad WeightPounds value for', list(q.index))
+        q=demogdata.query('HeightInches<36')
+        for i in q.index:
+            demogdata.loc[i,'HeightInches']=numpy.nan
+        if verbose and len(q)>0:
+            print('replacing bad HeightInches value for', list(q.index))
+        q=demogdata.query('CaffienatedSodaCansPerDay<0')
+        for i in q.index:
+            demogdata.loc[i,'CaffienatedSodaCansPerDay']=numpy.nan
+        if verbose and len(q)>0:
+            print('replacing bad CaffienatedSodaCansPerDay value for', list(q.index))
+
+    demogdata=demogdata.assign(BMI=demogdata['WeightPounds']*0.45 / (demogdata['HeightInches']*0.025)**2)
+    if drop_categorical:
+       demogdata.drop(categorical_vars, axis=1, inplace=True)
+       if verbose: 
+           print('dropping categorical variables')
     else:
-        if dataset.find('Discovery')==0:
-            datasets=[dataset,dataset.replace('Discovery','Validation')]
-        else:
-            datasets=[dataset,dataset.replace('Validation','Discovery')]
-        print('using datasets:',datasets)
-    ds_all={}
-    for ds in datasets:
-      for i,survey in enumerate(['demographics_ordinal','alcohol_drugs_ordinal','health_ordinal']):
-        infile=os.path.join(basedir,'Data/%s/%s.csv'%(ds,survey))
-        if i==0:
-            ds_all[ds]=pandas.DataFrame.from_csv(infile,index_col=0,sep=',')
-        else:
-            data=pandas.DataFrame.from_csv(infile,index_col=0,sep=',')
-            ds_all[ds]=ds_all[ds].merge(data,'inner',right_index=True,left_index=True)
-    if len(ds_all)==1:
-        alldata=ds_all[ds]
-    else:
-        alldata=pandas.concat([ds_all[ds] for ds in ds_all.keys()])
-    badweight=alldata['WeightPounds']<80
-    badheight=alldata['HeightInches']<36
-    alldata.loc[badweight,'WeightPounds']=numpy.nan
-    alldata.loc[badheight,'HeightInches']=numpy.nan
-    alldata['BMI']=alldata['WeightPounds']*0.45 / (alldata['HeightInches']*0.025)**2
-
-    if not var_subset is None:
-        for c in alldata.columns:
-            if not c in var_subset:
-                del alldata[c]
-
-    return(alldata)
-
+        demogdata=demogdata.assign(Obese=(demogdata['BMI']>30).astype('int'))
+    return demogdata
+                  
 def get_single_dataset(dataset,survey):
     basedir=get_info('base_directory')
     infile=os.path.join(basedir,'data/Derived_Data/%s/surveydata/%s.tsv'%(dataset,survey))

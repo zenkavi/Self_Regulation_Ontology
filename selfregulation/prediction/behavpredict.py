@@ -25,7 +25,7 @@ from sklearn.preprocessing import StandardScaler
 import fancyimpute
 from imblearn.combine import SMOTETomek
 
-from selfregulation.utils.utils import get_info,get_behav_data,get_demographics
+from selfregulation.utils.utils import get_info,get_behav_data
 from selfregulation.utils.logreg import LogReg
 
 from selfregulation.utils.get_balanced_folds import BalancedKFold
