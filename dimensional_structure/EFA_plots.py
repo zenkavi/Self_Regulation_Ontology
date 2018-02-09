@@ -1,10 +1,8 @@
 # imports
 import matplotlib
 matplotlib.use('Agg')
-from math import ceil
-from utils import (get_factor_groups, plot_factor_tree, get_top_factors, 
-         save_figure, visualize_factors, visualize_task_factors
-        )
+from utils import get_factor_groups
+from plot_utils import save_figure, visualize_factors, visualize_task_factors
 import matplotlib.pyplot as plt
 import numpy as np
 from os import makedirs, path
