@@ -7,7 +7,7 @@ from os import path
 import pandas as pd
 import pickle
 import re
-from scipy.stats import entropy
+import statsmodels.formula.api as sm
 import sys
 
 from expanalysis.experiments.ddm_utils import load_concat_models
