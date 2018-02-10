@@ -468,28 +468,25 @@ def quantify_lower_nesting(factor_tree):
 # Helper functions for visualization of component loadings
 # ****************************************************************************
 from fancyimpute import SimpleFill
-def get_demographic_factors(demographics, residualize=True):
-    def residualize_baseline(df):
-        # remove baseline vars
-        baseline=df[['Age','Sex']]
-        data=df.copy()
-        del data['Age']
-        del data['Sex']
-        #x=SimpleFill().complete(baseline)
-        lr=LinearRegression()
-        if data.isnull().sum().sum() > 0:
-            imputed = SimpleFill().complete(data)
-            data = pd.DataFrame(imputed, 
-                                index=data.index, 
-                                columns=data.columns)
-        for v in data:
-            y=data[v]
-            lr.fit(baseline,y)
-            data[v]=y - lr.predict(baseline)
-        return data
+def residualize_baseline(df):
+    # remove baseline vars
+    baseline=df[['Age','Sex']]
+    data=df.copy()
+    del data['Age']
+    del data['Sex']
+    #x=SimpleFill().complete(baseline)
+    lr=LinearRegression()
+    if data.isnull().sum().sum() > 0:
+        imputed = SimpleFill().complete(data)
+        data = pd.DataFrame(imputed, 
+                            index=data.index, 
+                            columns=data.columns)
+    for v in data:
+        y=data[v]
+        lr.fit(baseline,y)
+        data[v]=y - lr.predict(baseline)
+    return data
 
-    if residualize:
-        demographics = residualize_baseline(demographics)
-    BIC_c, BICs = find_optimal_components(demographics, metric='BIC')
-    fa, out = psychFA(demographics, BIC_c)
+
+
 
