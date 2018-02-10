@@ -6,7 +6,7 @@ import sys
 import traceback
 import selfregulation.prediction.behavpredict as behavpredict
 
-def run_EFA_prediction(dataset, factor_scores, output_base, save=True,
+def run_EFA_prediction(dataset, factor_scores, demographics, output_base, save=True,
                        verbose=False, classifier='lasso',
                        shuffle=False, n_jobs=2, imputer="SimpleFill",
                        smote_threshold=.05, freq_threshold=.1, icc_threshold=.25,
@@ -37,20 +37,16 @@ def run_EFA_prediction(dataset, factor_scores, output_base, save=True,
          freq_threshold=freq_threshold,
          imputer=imputer)
     
-    bp.load_demog_data()
-    bp.get_demogdata_vartypes()
-    bp.remove_lowfreq_vars()
+    bp.behavdata = factor_scores
+    bp.demogdata = demographics
+    model_types = get_demographic_model_type(demographics)
+    bp.data_models = {k:v for i, (k,v) in model_types.iterrows()}
     bp.binarize_ZI_demog_vars()
     bp.behavdata = factor_scores
     #bp.filter_by_icc(icc_threshold)
     bp.get_joint_datasets()
     
-    if not singlevar:
-        vars_to_test=[v for v in bp.demogdata.columns if not v in bp.skip_vars]
-    else:
-        vars_to_test=singlevar
-    
-    vars_to_test = ['BMI', 'AlcoholHowManyDrinksDay', 'SmokeEveryDay', 'CannabisHowOften', 'DaysLostLastMonth']
+    vars_to_test=[v for v in bp.demogdata.columns if not v in bp.skip_vars]
     for v in vars_to_test:
         bp.lambda_optim=None
         print('RUNNING:',v,bp.data_models[v],dataset)
@@ -68,8 +64,7 @@ def run_EFA_prediction(dataset, factor_scores, output_base, save=True,
             print('error on',v,':',e)
             bp.errors[v]=traceback.format_tb(e[2])
     if save == True:
-        if singlevar:
-            bp.write_data(vars_to_test,listvar=True)
-        else:
-            bp.write_data(vars_to_test)
+        bp.write_data(vars_to_test)
     return bp
+
+from selfregulation.utils.r_to_py_utils import get_demographic_model_type
