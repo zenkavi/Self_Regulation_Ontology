@@ -1,9 +1,11 @@
 import numpy as np
+from os import path
 import pandas as pd
 import readline
 import rpy2.robjects
 from rpy2.robjects import pandas2ri, Formula
 from rpy2.robjects.packages import importr
+from selfregulation.utils.utils import get_info
 pandas2ri.activate()
 
 def missForest(data):
@@ -105,3 +107,13 @@ def qgraph_cor(data, glasso=False, gamma=.25):
                            index=data.columns, 
                            columns=data.columns)
         return cors_df
+    
+def get_demographic_model_type(demographics, verbose=False):
+    base = get_info('base_directory')
+    rpy2.robjects.r.source(path.join(base, 'selfregulation', 'utils', 'utils.R'))
+    
+    get_vartypes = rpy2.robjects.globalenv['get_vartypes']
+    out=get_vartypes(demographics, verbose)
+    model_types = pd.DataFrame(np.reshape(np.matrix(out),(-1,2), 'F'))
+    model_types.iloc[:, 0] = demographics.columns
+    return model_types

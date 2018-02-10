@@ -174,7 +174,7 @@ def get_item_metadata(survey, dataset=None,verbose=False):
         metadata.append(item)
     return metadata
 
-def get_demographics(dataset=None, cleanup=True, 
+def get_demographics(dataset=None, cleanup=True, num_response_thresh=10,
                      drop_categorical=True, verbose=False):
     """ Preprocess and return demographic data
     
@@ -183,6 +183,8 @@ def get_demographics(dataset=None, cleanup=True,
             will be used if not specified
         cleanup: bool, indicated whether to remove data that is impossible
             (e.g. really low weights or heights)
+        num_response_thresh: int, number of NaN responses allowed before removing
+            variable
         drop_categorical: bool, whether to drop categorical variables
     
     """
@@ -219,8 +221,12 @@ def get_demographics(dataset=None, cleanup=True,
        demogdata.drop(categorical_vars, axis=1, inplace=True)
        if verbose: 
            print('dropping categorical variables')
-    else:
-        demogdata=demogdata.assign(Obese=(demogdata['BMI']>30).astype('int'))
+    demogdata=demogdata.assign(Obese=(demogdata['BMI']>30).astype('int'))
+        
+    # only keep variables with fewer NaNs then num_response_thresh
+    if num_response_thresh is not None:
+        good_vars = demogdata.isnull().sum() <= num_response_thresh
+        demogdata = demogdata.loc[:,good_vars]
     return demogdata
                   
 def get_single_dataset(dataset,survey):
