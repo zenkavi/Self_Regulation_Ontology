@@ -11,6 +11,7 @@ import statsmodels.formula.api as sm
 import sys
 
 from expanalysis.experiments.ddm_utils import load_concat_models
+import post_pred_gen_debug
 
 model_dir = sys.argv[1]
 task = sys.argv[2]

@@ -1,5 +1,5 @@
 import hddm
-from kabuki.analyze import post_pred_gen
+from post_pred_gen_debug import post_pred_gen
 import numpy as np
 import pandas as pd
 import pickle
@@ -50,7 +50,7 @@ out_dir='/Users/zeynepenkavi/Downloads/'
 task = 'test'
 
 #output nested dictionary for each sub with model details
-ppc_regression_samples = {} 
+ppc_regression_samples = {}
 #This loop should output n*condition*sample regression (e.g. 2*2*100)
 for (node, sample), sim_data in ppc_data_append.groupby(level=(0,1)):
     sample_out = {}
@@ -77,7 +77,7 @@ else:
     ppc_regression_samples['subj_id'] = 0
                        
 #Save sample level output
-ppc_regression_samples.to_csv(out_dir+task+'_fitstat_samples.csv')
+#ppc_regression_samples.to_csv(out_dir+task+'_fitstat_samples.csv')
 
 #Summarize on subject*condition level
 if 'condition' in ppc_regression_samples.columns:
@@ -86,4 +86,7 @@ else:
     ppc_regression_subj = ppc_regression_samples.groupby(['subj_id']).mean().reset_index(level=['subj_id'])
 
 #Save summarized output
-ppc_regression_subj.to_csv(out_dir+task+'_fitstat_summary.csv')
+#ppc_regression_subj.to_csv(out_dir+task+'_fitstat_summary.csv')
+
+###ADD SD'SSSSS
+###Add correct groupby's to ppc_data generations for each task
