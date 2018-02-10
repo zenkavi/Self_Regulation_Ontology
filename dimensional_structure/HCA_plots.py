@@ -1,5 +1,5 @@
 # imports
-from utils import abs_pdist,  set_seed,
+from utils import abs_pdist,  set_seed
 from plot_utils import save_figure, plot_loadings, plot_tree
 from itertools import combinations
 from math import ceil
