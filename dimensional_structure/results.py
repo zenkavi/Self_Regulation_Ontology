@@ -4,8 +4,7 @@
 from utils import (
         create_factor_tree, distcorr,  find_optimal_components, 
         get_loadings, get_scores_from_subset, get_top_factors, 
-        hdbscan_cluster, hierarchical_cluster, 
-        quantify_lower_nesting
+        hdbscan_cluster, hierarchical_cluster, residualize_baseline
         )
 from prediction_utils import run_EFA_prediction
 import glob
@@ -18,7 +17,7 @@ from scipy.cluster.hierarchy import leaves_list, linkage
 from scipy.spatial.distance import squareform
 from scipy.stats import entropy
 from selfregulation.utils.graph_utils import  (get_adj, Graph_Analysis)
-from selfregulation.utils.utils import get_behav_data, get_info
+from selfregulation.utils.utils import get_behav_data, get_demographics, get_info
 from selfregulation.utils.r_to_py_utils import get_attr, get_Rpsych, psychFA
 from sklearn.preprocessing import scale
 
@@ -473,6 +472,16 @@ class HCA_Analysis():
             # run graph analysis on raw data
             graphs = self.build_graphs('data', data)
             self.results['clustering_input-data']['graphs'] = graphs
+
+class Demographic_Analysis(EFA_Analysis):
+    """ Runs Hierarchical Clustering Analysis """
+    def __init__(self, data, residualize=True, boot_iter=1000):
+        if residualize:
+            data = residualize_baseline(data)
+        if 'BMI' in data.columns:
+            data.drop(['WeightPounds', 'HeightInches'], axis=1, inplace=True)
+        
+        super().__init__(data, boot_iter=boot_iter)
         
 class Results(EFA_Analysis, HCA_Analysis):
     """ Class to hold olutput of EFA, HCA and graph analyses """
@@ -500,6 +509,7 @@ class Results(EFA_Analysis, HCA_Analysis):
         self.data_no_impute = get_behav_data(dataset=datafile,
                                              file='meaningful_variables_clean.csv',
                                              filter_regex=filter_regex)
+        self.demographics = get_demographics()
         self.dataset = datafile
         if ID is None:
             self.ID =  '%s_%s' % (name, str(random.getrandbits(16)))
@@ -516,11 +526,19 @@ class Results(EFA_Analysis, HCA_Analysis):
         self.loading_thresh = None
         self.dist_metric = dist_metric
         # initialize analysis classes
+        self.DA = Demographic_Analysis(self.demographics, boot_iter=boot_iter)
         self.EFA = EFA_Analysis(self.data, 
                                 self.data_no_impute, 
                                 boot_iter=boot_iter)
         self.HCA = HCA_Analysis(dist_metric=self.dist_metric)
         self.hdbscan = HDBScan_Analysis(dist_metric=self.dist_metric)
+     
+    def run_demographic_analysis(self, bootstrap=False, verbose=False):
+        if verbose:
+            print('*'*79)
+            print('Running demographics')
+            print('*'*79)
+        self.DA.run(bootstrap=bootstrap, verbose=verbose)
         
     def run_EFA_analysis(self, bootstrap=False, verbose=False):
         if verbose:
@@ -557,15 +575,18 @@ class Results(EFA_Analysis, HCA_Analysis):
                         verbose=verbose)
             return {'HCA': HCA, 'hdbscan': hdbscan}
     
-    def run_prediction(self, c, shuffle=False, no_baseline_vars=True,
+    def run_prediction(self, c=None, shuffle=False, no_baseline_vars=True,
                        outfile=None):
         scores = self.EFA.get_scores(c)
+        demographics = self.DA.reorder_factors(self.DA.get_scores(c))
         if outfile is None:
-            run_EFA_prediction(self.dataset, scores, self.output_file,
+            run_EFA_prediction(self.dataset, scores, demographics, 
+                               self.output_file,
                                shuffle=shuffle, 
                                no_baseline_vars=no_baseline_vars)
         else:
-            run_EFA_prediction(self.dataset, scores, outfile,
+            run_EFA_prediction(self.dataset, scores, demographics,
+                               outfile,
                                shuffle=shuffle, 
                                no_baseline_vars=no_baseline_vars)
     

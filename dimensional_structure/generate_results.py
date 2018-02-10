@@ -39,7 +39,16 @@ if dataset == None:
 else:
     dataset = path.join(basedir,'Data',dataset)
 datafile = dataset.split(path.sep)[-1]
-    
+
+demographic_factor_names = ['Drug Use', 
+                            'Mental Health',
+                            'Problem Drinking',
+                            'Daily Smoking',
+                            'Binge Drinking',
+                            'Obesity',
+                            'Lifetime Smoking',
+                            'Safety Drinking',
+                            'Income/Life Milestones']
 subsets = [{'name': 'task', 
             'regex': 'task',
             'factor_names': ['Speeded IP', 'Strategic IP', 'Discounting',
@@ -72,6 +81,7 @@ for subset in subsets:
                           filter_regex=subset['regex'],
                           boot_iter=1000,
                           ID=ID)
+        results.run_demographic_analysis(verbose=True, bootstrap=bootstrap)
         results.run_EFA_analysis(verbose=True, bootstrap=bootstrap)
         results.run_clustering_analysis(verbose=True, run_graphs=False)
         ID = results.ID.split('_')[1]
@@ -82,10 +92,10 @@ for subset in subsets:
             results.EFA.name_factors(factor_names)
         if cluster_names:
             results.HCA.name_clusters(cluster_names)
+        results.DA.name_factors(demographic_factor_names)
         # run behavioral prediction using the factor results determined by BIC
-        c = results.EFA.num_factors
-        results.run_prediction(c=c)
-        results.run_prediction(c=c, shuffle=True) # shuffled
+        results.run_prediction()
+        results.run_prediction(shuffle=True) # shuffled
         run_time = time.time()-start
         
         # ***************************** saving ****************************************
@@ -138,7 +148,9 @@ for subset in subsets:
         
         # Plot prediction
         print("Plotting Prediction")
-        plot_prediction(results, prediction_plot_dir)
+        order = results.DA.reorder_factors(results.DA.get_loading()).columns
+        plot_prediction(results, target_order=order,
+                        plot_dir=prediction_plot_dir)
         
         # copy latest results and prediction to higher directory
         plot_dir = results.plot_file
