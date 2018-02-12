@@ -64,6 +64,7 @@ def post_pred_gen(model, groupby=None, samples=500, append_data=False, progress_
     for name, data in iter_data:
         node = model.get_data_nodes(data.index)
         
+        #New addition: Reset index for non regression models
         if str(type(model)) == "<class 'hddm.models.hddm_info.HDDM'>":
             data = data.reset_index()
 
@@ -79,9 +80,12 @@ def post_pred_gen(model, groupby=None, samples=500, append_data=False, progress_
         datasets = _post_pred_generate(node, samples=samples, data=data, append_data=append_data)
         results[name] = pd.concat(datasets, names=['sample'], keys=list(range(len(datasets))))
         
-        #Convert results dict keys to single items
-    if isinstance(list(results.keys())[0], str)==False:
-        results={ '('+",".join(x)+')': results[x] for x in results.keys() }
+        #New addition: Convert results dict keys to single items for regression models with different conditions
+    if list(results.keys())[0] != 'wfpt':
+        if isinstance(list(results.keys())[0], str)==False:
+            results={ '('+",".join(map(str,x))+')': results[x] for x in results.keys() }
+        else:
+            results={ '('+x+')': results[x] for x in results.keys() }
 
     if progress_bar:
         bar_iter += 1

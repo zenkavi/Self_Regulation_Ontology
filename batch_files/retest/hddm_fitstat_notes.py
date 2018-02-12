@@ -1,10 +1,15 @@
 import hddm
-from post_pred_gen_debug import post_pred_gen
 import numpy as np
+import os
 import pandas as pd
 import pickle
 from scipy.stats import linregress
 import statsmodels.formula.api as sm
+import sys
+
+sys.path.append(os.getcwd())
+from post_pred_gen_debug import post_pred_gen
+
 
 #Read model in
 m = pickle.load(open('path_to_model.model', 'rb'))
@@ -89,4 +94,19 @@ else:
 #ppc_regression_subj.to_csv(out_dir+task+'_fitstat_summary.csv')
 
 ###ADD SD'SSSSS
+
 ###Add correct groupby's to ppc_data generations for each task
+#Adaptive n back: None (parametric regressor)
+#Attention network task: groupby = ['flanker_type', 'cue']
+#Choice reaction time: None
+#Directed forgetting: groupby = ['probe_type']
+#dot_pattern_expectancy = groupby = ['condition']
+#local_global_letter: grouby = ['condition', 'conflict_condition', 'switch']
+#motor_selective_stop_signal: groupby = ['critical_key']
+#recent_probes: groupby = ['probeType']
+#shape_matching: groupby = ['condition']
+#simon: groupby = ['condition']
+#stim_selective_stop_signal: groupby = ['condition']
+#stop_signal: groupby = ['condition']
+#stroop: groupby = ['condition']
+#threebytwo: groupby = ['cue_switch_binary', 'task_switch_binary', 'CTI']
