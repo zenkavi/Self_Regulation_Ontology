@@ -11,7 +11,9 @@ import statsmodels.formula.api as sm
 import sys
 
 from expanalysis.experiments.ddm_utils import load_concat_models
-import post_pred_gen_debug
+
+sys.path.append(os.getcwd())
+from post_pred_gen_debug import post_pred_gen
 
 model_dir = sys.argv[1]
 task = sys.argv[2]
@@ -20,6 +22,7 @@ output_dir = sys.argv[4]
 hddm_type = sys.argv[5] #(flat or hierarhical)
 parallel = sys.argv[6]
 sub_id_dir = sys.argv[7]
+samples = sys.argv[8]
 
 ##############################################
 ############ HELPER FUNCTIONS ################
@@ -30,31 +33,48 @@ sub_id_dir = sys.argv[7]
 ##############################################
 
 # Define helper function to get fitstat
-def get_likelihood(m, samples=100):
-    value_range = np.linspace(-5,5,100)
-    observeds = m.get_observeds()
-    like = np.empty((samples, len(value_range)), dtype=np.float32)   
+def get_fitstats(m, samples, groupby=None, append_data = True):
     
-    #we have come up with our own way of doing a posterior predictive check
-    #for each subject we sample from the posterior predictive and compare it to the data
-    #we do this n=samples times and calculate the KL divergence between the posterior predictive and the actual data
-    def KL_loop(obs):
-        KLs = {}
-        for subj_i, (node_name, bottom_node) in enumerate(obs.iterrows()):
-            node = bottom_node['node']
-            for sample in range(samples):
-                _parents_to_random_posterior_sample(node)
-                # Generate likelihood for parents parameters
-                like[sample,:] = node.pdf(value_range)
-                y = like.mean(axis=0)
-                data_bins = np.histogram(node.value, value_range, density=True)[0]
-            KL_divergence = entropy(y[1:]+1E-10, data_bins+1E-10)
-            KLs[subj_i] = KL_divergence
-        return KLs
+    #Sample from posterior predictive and generate data
+    ppc_data_append = post_pred_gen(m, samples = samples, append_data = append_data, groupby=groupby)
     
-    out = KL_loop(observeds)
-    #KLs = pd.DataFrame.from_dict(KLs, orient="index").rename(index=str, columns={0: model.replace(".model",".KL")})
-    return out
+    ppc_regression_samples = {}
+    #This loop should output n*condition*sample regression (e.g. 2*2*100)
+    for (node, sample), sim_data in ppc_data_append.groupby(level=(0,1)):
+        sample_out = {}
+        model = sm.ols(formula='rt ~ rt_sampled', data=sim_data)
+        fitted = model.fit()
+        sample_out['int_val'] = fitted.params[0]
+        sample_out['int_pval'] = fitted.pvalues[0]
+        sample_out['slope_val'] = fitted.params[1]
+        sample_out['slope_pval'] = fitted.pvalues[1]
+        sample_out['rsq'] = fitted.rsquared
+        sample_out['rsq_adj'] = fitted.rsquared_adj
+        ppc_regression_samples.update({node+'_'+str(sample): sample_out})
+
+    #Convert sample*subject length dict to dataframe
+    ppc_regression_samples = pd.DataFrame.from_dict(ppc_regression_samples, orient="index")
+
+#Add subj_id and condition columns
+    if ppc_regression_samples.index.tolist()[0].find("(") != -1:
+        ppc_regression_samples['condition'] = [s[s.find("(")+1:s.find(")")] for s in ppc_regression_samples.index.tolist()]
+
+    if ppc_regression_samples.index.tolist()[0].find(".") != -1:
+        ppc_regression_samples['subj_id'] = [s[s.find(".")+1:s.find("_")] for s in ppc_regression_samples.index.tolist()]
+    else:
+        ppc_regression_samples['subj_id'] = 0
+                       
+    #Summarize on subject*condition level
+    if 'condition' in ppc_regression_samples.columns:
+        means = ppc_regression_samples.groupby(['condition', 'subj_id']).mean().reset_index(level=['condition', 'subj_id'])
+        stds = ppc_regression_samples.groupby(['condition', 'subj_id']).std().reset_index(level=['condition', 'subj_id'])
+        ppc_regression_subj = means.merge(stds, on = ['condition', 'subj_id'], suffixes = ('_mean', '_std'))
+    else:
+        means = ppc_regression_samples.groupby(['subj_id']).mean().reset_index(level=['subj_id'])
+        stds = ppc_regression_samples.groupby(['subj_id']).mean().reset_index(level=['subj_id'])
+        ppc_regression_subj = means.merge(stds, on = ['subj_id'], suffixes = ('_mean', '_std'))    
+    
+    return(ppc_data_append, ppc_regression_samples, ppc_regression_subj)
 
 ##############################################
 ############# For Model Loading ##############
@@ -69,6 +89,33 @@ def load_parallel_models(model_path):
         models.append(m)
     m = load_concat_models(models)
     return m, models
+
+##############################################
+############### Groupby lookup ################
+##############################################
+
+def get_groupby_array(task=None):
+    groupby_array_dict = \
+    {
+        'adaptive_n_back': None, 
+        'attention_network_task': ['flanker_type', 'cue'],
+        'choice_reaction_time': None,
+        'directed_forgetting': ['probe_type'],
+        'dot_pattern_expectancy' : ['condition'],
+        'local_global_letter' : ['condition', 'conflict_condition', 'switch'],
+        'motor_selective_stop_signal': ['critical_key'],
+        'recent_probes': ['probeType'],
+        'shape_matching': ['condition'],
+        'simon': ['condition'],
+        'stim_selective_stop_signal': ['condition'],
+        'stop_signal': ['condition'],
+        'stroop': ['condition'],
+        'threebytwo': ['cue_switch_binary', 'task_switch_binary', 'CTI']
+    }
+    if task is None:
+        return groupby_array_dict
+    else:
+        return groupby_array_dict[task]
 
 ##############################################
 ############### Sub Id lookup ################
@@ -264,16 +311,16 @@ if hddm_type == 'hierarchical':
 ##############################################
 
 #test
-#python calculate_hddm_fitstat.py /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_complete_output/ choice_reaction_time t1 /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/ hierarchical yes /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Complete_01-22-2018/Individual_Measures/
+#python calculate_hddm_fitstat.py /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_complete_output/ choice_reaction_time t1 /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/ hierarchical yes /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Complete_01-22-2018/Individual_Measures/ 20
 
 #retest
-#python calculate_hddm_fitstat.py /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/ choice_reaction_time retest /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/ hierarchical yes /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_01-23-2018/Individual_Measures/
+#python calculate_hddm_fitstat.py /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/ choice_reaction_time retest /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/ hierarchical yes /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_01-23-2018/Individual_Measures/ 20
 
 #refits
-#python calculate_hddm_fitstat.py /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_refits/ choice_reaction_time refit /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/ hierarchical yes /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_01-23-2018/t1_data/Individual_Measures/
+#python calculate_hddm_fitstat.py /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_refits/ choice_reaction_time refit /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/ hierarchical yes /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_01-23-2018/t1_data/Individual_Measures/ 20
 
 #test flat
-#python calculate_hddm_fitstat.py /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/subject_fits/ choice_reaction_time t1 /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/ flat no /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_01-23-2018/t1_data/Individual_Measures/
+#python calculate_hddm_fitstat.py /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/subject_fits/ choice_reaction_time t1 /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/ flat no /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_01-23-2018/t1_data/Individual_Measures/ 20
 
 #retest flat
-#python calculate_hddm_fitstat.py /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/subject_fits/ choice_reaction_time retest /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/ flat no /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_01-23-2018/Individual_Measures/
+#python calculate_hddm_fitstat.py /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/subject_fits/ choice_reaction_time retest /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/ flat no /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_01-23-2018/Individual_Measures/ 20

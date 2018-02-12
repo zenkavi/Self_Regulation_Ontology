@@ -86,14 +86,16 @@ else:
 
 #Summarize on subject*condition level
 if 'condition' in ppc_regression_samples.columns:
-    ppc_regression_subj = ppc_regression_samples.groupby(['condition', 'subj_id']).mean().reset_index(level=['condition', 'subj_id'])
+    means = ppc_regression_samples.groupby(['condition', 'subj_id']).mean().reset_index(level=['condition', 'subj_id'])
+    stds = ppc_regression_samples.groupby(['condition', 'subj_id']).std().reset_index(level=['condition', 'subj_id'])
 else:
-    ppc_regression_subj = ppc_regression_samples.groupby(['subj_id']).mean().reset_index(level=['subj_id'])
+    means = ppc_regression_samples.groupby(['subj_id']).mean().reset_index(level=['subj_id'])
+    stds = ppc_regression_samples.groupby(['subj_id']).mean().reset_index(level=['subj_id'])
 
+ppc_regression_subj = means.merge(stds, on = ['condition', 'subj_id'], suffixes = ('_mean', '_std'))
+    
 #Save summarized output
 #ppc_regression_subj.to_csv(out_dir+task+'_fitstat_summary.csv')
-
-###ADD SD'SSSSS
 
 ###Add correct groupby's to ppc_data generations for each task
 #Adaptive n back: None (parametric regressor)
