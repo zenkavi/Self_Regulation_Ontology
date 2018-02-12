@@ -4,6 +4,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import seaborn as sns
 from selfregulation.utils.plot_utils import beautify_legend
 
@@ -15,7 +16,8 @@ def extract_tril(mat, k=0):
 def plot_corr_hist(results, colors, reps=100):
     survey_corr = abs(results['survey'].data.corr())
     task_corr = abs(results['task'].data.corr())
-    cross_corr = abs(results['all'].data.corr()).loc[survey_corr.columns,
+    all_data = pd.concat([results['task'].data, results['survey'].data], axis=1)
+    cross_corr = abs(all_data.corr()).loc[survey_corr.columns,
                                                     task_corr.columns]
     
     plot_elements = [(extract_tril(survey_corr.values,-1), 'Within Surveys'),
@@ -54,7 +56,7 @@ def plot_corr_hist(results, colors, reps=100):
             ax.spines['right'].set_visible(False)
             #ax.spines['left'].set_visible(False)
             ax.spines['top'].set_visible(False)
-            leg=ax.legend(fontsize=14, loc='center')
+            leg=ax.legend(fontsize=14, loc='upper center')
             beautify_legend(leg, [colors[i]])
         axes[1].set_xlabel('Pearson Correlation', fontsize=20, y=-.05)
     return f
