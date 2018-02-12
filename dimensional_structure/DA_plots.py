@@ -12,7 +12,7 @@ from utils import format_variable_names, get_factor_groups
 def plot_demo_factor_dist(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):
     DA = results.DA
     sex = DA.raw_data['Sex']
-    sex_percent = "{0:0.1f}".format(np.mean(sex)*100)
+    sex_percent = "{0:0.1f}%".format(np.mean(sex)*100)
     scores = DA.get_scores(c)
     axes = scores.hist(bins=40, grid=False, figsize=(figsize*1.3,figsize))
     axes = axes.flatten()

@@ -387,16 +387,26 @@ class HCA_Analysis():
         else:
             self.metric_name = self.dist_metric
         
-    def cluster_data(self, data):
+    def cluster_data(self, data, dist_metric=None):
+        if dist_metric is None:
+            dist_metric = self.dist_metric
+            label_append = ''
+        else:
+            label_append = '_dist-%s' % dist_metric
         output = hierarchical_cluster(data.T, 
-                                      pdist_kws={'metric': self.dist_metric})
-        self.results['clustering_input-data'] = output
+                                      pdist_kws={'metric': dist_metric})
+        self.results['clustering_input-data%s' % label_append] = output
         
-    def cluster_EFA(self, EFA, c):
+    def cluster_EFA(self, EFA, c, dist_metric=None):
+        if dist_metric is None:
+            dist_metric = self.dist_metric
+            label_append = ''
+        else:
+            label_append = '_dist-%s' % dist_metric
         loading = EFA.get_loading(c)
         output = hierarchical_cluster(loading, 
-                                      pdist_kws={'metric': self.dist_metric})
-        self.results['clustering_input-EFA%s' % c] = output
+                                      pdist_kws={'metric': dist_metric})
+        self.results['clustering_input-EFA%s%s' % (c, label_append)] = output
         
     def get_cluster_labels(self, inp='data'):
         cluster = self.results['clustering_input-%s' % inp]
