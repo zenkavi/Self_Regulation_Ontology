@@ -1,5 +1,5 @@
 # imports
-from utils import abs_pdist,  set_seed
+from utils import abs_pdist, format_variable_names, set_seed
 from plot_utils import save_figure, plot_loadings, plot_tree
 from itertools import combinations
 from math import ceil
@@ -133,6 +133,7 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
         loading_start = cumsizes[cluster_i-1]
     subset_loading = loading.T.iloc[:,loading_start:cumsizes[cluster_i]]
     plot_tree(tree, range(start, end), dendro_ax)
+    dendro_ax.set_xticklabels('')
     sns.heatmap(subset_loading, ax=heatmap_ax, 
                 cbar=False,
                 yticklabels=True,
@@ -180,6 +181,7 @@ def plot_subbranches(results, c=None,  inp=None, cluster_range=None,
     HCA = results.HCA
     EFA = results.EFA
     loading = EFA.reorder_factors(EFA.get_loading(c))
+    loading.index = format_variable_names(loading.index)
     # get all clustering solutions
     if inp is None:
         inp = ''
@@ -190,13 +192,15 @@ def plot_subbranches(results, c=None,  inp=None, cluster_range=None,
         # extract cluster vars
         link = clustering['linkage']
         labels = clustering['clustered_df'].columns
+        labels = format_variable_names(labels)
         ordered_loading = loading.loc[labels]
         # get cluster sizes
         cluster_labels = HCA.get_cluster_labels(inp=name.split('-')[1])
         cluster_sizes = [len(i) for i in cluster_labels]
         link_function, colors = get_dendrogram_color_fun(link, clustering['reorder_vec'],
                                                          clustering['labels'])
-        tree = dendrogram(link,  link_color_func=link_function, no_plot=True)
+        tree = dendrogram(link,  link_color_func=link_function, no_plot=True,
+                          no_labels=True)
         
         if plot_dir is not None:
             function_directory = 'subbranches_input-%s' % inp

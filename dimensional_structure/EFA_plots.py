@@ -1,7 +1,7 @@
 # imports
 import matplotlib
 matplotlib.use('Agg')
-from utils import get_factor_groups
+from utils import format_variable_names, get_factor_groups
 from plot_utils import save_figure, visualize_factors, visualize_task_factors
 import matplotlib.pyplot as plt
 import numpy as np
@@ -98,9 +98,10 @@ def plot_factor_correlation(results, c, figsize=12, dpi=300, ext='png', plot_dir
     # get higher order correlations
     if 'factor2_tree' in EFA.results.keys() and c in EFA.results['factor2_tree'].keys():
         higher_loading = EFA.results['factor2_tree'][c].iloc[reorder_vec]
+        max_val = np.max(np.max(abs(higher_loading)))
         ax2 = f.add_axes([.85,0,.04*higher_loading.shape[1],.75])
         sns.heatmap(higher_loading, ax=ax2, cbar=True,
-                    yticklabels=False,
+                    yticklabels=False, vmax=max_val, vmin=-max_val,
                     cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
         ax2.set_title('2nd-Order Factor Loadings', weight='bold')
         ax2.yaxis.set_label_position('right')
@@ -220,7 +221,7 @@ def plot_bar_factors(results, c, figsize=20, thresh=75,
         plot_dir: the directory to save the figure. If none, do not save
     """
     EFA = results.EFA
-    loadings = EFA.reorder_factors(EFA.get_loading(c))            
+    loadings = EFA.reorder_factors(EFA.get_loading(c))           
     grouping = get_factor_groups(loadings)
     flattened_factor_order = []
     for sublist in [i[1] for i in grouping]:
@@ -249,6 +250,11 @@ def plot_bar_factors(results, c, figsize=20, thresh=75,
             group = [x for x in group if x in kept_vars]
             threshed_groups.append([factor,group])
         grouping = threshed_groups
+    # change variable names to make them more readable
+    loadings.index = format_variable_names(loadings.index)
+    if bootstrap_CI is not None:
+        bootstrap_CI.index = format_variable_names(bootstrap_CI.index)
+    # plot
     n_factors = len(loadings.columns)
     f, axes = plt.subplots(1, n_factors, figsize=(n_factors*(figsize/12), figsize))
     for i, k in enumerate(loadings.columns):
@@ -340,6 +346,7 @@ def plot_task_factors(results, c, task_sublists=None, figsize=10,
             # comparisons are impossible. Only the distributions can be compared
             f, ax = plt.subplots(1,1, subplot_kw={'projection': 'polar'})
             task_loadings = loadings.filter(regex='^%s' % task, axis=0)
+            task_loadings.index = format_variable_names(task_loadings.index)
             # add entropy to index
             task_entropies = entropies[c][task_loadings.index]
             task_loadings.index = [i+'(%.2f)' % task_entropies.loc[i] for i in task_loadings.index]

@@ -179,14 +179,14 @@ class EFA_Analysis:
         if (not recompute and 'factor_tree' in self.results.keys() and 
             c in self.results['factor_tree'].keys() and
             (n_iter==1 or 'cis' in self.results['factor_tree_Rout'][c].names)):
-            return self.results['factor_tree'][c]
+            return self.results['factor_tree'][c].copy()
         else:
             print('No %s factor solution computed yet! Computing...' % c)
             fa, output = psychFA(self.data, c, method='ml', n_iter=n_iter)
             loadings = get_loadings(output, labels=self.data.columns)
             self.results['factor_tree'][c] = loadings
             self.results['factor_tree_Rout'][c] = fa
-            return loadings
+            return loadings.copy()
     
     def get_loading_entropy(self, c=None):
         if c is None:
@@ -476,6 +476,7 @@ class HCA_Analysis():
 class Demographic_Analysis(EFA_Analysis):
     """ Runs Hierarchical Clustering Analysis """
     def __init__(self, data, residualize=True, boot_iter=1000):
+        self.raw_data = data
         if residualize:
             data = residualize_baseline(data)
         if 'BMI' in data.columns:
@@ -576,7 +577,11 @@ class Results(EFA_Analysis, HCA_Analysis):
             return {'HCA': HCA, 'hdbscan': hdbscan}
     
     def run_prediction(self, c=None, shuffle=False, no_baseline_vars=True,
-                       outfile=None):
+                       outfile=None, verbose=False):
+        if verbose:
+            print('*'*79)
+            print('Running Prediction, shuffle: %s' % shuffle)
+            print('*'*79)
         scores = self.EFA.get_scores(c)
         demographics = self.DA.reorder_factors(self.DA.get_scores(c))
         if outfile is None:

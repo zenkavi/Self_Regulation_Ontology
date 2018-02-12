@@ -2,6 +2,7 @@
 
 # imports
 import argparse
+from DA_plots import plot_DA
 from EFA_plots import plot_EFA
 from HCA_plots import plot_HCA
 from prediction_plots import plot_prediction
@@ -21,12 +22,14 @@ parser.add_argument('-dataset', default=None)
 parser.add_argument('-no_analysis', action='store_false')
 parser.add_argument('-no_plot', action='store_false')
 parser.add_argument('-bootstrap', action='store_true')
+parser.add_argument('-boot_iter', type=int, default=1000)
 args = parser.parse_args()
 
 dataset = args.dataset
 run_analysis = args.no_analysis
 run_plot = args.no_plot
 bootstrap = args.bootstrap
+boot_iter = args.boot_iter
 print('Running Analysis? %s, Plotting? %s, Bootstrap? %s' % (['No', 'Yes'][run_analysis], 
                                                              ['No', 'Yes'][run_plot],
                                                              ['No', 'Yes'][bootstrap]))
@@ -69,6 +72,8 @@ results = None
 # create/run results for each subset
 for subset in subsets:
     name = subset['name']
+    print('*'*79)
+    print('*'*79)
     print('Running Subset: %s' % name)
     if run_analysis == True:
         # ****************************************************************************
@@ -79,7 +84,7 @@ for subset in subsets:
         results = Results(datafile, dist_metric='abscorrelation',
                           name=subset['name'],
                           filter_regex=subset['regex'],
-                          boot_iter=1000,
+                          boot_iter=boot_iter,
                           ID=ID)
         results.run_demographic_analysis(verbose=True, bootstrap=bootstrap)
         results.run_EFA_analysis(verbose=True, bootstrap=bootstrap)
@@ -94,8 +99,8 @@ for subset in subsets:
             results.HCA.name_clusters(cluster_names)
         results.DA.name_factors(demographic_factor_names)
         # run behavioral prediction using the factor results determined by BIC
-        results.run_prediction()
-        results.run_prediction(shuffle=True) # shuffled
+        results.run_prediction(verbose=True)
+        results.run_prediction(shuffle=True, verbose=True) # shuffled
         run_time = time.time()-start
         
         # ***************************** saving ****************************************
@@ -123,9 +128,11 @@ for subset in subsets:
     if run_plot==True:
         if results is None or name not in results.ID:
             results = load_results(datafile, name=name)[name]
+        DA_plot_dir = path.join(results.plot_file, 'DA')
         EFA_plot_dir = path.join(results.plot_file, 'EFA')
         HCA_plot_dir = path.join(results.plot_file, 'HCA')
         prediction_plot_dir = path.join(results.plot_file, 'prediction')
+        makedirs(DA_plot_dir, exist_ok = True)
         makedirs(EFA_plot_dir, exist_ok = True)
         makedirs(HCA_plot_dir, exist_ok = True)
         
@@ -137,7 +144,11 @@ for subset in subsets:
             plot_task_kws= {'task_sublists': {'surveys': [t for t in tasks if 'survey' in t]}}
         else:
             plot_task_kws={}
-            
+         
+            # Plot EFA
+        print("Plotting EFA")
+        plot_DA(results, DA_plot_dir, verbose=True)
+        
         # Plot EFA
         print("Plotting EFA")
         plot_EFA(results, EFA_plot_dir, verbose=True,  plot_task_kws=plot_task_kws)
