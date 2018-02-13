@@ -1,6 +1,8 @@
+import math
 from math import ceil
 import matplotlib.pyplot as plt
 from matplotlib.colors import to_hex
+from matplotlib import text as mtext
 import numpy as np
 import pandas as pd
 from scipy.cluster.hierarchy import dendrogram
@@ -218,6 +220,7 @@ def heatmap(df):
 class CurvedText(mtext.Text):
     """
     A text object that follows an arbitrary curve.
+    https://stackoverflow.com/questions/19353576/curved-text-rendering-in-matplotlib
     """
     def __init__(self, x, y, text, axes, **kwargs):
         super(CurvedText, self).__init__(x[0],y[0],' ', axes, **kwargs)
