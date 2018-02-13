@@ -5,13 +5,11 @@ import functools
 import hdbscan
 from itertools import combinations
 from glob import glob
-from matplotlib import pyplot as plt
 import numpy as np
 import os
 import pandas as pd
 import pickle
-import seaborn as sns
-from scipy.cluster.hierarchy import leaves_list, linkage, cut_tree
+from scipy.cluster.hierarchy import leaves_list, linkage
 from scipy.spatial.distance import pdist, squareform
 from selfregulation.utils.plot_utils import dendroheatmap
 from selfregulation.utils.r_to_py_utils import psychFA
@@ -22,12 +20,7 @@ from sklearn.metrics import r2_score
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, scale
-# imports for behavior prediction
-import sys
-import importlib
-import traceback
-import selfregulation.prediction.behavpredict as behavpredict
-importlib.reload(behavpredict)
+
 
 def set_seed(seed):
     def seeded_fun_decorator(fun):
@@ -113,14 +106,32 @@ def load_results(datafile, name=None, results_dir=None):
 def not_regex(txt):
     return '^((?!%s).)*$' % txt
 
-def save_figure(fig, loc, save_kws=None):
-    """ Saves figure in location and creates directory tree if needed """
-    if save_kws is None:
-        save_kws = {}
-    directory = os.path.dirname(loc)
-    if directory != "":
-        os.makedirs(directory, exist_ok=True)
-    fig.savefig(loc, **save_kws)
+def format_variable_names(variables):
+    """ formats a list of variable names """
+    # convert non_decision
+    new_vars = []
+    for var in variables:
+        var = var.replace('non_decision', 'non-decision')
+        var = var.replace('hddm_', 'DDM-')
+        var = var.replace('_cost', '-cost')
+        var = var.replace('_sensitivity', '-sensitivity')
+        var = var.replace('.', ': ')
+        var = ' '.join(var.split('_'))
+        new_vars.append(var)
+    return new_vars
+
+def shorten_labels(labels, conversions={}):
+    lookup = []
+    new_labels = []
+    for label in labels:
+        if label in conversions.keys():
+            new_label = conversions[label]
+        else:
+            label.replace('-', ' ')
+            new_label = ''.join([l[0:2] for l in label.split(' ')])
+        new_labels.append(new_label)
+        lookup.append((new_label, label))
+    return new_labels, lookup
 
 # ****************************************************************************
 # helper functions for hierarchical clustering
@@ -160,6 +171,16 @@ def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None,
     if cluster_kws is None:
         cluster_kws = {'minClusterSize': 1}
     clustering = cutreeHybrid(link, dist_vec, **cluster_kws)
+    # reorder labels based on dendrogram position
+    # reindex so the clusters are in order based on their proximity
+    # in the dendrogram
+    cluster_swap = {}
+    last_group = 1
+    for i in clustering['labels'][reorder_vec]:
+        if i not in cluster_swap.keys():
+            cluster_swap[i] = last_group
+            last_group += 1
+    cluster_reindex = np.array([cluster_swap[i] for i in clustering['labels']])
     if plot == True:
         if plot_kws is None:
             plot_kws = {}
@@ -170,7 +191,7 @@ def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None,
             'clustered_df': clustered_df,
             'reorder_vec': reorder_vec,
             'clustering': clustering,
-            'labels': clustering['labels']}
+            'labels': cluster_reindex}
 
 
 def hdbscan_cluster(df, compute_dist=True,  pdist_kws=None, 
@@ -228,6 +249,7 @@ def hdbscan_cluster(df, compute_dist=True,  pdist_kws=None,
             'link': link}
 
 
+        
 # ****************************************************************************
 # helper functions for dealing with factor analytic results
 # ****************************************************************************
@@ -249,7 +271,7 @@ def corr_lower_higher(higher_dim, lower_dim, cross_only=True):
     return corr
 
 # functions to fit and extract factor analysis solutions
-def find_optimal_components(data, minc=1, maxc=50, metric='BIC'):
+def find_optimal_components(data, minc=1, maxc=50, nobs=0, metric='BIC'):
     """
     Fit EFA over a range of components and returns the best c. If metric = CV
     uses sklearn. Otherwise uses psych
@@ -258,23 +280,29 @@ def find_optimal_components(data, minc=1, maxc=50, metric='BIC'):
     """
     steps_since_best = 0 # count steps since last best metric.
     metrics = {}
+    maxc = min(maxc, data.shape[1])
     n_components = range(minc,maxc)
     scaler = StandardScaler()
     if metric != 'CV':
-        scaled_data = scaler.fit_transform(data)
+        best_metric = float("Inf")
+        best_c = 0
         for c in n_components:
-            fa, output = psychFA(scaled_data, c, method='ml')
-            last_metric = output[metric]
+            out = psychFA(data, c, method='ml', nobs=nobs)
+            if out is None:
+                break
+            fa, output = out
+            curr_metric = output[metric]
             # iterate counter if new metric isn't better than previous metric
             if len(metrics) > 0:
-                if last_metric > metrics[c-1]:
+                if curr_metric >= (best_metric-2):
                     steps_since_best += 1
                 else:
                     steps_since_best = 0
-            metrics[c] = last_metric
+                    best_c = c
+                    best_metric = curr_metric
+            metrics[c] = curr_metric
             if steps_since_best > 2:
                 break
-        best_c = min(metrics, key=metrics.get)
     else:
         for c in n_components:
             fa = FactorAnalysis(c)
@@ -459,268 +487,32 @@ def quantify_lower_nesting(factor_tree):
         relationships[(higher_c,lower_c)] = relationship
     return relationships
 
+
+
+
 # ****************************************************************************
 # Helper functions for visualization of component loadings
 # ****************************************************************************
-
-def plot_loadings(ax, component_loadings, groups=None, colors=None, 
-                  width_scale=1, offset=0, kind='bar', plot_kws=None):
-    """Plot component loadings
-    
-    Args:
-        ax: axis to plot on. If a polar axist, a polar bar plot will be created.
-            Otherwise, a histogram will be plotted
-        component_loadings (array or pandas Series): loadings to plot
-        groups (list, optional): ordered list of tuples of the form: 
-            [(group_name, list of group members), ...]. If not supplied, all
-            elements will be treated as one group
-        colors (list, optional): if supplied, specifies the colors for the groups
-        width_scale (float): scale of bars. Default is 1, which fills the entire
-            plot
-        offset (float): offset as a proportion of width. Used to plot multiple
-            columns side by side under one factor
-        bar_kws (dict): keywords to pass to ax.bar
-    """
-    if plot_kws is None:
-        plot_kws = {}
-    N = len(component_loadings)
-    if groups is None:
-        groups = [('all', [0]*N)]
-    if colors is not None:
-        assert(len(colors) == len(groups))
-    else:
-        colors = sns.hls_palette(len(groups), l=.5, s=.8)
-    ax.set_xticklabels([''])
-    ax.set_yticklabels([''])
-    
-    width = np.pi/(N/2)*width_scale*np.ones(N)
-    theta = np.arange(0.0, 2*np.pi, 2*np.pi/N) + width[0]*offset
-    radii = component_loadings
-    if kind == 'bar':
-        bars = ax.bar(theta, radii, width=width, bottom=0.0, **plot_kws)
-        for i,r,bar in zip(range(N),radii, bars):
-            color_index = sum((np.cumsum([len(g[1]) for g in groups])<i+1))
-            bar.set_facecolor(colors[color_index])
-    elif kind == 'line':
-        theta = np.append(theta, theta[0])
-        radii = np.append(radii, radii[0])
-        bars = ax.plot(theta, radii, linewidth=5, **plot_kws)
-    return colors
-        
-def create_categorical_legend(labels,colors, ax):
-    """Take a list of labels and colors and creates a legend"""
-    import matplotlib
-    def create_proxy(color):
-        line = matplotlib.lines.Line2D([0], [0], linestyle='none',
-                    mec='none', marker='o', color=color)
-        return line
-    proxies = [create_proxy(item) for item in colors]
-    ncol = max(len(proxies)//6, 1)
-    ax.legend(proxies, labels, numpoints=1, markerscale=2.5, ncol=ncol,
-              bbox_to_anchor=(1, .95), prop={'size':20})
-
-def visualize_factors(loading_df, groups=None, n_rows=2, 
-                      legend=True, input_axes=None, colors=None):
-    """
-    Takes in a dataset to run EFA on, and a list of groups in the form
-    of a list of tuples. Each element of this list should be of the form
-    ("group name", [list of variables]). Each element of the list should
-    be mututally exclusive. These groups are used for coloring the plots
-    """
-    numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
-    loading_df = loading_df.select_dtypes(include=numerics)
-    if groups:
-        loading_df = reorder_data(loading_df, groups, axis=0)
-            
-    n_components = loading_df.shape[1]
-    n_cols = int(np.ceil(n_components/n_rows))
-    sns.set_style("white")
-    if input_axes is None:
-        fig, axs = plt.subplots(n_rows, n_cols, figsize=(n_cols*5,n_rows*5),
-                           subplot_kw={'projection': 'polar'})
-        axes = fig.get_axes()
-        fig.tight_layout()
-    else:
-        axes = input_axes
-    for i in range(n_components):
-        component_loadings = loading_df.iloc[:,i]
-        colors = plot_loadings(axes[i], abs(component_loadings), groups,
-                               colors=colors)
-    for j in range(n_components, len(axes)):
-        axes[j].set_visible(False)
-    if legend and groups is not None:
-        create_categorical_legend([g[0] for g in groups], 
-                                  colors, axes[n_components-1])
-    if input_axes is None:
-        return fig
-
-def visualize_task_factors(task_loadings, ax, xticklabels=True, 
-                           yticklabels=False, pad=0, ymax=None, legend=True):
-    """Plot task loadings on one axis"""
-    n_measures = len(task_loadings)
-    colors = sns.hls_palette(len(task_loadings), l=.5, s=.8)
-    for i, (name, DV) in enumerate(task_loadings.iterrows()):
-        plot_loadings(ax, abs(DV)+pad, width_scale=1/(n_measures), 
-                      colors = [colors.pop()], offset=i+.5,
-                      kind='line',
-                      plot_kws={'label': name, 'alpha': .8})
-    # set up yticks
-    if ymax:
-        ax.set_ylim(top=ymax)
-    ytick_locs = ax.yaxis.get_ticklocs()
-    new_yticks = np.linspace(0, ytick_locs[-1], 7)
-    ax.set_yticks(new_yticks)
-    if yticklabels:
-        labels = np.round(new_yticks,2)
-        replace_dict = {i:'' for i in labels[::2]}
-        labels = [replace_dict.get(i, i) for i in labels]
-        ax.set_yticklabels(labels)
-    # set up x ticks
-    xtick_locs = np.arange(0.0, 2*np.pi, 2*np.pi/len(DV))
-    ax.set_xticks(xtick_locs)
-    ax.set_xticks(xtick_locs+np.pi/len(DV), minor=True)
-    if xticklabels:
-        ax.set_xticklabels(task_loadings.columns,  y=.08, minor=True)
-    if legend:
-        ax.legend(loc='upper center', bbox_to_anchor=(.5,-.15))
-        
-def plot_factor_tree(factor_tree, groups=None, filename=None):
-    """
-    Runs "visualize_factors" at multiple dimensionalities and saves them
-    to a pdf
-    data: dataframe to run EFA on at multiple dimensionalities
-    groups: group list to be passed to visualize factors
-    filename: filename to save pdf
-    component_range: limits of EFA dimensionalities. e.g. (1,5) will run
-                     EFA with 1 component, 2 components... 5 components.
-    reorder_list: optional. List of index values in an order that will be used
-                  to rearrange data
-    """
-    max_c = np.max(list(factor_tree.keys()))
-    min_c = np.min(list(factor_tree.keys()))
-    n_cols = max_c
-    n_rows = max_c-min_c+1
-    f,axes = plt.subplots(n_rows, n_cols, subplot_kw=dict(projection='polar'),
-               figsize=(n_cols*5,n_rows*5))
-    f.tight_layout()
-    # move axes:
-    for i,row in enumerate(axes):
-        for j,ax in enumerate(row):
-            pos1 = ax.get_position() # get the original position
-            pos2 = [pos1.x0 + (n_rows-i-1)*pos1.width/1.76, pos1.y0,  pos1.width, pos1.height] 
-            ax.set_position(pos2) # set a new position
-
-    # plot
-    for rowi, c in enumerate(range(min_c,max_c+1)):
-        tmp_loading_df = factor_tree[c]
-        if rowi == 0:
-            visualize_factors(tmp_loading_df, groups, 
-                              n_rows=1, input_axes=axes[rowi,0:c], legend=True)
-        else:
-            visualize_factors(tmp_loading_df, groups, 
-                              n_rows=1, input_axes=axes[rowi,0:c], legend=False)
-        for ax in axes[rowi,c:]:
-            ax.set_axis_off()
-    if filename:
-        save_figure(f, filename, {'bbox_inches': 'tight'})
-    else:
-        return f
+from fancyimpute import SimpleFill
+def residualize_baseline(df):
+    # remove baseline vars
+    baseline=df[['Age','Sex']]
+    data=df.copy()
+    del data['Age']
+    del data['Sex']
+    #x=SimpleFill().complete(baseline)
+    lr=LinearRegression()
+    if data.isnull().sum().sum() > 0:
+        imputed = SimpleFill().complete(data)
+        data = pd.DataFrame(imputed, 
+                            index=data.index, 
+                            columns=data.columns)
+    for v in data:
+        y=data[v]
+        lr.fit(baseline,y)
+        data[v]=y - lr.predict(baseline)
+    return data
 
 
 
-# ****************************************************************************
-# Helper functions for prediction
-# ****************************************************************************
-from sklearn.linear_model import RidgeCV
-from sklearn.pipeline import make_pipeline
-from selfregulation.utils.utils import get_behav_data
-
-def survey_task_prediction(datafile):
-    # assess survey task independence
-    data = get_behav_data(datafile, file='meaningful_variables_imputed.csv')
-    task_data = data.filter(regex=not_regex('survey')+'|cognitive_reflection')
-    survey_data = data.filter(regex= not_regex(not_regex('survey')+'|cognitive_reflection'))
-    
-    pipe = make_pipeline(StandardScaler(),RidgeCV())
-    #fit survey to task and task to survey
-    st_score = np.mean(cross_val_score(pipe, survey_data, scale(task_data), cv=10))
-    ts_score = np.mean(cross_val_score(pipe, task_data, scale(survey_data), cv=10))
-    # without cross validation
-    pipe.fit(survey_data, scale(task_data))
-    st_score_within = pipe.score(survey_data, scale(task_data))
-    pipe.fit(task_data, scale(survey_data))
-    ts_score_within = pipe.score(task_data, scale(survey_data))
-    return {'st_scores_within': st_score_within,
-            'ts_scores_within': ts_score_within,
-            'st_scores_cv': st_score,
-            'ts_scores_cv': ts_score}
-    
-
-def run_EFA_prediction(dataset, factor_scores, output_base, save=True,
-                       verbose=False, classifier='lasso',
-                       shuffle=False, n_jobs=2, imputer="SimpleFill",
-                       smote_threshold=.05, freq_threshold=.1, icc_threshold=.25,
-                       no_baseline_vars=True, singlevar=None):
-    
-    output_dir=os.path.join(output_base,'prediction_outputs')
-    if dataset is 'baseline' or no_baseline_vars:
-        baselinevars=False
-        if verbose:
-            print("turning off inclusion of baseline vars")
-    else:
-        baselinevars=True
-        if verbose:
-            print("including baseline vars in prediction models")
-            
-    # skip several variables because they crash the estimation tool
-    bp=behavpredict.BehavPredict(verbose=verbose,
-                                 dataset=dataset,
-         drop_na_thresh=100,n_jobs=n_jobs,
-         skip_vars=['RetirementPercentStocks',
-         'HowOftenFailedActivitiesDrinking',
-         'HowOftenGuiltRemorseDrinking',
-         'AlcoholHowOften6Drinks'],
-         output_dir=output_dir,shuffle=shuffle,
-         classifier=classifier,
-         add_baseline_vars=baselinevars,
-         smote_cutoff=smote_threshold,
-         freq_threshold=freq_threshold,
-         imputer=imputer)
-    
-    bp.load_demog_data()
-    bp.get_demogdata_vartypes()
-    bp.remove_lowfreq_vars()
-    bp.binarize_ZI_demog_vars()
-    bp.behavdata = factor_scores
-    #bp.filter_by_icc(icc_threshold)
-    bp.get_joint_datasets()
-    
-    if not singlevar:
-        vars_to_test=[v for v in bp.demogdata.columns if not v in bp.skip_vars]
-    else:
-        vars_to_test=singlevar
-    
-    vars_to_test = ['BMI', 'AlcoholHowManyDrinksDay', 'SmokeEveryDay', 'CannabisHowOften', 'DaysLostLastMonth']
-    for v in vars_to_test:
-        bp.lambda_optim=None
-        print('RUNNING:',v,bp.data_models[v],dataset)
-        try:
-            bp.scores[v],bp.importances[v]=bp.run_crossvalidation(v,nlambda=100)
-            bp.scores_insample[v],_=bp.run_lm(v,nlambda=100)
-            # fit model with no regularization
-            if bp.data_models[v]=='binary':
-                bp.lambda_optim=[0]
-            else:
-                bp.lambda_optim=[0,0]
-            bp.scores_insample_unbiased[v],_=bp.run_lm(v,nlambda=100)
-        except:
-            e = sys.exc_info()
-            print('error on',v,':',e)
-            bp.errors[v]=traceback.format_tb(e[2])
-    if save == True:
-        if singlevar:
-            bp.write_data(vars_to_test,listvar=True)
-        else:
-            bp.write_data(vars_to_test)
-    return bp
 

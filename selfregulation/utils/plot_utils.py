@@ -119,17 +119,21 @@ def dendroheatmap(link, dist_df, clusters=None,
     sns.set_style("white")
     fig = plt.figure(figsize = figsize)
     ax1 = fig.add_axes([.16,.3,.62,.62]) 
+    
     cax = fig.add_axes([0.21,0.25,0.5,0.02]) 
-    sns.heatmap(rowclust_df, ax=ax1, xticklabels = False,
+    sns.heatmap(rowclust_df, ax=ax1, xticklabels=False,
+                yticklabels=True,
                 cbar_ax=cax, 
                 cbar_kws={'orientation': 'horizontal'})
+    ax1.yaxis.tick_right()
     # update colorbar ticks
     cbar = ax1.collections[0].colorbar
     cbar.set_ticks([0, .5, .99])
     cbar.set_ticklabels([0, .5, ceil(dist_df.max().max())])
     cax.tick_params(labelsize=20)
     # reorient axis labels
-    ax1.yaxis.tick_right()
+    ax1.tick_params(labelrotation=0)
+    ax1.set_yticks(ax1.get_yticks()+.25)
     ax1.set_yticklabels(rowclust_df.columns[::-1], rotation=0, 
                        rotation_mode="anchor", fontsize=label_fontsize, 
                        visible=labels)
@@ -181,9 +185,8 @@ def get_dendrogram_color_fun(Z, labels, clusters, color_palette=sns.hls_palette)
     
     """
     dflt_col = "#808080"   # Unclustered gray
-    color_palette = sns.hls_palette(len(np.unique(clusters)))
+    color_palette = color_palette(len(np.unique(clusters)))
     D_leaf_colors = {i: to_hex(color_palette[clusters[i]-1]) for i in labels}
-    
     # notes:
     # * rows in Z correspond to "inverted U" links that connect clusters
     # * rows are ordered by increasing distance
