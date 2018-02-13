@@ -65,12 +65,12 @@ def get_fitstats(m, samples, groupby=None, append_data = True):
                        
     #Summarize on subject*condition level
     if 'condition' in ppc_regression_samples.columns:
-        means = ppc_regression_samples.groupby(['condition', 'subj_id']).mean().reset_index(level=['condition', 'subj_id'])
-        stds = ppc_regression_samples.groupby(['condition', 'subj_id']).std().reset_index(level=['condition', 'subj_id'])
+        means = ppc_regression_samples.groupby(['condition', 'subj_id']).mean().reset_index()
+        stds = ppc_regression_samples.groupby(['condition', 'subj_id']).std().reset_index()
         ppc_regression_subj = means.merge(stds, on = ['condition', 'subj_id'], suffixes = ('_mean', '_std'))
     else:
-        means = ppc_regression_samples.groupby(['subj_id']).mean().reset_index(level=['subj_id'])
-        stds = ppc_regression_samples.groupby(['subj_id']).mean().reset_index(level=['subj_id'])
+        means = ppc_regression_samples.groupby(['subj_id']).mean().reset_index()
+        stds = ppc_regression_samples.groupby(['subj_id']).mean().reset_index()
         ppc_regression_subj = means.merge(stds, on = ['subj_id'], suffixes = ('_mean', '_std'))    
     
     return(ppc_data_append, ppc_regression_samples, ppc_regression_subj)
