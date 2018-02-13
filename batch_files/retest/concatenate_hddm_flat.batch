@@ -1,0 +1,12 @@
+#!/bin/bash
+#SBATCH --job-name=concatenate_hddm_flat_{SUBSET}
+#SBATCH --output=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/.out/concatenate_hddm_flat_{SUBSET}.job.out
+#SBATCH --error=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/.err/concatenate_hddm_flat_{SUBSET}.job.err
+#SBATCH --time=4:00:00
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=zenkavi@stanford.edu
+source activate SRO
+#python concatenate_hddm_flat.py {MODEL_DIR} {TASKS} {SUBSETS} {OUT_DIR}
+python concatenate_hddm_flat.py /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/subject_fits all both /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/
