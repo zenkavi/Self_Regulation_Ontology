@@ -1,3 +1,4 @@
+import math
 import matplotlib.pyplot as plt
 import numpy as np
 from os import path
@@ -11,8 +12,7 @@ sns.set_palette("Set1", 8, .75)
 
 
 def visualize_importance(importance, ax, xticklabels=True, yticklabels=True, 
-                         label_size=10, pad=0, title=None, ymax=None):
-    """Plot task loadings on one axis"""
+                         label_size=10, pad=0, label_scale=0, title=None, ymax=None):
     importance_vars = importance[0]
     if importance[1] is not None:
         importance_vals = [abs(i)+pad for i in importance[1].T]
@@ -27,20 +27,21 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
     if xticklabels:
         if type(importance_vars[0]) != str:
             importance_vars[0] = ['Fac %s' % str(i+1) for i in importance_vars]
-        offset=.07
-        ax2=f.add_axes([offset+.01, offset, 1-offset*2, 1-offset*2],zorder=-1)
-        
+        offset=-.1
+        scale = 1+label_scale
+        size = ax.get_position().expanded(scale, scale)
+        ax2=ax.get_figure().add_axes(size,zorder=2)
         
         max_var_length = max([len(v) for v in importance_vars])
         for i, var in enumerate(importance_vars):
-            offset=0
+            offset=.25
             start = (i-offset)*2*np.pi/len(importance_vars)
             end = (i+(1-offset))*2*np.pi/len(importance_vars)
             curve = [
                 np.cos(np.linspace(start,end,100)),
                 np.sin(np.linspace(start,end,100))
             ]  
-            plt.plot(*curve, alpha=0)
+            plt.plot(*curve, alpha=1)
             # pad strings to longest length
             num_spaces = (max_var_length-len(var))
             var = ' '*(num_spaces//2) + var + ' '*(num_spaces-num_spaces//2)
@@ -51,7 +52,7 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
                 text=var, #'this this is a very, very long text',
                 va = 'bottom',
                 axes = ax2,
-                fontsize=label_size*(14/10)##calls ax.add_artist in __init__
+                fontsize=label_size*(14/len(importance_vars))##calls ax.add_artist in __init__
             )
             ax2.axis('off')
         
@@ -119,11 +120,11 @@ def plot_prediction(results, target_order=None, include_shuffle=False,
     # plot top prediction, labeled
     top_prediction = max(enumerate(r2s), key=lambda x: x[1][1])
     label_importance = importances[top_prediction[0]]
-    axes.append(fig.add_axes([.33, .65, .34, .34], projection='polar'))
-
+    axes.append(fig.add_axes([.25,.5,.5,.5], projection='polar'))
     visualize_importance(label_importance, axes[-1], yticklabels=False,
                          xticklabels=True,
-                         label_size=figsize[1]*.9)
+                         label_size=figsize[1]*.9,
+                         label_scale=.2)
     
     
     if plot_dir is not None:
