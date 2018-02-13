@@ -15,11 +15,14 @@ args = parser.parse_args()
 
 datafile = args.dataset
 results = load_results(datafile)
+plot_file = path.dirname(results['task'].plot_file)
 
 # make histogram plot
 colors = [sns.color_palette("Paired")[i] for i in [0, 1, 4]]
 f = plot_corr_hist(results,colors, reps=2)
-
+f.savefig(path.join(plot_file, 'within-across_correlations.png'), 
+                    bbox_inches='tight', 
+                    dpi=300)
 # Create and save dendorgram plots temporarily
 scores = {}
 for title, subset in [('Behavioral Tasks', 'task'), ('Self-Report Surveys', 'survey')]:
@@ -109,7 +112,6 @@ fig.append([plot1, plot2, plot3, plot4, plot5])
 fig.append([txt1, txt2, txt3, txt4])
 
 # save generated SVG files
-plot_file = path.dirname(results['task'].plot_file)
 fig.save(path.join(plot_file, 'Ontology_Figure.svg'))
 
 for file in dendrograms:

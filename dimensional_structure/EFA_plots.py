@@ -86,15 +86,17 @@ def plot_factor_correlation(results, c, figsize=12, dpi=300, ext='png', plot_dir
     phi = get_attr(EFA.results['factor_tree_Rout'][c],'Phi')
     phi = pd.DataFrame(phi, columns=loading.columns, index=loading.columns)
     phi = phi.iloc[reorder_vec, reorder_vec]
-    f = plt.figure(figsize=(figsize*5/4, figsize))
-    ax1 = f.add_axes([0,0,.75,.75])
-    ax1_cbar = f.add_axes([.7, .05, .03, .65])
-    sns.heatmap(phi, ax=ax1, square=True, vmax=.5, vmin=-.5,
-                cbar_ax = ax1_cbar,
-                cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
-    ax1.set_title('%s 1st-Level Factor Correlations' % results.ID.split('_')[0],
-              weight='bold')
-    
+    with sns.plotting_context('notebook', font_scale=2):
+        f = plt.figure(figsize=(figsize*5/4, figsize))
+        ax1 = f.add_axes([0,0,.75,.75])
+        ax1_cbar = f.add_axes([.7, .05, .03, .65])
+        sns.heatmap(phi, ax=ax1, square=True, vmax=.5, vmin=-.5,
+                    cbar_ax=ax1_cbar,
+                    cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
+        yticklabels = ax1.get_yticklabels()
+        ax1.set_yticklabels(yticklabels, rotation = 0, ha="right")
+        ax1.set_title('%s 1st-Level Factor Correlations' % results.ID.split('_')[0],
+                  weight='bold', y=1.05)
     # get higher order correlations
     if 'factor2_tree' in EFA.results.keys() and c in EFA.results['factor2_tree'].keys():
         higher_loading = EFA.results['factor2_tree'][c].iloc[reorder_vec]
@@ -103,7 +105,7 @@ def plot_factor_correlation(results, c, figsize=12, dpi=300, ext='png', plot_dir
         sns.heatmap(higher_loading, ax=ax2, cbar=True,
                     yticklabels=False, vmax=max_val, vmin=-max_val,
                     cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
-        ax2.set_title('2nd-Order Factor Loadings', weight='bold')
+        ax2.set_title('2nd-Order Factor Loadings', weight='bold', y=1.05)
         ax2.yaxis.set_label_position('right')
     if plot_dir:
         filename = 'factor_correlations_EFA%s.%s' % (c, ext)
@@ -216,7 +218,7 @@ def plot_bar_factors(results, c, figsize=20, thresh=75,
         dpi: the final dpi for the image
         figsize: scalar - the width of the plot. The height is determined
             by the number of factors
-        thresh: proportion of factor loadings to keep
+        thresh: proportion of factor loadings to remove
         ext: the extension for the saved figure
         plot_dir: the directory to save the figure. If none, do not save
     """

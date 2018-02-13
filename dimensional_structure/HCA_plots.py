@@ -221,8 +221,8 @@ def plot_subbranches(results, c=None,  inp=None, cluster_range=None,
                            
 
 def plot_dendrograms(results, c=None,  inp=None, titles=None, var_labels=False,
-                     figsize=(20,12), orientation='horizontal',
-                     dpi=300, ext='png', plot_dir=None):
+                     break_lines=True, orientation='horizontal',
+                     figsize=(20,12),  dpi=300, ext='png', plot_dir=None):
     """ Plots HCA results as dendrogram with loadings underneath
     
     Args:
@@ -295,18 +295,19 @@ def plot_dendrograms(results, c=None,  inp=None, titles=None, var_labels=False,
                         cbar_kws={'orientation': cbar_orientation},
                         cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
             # add lines to heatmap to distinguish clusters
-            xlim = ax2.get_xlim(); 
-            ylim = ax2.get_ylim()
-            if orientation == 'horizontal':
-                step = xlim[1]/len(labels)
-                cluster_breaks = [i*step for i in np.cumsum(cluster_sizes)]
-                ax2.vlines(cluster_breaks[:-1], ylim[0], ylim[1], linestyles='dashed',
-                           linewidth=3, colors=[.5,.5,.5])
-            elif orientation == 'vertical':
-                step = max(ylim)/len(labels)
-                cluster_breaks = [ylim[1]-i*step for i in np.cumsum(cluster_sizes)]
-                ax2.hlines(cluster_breaks[:-1], xlim[0], xlim[1], linestyles='dashed',
-                           linewidth=2, colors=[.5,.5,.5])
+            if break_lines == True:
+                xlim = ax2.get_xlim(); 
+                ylim = ax2.get_ylim()
+                if orientation == 'horizontal':
+                    step = xlim[1]/len(labels)
+                    cluster_breaks = [i*step for i in np.cumsum(cluster_sizes)]
+                    ax2.vlines(cluster_breaks[:-1], ylim[0], ylim[1], linestyles='dashed',
+                               linewidth=3, colors=[.5,.5,.5])
+                elif orientation == 'vertical':
+                    step = max(ylim)/len(labels)
+                    cluster_breaks = [ylim[1]-i*step for i in np.cumsum(cluster_sizes)]
+                    ax2.hlines(cluster_breaks[:-1], xlim[0], xlim[1], linestyles='dashed',
+                               linewidth=2, colors=[.5,.5,.5])
             # change axis properties based on orientation
             if orientation == 'horizontal':
                 ax2.tick_params(labelsize=figsize[0]*.8)

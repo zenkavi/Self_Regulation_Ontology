@@ -23,6 +23,7 @@ parser.add_argument('-no_analysis', action='store_false')
 parser.add_argument('-no_plot', action='store_false')
 parser.add_argument('-bootstrap', action='store_true')
 parser.add_argument('-boot_iter', type=int, default=1000)
+parser.add_argument('-dpi', type=int, default=300)
 args = parser.parse_args()
 
 dataset = args.dataset
@@ -30,6 +31,7 @@ run_analysis = args.no_analysis
 run_plot = args.no_plot
 bootstrap = args.bootstrap
 boot_iter = args.boot_iter
+dpi = args.dpi
 print('Running Analysis? %s, Plotting? %s, Bootstrap? %s' % (['No', 'Yes'][run_analysis], 
                                                              ['No', 'Yes'][run_plot],
                                                              ['No', 'Yes'][bootstrap]))
@@ -147,11 +149,11 @@ for subset in subsets:
          
             # Plot EFA
         print("Plotting EFA")
-        plot_DA(results, DA_plot_dir, verbose=True)
+        plot_DA(results, DA_plot_dir, verbose=True, dpi=dpi)
         
         # Plot EFA
         print("Plotting EFA")
-        plot_EFA(results, EFA_plot_dir, verbose=True,  plot_task_kws=plot_task_kws)
+        plot_EFA(results, EFA_plot_dir, verbose=True,  dpi=dpi, plot_task_kws=plot_task_kws)
             
         # Plot HCA
         print("Plotting HCA")
@@ -160,7 +162,7 @@ for subset in subsets:
         # Plot prediction
         print("Plotting Prediction")
         order = results.DA.reorder_factors(results.DA.get_loading()).columns
-        plot_prediction(results, target_order=order,
+        plot_prediction(results, target_order=order, dpi=dpi,
                         plot_dir=prediction_plot_dir)
         
         # copy latest results and prediction to higher directory
