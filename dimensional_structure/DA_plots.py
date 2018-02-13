@@ -23,7 +23,7 @@ def plot_demo_factor_dist(results, c, figsize=12, dpi=300, ext='png', plot_dir=N
     axes[-1].set_xlabel('N: %s, Female Percent: %s' % (len(scores), sex_percent), 
         labelpad=20)
     if plot_dir:
-        filename = 'factor_correlations_EFA%s.%s' % (c, ext)
+        filename = 'factor_correlations_DA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
         
@@ -35,14 +35,16 @@ def plot_factor_correlation(results, c, figsize=12, dpi=300, ext='png', plot_dir
     phi = get_attr(DA.results['factor_tree_Rout'][c],'Phi')
     phi = pd.DataFrame(phi, columns=loading.columns, index=loading.columns)
     phi = phi.iloc[reorder_vec, reorder_vec]
-    f = plt.figure(figsize=(figsize*5/4, figsize))
-    ax1 = f.add_axes([0,0,.9,.9])
-    ax1_cbar = f.add_axes([.92, .1, .03, .7])
-    sns.heatmap(phi, ax=ax1, square=True, vmax=.5, vmin=-.5,
-                cbar_ax = ax1_cbar,
-                cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
-    ax1.set_title('Demographic Factor Correlations', weight='bold')
-    
+    with sns.plotting_context('notebook', font_scale=2):
+        f = plt.figure(figsize=(figsize*5/4, figsize))
+        ax1 = f.add_axes([0,0,.9,.9])
+        ax1_cbar = f.add_axes([.92, .1, .03, .7])
+        sns.heatmap(phi, ax=ax1, square=True, vmax=.5, vmin=-.5,
+                    cbar_ax = ax1_cbar,
+                    cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
+        yticklabels = ax1.get_yticklabels()
+        ax1.set_yticklabels(yticklabels, rotation = 0, ha="right")
+        ax1.set_title('Demographic Factor Correlations', weight='bold', y=1.05)
     if plot_dir:
         filename = 'factor_correlations_DA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
@@ -125,7 +127,7 @@ def plot_bar_factors(results, c, figsize=20, thresh=75,
                         )
                 
     if plot_dir:
-        filename = 'factor_bars_EFA%s.%s' % (c, ext)
+        filename = 'factor_bars_DA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
         

@@ -168,7 +168,7 @@ class EFA_Analysis:
         if verbose:
                 print('Best Components: ', best_cs)
     
-    def get_loading(self, c=None, bootstrap=False, recompute=False):
+    def get_loading(self, c=None, bootstrap=False, recompute=False, copy=True):
         """ Return the loading for an EFA solution at the specified c """
         if c is None:
             c = self.num_factors
@@ -179,14 +179,20 @@ class EFA_Analysis:
         if (not recompute and 'factor_tree' in self.results.keys() and 
             c in self.results['factor_tree'].keys() and
             (n_iter==1 or 'cis' in self.results['factor_tree_Rout'][c].names)):
-            return self.results['factor_tree'][c].copy()
+            if copy:
+                return self.results['factor_tree'][c].copy()
+            else:
+                return self.results['factor_tree'][c]
         else:
             print('No %s factor solution computed yet! Computing...' % c)
             fa, output = psychFA(self.data, c, method='ml', n_iter=n_iter)
             loadings = get_loadings(output, labels=self.data.columns)
             self.results['factor_tree'][c] = loadings
             self.results['factor_tree_Rout'][c] = fa
-            return loadings.copy()
+            if copy:
+                return loadings.copy()
+            else:
+                return loadings
     
     def get_loading_entropy(self, c=None):
         if c is None:
@@ -277,7 +283,7 @@ class EFA_Analysis:
         return explained_scores, sum_explained
     
     def name_factors(self, labels):
-        loading = self.get_loading(len(labels))
+        loading = self.get_loading(len(labels), copy=False)
         loading.columns = labels
     
     def print_top_factors(self, c=None, n=5):
