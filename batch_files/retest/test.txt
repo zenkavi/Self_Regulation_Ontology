@@ -1,2 +1,0 @@
-shift_task.acc
-shift_task.avg_rt
