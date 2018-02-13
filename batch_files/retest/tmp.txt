@@ -1,2 +1,0 @@
-angling_risk_task_always_sunny.keep_coef_of_variation
-angling_risk_task_always_sunny.release_coef_of_variation
