@@ -1,8 +1,7 @@
 from glob import glob
 import hddm
-from kabuki.analyze import _parents_to_random_posterior_sample
 from kabuki.utils import concat_models
-import numpy as np
+import os
 from os import path
 import pandas as pd
 import pickle

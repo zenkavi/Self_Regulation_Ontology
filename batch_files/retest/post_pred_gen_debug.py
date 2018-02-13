@@ -84,6 +84,7 @@ def post_pred_gen(model, groupby=None, samples=500, append_data=False, progress_
     if list(results.keys())[0] != 'wfpt':
         if isinstance(list(results.keys())[0], str)==False:
             results={ '('+",".join(map(str,x))+')': results[x] for x in results.keys() }
+            results={key.replace('.0','') : value for key, value in results.items()}
         else:
             results={ '('+x+')': results[x] for x in results.keys() }
 
