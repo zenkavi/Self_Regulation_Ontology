@@ -3,7 +3,7 @@ import pandas as pd
 import sys
 
 model_dir = sys.argv[1]
-tasks = [sys.argv[2]]
+tasks = sys.argv[2]
 subsets = [sys.argv[3]]
 output_dir = sys.argv[4]
 
