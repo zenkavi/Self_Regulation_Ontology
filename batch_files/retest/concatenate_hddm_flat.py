@@ -29,7 +29,7 @@ for subset in subsets:
       task_concat.rename(columns={task+'.Unnamed: 0':'subj_id'}, inplace=True)
       
       if task != ['all']:
-          task_concat.to_csv(output_dir+task+'_hddm_flat.csv')
+          task_concat.to_csv(output_dir+task+'_'+subset+'_hddm_flat.csv')
       
       elif subset_concat.empty:
           subset_concat = task_concat
