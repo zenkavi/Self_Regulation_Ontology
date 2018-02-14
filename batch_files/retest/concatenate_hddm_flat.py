@@ -7,10 +7,10 @@ tasks = [sys.argv[2]]
 subsets = [sys.argv[3]]
 output_dir = sys.argv[4]
 
-if tasks == 'all':
+if tasks == ['all']:
     tasks = ['adaptive_n_back', 'attention_network_task', 'choice_reaction_time', 'directed_forgetting', 'dot_pattern_expectancy' , 'local_global_letter', 'motor_selective_stop_signal' , 'recent_probes', 'shape_matching', 'simon', 'stim_selective_stop_signal', 'stop_signal', 'stroop', 'threebytwo']
 
-if subsets == 'both':
+if subsets == ['both']:
     subsets = ['retest', 't1']
 
 for subset in subsets:
