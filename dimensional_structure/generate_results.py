@@ -53,18 +53,18 @@ demographic_factor_names = ['Drug Use',
                             'Obesity',
                             'Lifetime Smoking',
                             'Safety Drinking',
-                            'Income/Life Milestones']
+                            'Income / Life Milestones']
 subsets = [{'name': 'task', 
             'regex': 'task',
             'factor_names': ['Speeded IP', 'Strategic IP', 'Discounting',
-                             'Perc/Resp', 'Caution'],
+                             'Perc / Resp', 'Caution'],
             'cluster_names': []},
             {'name': 'survey',
              'regex': 'survey',
              'factor_names':  ['Sensation Seeking', 'Mindfulness', 'Emotional Control', 
                                'Impulsivity', 'Goal-Directedness', 'Reward Sensitivity',
-                               'Risk Perception', 'Eating Control', 'Ethical Risk Taking', 
-                               'Social Risk Taking', 'Financial Risk Taking', 'Agreeableness']},
+                               'Risk Perception', 'Eating Control', 'Ethical Risk-Taking', 
+                               'Social Risk-Taking', 'Financial Risk-Taking', 'Agreeableness']},
              {'name': 'all', 
             'regex': '.',
             'factor_names': []}]
@@ -161,8 +161,8 @@ for subset in subsets:
         
         # Plot prediction
         print("Plotting Prediction")
-        order = results.DA.reorder_factors(results.DA.get_loading()).columns
-        plot_prediction(results, target_order=order, dpi=dpi,
+        target_order = results.DA.reorder_factors(results.DA.get_loading()).columns
+        plot_prediction(results, target_order=target_order, dpi=dpi,
                         plot_dir=prediction_plot_dir)
         
         # copy latest results and prediction to higher directory

@@ -63,27 +63,26 @@ plt.savefig(save_dir, dpi=300, bbox_inches='tight')
 # plot psychometric reliability
 sns.set_context('poster')
 meaningful_vars = get_behav_data().columns
-retest_data = get_behav_data(dataset='Retest_01-23-2018', file='bootstrap_merged.csv.gz')
+retest_data = get_behav_data(dataset='Retest_02-03-2018', file='bootstrap_merged.csv.gz')
+retest_data = retest_data.groupby('dv').mean()
 # onyl select meaningful variables
 retest_data = retest_data.query('dv in %s' % list(meaningful_vars))
 
 # create reliability dataframe
-ICC_reliability = pd.DataFrame(retest_data.groupby('dv').icc.mean())
-ICC_reliability.columns = ['ICC']
-measure_cat = [get_var_category(v).title() for v in ICC_reliability.index]
-ICC_reliability.loc[:,'Measure Category'] = measure_cat
-Survey_N = np.sum(ICC_reliability.loc[:, 'Measure Category']=='Survey')
-Task_N = len(ICC_reliability)-Survey_N
+measure_cat = [get_var_category(v).title() for v in retest_data.index]
+retest_data.loc[:,'Measure Category'] = measure_cat
+Survey_N = np.sum(retest_data.loc[:, 'Measure Category']=='Survey')
+Task_N = len(retest_data)-Survey_N
 # plot
 save_dir = path.join(base_dir, 'Data', 'Plots', 'ICC_stripplot.%s' % ext)
 plt.figure(figsize=(12,8))
-ax = sns.pointplot(y='ICC', x='Measure Category', 
+ax = sns.pointplot(y='icc', x='Measure Category', 
                    color='black',
-                   data=ICC_reliability, 
+                   data=retest_data, 
                    join=False)
 plt.setp(ax.collections, sizes=[200], zorder=20)
-ax = sns.stripplot(y='ICC', x='Measure Category', 
-                    data=ICC_reliability, 
+ax = sns.stripplot(y='icc', x='Measure Category', 
+                    data=retest_data, 
                     jitter=True, alpha=.5, size=10)
 plt.savefig(save_dir, dpi=300, bbox_inches='tight')
 
@@ -91,8 +90,8 @@ plt.savefig(save_dir, dpi=300, bbox_inches='tight')
 colors = sns.color_palette(n_colors=2, desat=.75)
 save_dir = path.join(base_dir, 'Data', 'Plots', 'ICC_boxplot.%s' % ext)
 plt.figure(figsize=(12,8))
-ax = sns.boxplot(y='ICC', x='Measure Category', 
-                 data=ICC_reliability,
+ax = sns.boxplot(y='icc', x='Measure Category', 
+                 data=retest_data,
                  palette = colors, saturation=1)
 ax.text(.7, .3, '%s Task Measures' % Task_N, color=colors[0])
 ax.text(.7, .2, '%s Survey Measures' % Survey_N, color=colors[1])

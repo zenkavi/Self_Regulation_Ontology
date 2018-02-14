@@ -7,17 +7,32 @@ import seaborn as sns
 from plot_utils import plot_loadings, save_figure
 from utils import shorten_labels
 from selfregulation.utils.plot_utils import CurvedText
-sns.set_palette("Set1", 8, .75)
+colors = sns.color_palette("Set1", 8, .75)
 
 
+shortened_factors = {
+        'Sensation Seeking': 'SS',
+        'Mindfulness': 'Mind',
+        'Emotional Control': 'Em. Con.',
+        'Impulsivity': 'Imp',
+        'Goal-Directedness': 'Goal',
+        'Reward Sensitivity': 'Reward',
+        'Risk Perception': 'RP',
+        'Eating Control': 'Eating',
+        'Ethical Risk-Taking': 'Ethical RT',
+        'Social Risk-Taking': 'Social RT',
+        'Financial Risk-Taking': 'Fin. RT',
+        'Agreeableness': 'Agr'
+        }
 
 def visualize_importance(importance, ax, xticklabels=True, yticklabels=True, 
                          label_size=10, pad=0, label_scale=0, title=None, ymax=None):
     importance_vars = importance[0]
+    importance_vars = [shortened_factors.get(v,v) for v in importance_vars]
     if importance[1] is not None:
         importance_vals = [abs(i)+pad for i in importance[1].T]
         plot_loadings(ax, importance_vals, kind='line', offset=.5,
-                      plot_kws={'alpha': 1})
+                      plot_kws={'alpha': 1, 'color': colors[0]})
     else:
         ax.set_yticks([])
     # set up x ticks
@@ -27,37 +42,35 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
     if xticklabels:
         if type(importance_vars[0]) != str:
             importance_vars[0] = ['Fac %s' % str(i+1) for i in importance_vars]
-        offset=-.1
         scale = 1+label_scale
         size = ax.get_position().expanded(scale, scale)
         ax2=ax.get_figure().add_axes(size,zorder=2)
         
         max_var_length = max([len(v) for v in importance_vars])
         for i, var in enumerate(importance_vars):
-            offset=.25
+            offset=.1
             start = (i-offset)*2*np.pi/len(importance_vars)
             end = (i+(1-offset))*2*np.pi/len(importance_vars)
             curve = [
                 np.cos(np.linspace(start,end,100)),
                 np.sin(np.linspace(start,end,100))
             ]  
-            plt.plot(*curve, alpha=1)
+            plt.plot(*curve, alpha=0)
             # pad strings to longest length
             num_spaces = (max_var_length-len(var))
             var = ' '*(num_spaces//2) + var + ' '*(num_spaces-num_spaces//2)
-            ax2.plot(*curve, alpha=0)
             curvetext = CurvedText(
                 x = curve[0][::-1],
                 y = curve[1][::-1],
                 text=var, #'this this is a very, very long text',
-                va = 'bottom',
+                va = 'top',
                 axes = ax2,
-                fontsize=label_size*(14/len(importance_vars))##calls ax.add_artist in __init__
+                fontsize=label_size##calls ax.add_artist in __init__
             )
             ax2.axis('off')
         
     if title:
-        ax.set_title(title, fontsize=label_size*1.5)
+        ax.set_title(title, fontsize=label_size*1.5, y=1.1)
     # set up yticks
     if importance[1] is not None:
         if ymax:
@@ -91,15 +104,18 @@ def plot_prediction(results, target_order=None, include_shuffle=False,
     ind = np.arange(len(r2s))
     width=.25
     ax1 = fig.add_axes([0,0,1,.5]) 
-    ax1.bar(ind, [i[1] for i in r2s], width, label='CV Prediction')
-    ax1.bar(ind+width, [i[1] for i in insample_r2s], width, label='Insample Prediction')
+    ax1.bar(ind, [i[1] for i in r2s], width, 
+            label='CV Prediction', color=colors[0])
+    ax1.bar(ind+width, [i[1] for i in insample_r2s], width, 
+            label='Insample Prediction', color=colors[1])
     if include_shuffle:
-        ax1.bar(ind+width*2, [i[1] for i in shuffled_r2s], width, label='Shuffled Prediction')
+        ax1.bar(ind+width*2, [i[1] for i in shuffled_r2s], width, 
+                label='Shuffled Prediction', colors=colors[2])
     ax1.set_xticks(np.arange(0,len(r2s))+width/2)
-    ax1.set_xticklabels([i[0] for i in r2s], rotation=15, fontsize=figsize[0]*.9)
+    ax1.set_xticklabels([i[0] for i in r2s], rotation=15, fontsize=figsize[0]*1.1)
     ax1.set_ylabel('R2', fontsize=20)
     ylim = ax1.get_ylim()
-    ax1.set_ylim(ylim[0], max(.1, ylim[1]+.15))
+    ax1.set_ylim(ylim[0], max(.15, ylim[1]+.1))
     ax1.legend(fontsize=20, loc='upper left')
     
     # get importances
@@ -110,21 +126,44 @@ def plot_prediction(results, target_order=None, include_shuffle=False,
     N = len(importances)
     #if plot_heights is None:
     ylim = ax1.get_ylim()[1]
-    plot_heights = [predictions[k]['scores_insample'][0]/ylim*.5+.05 for k in target_order]
+    plot_heights = [predictions[k]['scores_insample'][0]/ylim*.5+.03 for k in target_order]
     xlow, xhigh = ax1.get_xlim()
     plot_x = (ax1.get_xticks()-xlow)/(xhigh-xlow)-(1/N/2)
     for i, importance in enumerate(importances):
         axes.append(fig.add_axes([plot_x[i],plot_heights[i], 1/N,1/N], projection='polar'))
         visualize_importance(importance, axes[i],
                              yticklabels=False, xticklabels=False)
-    # plot top prediction, labeled
+    # plot top 2 predictions, labeled
     top_prediction = max(enumerate(r2s), key=lambda x: x[1][1])
     label_importance = importances[top_prediction[0]]
-    axes.append(fig.add_axes([.25,.5,.5,.5], projection='polar'))
+    ratio = figsize[1]/figsize[0]
+    axes.append(fig.add_axes([.25-.2*ratio,.6,.4*ratio,.4], projection='polar'))
     visualize_importance(label_importance, axes[-1], yticklabels=False,
                          xticklabels=True,
-                         label_size=figsize[1]*.9,
-                         label_scale=.2)
+                         label_size=figsize[1]*1.5,
+                         label_scale=.22)
+    
+    top_prediction = max(enumerate(r2s), key=lambda x: x[1][1])
+    label_importance = importances.pop(top_prediction[0])
+    r2s.pop(top_prediction[0])
+    ratio = figsize[1]/figsize[0]
+    axes.append(fig.add_axes([.75-.2*ratio,.6,.4*ratio,.4], projection='polar'))
+    visualize_importance(label_importance, axes[-1], yticklabels=False,
+                         xticklabels=True,
+                         label_size=figsize[1]*1.5,
+                         label_scale=.22,
+                         title=top_prediction[1][0])
+    # 2nd top
+    top_prediction = max(enumerate(r2s), key=lambda x: x[1][1])
+    label_importance = importances.pop(top_prediction[0])
+    r2s.pop(top_prediction[0])
+    ratio = figsize[1]/figsize[0]
+    axes.append(fig.add_axes([.25-.2*ratio,.6,.4*ratio,.4], projection='polar'))
+    visualize_importance(label_importance, axes[-1], yticklabels=False,
+                         xticklabels=True,
+                         label_size=figsize[1]*1.5,
+                         label_scale=.22,
+                         title=top_prediction[1][0])
     
     
     if plot_dir is not None:
