@@ -24,6 +24,7 @@ parser.add_argument('-no_plot', action='store_false')
 parser.add_argument('-bootstrap', action='store_true')
 parser.add_argument('-boot_iter', type=int, default=1000)
 parser.add_argument('-dpi', type=int, default=300)
+parser.add_argument('-subset', default=None)
 args = parser.parse_args()
 
 dataset = args.dataset
@@ -32,6 +33,7 @@ run_plot = args.no_plot
 bootstrap = args.bootstrap
 boot_iter = args.boot_iter
 dpi = args.dpi
+selected_subset = args.subset
 print('Running Analysis? %s, Plotting? %s, Bootstrap? %s' % (['No', 'Yes'][run_analysis], 
                                                              ['No', 'Yes'][run_plot],
                                                              ['No', 'Yes'][bootstrap]))
@@ -52,7 +54,7 @@ demographic_factor_names = ['Drug Use',
                             'Binge Drinking',
                             'Obesity',
                             'Lifetime Smoking',
-                            'Safety Drinking',
+                            'Unsafe Drinking',
                             'Income / Life Milestones']
 subsets = [{'name': 'task', 
             'regex': 'task',
@@ -74,6 +76,8 @@ results = None
 # create/run results for each subset
 for subset in subsets:
     name = subset['name']
+    if selected_subset is not None and name != selected_subset:
+        continue
     print('*'*79)
     print('*'*79)
     print('Running Subset: %s' % name)

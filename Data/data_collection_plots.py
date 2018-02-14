@@ -44,27 +44,38 @@ plt.xlabel('Time (Hours)')
 
 """
 # Load worker completions if plot needs to be regenerated
-worker_completion_loc = ''
+worker_completion_loc = '/mnt/OAK/behavioral_data/admin/worker_counts.json'
 worker_completions = json.load(open(worker_completion_loc, 'r'))
 """
-save_dir = path.join(base_dir, 'Data', 'Plots', 'worker_completions.%s' % ext)
-completion_rate = np.mean(np.array(list(worker_completions.values())) ==63)
-completion_rate = "{0:0.1f}%".format(completion_rate*100)
-plt.figure(figsize=(12,8))
-plt.hist(worker_completions.values(), bins=40, width=5)
-ax = plt.gca()
-ax.spines['right'].set_visible(False)
-ax.spines['top'].set_visible(False)
-ax.text(5, 400, 'Completion Rate: %s' % completion_rate, size=20)
-plt.xlabel('Number of Tasks Completed')
+with sns.plotting_context('poster'):
+    save_dir = path.join(base_dir, 'Data', 'Plots', 'worker_completions.%s' % ext)
+    completion_rate = np.mean(np.array(list(worker_completions.values())) ==63)
+    completion_rate = "{0:0.1f}%".format(completion_rate*100)
+    analyzed_rate = 522/len(worker_completions)
+    analyzed_rate = "{0:0.1f}%".format(analyzed_rate*100)
+    plt.figure(figsize=(12,8))
+    plt.hist(worker_completions.values(), bins=40, width=5)
+    ax = plt.gca()
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.text(5, 400, 'Completion Rate: %s' % completion_rate, size=20)
+    ax.text(5, 350, 'Passed QC: %s' % analyzed_rate, size=20)
+    plt.xlabel('Number of Tasks Completed', fontsize=20)
 plt.savefig(save_dir, dpi=300, bbox_inches='tight')
 
 
 # plot psychometric reliability
 sns.set_context('poster')
-meaningful_vars = get_behav_data().columns
+meaningful_vars = get_behav_data(file='meaningful_variables_imputed.csv').columns
+meaningful_vars = [i.replace('.logTr','') for i in meaningful_vars]
+meaningful_vars = [i.replace('.ReflogTr','') for i in meaningful_vars]
+
 retest_data = get_behav_data(dataset='Retest_02-03-2018', file='bootstrap_merged.csv.gz')
 retest_data = retest_data.groupby('dv').mean()
+retest_data.rename({'dot_pattern_expectancy.BX.BY_hddm_drift': 'dot_pattern_expectancy.BX-BY_hddm_drift',
+                    'dot_pattern_expectancy.AY.BY_hddm_drift': 'dot_pattern_expectancy.AY-BY_hddm_drift'},
+                    axis='index',
+                    inplace=True)
 # onyl select meaningful variables
 retest_data = retest_data.query('dv in %s' % list(meaningful_vars))
 
@@ -87,7 +98,7 @@ ax = sns.stripplot(y='icc', x='Measure Category',
 plt.savefig(save_dir, dpi=300, bbox_inches='tight')
 
 # boxplot
-colors = sns.color_palette(n_colors=2, desat=.75)
+colors = [sns.color_palette("Paired")[i] for i in [1, 0]]
 save_dir = path.join(base_dir, 'Data', 'Plots', 'ICC_boxplot.%s' % ext)
 plt.figure(figsize=(12,8))
 ax = sns.boxplot(y='icc', x='Measure Category', 

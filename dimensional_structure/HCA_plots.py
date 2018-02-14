@@ -1,6 +1,6 @@
 # imports
 from utils import abs_pdist, format_variable_names, set_seed
-from plot_utils import save_figure, plot_loadings, plot_tree
+from plot_utils import get_short_names, save_figure, plot_loadings, plot_tree
 from itertools import combinations
 from math import ceil
 import matplotlib.pyplot as plt
@@ -10,7 +10,7 @@ import pandas as pd
 import seaborn as sns
 from scipy.cluster.hierarchy import dendrogram
 from scipy.spatial.distance import pdist, squareform
-from selfregulation.utils.plot_utils import dendroheatmap, get_dendrogram_color_fun
+from selfregulation.utils.plot_utils import CurvedText, dendroheatmap, get_dendrogram_color_fun
 from sklearn.manifold import MDS
 from sklearn.metrics import adjusted_mutual_info_score, adjusted_rand_score
 from sklearn.preprocessing import MinMaxScaler, scale
@@ -118,7 +118,7 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
                 start = i
             curr_color = color
     # plotting
-    polar_size = [0,.6,1,.4]
+    polar_size = [0,.6, 1,.4]
     dendro_size = [0,.3,1,.2]
     heatmap_size = [0,.05,1,.25]
     fig = plt.figure(figsize=figsize)
@@ -146,9 +146,37 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
     xtick_locs = np.arange(0.0, 2*np.pi, 2*np.pi/len(subset_loading))
     polar_ax.set_xticks(xtick_locs)
     polar_ax.set_xticks(xtick_locs+np.pi/len(subset_loading), minor=True)
-    polar_ax.set_xticklabels(subset_loading.index, minor=True)
-    polar_ax.tick_params(axis='x', which='minor', pad=20)
-    
+    # labels for polar plot
+    scale = 1.3
+    size = polar_ax.get_position().expanded(scale, scale)
+    polar_labels=fig.add_axes(size,zorder=2)
+    short_names = get_short_names()
+    labels = [short_names.get(v, v) for v in subset_loading.index]
+    if type(labels[0]) != str:
+            labels = ['Fac %s' % str(i+1) for i in labels]
+    max_var_length = max([len(v) for v in labels])
+    for i, var in enumerate(labels):
+        offset=-.15+.38*25/len(labels)**2
+        start = (i-offset)*2*np.pi/len(labels)
+        end = (i+(1-offset))*2*np.pi/len(labels)
+        curve = [
+            np.cos(np.linspace(start,end,100)),
+            np.sin(np.linspace(start,end,100))
+        ]  
+        plt.plot(*curve, alpha=0)
+        # pad strings to longest length
+        num_spaces = (max_var_length-len(var))
+        var = ' '*(num_spaces//2) + var + ' '*(num_spaces-num_spaces//2)
+        curvetext = CurvedText(
+            x = curve[0][::-1],
+            y = curve[1][::-1],
+            text=var, #'this this is a very, very long text',
+            va = 'top',
+            axes = polar_labels,
+            fontsize=figsize[1]*.4*3.5##calls ax.add_artist in __init__
+        )
+        polar_labels.axis('off')
+            
     # title and axes styling of dendrogram
     if title:
         dendro_ax.set_title(title, fontsize=20, y=1.05, fontweight='bold')
@@ -161,7 +189,6 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
         save_figure(fig, plot_loc, {'bbox_inches': 'tight', 'dpi': dpi})
     else:
         return fig
-        
     
 def plot_subbranches(results, c=None,  inp=None, cluster_range=None,
                      figsize=(6,10), dpi=300, ext='png', plot_dir=None):

@@ -59,6 +59,10 @@ def plot_communality(results, c, figsize=20, dpi=300, ext='png', plot_dir=None):
     # load retest data
     retest_data = get_behav_data(dataset='Retest_02-03-2018', file='bootstrap_merged.csv.gz')
     retest_data = retest_data.groupby('dv').mean()    
+    retest_data.rename({'dot_pattern_expectancy.BX.BY_hddm_drift': 'dot_pattern_expectancy.BX-BY_hddm_drift',
+                        'dot_pattern_expectancy.AY.BY_hddm_drift': 'dot_pattern_expectancy.AY-BY_hddm_drift'},
+                        axis='index',
+                        inplace=True)
     # reorder data in line with communality
     retest_data = retest_data.loc[communality.index]
     # reformat variable names
@@ -396,8 +400,8 @@ def plot_polar_factors(results, c, color_by_group=True,
                     {'bbox_inches': 'tight', 'dpi': dpi})
 
     
-def plot_task_factors(results, c, task_sublists=None, figsize=10,
-                      dpi=300, ext='png', plot_dir=None):
+def plot_task_factors(results, c, task_sublists=None, normalize_loadings = False,
+                      figsize=10,  dpi=300, ext='png', plot_dir=None):
     """ Plots task factors as polar plots
     
     Args:
@@ -412,7 +416,6 @@ def plot_task_factors(results, c, task_sublists=None, figsize=10,
     """
     EFA = results.EFA
     # plot task factor loading
-    entropies = EFA.results['entropies']
     loadings = EFA.get_loading(c)
     max_loading = abs(loadings).max().max()
     tasks = np.unique([i.split('.')[0] for i in loadings.index])
@@ -425,20 +428,25 @@ def plot_task_factors(results, c, task_sublists=None, figsize=10,
         for i, task in enumerate(task_sublist):
             # plot loading distributions. Each measure is scaled so absolute
             # comparisons are impossible. Only the distributions can be compared
-            f, ax = plt.subplots(1,1, subplot_kw={'projection': 'polar'})
+            f, ax = plt.subplots(1,1, 
+                                 figsize=(figsize, figsize), subplot_kw={'projection': 'polar'})
             task_loadings = loadings.filter(regex='^%s' % task, axis=0)
             task_loadings.index = format_variable_names(task_loadings.index)
-            # add entropy to index
-            task_entropies = entropies[c][task_loadings.index]
-            task_loadings.index = [i+'(%.2f)' % task_entropies.loc[i] for i in task_loadings.index]
+            if normalize_loadings:
+                task_loadings = task_loadings = (task_loadings.T/abs(task_loadings).max(1)).T
+            # format variable names
+            task_loadings.index = format_variable_names(task_loadings.index)
             # plot
             visualize_task_factors(task_loadings, ax, ymax=max_loading,
-                                   xticklabels=True)
+                                   xticklabels=True, label_size=figsize*2)
             ax.set_title(' '.join(task.split('_')), 
                               y=1.14, fontsize=25)
             
             if plot_dir is not None:
-                function_directory = 'factor_DVdistributions_EFA%s_subset-%s' % (c, sublist_name)
+                if normalize_loadings:
+                    function_directory = 'factor_DVnormdist_EFA%s_subset-%s' % (c, sublist_name)
+                else:
+                    function_directory = 'factor_DVdist_EFA%s_subset-%s' % (c, sublist_name)
                 makedirs(path.join(plot_dir, function_directory), exist_ok=True)
                 filename = '%s.%s' % (task, ext)
                 save_figure(f, path.join(plot_dir, function_directory, filename),
@@ -485,7 +493,7 @@ def plot_EFA(results, plot_dir=None, verbose=False, dpi=300, ext='png',
     #if verbose: print("Plotting BIC/SABIC")
     #plot_BIC_SABIC(EFA, plot_dir)
     if verbose: print("Plotting communality")
-    plot_entropies(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext)
+    plot_communality(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting entropies")
     plot_entropies(results, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting factor bars")
@@ -494,5 +502,6 @@ def plot_EFA(results, plot_dir=None, verbose=False, dpi=300, ext='png',
     plot_polar_factors(results, c=c, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting task factors")
     plot_task_factors(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)
+    plot_task_factors(results, c, normalize_loadings=True, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)
     if verbose: print("Plotting factor correlations")
     plot_factor_correlation(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext)
