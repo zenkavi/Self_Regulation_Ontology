@@ -1,7 +1,5 @@
 from glob import glob
-from os import path
 import pandas as pd
-import pickle
 import sys
 
 model_dir = sys.argv[1]
@@ -17,18 +15,27 @@ if subsets == 'both':
 
 for subset in subsets:
     subset_concat = pd.DataFrame()
-  for task in tasks:
+    
+    for task in tasks:
       task_path = model_dir + task + '_' + subset +'_*_hddm_flat.csv'
       file_list = glob(task_path)
       task_concat = pd.DataFrame()
+      
       for file in file_list:
-        sub_file = pd.read_csv(file)
-        task_concat = task_concat.append(sub_file, ignore.index_True)
-      task_concat.add_prefix(task+'.')
-      if task != 'all':
-        task_concat.to_csvcsv(output_dir+task+'_hddm_flat.csv')
-    
-
-if task != 'all'
-#save output per task
-#otherwise just save all together 'hddm_flat_'+sample+'.csv'
+          sub_file = pd.read_csv(file)
+          task_concat = task_concat.append(sub_file)
+      
+      task_concat = task_concat.add_prefix(task+'.')
+      task_concat.rename(columns={task+'.Unnamed: 0':'subj_id'}, inplace=True)
+      
+      if task != ['all']:
+          task_concat.to_csv(output_dir+task+'_hddm_flat.csv')
+      
+      elif subset_concat.empty:
+          subset_concat = task_concat
+          
+      else:    
+          pd.merge(subset_concat, task_concat, on='subj_id')
+          
+    if task == ['all']:
+        subset_concat.to_csv(output_dir+subset+'hddm_flat.csv')
