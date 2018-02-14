@@ -9,4 +9,4 @@
 #SBATCH --mail-user=zenkavi@stanford.edu
 source activate SRO
 #python concatenate_hddm_flat.py {MODEL_DIR} {TASKS} {SUBSETS} {OUT_DIR}
-python concatenate_hddm_flat.py /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/subject_fits/ ['all'] both /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/
+python concatenate_hddm_flat.py /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/subject_fits/ 'all' both /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/
