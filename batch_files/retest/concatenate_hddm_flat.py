@@ -35,7 +35,7 @@ for subset in subsets:
           subset_concat = task_concat
           
       else:    
-          pd.merge(subset_concat, task_concat, on='subj_id')
+          pd.merge(subset_concat, task_concat, on=['subj_id'])
           
     if sys.argv[2] == 'all':
         subset_concat.to_csv(output_dir+subset+'_hddm_flat.csv')
