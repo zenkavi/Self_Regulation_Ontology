@@ -176,11 +176,26 @@ get_sem <- function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_data, 
   return(sem)
 }
 
+get_aov_stats <- function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_data, merge_var = 'sub_id', sample='full', sample_vec){
+  if(sample=='full'){
+    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var)
+  }
+  else if(sample=='bootstrap'){
+    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var, sample='bootstrap', sample_vec = sample_vec)
+  }
+  mod = summary(aov(score~Error(sub_id)+time, df))
+  aov_breakdown = data.frame(F_time = as.data.frame(unlist(mod$`Error: Within`))['F value1',],
+                             p_time = as.data.frame(unlist(mod$`Error: Within`))['Pr(>F)1',],
+                             df_time = as.data.frame(unlist(mod$`Error: Within`))['Df1',],
+                             df_resid = as.data.frame(unlist(mod$`Error: Within`))['Df2',])
+  return(aov_stats)
+}
+
 sample_workers = function(N = 150, repl= TRUE, df=retest_data, worker_col = "sub_id"){
   return(sample(df[,worker_col], N, replace = repl))
 }
 
-bootstrap_relialibility = function(metric = c('icc', 'spearman','pearson', 'partial_eta_sq', 'eta_sq', 'omega_sq', 'sem', 'var_breakdown'), dv_var, worker_col="sub_id"){
+bootstrap_relialibility = function(metric = c('icc', 'spearman','pearson', 'partial_eta_sq', 'eta_sq', 'omega_sq', 'sem', 'var_breakdown', 'aov_stats'), dv_var, worker_col="sub_id"){
   tmp_sample = sample_workers(worker_col = worker_col)
   out_df = data.frame(dv = dv_var)
   if('icc' %in% metric){
@@ -212,6 +227,18 @@ bootstrap_relialibility = function(metric = c('icc', 'spearman','pearson', 'part
   }
   if('var_breakdown' %in% metric){
     out_df$var_resid = get_var_breakdown(dv_var, sample = 'bootstrap', sample_vec = tmp_sample, merge_var = worker_col)$resid
+  }
+  if('aov_stats' %in% metric){
+    out_df$F_time = get_aov_stats(dv_var, sample = 'bootstrap', sample_vec = tmp_sample, merge_var = worker_col)$F_time
+  }
+  if('aov_stats' %in% metric){
+    out_df$p_time = get_aov_stats(dv_var, sample = 'bootstrap', sample_vec = tmp_sample, merge_var = worker_col)$p_time
+  }
+  if('aov_stats' %in% metric){
+    out_df$df_time = get_aov_stats(dv_var, sample = 'bootstrap', sample_vec = tmp_sample, merge_var = worker_col)$df_time
+  }
+  if('aov_stats' %in% metric){
+    out_df$df_resid = get_aov_stats(dv_var, sample = 'bootstrap', sample_vec = tmp_sample, merge_var = worker_col)$df_resid
   }
   return(out_df)
 }
