@@ -184,7 +184,7 @@ get_aov_stats <- function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_
     df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var, sample='bootstrap', sample_vec = sample_vec)
   }
   mod = summary(aov(score~Error(sub_id)+time, df))
-  aov_breakdown = data.frame(F_time = as.data.frame(unlist(mod$`Error: Within`))['F value1',],
+  aov_stats = data.frame(F_time = as.data.frame(unlist(mod$`Error: Within`))['F value1',],
                              p_time = as.data.frame(unlist(mod$`Error: Within`))['Pr(>F)1',],
                              df_time = as.data.frame(unlist(mod$`Error: Within`))['Df1',],
                              df_resid = as.data.frame(unlist(mod$`Error: Within`))['Df2',])
