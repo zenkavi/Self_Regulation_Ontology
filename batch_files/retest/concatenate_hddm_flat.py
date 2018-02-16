@@ -35,7 +35,7 @@ for subset in subsets:
           subset_concat = task_concat
           
       else:    
-          subset_concat = subset_concat.merge(task_concat, on=['subj_id'])
+          subset_concat = subset_concat.merge(task_concat, on=['subj_id'], how = 'outer')
           
     if sys.argv[2] == 'all':
         subset_concat.to_csv(output_dir+subset+'_hddm_flat.csv')
