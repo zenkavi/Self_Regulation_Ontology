@@ -38,4 +38,4 @@ for subset in subsets:
           pd.merge(subset_concat, task_concat, on='subj_id')
           
     if sys.argv[2] == 'all':
-        subset_concat.to_csv(output_dir+subset+_'hddm_flat.csv')
+        subset_concat.to_csv(output_dir+subset+'_hddm_flat.csv')
