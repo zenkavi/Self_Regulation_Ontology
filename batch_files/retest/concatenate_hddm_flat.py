@@ -28,7 +28,7 @@ for subset in subsets:
       task_concat = task_concat.add_prefix(task+'.')
       task_concat.rename(columns={task+'.Unnamed: 0':'subj_id'}, inplace=True)
       
-      if task != ['all']:
+      if sys.argv[2] != 'all':
           task_concat.to_csv(output_dir+task+'_'+subset+'_hddm_flat.csv')
       
       elif subset_concat.empty:
@@ -37,5 +37,5 @@ for subset in subsets:
       else:    
           pd.merge(subset_concat, task_concat, on='subj_id')
           
-    if task == ['all']:
+    if sys.argv[2] == 'all':
         subset_concat.to_csv(output_dir+subset+'hddm_flat.csv')
