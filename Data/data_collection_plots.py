@@ -5,6 +5,7 @@ from os import path
 import pandas as pd
 import seaborn as sns
 from selfregulation.utils.utils import get_behav_data, get_info, get_var_category
+from selfregulation.utils.plot_utils import format_num
 sns.set_palette("Set1", 8, .75)
 
 base_dir = get_info('base_directory')
@@ -50,9 +51,9 @@ worker_completions = json.load(open(worker_completion_loc, 'r'))
 with sns.plotting_context('poster'):
     save_dir = path.join(base_dir, 'Data', 'Plots', 'worker_completions.%s' % ext)
     completion_rate = np.mean(np.array(list(worker_completions.values())) ==63)
-    completion_rate = "{0:0.1f}%".format(completion_rate*100)
+    completion_rate = format_num(completion_rate*100, 1)
     analyzed_rate = 522/len(worker_completions)
-    analyzed_rate = "{0:0.1f}%".format(analyzed_rate*100)
+    analyzed_rate = format_num(analyzed_rate*100, 1)
     plt.figure(figsize=(12,8))
     plt.hist(worker_completions.values(), bins=40, width=5)
     ax = plt.gca()

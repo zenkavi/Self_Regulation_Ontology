@@ -4,6 +4,7 @@ matplotlib.use('Agg')
 from utils import format_variable_names, get_factor_groups
 from plot_utils import save_figure, visualize_factors, visualize_task_factors
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 from os import makedirs, path
 import pandas as pd
@@ -485,7 +486,50 @@ def plot_entropies(results, dpi=300, figsize=(20,8), ext='png', plot_dir=None):
         if plot_dir is not None:
             f.savefig(path.join(plot_dir, 'entropies_across_factors.%s' % ext), 
                       bbox_inches='tight', dpi=dpi)
-            
+    
+# plot specific variable groups
+def plot_DDM(results, c, dpi=300, figsize=(20,8), ext='png', plot_dir=None): 
+    EFA = results.EFA
+    loading = abs(EFA.get_loading(c))
+    cats = []
+    for i in loading.index:
+        if 'drift' in i:
+            cats.append('Drift')
+        elif 'thresh' in i:
+            cats.append('Thresh')
+        elif 'non_decision' in i:
+            cats.append('Non-Decision')
+        else:
+            cats.append('Misc')
+    loading.insert(0,'category', cats)
+    # plotting
+    colors = sns.color_palette("Set1", 8, .75)
+    color_map = {v:i for i,v in enumerate(loading.category.unique())}
+    
+    fig = plt.figure(figsize=(12,12))
+    ax = fig.add_subplot(111, projection='3d')
+    for name, group in loading.groupby('category'):
+        ax.scatter(group['Speeded IP'],
+                   group['Caution'],
+                   group['Perc/Resp'],
+                   marker='o',
+                   s=150,
+                   c=colors[color_map[name]],
+                   label=name)
+    ax.tick_params(labelsize=0, length=0)
+    ax.set_xlabel('Speeded IP', fontsize=20)
+    ax.set_ylabel('Caution', fontsize=20)
+    ax.set_zlabel('Perc / Resp', fontsize=20)
+    ax.view_init(30, 0)
+    leg = plt.legend(fontsize=20)
+    beautify_legend(leg, colors)      
+    if plot_dir is not None:
+        fig.savefig(path.join(plot_dir, 'DDM_factors.%s' % ext), 
+                  bbox_inches='tight', dpi=dpi)
+
+
+
+        
 def plot_EFA(results, plot_dir=None, verbose=False, dpi=300, ext='png',
              plot_task_kws={}):
 
@@ -505,3 +549,7 @@ def plot_EFA(results, plot_dir=None, verbose=False, dpi=300, ext='png',
     plot_task_factors(results, c, normalize_loadings=True, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)
     if verbose: print("Plotting factor correlations")
     plot_factor_correlation(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext)
+    if verbose: print("Plotting DDM factors")
+    if 'task' in results.ID:
+        plot_DDM(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext)
+    
