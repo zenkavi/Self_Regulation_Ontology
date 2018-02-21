@@ -81,19 +81,24 @@ def DDM_plot(v,t,a, sigma = .1, n = 10, plot_n = 15, file = None):
     plt.hlines([a,-a],0,max_y+50,linestyles = 'dashed')
     plt.xlim([plot_start,max_y+50])
     plt.ylim([-a*1.01,a*1.01])
-    plt.ylabel('Decision Variable', fontsize = 20)
+    plt.ylabel('Decision Variable', fontsize = 30)
+    plt.xticks(np.arange(*ax.get_xlim(), 200),
+               [format_num(i,0) for i in np.arange(*ax.get_xlim(), 200)],
+               fontsize=20)
+    plt.tick_params(axis='y', labelsize=20)
     with sns.axes_style("white"):
         ax2 = fig.add_axes([0,.8,1,.2]) 
         sns.kdeplot(pd.Series(correct_rts), color = 'g', ax = ax2, shade = True)
         ax2.set_xticklabels([])
         ax2.set_yticklabels([])
         ax3 = fig.add_axes([0,.2*p_correct,1,.2*(1-p_correct)])
+        ax3.set_xlabel('Time Step (ms)', fontsize = 30, labelpad=50)
         if len(incorrect_rts) > 0:
             sns.kdeplot(pd.Series(incorrect_rts), color = 'r', ax = ax3, shade = True)
-            ax3.set_ylim(ax3.get_ylim()[0]/p_correct,0)
             ax3.set_yticklabels([])
-            plt.xlabel('Time Step (ms)', fontsize = 20)
+            ax.tick_params(axis='x', pad=40)
         ax3.set_ylim(0, ax3.get_ylim()[1])
+        ax3.set_xticklabels([])
         ax3.invert_yaxis()
         #remove spines
         ax2.spines['top'].set_visible(False)
@@ -104,6 +109,7 @@ def DDM_plot(v,t,a, sigma = .1, n = 10, plot_n = 15, file = None):
     if file:
         fig.savefig(file, dpi = 300)
     return fig, trajectories
+#DDM_plot(1.2, .2, 3, n=100, plot_n=7)
 
 def dendroheatmap(link, dist_df, clusters=None,
                   label_fontsize=None, labels=True,
