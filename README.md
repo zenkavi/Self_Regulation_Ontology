@@ -34,6 +34,11 @@ pip install -r requirements2.txt
 python setup.py install
 rpy2 needs to be installed
 
+rpy2 can be install using conda install rpy2
+if errors occur when install R packages in the conda environment these commands may fix the issues:
+conda install gxx_linux-64
+conda install gfortran_linux-64
+
 # data preparation requires install expfactory-analysis, as below:
 git+https://github.com/IanEisenberg/expfactory-analysis
 
@@ -44,6 +49,7 @@ missForest
 psych
 lme4
 qgraph
+mpath
 
 ### Docker usage
 
