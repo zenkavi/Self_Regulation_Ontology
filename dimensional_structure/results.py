@@ -523,10 +523,12 @@ class Results(EFA_Analysis, HCA_Analysis):
         # load data
         self.data = get_behav_data(dataset=datafile, 
                                   file='meaningful_variables_imputed.csv',
-                                  filter_regex=filter_regex)
+                                  filter_regex=filter_regex,
+                                  verbose=True)
         self.data_no_impute = get_behav_data(dataset=datafile,
                                              file='meaningful_variables_clean.csv',
-                                             filter_regex=filter_regex)
+                                             filter_regex=filter_regex,
+                                             verbose=True)
         self.demographics = get_demographics()
         self.dataset = datafile
         if ID is None:

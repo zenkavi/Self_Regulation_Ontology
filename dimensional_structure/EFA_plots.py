@@ -511,7 +511,7 @@ def plot_DDM(results, c, dpi=300, figsize=(20,8), ext='png', plot_dir=None):
     for name, group in loading.groupby('category'):
         ax.scatter(group['Speeded IP'],
                    group['Caution'],
-                   group['Perc/Resp'],
+                   group['Perc / Resp'],
                    marker='o',
                    s=150,
                    c=colors[color_map[name]],
@@ -520,7 +520,7 @@ def plot_DDM(results, c, dpi=300, figsize=(20,8), ext='png', plot_dir=None):
     ax.set_xlabel('Speeded IP', fontsize=20)
     ax.set_ylabel('Caution', fontsize=20)
     ax.set_zlabel('Perc / Resp', fontsize=20)
-    ax.view_init(30, 0)
+    ax.view_init(30, 30)
     leg = plt.legend(fontsize=20)
     beautify_legend(leg, colors)      
     if plot_dir is not None:

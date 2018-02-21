@@ -7,7 +7,7 @@ import seaborn as sns
 from plot_utils import get_short_names, plot_loadings, save_figure
 from utils import shorten_labels
 from selfregulation.utils.plot_utils import beautify_legend, CurvedText
-colors = [sns.color_palette("Paired")[i] for i in [1, 0, 5]]
+colors = sns.color_palette('Blues_d',3) + sns.color_palette('Reds_d',2)[:1]
 
 
 shortened_factors = get_short_names()
@@ -94,16 +94,29 @@ def plot_prediction(results, target_order=None, include_shuffle=False,
             label='Insample Prediction', color=colors[1])
     if include_shuffle:
         ax1.bar(ind+width*2, [i[1] for i in shuffled_r2s], width, 
-                label='Shuffled Prediction', colors=colors[2])
-    ax1.set_xticks(np.arange(0,len(r2s))+width/2)
-    ax1.set_xticklabels([i[0] for i in r2s], rotation=15, fontsize=figsize[0]*1.1)
-    ax1.set_ylabel('R2', fontsize=20)
+                label='Shuffled Prediction', color=colors[2])
+        ax1.set_xticks(np.arange(0,len(r2s))+width)
+    else:
+        ax1.set_xticks(np.arange(0,len(r2s))+width/2)
+        tick_locs = ax1.get_xticks()
+        xmin, xmax = ax1.get_xlim()
+        xrange = xmax-xmin
+        for i, (name, val) in enumerate(shuffled_r2s):
+            ax1.axhline(val, 
+                        (tick_locs[i]-width+abs(xmin))/xrange, 
+                        (tick_locs[i]+width+abs(xmin))/xrange,
+                        color='w',
+                        linestyle='--')
+    ax1.set_xticklabels([i[0] for i in r2s], rotation=15, fontsize=figsize[0]*1.15)
+    ax1.set_ylabel('R2', fontsize=30, labelpad=10)
+    ax1.tick_params(axis='y', labelsize=20)
+    ax1.tick_params(length=5, width=2)
     ylim = ax1.get_ylim()
     if ymax is None:
         ymax = max(.15, ylim[1]+.1)
     ax1.set_ylim(ylim[0], ymax)
     leg = ax1.legend(fontsize=24, loc='upper left')
-    beautify_legend(leg, colors[:2])
+    beautify_legend(leg, colors[:3])
 
     # draw grid
     ax1.set_axisbelow(True)
@@ -123,7 +136,7 @@ def plot_prediction(results, target_order=None, include_shuffle=False,
     for i, importance in enumerate(importances):
         axes.append(fig.add_axes([plot_x[i], plot_heights[i], 1/N,1/N], projection='polar'))
         if i in [best_predictors[-1][0], best_predictors[-2][0]]:
-            color = colors[2]
+            color = colors[3]
         else:
             color = colors[0]
         visualize_importance(importance, axes[i],
@@ -142,7 +155,7 @@ def plot_prediction(results, target_order=None, include_shuffle=False,
                          label_size=figsize[1]*1.5,
                          label_scale=.22,
                          title=best_predictors[-1][1][0],
-                         color=colors[2])
+                         color=colors[3])
     # 2nd top
     label_importance = importances.pop(best_predictors[-2][0])
     ratio = figsize[1]/figsize[0]
@@ -152,7 +165,7 @@ def plot_prediction(results, target_order=None, include_shuffle=False,
                          label_size=figsize[1]*1.5,
                          label_scale=.23,
                          title=best_predictors[-2][1][0],
-                         color=colors[2])
+                         color=colors[3])
     
     if plot_dir is not None:
         filename = 'prediction_output.png'

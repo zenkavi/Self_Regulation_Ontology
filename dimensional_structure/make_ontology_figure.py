@@ -1,6 +1,6 @@
 import argparse
 from cross_results_plots import plot_corr_hist
-from HCA_plots import plot_dendrograms, plot_subbranches
+from HCA_plots import plot_dendrogram, plot_subbranches
 import glob
 from os import path, remove
 from utils import load_results
@@ -18,7 +18,7 @@ results = load_results(datafile)
 plot_file = path.dirname(results['task'].plot_file)
 
 # make histogram plot
-colors = [sns.color_palette("Paired")[i] for i in [0, 1, 4]]
+colors = sns.color_palette('Blues_d',3)[0:2] + sns.color_palette('Reds_d',2)[:1]
 f = plot_corr_hist(results,colors, reps=2)
 f.savefig(path.join(plot_file, 'within-across_correlations.png'), 
                     bbox_inches='tight', 
@@ -29,7 +29,7 @@ for title, subset in [('Behavioral Tasks', 'task'), ('Self-Report Surveys', 'sur
     r = results[subset]
     c = r.EFA.get_metric_cs()['c_metric-BIC']
     inp = 'EFA%s' % c
-    plot_dendrograms(r, c, inp=inp, titles=[title],
+    plot_dendrogram(r, c, inp=inp, titles=[title],
                      figsize=(12,10), ext='svg',  plot_dir='/tmp/')
     # get scores
     scores[subset] = r.EFA.get_scores(c)

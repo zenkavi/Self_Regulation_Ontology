@@ -58,8 +58,8 @@ def plot_corr_hist(results, colors, reps=100):
             ax.spines['top'].set_visible(False)
             leg=ax.legend(fontsize=14, loc='upper center')
             beautify_legend(leg, [colors[i]])
-        axes[1].set_xlabel('Pearson Correlation', fontsize=20, y=-.05)
-        axes[0].set_ylabel('Normalized Density', fontsize=20, x=-.05)
+        axes[1].set_xlabel('Pearson Correlation', fontsize=20, labelpad=10)
+        axes[0].set_ylabel('Normalized Density', fontsize=20, labelpad=10)
     return f
     
     

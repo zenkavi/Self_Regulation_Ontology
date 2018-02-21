@@ -182,6 +182,8 @@ def visualize_task_factors(task_loadings, ax, xticklabels=True, label_size=12,
     ax.set_xticks(xtick_locs+np.pi/len(DV), minor=True)
     if xticklabels:
         labels = task_loadings.columns
+        if type(labels[0]) != str:
+            labels = ['Fac %s' % str(i) for i in labels]
         scale = 1.2
         size = ax.get_position().expanded(scale, scale)
         ax2=ax.get_figure().add_axes(size,zorder=2)

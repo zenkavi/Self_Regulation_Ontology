@@ -110,6 +110,7 @@ for subset in subsets:
         run_time = time.time()-start
         
         # ***************************** saving ****************************************
+        print('Saving Subset: %s' % name)
         id_file = path.join(results.output_file,  'results_ID-%s.pkl' % results.ID)
         pickle.dump(results, open(id_file,'wb'))
         # copy latest results and prediction to higher directory
