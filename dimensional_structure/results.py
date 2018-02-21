@@ -84,7 +84,8 @@ class EFA_Analysis:
         if ('factor_tree' in self.results.keys() and 
             c in self.results['factor_tree_Rout'].keys()):
             # get factor correlation matrix
-            phi = pd.DataFrame(get_attr(self.results['factor_tree_Rout'][c], 'Phi'))
+            scores = get_attr(self.results['factor_tree_Rout'][c], 'scores')
+            phi = pd.DataFrame(np.corrcoef(scores.T))
             n_obs = self.data.shape[0]
             labels = list(self.results['factor_tree'][c].columns)
             BIC_c, BICs = find_optimal_components(phi, 
@@ -393,24 +394,24 @@ class HCA_Analysis():
         else:
             self.metric_name = self.dist_metric
         
-    def cluster_data(self, data, dist_metric=None):
+    def cluster_data(self, data, dist_metric=None, method='average'):
         if dist_metric is None:
             dist_metric = self.dist_metric
             label_append = ''
         else:
             label_append = '_dist-%s' % dist_metric
-        output = hierarchical_cluster(data.T, 
+        output = hierarchical_cluster(data.T, method=method,
                                       pdist_kws={'metric': dist_metric})
         self.results['clustering_input-data%s' % label_append] = output
         
-    def cluster_EFA(self, EFA, c, dist_metric=None):
+    def cluster_EFA(self, EFA, c, dist_metric=None, method='average'):
         if dist_metric is None:
             dist_metric = self.dist_metric
             label_append = ''
         else:
             label_append = '_dist-%s' % dist_metric
         loading = EFA.get_loading(c)
-        output = hierarchical_cluster(loading, 
+        output = hierarchical_cluster(loading, method=method,
                                       pdist_kws={'metric': dist_metric})
         self.results['clustering_input-EFA%s%s' % (c, label_append)] = output
         

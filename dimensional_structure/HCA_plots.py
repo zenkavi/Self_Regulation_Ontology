@@ -162,9 +162,10 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
     cbar_ax.tick_params(labelsize=figsize[0]*3)
     
     # Plot polar plot
-    polar_size = [0,.6, .7,.4]
+    ratio = figsize[0]/figsize[1]
+    polar_size = [0,.6, .7,.7*ratio]
     polar_ax = fig.add_axes(polar_size, projection='polar') 
-    plot_loadings(polar_ax, avg_factors, kind='line', offset=.5, 
+    plot_loadings(polar_ax, list(avg_factors), kind='line', offset=.5, 
                   colors=[tree['color_list'][start]],
                   plot_kws={'alpha': .8})
     # tick properties of polar plot
@@ -178,7 +179,7 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
     short_names = get_short_names()
     labels = [short_names.get(v, v) for v in subset_loading.index]
     if type(labels[0]) != str:
-            labels = ['Fac %s' % str(i+1) for i in labels]
+            labels = ['Fac %s' % str(i) for i in labels]
     max_var_length = max([len(v) for v in labels])
     for i, var in enumerate(labels):
         offset=-.15+.38*25/len(labels)**2
@@ -208,6 +209,7 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
                          color= tree['color_list'][start])
         factor_avg_ax.set_xticklabels('')
         factor_avg_ax.set_yticklabels('')
+        factor_avg_ax.tick_params(length=0)
         factor_avg_ax.spines['top'].set_visible(False)
         factor_avg_ax.spines['bottom'].set_visible(False)
         factor_avg_ax.spines['left'].set_visible(False)
@@ -227,6 +229,7 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
         return fig
     
 def plot_subbranches(results, c=None,  inp=None, cluster_range=None,
+                     absolute_loading=False,
                      figsize=(6,10), dpi=300, ext='png', plot_dir=None):
     """ Plots HCA results as dendrogram with loadings underneath
     
@@ -257,6 +260,8 @@ def plot_subbranches(results, c=None,  inp=None, cluster_range=None,
         labels = clustering['clustered_df'].columns
         labels = format_variable_names(labels)
         ordered_loading = loading.loc[labels]
+        if absolute_loading:
+            ordered_loading = abs(ordered_loading)
         # get cluster sizes
         cluster_labels = HCA.get_cluster_labels(inp=name.split('-')[1])
         cluster_sizes = [len(i) for i in cluster_labels]
@@ -284,7 +289,8 @@ def plot_subbranches(results, c=None,  inp=None, cluster_range=None,
                            
 
 def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=False,
-                     break_lines=True, orientation='horizontal',
+                     break_lines=True, orientation='horizontal', 
+                     absolute_loading=False,
                      figsize=(20,12),  dpi=300, ext='png', plot_dir=None):
     """ Plots HCA results as dendrogram with loadings underneath
     
@@ -318,6 +324,8 @@ def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=False,
         link = clustering['linkage']
         labels = clustering['clustered_df'].columns
         ordered_loading = loading.loc[labels]
+        if absolute_loading:
+            ordered_loading = abs(ordered_loading)
         # get cluster sizes
         cluster_labels = HCA.get_cluster_labels(inp=name.split('-')[1])
         cluster_sizes = [len(i) for i in cluster_labels]
@@ -353,6 +361,7 @@ def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=False,
             # if max_val is high, just make it 1
             if max_val > .95:
                 max_val = 1
+            
             sns.heatmap(ordered_loading, ax=ax2, 
                         cbar=True, cbar_ax=ax3,
                         yticklabels=True,

@@ -72,7 +72,7 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
             ax.set_yticklabels(labels)
 
 def plot_prediction(results, target_order=None, include_shuffle=False, 
-                    figsize=(20,16),  dpi=300, plot_dir=None):
+                    ymax=None, figsize=(20,16),  dpi=300, plot_dir=None):
     predictions = results.load_prediction_object()['data']
     shuffled_predictions = results.load_prediction_object(shuffle=True)['data']
     
@@ -99,7 +99,8 @@ def plot_prediction(results, target_order=None, include_shuffle=False,
     ax1.set_xticklabels([i[0] for i in r2s], rotation=15, fontsize=figsize[0]*1.1)
     ax1.set_ylabel('R2', fontsize=20)
     ylim = ax1.get_ylim()
-    ymax = max(.15, ylim[1]+.1)
+    if ymax is None:
+        ymax = max(.15, ylim[1]+.1)
     ax1.set_ylim(ylim[0], ymax)
     leg = ax1.legend(fontsize=24, loc='upper left')
     beautify_legend(leg, colors[:2])

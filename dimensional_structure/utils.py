@@ -137,7 +137,8 @@ def shorten_labels(labels, conversions={}):
 # helper functions for hierarchical clustering
 # ****************************************************************************
 def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None, 
-                         plot=False, cluster_kws=None, plot_kws=None):
+                         method='ward', plot=False, cluster_kws=None, 
+                         plot_kws=None):
     """
     plot hierarchical clustering and heatmap
     :df: a correlation matrix
@@ -163,7 +164,7 @@ def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None,
         dist_df = df
         dist_vec = squareform(df.values)
     #clustering
-    link = linkage(dist_vec, method='ward')    
+    link = linkage(dist_vec, method=method)    
     #dendrogram
     reorder_vec = leaves_list(link)
     clustered_df = dist_df.iloc[reorder_vec, reorder_vec]
