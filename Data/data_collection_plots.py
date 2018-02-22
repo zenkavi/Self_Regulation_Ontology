@@ -99,13 +99,16 @@ ax = sns.stripplot(y='icc', x='Measure Category',
 plt.savefig(save_dir, dpi=300, bbox_inches='tight')
 
 # boxplot
-colors = [sns.color_palette("Paired")[i] for i in [1, 0]]
-save_dir = path.join(base_dir, 'Data', 'Plots', 'ICC_boxplot.%s' % ext)
+colors = sns.color_palette('Blues_d',3) 
+save_dir = path.join(base_dir, 'Data', 'Plots', 'ICC_violinplot.%s' % ext)
 plt.figure(figsize=(12,8))
-ax = sns.boxplot(y='icc', x='Measure Category', 
+ax = sns.violinplot(y='icc', x='Measure Category', 
                  data=retest_data,
                  palette = colors, saturation=1)
-ax.text(.7, .3, '%s Task Measures' % Task_N, color=colors[0])
-ax.text(.7, .2, '%s Survey Measures' % Survey_N, color=colors[1])
+ax.text(.7, .3, '%s Task Measures' % Task_N, color=colors[0], fontsize=24)
+ax.text(.7, .2, '%s Survey Measures' % Survey_N, color=colors[1], fontsize=24)
+plt.ylabel('ICC', fontsize=24, labelpad=10)
+plt.xlabel('Measure Category', fontsize=24, labelpad=10)
+plt.tick_params(labelsize=20)
 
 plt.savefig(save_dir, dpi=300, bbox_inches='tight')
