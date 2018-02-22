@@ -156,7 +156,7 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
     xn = max(xn,12) # don't want the x labels too big
     heatmap_ax.tick_params(axis='x', labelsize=figsize[0]*40/xn)
     heatmap_ax.tick_params(axis='y', labelsize=figsize[0]*14/yn)
-    avg_factors = abs(subset_loading).mean(1)/max_val
+    avg_factors = abs(subset_loading).mean(1)
     # format cbar axis
     cbar_ax.set_yticklabels([format_num(-max_val), 0, format_num(max_val)])
     cbar_ax.tick_params(labelsize=figsize[0]*3)
@@ -205,8 +205,11 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
     if avg_bar == True:
         factor_avg_size = [.71,.05,.2,.25]
         factor_avg_ax = fig.add_axes(factor_avg_size)
-        avg_factors[::-1].plot(kind='barh', ax = factor_avg_ax, 
+        avg_factors[::-1].plot(kind='barh', ax = factor_avg_ax, width=.7,
                          color= tree['color_list'][start])
+        factor_avg_ax.set_xlim(0, max_val)
+        #factor_avg_ax.set_xticks([max(avg_factors)])
+        #factor_avg_ax.set_xticklabels([format_num(max(avg_factors))])
         factor_avg_ax.set_xticklabels('')
         factor_avg_ax.set_yticklabels('')
         factor_avg_ax.tick_params(length=0)
