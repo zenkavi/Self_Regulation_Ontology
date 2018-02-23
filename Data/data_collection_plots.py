@@ -64,8 +64,10 @@ with sns.plotting_context('poster'):
     plt.xlabel('Number of Tasks Completed', fontsize=20)
 plt.savefig(save_dir, dpi=300, bbox_inches='tight')
 
-
+# ****************************************************************************
 # plot psychometric reliability
+# ****************************************************************************
+
 sns.set_context('poster')
 meaningful_vars = get_behav_data(file='meaningful_variables_imputed.csv').columns
 meaningful_vars = [i.replace('.logTr','') for i in meaningful_vars]
@@ -85,6 +87,7 @@ measure_cat = [get_var_category(v).title() for v in retest_data.index]
 retest_data.loc[:,'Measure Category'] = measure_cat
 Survey_N = np.sum(retest_data.loc[:, 'Measure Category']=='Survey')
 Task_N = len(retest_data)-Survey_N
+
 # plot
 save_dir = path.join(base_dir, 'Data', 'Plots', 'ICC_stripplot.%s' % ext)
 plt.figure(figsize=(12,8))
@@ -98,7 +101,33 @@ ax = sns.stripplot(y='icc', x='Measure Category',
                     jitter=True, alpha=.5, size=10)
 plt.savefig(save_dir, dpi=300, bbox_inches='tight')
 
-# boxplot
+# box plot
+colors = sns.color_palette('Blues_d',3) 
+save_dir = path.join(base_dir, 'Data', 'Plots', 'ICC_distplot.%s' % ext)
+f = plt.figure(figsize=(12,8))
+# plot boxes
+box_ax = f.add_axes([0,0,1,.6]) 
+sns.boxplot(x='icc', y='Measure Category', ax=box_ax, data=retest_data,
+            palette={'Survey': colors[0], 'Task': colors[1]}, saturation=1,
+            width=.5)
+box_ax.text(0, 1.2, '%s Task Measures' % Task_N, color=colors[1], fontsize=24)
+box_ax.text(0, 1, '%s Survey Measures' % Survey_N, color=colors[0], fontsize=24)
+box_ax.set_ylabel('Measure Category', fontsize=24, labelpad=10)
+box_ax.set_xlabel('ICC', fontsize=24, labelpad=10)
+box_ax.tick_params(labelsize=20)
+# plot distributions
+dist_ax = f.add_axes([0,.6,1,.4]) 
+dist_ax.set_xlim(*box_ax.get_xlim())
+dist_ax.set_xticklabels('')
+dist_ax.tick_params(length=0)
+for i, (name, g) in enumerate(retest_data.groupby('Measure Category')):
+    sns.kdeplot(g['icc'], color=colors[i], ax=dist_ax, linewidth=4, 
+                shade=True, legend=False)
+dist_ax.axis('off')
+plt.savefig(save_dir, dpi=300, bbox_inches='tight')
+
+
+# violin plot
 colors = sns.color_palette('Blues_d',3) 
 save_dir = path.join(base_dir, 'Data', 'Plots', 'ICC_violinplot.%s' % ext)
 plt.figure(figsize=(12,8))
