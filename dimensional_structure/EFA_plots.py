@@ -1,7 +1,7 @@
 # imports
 import matplotlib
 matplotlib.use('Agg')
-from utils import format_variable_names, get_factor_groups
+from utils import get_factor_groups
 from plot_utils import save_figure, visualize_factors, visualize_task_factors
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -9,7 +9,7 @@ import numpy as np
 from os import makedirs, path
 import pandas as pd
 import seaborn as sns
-from selfregulation.utils.plot_utils import beautify_legend
+from selfregulation.utils.plot_utils import beautify_legend, format_variable_names
 from selfregulation.utils.r_to_py_utils import get_attr
 from selfregulation.utils.utils import get_behav_data
 

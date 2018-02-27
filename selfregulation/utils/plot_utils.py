@@ -12,6 +12,19 @@ import seaborn as sns
 def format_num(num, digits=2):
     return ("{0:0." + str(digits) + "f}").format(num)
     
+def format_variable_names(variables):
+    """ formats a list of variable names """
+    # convert non_decision
+    new_vars = []
+    for var in variables:
+        var = var.replace('non_decision', 'non-decision')
+        var = var.replace('hddm_', 'DDM-')
+        var = var.replace('_cost', '-cost')
+        var = var.replace('_sensitivity', '-sensitivity')
+        var = var.replace('.', ': ')
+        var = ' '.join(var.split('_'))
+        new_vars.append(var)
+    return new_vars
 
 #***************************************************
 # ********* Plotting Functions **********************
