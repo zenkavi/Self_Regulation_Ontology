@@ -60,6 +60,12 @@ def plot_vars(tasks, contrasts, axes=None,  xlabel='Value', standardize=False):
 hddm_contrasts = data.filter(regex='_hddm.*drift')
 
 # get rt contrasts
+EZ_columns = [c.replace('hddm_drift','EZ_drift') for c in hddm_contrasts]
+EZ_contrasts = pd.DataFrame()
+for c in EZ_columns:
+    EZ_contrasts = pd.concat([EZ_contrasts, data.filter(regex=c)], axis=1)
+    
+# get rt contrasts
 rt_columns = [c.replace('hddm_drift','rt') for c in hddm_contrasts]
 rt_contrasts = pd.DataFrame()
 for c in rt_columns:
@@ -71,14 +77,16 @@ acc_contrasts = pd.DataFrame()
 for c in acc_columns:
     acc_contrasts = pd.concat([acc_contrasts, data.filter(regex=c)], axis=1)
     
-cols = 3 
-rows = math.ceil(len(tasks)*3/cols)
-f, axes = plt.subplots(rows, cols, figsize=(cols*10, rows*6))
-hddm_axes = f.get_axes()[::3]
-rt_axes = f.get_axes()[1::3]
-acc_axes = f.get_axes()[2::3]
+cols = 4
+rows = math.ceil(len(tasks)*4/cols)
+f, axes = plt.subplots(rows, cols, figsize=(cols*8, rows*6))
+hddm_axes = f.get_axes()[::4]
+ez_axes = f.get_axes()[1::4]
+rt_axes = f.get_axes()[2::4]
+acc_axes = f.get_axes()[3::4]
 
-plot_vars(tasks, hddm_contrasts, hddm_axes, xlabel='Drift Rate')
+plot_vars(tasks, hddm_contrasts, hddm_axes, xlabel='HDDM Drift Rate')
+plot_vars(tasks, EZ_contrasts, ez_axes, xlabel='EZ Drift Rate')
 plot_vars(tasks, rt_contrasts, rt_axes, xlabel='RT (ms)')
 plot_vars(tasks, acc_contrasts, acc_axes, xlabel='Accuracy')
 
