@@ -5,8 +5,9 @@ import numpy as np
 from os import  path
 import pandas as pd
 import seaborn as sns
+from selfregulation.utils.plot_utils import format_variable_names
 from selfregulation.utils.r_to_py_utils import get_attr
-from utils import format_variable_names, get_factor_groups
+from utils import get_factor_groups
 
 
 def plot_demo_factor_dist(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):

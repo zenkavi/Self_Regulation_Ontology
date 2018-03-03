@@ -4,7 +4,8 @@
 import os
 import sys
 import traceback
-import selfregulation.prediction.behavpredict as behavpredict
+import selfregulation.prediction.behavpredict_V1 as behavpredict
+from selfregulation.prediction.prediction_utils import get_demographic_model_type
 
 def run_EFA_prediction(dataset, factor_scores, demographics, output_base, save=True,
                        verbose=False, classifier='lasso',
@@ -67,4 +68,3 @@ def run_EFA_prediction(dataset, factor_scores, demographics, output_base, save=T
         bp.write_data(vars_to_test)
     return bp
 
-from selfregulation.utils.r_to_py_utils import get_demographic_model_type
