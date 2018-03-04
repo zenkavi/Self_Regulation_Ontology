@@ -2,7 +2,7 @@
 # Helper functions for prediction
 # ****************************************************************************
 import os
-import selfregulation.prediction.behavpredict_V2 as behavpredict
+from selfregulation.prediction.behavpredict_V2 import BehavPredict
 
 def run_prediction(factor_scores, demographics, output_base, 
                    outfile='prediction', save=True,
@@ -12,11 +12,12 @@ def run_prediction(factor_scores, demographics, output_base,
     
     output_dir=os.path.join(output_base,'prediction_outputs')
     
-    bp = behavpredict(behavdata=factor_scores,
+    bp = BehavPredict(behavdata=factor_scores,
                       demogdata=demographics,
                       classifier='tikhonov',
                       output_dir=output_dir,
-                      outfile=outfile)
+                      outfile=outfile,
+                      shuffle=shuffle)
     bp.binarize_ZI_demog_vars()
     vars_to_test=[v for v in bp.demogdata.columns if not v in bp.skip_vars]
     for v in vars_to_test:

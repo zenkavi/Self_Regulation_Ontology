@@ -543,7 +543,7 @@ class BehavPredict:
             outfile = self.outfile.rstrip('.pkl')
             outfile = outfile + shuffle_flag + '_%s.pkl' % h
         if not os.path.exists(self.output_dir):
-            os.mkdir(self.output_dir, exist_ok=True)
+            os.makedirs(self.output_dir, exist_ok=True)
         if self.verbose:
             print('saving to',os.path.join(self.output_dir,outfile))
         if not isinstance(vars,list):
