@@ -481,12 +481,13 @@ def quantify_lower_nesting(factor_tree):
 # Helper functions for visualization of component loadings
 # ****************************************************************************
 from fancyimpute import SimpleFill
-def residualize_baseline(df):
+def residualize_baseline(df, baseline_vars=[]):
+    if len(baseline_vars) == 0:
+        baseline_vars = ['Age', 'Sex']
     # remove baseline vars
-    baseline=df[['Age','Sex']]
+    baseline=df[baseline_vars]
     data=df.copy()
-    del data['Age']
-    del data['Sex']
+    data.drop(baseline_vars, axis=1, inplace=True)
     #x=SimpleFill().complete(baseline)
     lr=LinearRegression()
     if data.isnull().sum().sum() > 0:

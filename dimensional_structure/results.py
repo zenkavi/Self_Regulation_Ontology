@@ -6,7 +6,7 @@ from utils import (
         get_loadings, get_scores_from_subset, get_top_factors, 
         hdbscan_cluster, hierarchical_cluster, residualize_baseline
         )
-from prediction_utils import run_EFA_prediction
+from prediction_utils import run_prediction
 import glob
 from os import makedirs, path
 import pandas as pd
@@ -492,10 +492,11 @@ class HCA_Analysis():
 
 class Demographic_Analysis(EFA_Analysis):
     """ Runs Hierarchical Clustering Analysis """
-    def __init__(self, data, residualize=True, boot_iter=1000):
+    def __init__(self, data, residualize=True, residualize_vars=['Age', 'Sex'],
+                 boot_iter=1000):
         self.raw_data = data
         if residualize:
-            data = residualize_baseline(data)
+            data = residualize_baseline(data, residualize_vars)
         if 'BMI' in data.columns:
             data.drop(['WeightPounds', 'HeightInches'], axis=1, inplace=True)
         
@@ -595,24 +596,32 @@ class Results(EFA_Analysis, HCA_Analysis):
                         verbose=verbose)
             return {'HCA': HCA, 'hdbscan': hdbscan}
     
-    def run_prediction(self, c=None, shuffle=False, no_baseline_vars=True,
-                       outfile=None, verbose=False):
+    def run_prediction(self, c=None, shuffle=False, 
+                       include_raw_demographics=False, verbose=False):
         if verbose:
             print('*'*79)
             print('Running Prediction, shuffle: %s' % shuffle)
             print('*'*79)
-        scores = self.EFA.get_scores(c)
-        demographics = self.DA.reorder_factors(self.DA.get_scores(c))
-        if outfile is None:
-            run_EFA_prediction(self.dataset, scores, demographics, 
-                               self.output_file,
-                               shuffle=shuffle, 
-                               no_baseline_vars=no_baseline_vars)
-        else:
-            run_EFA_prediction(self.dataset, scores, demographics,
-                               outfile,
-                               shuffle=shuffle, 
-                               no_baseline_vars=no_baseline_vars)
+        factor_scores = self.EFA.get_scores(c)
+        demographic_factors = self.DA.reorder_factors(self.DA.get_scores(c))
+        c = factor_scores.shape[1]
+        targets = [('demo_factors', demographic_factors)]
+        if include_raw_demographics:
+            targets.append(('demo_raw', self.demographics))
+        for name, target in targets:
+            # predicting using best EFA
+            run_prediction(factor_scores, 
+                           target, 
+                           self.output_file,
+                           outfile='EFA%s_%s_prediction' % (c, name), 
+                           shuffle=shuffle)
+            # predict using raw variables
+            run_prediction(self.data, 
+                           target, 
+                           self.output_file,
+                           outfile='IDM_%s_prediction' % name, 
+                           shuffle=shuffle)
+
     
     def load_prediction_object(self, ID=None, shuffle=False):
         prediction_files = glob.glob(path.join(self.output_file,

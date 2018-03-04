@@ -20,6 +20,7 @@ from sklearn.model_selection import cross_val_score,StratifiedKFold,ShuffleSplit
 from sklearn.metrics import roc_auc_score,r2_score,explained_variance_score,mean_absolute_error
 from sklearn.linear_model import LassoCV,LinearRegression,LogisticRegressionCV,Lasso,LogisticRegression
 from sklearn.preprocessing import StandardScaler
+from sklearn.utils.multiclass import type_of_target
 
 import fancyimpute
 from imblearn.combine import SMOTETomek
@@ -37,7 +38,6 @@ class UserSchema(Schema):
     dataset = fields.Str()
     drop_na_thresh = fields.Integer()
     n_jobs = fields.Integer()
-    baseline_vars = fields.List(fields.Str())
     errors = fields.List(fields.Str())
     finished_at = fields.DateTime()
     shuffle=fields.Boolean()
@@ -61,22 +61,18 @@ class BehavPredict:
                  binary_classifier='rf',
                  classifier='rf',
                  verbose=False,
-                 dataset=None,
-                 use_full_dataset=True,
                  n_jobs=1,
                  categorical_vars=None,
                  n_outer_splits=8,
                  use_smote=True,
                  smote_cutoff=0.3,
-                 baseline_vars=['Age','Sex'],
-                 add_baseline_vars=True,
                  skip_vars=[],
                  shuffle=False,
                  freq_threshold=0.04,
                  drop_threshold=0.2,
                  imputer='SoftImpute'):
         # set up arguments
-        self.behavdata = behavdata,
+        self.behavdata = behavdata
         self.demogdata = demogdata
         self.reliabilities = reliabilities
         self.git_commit = get_git_revision_short_hash().strip()
@@ -85,19 +81,12 @@ class BehavPredict:
         self.shuffle = shuffle
         self.classifier = classifier
         self.output_dir = output_dir
+        self.outfile = outfile
         self.freq_threshold=freq_threshold
         self.skip_vars=skip_vars
-        self.use_full_dataset=use_full_dataset
         self.drop_threshold=drop_threshold
-        if self.dataset is 'mean':
-            if self.verbose:
-                print("modeling only the mean: excluding baseline vars")
-            self.add_baseline_vars=False
-        else:
-            self.add_baseline_vars=add_baseline_vars
         self.n_jobs=n_jobs
         self.n_outer_splits=n_outer_splits
-        self.baseline_vars=baseline_vars
         self.imputer=imputer
 
         # define internal variables
@@ -114,8 +103,7 @@ class BehavPredict:
         self.data_models=None
         self.pred=None
         self.varsets={}
-
-    
+        
         # initialize
         self.get_joint_datasets()
         self.get_demogdata_vartypes()
@@ -244,9 +232,6 @@ class BehavPredict:
         Xdata=self.behavdata.loc[idx,:].copy()
         Ydata=Ydata.values
         scale=StandardScaler()
-        if self.add_baseline_vars:
-            for bv in self.baseline_vars:
-                Xdata[bv]=self.demogdata[bv][idx].copy()
         if self.shuffle:
             if self.verbose:
                 print('shuffling Y variable')
@@ -311,9 +296,6 @@ class BehavPredict:
         # run regression
         Ydata=self.demogdata[v].dropna().copy()
         Xdata=self.behavdata.loc[Ydata.index,:].copy()
-        if self.add_baseline_vars:
-            for v in self.baseline_vars:
-                Xdata[v]=self.demogdata[v].dropna().copy()
         Ydata=Ydata.values
         if self.shuffle:
             if self.verbose:
@@ -396,9 +378,6 @@ class BehavPredict:
         # set up data
         Ydata=self.demogdata[v].dropna().copy()
         Xdata=self.behavdata.loc[Ydata.index,:].copy()
-        if self.add_baseline_vars:
-            for bv in self.baseline_vars:
-                Xdata[bv]=self.demogdata[bv].dropna().copy()
 
         Ydata=Ydata.values
         if self.shuffle:
@@ -484,17 +463,9 @@ class BehavPredict:
         else:
             clf = self.classifier
         # set up crossvalidation
-        if not outer_cv:
-            try:
-                outer_cv=StratifiedKFold(n_splits=self.n_outer_splits,shuffle=True)
-            except ValueError:
-                outer_cv=BalancedKFold(nfolds=self.n_outer_splits)
         # set up data
         Ydata=self.demogdata[v].dropna().copy()
         Xdata=self.behavdata.loc[Ydata.index,:].copy()
-        if self.add_baseline_vars:
-            for bv in self.baseline_vars:
-                Xdata[bv]=self.demogdata[bv].dropna().copy()
         Ydata=Ydata.values
         if self.shuffle:
             if self.verbose:
@@ -505,6 +476,12 @@ class BehavPredict:
         importances=[]
         self.pred=numpy.zeros(Ydata.shape[0])
         scale=StandardScaler()
+        # set up CV object
+        if not outer_cv:
+            if type_of_target(Ydata) == 'continuous':
+                outer_cv=BalancedKFold(nfolds=self.n_outer_splits)
+            else:
+                outer_cv=StratifiedKFold(n_splits=self.n_outer_splits,shuffle=True)
         # run cross validation loops
         for train,test in outer_cv.split(Xdata,Ydata):
             Xtrain=Xdata[train,:]
@@ -556,14 +533,15 @@ class BehavPredict:
     
     def write_data(self, vars):
         shuffle_flag='shuffle_' if self.shuffle else ''
+        h='%08x'%random.getrandbits(32)
         if self.outfile is None:
-            h='%08x'%random.getrandbits(32)
             outfile='prediction_%s_%s_%s%s%s.pkl' % (self.predictor_set,
                                                      self.classifier,
                                                      shuffle_flag,
                                                      h)
         else:
-            outfile = shuffle_flag + self.outfile
+            outfile = self.outfile.rstrip('.pkl')
+            outfile = outfile + shuffle_flag + '_%s.pkl' % h
         if not os.path.exists(self.output_dir):
             os.mkdir(self.output_dir, exist_ok=True)
         if self.verbose:
@@ -595,10 +573,6 @@ class BehavPredict:
                 pass
         pickle.dump(info,
                     open(os.path.join(self.output_dir,outfile),'wb'))
-        if len(self.errors)>0:
-            pickle.dump(self.errors,
-                open(os.path.join(self.output_dir,'error_'+outfile),'wb'))
-            return info
         
     def print_importances(self,v,nfeatures=3):
             print('Most important predictors for',v)
