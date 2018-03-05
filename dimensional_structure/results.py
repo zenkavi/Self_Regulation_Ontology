@@ -596,15 +596,20 @@ class Results(EFA_Analysis, HCA_Analysis):
                         verbose=verbose)
             return {'HCA': HCA, 'hdbscan': hdbscan}
     
-    def run_prediction(self, c=None, shuffle=False, 
+    def run_prediction(self, c=None, shuffle=False, classifier='lasso',
                        include_raw_demographics=False, verbose=False):
         if verbose:
             print('*'*79)
-            print('Running Prediction, shuffle: %s' % shuffle)
+            print('Running Prediction, shuffle: %s, classifier: %s' % (shuffle, classifier))
             print('*'*79)
         factor_scores = self.EFA.get_scores(c)
         demographic_factors = self.DA.reorder_factors(self.DA.get_scores(c))
         c = factor_scores.shape[1]
+        # get raw data reorganized by clustering
+        clustering=self.HCA.results['clustering_input-EFA%s' % c]
+        labels = clustering['clustered_df'].columns
+        raw_data = self.data[labels]
+        
         targets = [('demo_factors', demographic_factors)]
         if include_raw_demographics:
             targets.append(('demo_raw', self.demographics))
@@ -614,30 +619,40 @@ class Results(EFA_Analysis, HCA_Analysis):
                            target, 
                            self.output_file,
                            outfile='EFA%s_%s_prediction' % (c, name), 
-                           shuffle=shuffle)
+                           shuffle=shuffle,
+                           classifier=classifier, 
+                           verbose=verbose)
             # predict using raw variables
-            run_prediction(self.data, 
+            run_prediction(raw_data, 
                            target, 
                            self.output_file,
                            outfile='IDM_%s_prediction' % name, 
-                           shuffle=shuffle)
+                           shuffle=shuffle,
+                           classifier=classifier,
+                           verbose=verbose)
 
     
-    def load_prediction_object(self, ID=None, shuffle=False):
+    def load_prediction_object(self, ID=None, shuffle=False, EFA=True,
+                               classifier='lasso'):
+        prefix = 'EFA' if EFA else 'IDM'
         prediction_files = glob.glob(path.join(self.output_file,
                                                'prediction_outputs',
-                                               '*'))
+                                               '%s*' % prefix))
         if shuffle:
             prediction_files = [f for f in prediction_files if 'shuffle' in f]
         else:
             prediction_files = [f for f in prediction_files if 'shuffle' not in f]
+        prediction_files = [f for f in prediction_files if classifier in f]
         # sort by time
         if ID is not None:
             filey = [i for i in prediction_files if ID in i][0]
         else:
             prediction_files.sort(key=path.getmtime)
+        if len(prediction_files)>0:
             filey = prediction_files[-1]
-        behavpredict = pickle.load(open(filey,'rb'))
+            behavpredict = pickle.load(open(filey,'rb'))
+        else:
+            behavpredict = None
         return behavpredict
 
     def set_EFA(self, EFA):

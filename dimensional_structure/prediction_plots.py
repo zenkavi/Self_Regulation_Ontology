@@ -60,6 +60,7 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
         ax.set_title(title, fontsize=label_size*1.5, y=1.1)
     # set up yticks
     if importance[1] is not None:
+        ax.set_ylim(bottom=0)
         if ymax:
             ax.set_ylim(top=ymax)
         ytick_locs = ax.yaxis.get_ticklocs()
@@ -71,10 +72,16 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
             labels = [replace_dict.get(i, i) for i in labels]
             ax.set_yticklabels(labels)
 
-def plot_prediction(results, target_order=None, include_shuffle=False, 
-                    ymax=None, figsize=(20,16),  dpi=300, plot_dir=None):
-    predictions = results.load_prediction_object()['data']
-    shuffled_predictions = results.load_prediction_object(shuffle=True)['data']
+def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
+                    include_shuffle=False,  ymax=None, figsize=(20,16),  
+                    dpi=300, plot_dir=None):
+    predictions = results.load_prediction_object(EFA=EFA, classifier=classifier)
+    if predictions is None:
+        print('No prediction object found!')
+        return
+    else:
+        predictions = predictions['data']
+    shuffled_predictions = results.load_prediction_object(EFA=EFA, classifier=classifier, shuffle=True)['data']
     
     if target_order is None:
         target_order = predictions.keys()
@@ -147,7 +154,7 @@ def plot_prediction(results, target_order=None, include_shuffle=False,
         locs = [.25, .75]
     else:
         locs = [.75, .25]
-    label_importance = importances.pop(best_predictors[-1][0])
+    label_importance = importances[best_predictors[-1][0]]
     ratio = figsize[1]/figsize[0]
     axes.append(fig.add_axes([locs[0]-.2*ratio,.56,.4*ratio,.4], projection='polar'))
     visualize_importance(label_importance, axes[-1], yticklabels=False,
@@ -157,7 +164,7 @@ def plot_prediction(results, target_order=None, include_shuffle=False,
                          title=best_predictors[-1][1][0],
                          color=colors[3])
     # 2nd top
-    label_importance = importances.pop(best_predictors[-2][0])
+    label_importance = importances[best_predictors[-2][0]]
     ratio = figsize[1]/figsize[0]
     axes.append(fig.add_axes([locs[1]-.2*ratio,.56,.4*ratio,.4], projection='polar'))
     visualize_importance(label_importance, axes[-1], yticklabels=False,
@@ -168,7 +175,10 @@ def plot_prediction(results, target_order=None, include_shuffle=False,
                          color=colors[3])
     
     if plot_dir is not None:
-        filename = 'prediction_output.png'
+        if EFA:
+            filename = 'EFA_%s_prediction_output.png' % classifier
+        else:
+            filename = 'IDM_%s_prediction_output.png' % classifier
         save_figure(fig, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
 
