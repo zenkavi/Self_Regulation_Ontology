@@ -1,12 +1,6 @@
 # Defines Results and Analysis Classes to run on subsets of data
 
 # imports
-from utils import (
-        create_factor_tree, distcorr,  find_optimal_components, 
-        get_loadings, get_scores_from_subset, get_top_factors, 
-        hdbscan_cluster, hierarchical_cluster, residualize_baseline
-        )
-from prediction_utils import run_prediction
 import glob
 from os import makedirs, path
 import pandas as pd
@@ -16,10 +10,17 @@ import random
 from scipy.cluster.hierarchy import leaves_list, linkage
 from scipy.spatial.distance import squareform
 from scipy.stats import entropy
+from sklearn.preprocessing import scale
+
+from dimensional_structure.prediction_utils import run_prediction
+from dimensional_structure.utils import (
+        create_factor_tree, distcorr,  find_optimal_components, 
+        get_loadings, get_scores_from_subset, get_top_factors, 
+        hdbscan_cluster, hierarchical_cluster, residualize_baseline
+        )
 from selfregulation.utils.graph_utils import  (get_adj, Graph_Analysis)
 from selfregulation.utils.utils import get_behav_data, get_demographics, get_info
 from selfregulation.utils.r_to_py_utils import get_attr, get_Rpsych, psychFA
-from sklearn.preprocessing import scale
 
 # load the psych R package
 psych = get_Rpsych()

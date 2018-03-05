@@ -2,7 +2,7 @@
 some util functions
 """
 from glob import glob
-import os,json
+import os
 import pandas,numpy
 import re
 from sklearn.metrics import confusion_matrix
