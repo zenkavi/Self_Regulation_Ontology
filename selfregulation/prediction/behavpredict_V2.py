@@ -18,7 +18,8 @@ import warnings
 from sklearn.ensemble import ExtraTreesClassifier,ExtraTreesRegressor
 from sklearn.model_selection import cross_val_score,StratifiedKFold,ShuffleSplit,GridSearchCV
 from sklearn.metrics import roc_auc_score,r2_score,explained_variance_score,mean_absolute_error
-from sklearn.linear_model import LassoCV,LinearRegression,LogisticRegressionCV,Lasso,LogisticRegression
+from sklearn.linear_model import (LassoCV,LinearRegression,LogisticRegressionCV,
+                                  Lasso,LogisticRegression,RidgeCV)
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.multiclass import type_of_target
 
@@ -63,7 +64,7 @@ class BehavPredict:
                  verbose=False,
                  n_jobs=1,
                  categorical_vars=None,
-                 n_outer_splits=8,
+                 n_outer_splits=10,
                  use_smote=True,
                  smote_cutoff=0.3,
                  skip_vars=[],
@@ -198,7 +199,7 @@ class BehavPredict:
 
     
     # linear models without cross validation for testing
-    def run_lm(self,v,nlambda=100):
+    def run_lm(self,v):
         """
         compute in-sample r^2/auroc
         """
@@ -207,7 +208,7 @@ class BehavPredict:
         if self.data_models[v]=='binary':
             return self.run_lm_binary(v,imputer)
         else:
-            return self.run_lm_regression(v,imputer,nlambda)
+            return self.run_lm_regression(v,imputer)
 
     def run_lm_binary(self,v,imputer):
         if self.binary_classifier=='rf':
@@ -260,35 +261,21 @@ class BehavPredict:
             print('overfit mean accuracy = %0.3f'%scores[0])
         return scores,importances
 
-    def run_lm_regression(self,v,imputer,nlambda=100):
+    def run_lm_regression(self,v,imputer):
         if self.classifier=='rf':
             clf=ExtraTreesRegressor()
         elif self.classifier=='lasso':
             if not self.data_models[v]=='gaussian':
                 if self.verbose:
                     print('using R to fit model...')
-                if self.lambda_optim is not None:
-                    if len(self.lambda_optim)>2:
-                        lambda_optim=numpy.hstack(self.lambda_optim).T.mean(0)
-                    else:
-                        lambda_optim=self.lambda_optim
-                    if self.verbose:
-                        print('using optimal lambdas from CV:')
-                        print(lambda_optim)
-                else:
-                    lambda_optim=None
                 clf=RModel(self.data_models[v],self.verbose,
                                 self.n_jobs,
-                                lambda_preset=lambda_optim)
+                                lambda_preset=None)
 
             else:
-                if self.lambda_optim is not None:
-                    if self.lambda_optim[0]==0:
-                        clf=LinearRegression()
-                    else:
-                        clf=Lasso(alpha=self.lambda_optim)
-                else:
-                    clf=LassoCV(max_iter=5000)
+                clf=LassoCV(max_iter=5000)
+        elif self.classifier=='ridge':
+            clf = RidgeCV()    
         elif self.classifier=='tikhonov':
             clf = TikhonovCV()
         else:
@@ -454,10 +441,11 @@ class BehavPredict:
                 clf=RModel(self.data_models[v],
                            self.verbose,
                            self.n_jobs,
-                           nlambda=nlambda)
-
+                           nlambda=None)
             else:
                 clf=LassoCV(max_iter=5000)
+        elif self.classifier=='ridge':
+            clf = RidgeCV()      
         elif self.classifier=='tikhonov':
             clf = TikhonovCV()
         else:
@@ -534,14 +522,21 @@ class BehavPredict:
     def write_data(self, vars):
         shuffle_flag='shuffle_' if self.shuffle else ''
         h='%08x'%random.getrandbits(32)
+        if type(self.classifier) == str:
+            classifier_name = self.classifier
+        else:
+            try:
+                classifier_name = self.classifier.__name__
+            except AttributeError:
+                classifier_name = 'Unknown'
         if self.outfile is None:
             outfile='prediction_%s_%s_%s%s%s.pkl' % (self.predictor_set,
-                                                     self.classifier,
+                                                     classifier_name,
                                                      shuffle_flag,
                                                      h)
         else:
             outfile = self.outfile.rstrip('.pkl')
-            outfile = outfile + shuffle_flag + '_%s.pkl' % h
+            outfile = outfile + '_%s_%s%s.pkl' % (classifier_name, shuffle_flag, h)
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir, exist_ok=True)
         if self.verbose:
