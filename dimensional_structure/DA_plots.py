@@ -1,12 +1,14 @@
-from EFA_plots import plot_bar_factor
-from plot_utils import save_figure
 import matplotlib.pyplot as plt
 import numpy as np
 from os import  path
 import pandas as pd
 import seaborn as sns
+
+from dimensional_structure.EFA_plots import plot_bar_factor
+from dimensional_structure.plot_utils import save_figure
+from dimensional_structure.utils import get_factor_groups
+from selfregulation.utils.plot_utils import format_variable_names
 from selfregulation.utils.r_to_py_utils import get_attr
-from utils import format_variable_names, get_factor_groups
 
 
 def plot_demo_factor_dist(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):

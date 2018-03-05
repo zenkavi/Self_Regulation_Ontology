@@ -1,9 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-from utils import reorder_data
 from scipy import array as scipyarray
 import seaborn as sns
+
+from dimensional_structure.utils import reorder_data
 from selfregulation.utils.plot_utils import CurvedText, beautify_legend
 
 def save_figure(fig, loc, save_kws=None):

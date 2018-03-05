@@ -2,19 +2,20 @@
 
 # imports
 import argparse
-from DA_plots import plot_DA
-from EFA_plots import plot_EFA
-from HCA_plots import plot_HCA
-from prediction_plots import plot_prediction
-from results import Results
 from glob import glob
 import numpy as np
 from os import makedirs, path
 import pickle
-from selfregulation.utils.utils import get_info, sorting
 from shutil import copyfile, copytree, rmtree
 import time
-from utils import load_results
+
+from dimensional_structure.results import Results
+from dimensional_structure.DA_plots import plot_DA
+from dimensional_structure.EFA_plots import plot_EFA
+from dimensional_structure.HCA_plots import plot_HCA
+from dimensional_structure.prediction_plots import plot_prediction
+from dimensional_structure.utils import load_results
+from selfregulation.utils.utils import get_info, sorting
 
 # parse arguments
 parser = argparse.ArgumentParser()

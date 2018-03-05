@@ -1,6 +1,4 @@
 # imports
-from utils import abs_pdist, set_seed
-from plot_utils import get_short_names, save_figure, plot_loadings, plot_tree
 from itertools import combinations
 from math import ceil
 import matplotlib.pyplot as plt
@@ -10,12 +8,15 @@ import pandas as pd
 import seaborn as sns
 from scipy.cluster.hierarchy import dendrogram
 from scipy.spatial.distance import pdist, squareform
-from selfregulation.utils.plot_utils import (CurvedText, dendroheatmap, format_num,
-                                             format_variable_names, 
-                                             get_dendrogram_color_fun)
 from sklearn.manifold import MDS
 from sklearn.metrics import adjusted_mutual_info_score, adjusted_rand_score
 from sklearn.preprocessing import MinMaxScaler, scale
+
+from dimensional_structure.utils import abs_pdist, set_seed
+from dimensional_structure.plot_utils import get_short_names, save_figure, plot_loadings, plot_tree
+from selfregulation.utils.plot_utils import (CurvedText, dendroheatmap, format_num,
+                                             format_variable_names, 
+                                             get_dendrogram_color_fun)
 
 def plot_clusterings(results, plot_dir=None, inp='data', figsize=(50,50),
                      titles=None, show_clusters=True, verbose=False, ext='png'):    
