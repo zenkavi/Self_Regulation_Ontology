@@ -73,7 +73,7 @@ classifiers = ['lasso', 'ridge', 'tikhonov']
 ID = None # ID will be created
 results = None
 # create/run results for each subset
-for subset in subsets:
+for subset in subsets[0:2]:
     name = subset['name']
     if selected_subset is not None and name != selected_subset:
         continue

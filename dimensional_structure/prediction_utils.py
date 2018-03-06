@@ -34,16 +34,17 @@ def run_prediction(factor_scores, demographics, output_base,
             insample_repeats += 1
             insample_scores,_ = bp.run_lm(v)
         if verbose:
-            if insample_repeats > 2 or cv_repeats > 2:
+            if insample_repeats == 2 or cv_repeats == 2:
+                print('Regressions was repeated var: %s.\n\
+                CV run %s times. Insample run %s times' % (v, 
+                                                           cv_repeats, 
+                                                           insample_repeats))
+            elif insample_repeats > 2 or cv_repeats > 2:
                 print('Regressions FAILED for var: %s.\n\
                 CV run %s times. Insample run %s times' % (v, 
                                                            cv_repeats, 
                                                            insample_repeats))
-            else:
-                print('Regressions finished for var: %s.\n\
-                CV run %s times. Insample run %s times' % (v, 
-                                                           cv_repeats, 
-                                                           insample_repeats))
+                
         bp.scores[v],bp.importances[v] = cv_scores, cv_importances
         bp.scores_insample[v] = insample_scores
         

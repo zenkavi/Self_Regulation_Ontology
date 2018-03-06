@@ -126,51 +126,53 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
     # draw grid
     ax1.set_axisbelow(True)
     plt.grid(axis='y', linestyle='dotted')
-    # get importances
-    vals = [predictions[i] for i in target_order]
-    importances = [(i['predvars'], i['importances']) for i in vals]
-    # plot
-    axes=[]
-    N = len(importances)
-    best_predictors = sorted(enumerate(r2s), key = lambda x: x[1][1])
-    #if plot_heights is None:
-    ylim = ax1.get_ylim()[1]
-    plot_heights = [predictions[k]['scores_insample'][0]/ylim*.5+.018 for k in target_order]
-    xlow, xhigh = ax1.get_xlim()
-    plot_x = (ax1.get_xticks()-xlow)/(xhigh-xlow)-(1/N/2)
-    for i, importance in enumerate(importances):
-        axes.append(fig.add_axes([plot_x[i], plot_heights[i], 1/N,1/N], projection='polar'))
-        if i in [best_predictors[-1][0], best_predictors[-2][0]]:
-            color = colors[3]
+    # Plot Polar Plots for importances
+    if EFA == True:
+        # get importances
+        vals = [predictions[i] for i in target_order]
+        importances = [(i['predvars'], i['importances']) for i in vals]
+        # plot
+        axes=[]
+        N = len(importances)
+        best_predictors = sorted(enumerate(r2s), key = lambda x: x[1][1])
+        #if plot_heights is None:
+        ylim = ax1.get_ylim()[1]
+        plot_heights = [predictions[k]['scores_insample'][0]/ylim*.5+.018 for k in target_order]
+        xlow, xhigh = ax1.get_xlim()
+        plot_x = (ax1.get_xticks()-xlow)/(xhigh-xlow)-(1/N/2)
+        for i, importance in enumerate(importances):
+            axes.append(fig.add_axes([plot_x[i], plot_heights[i], 1/N,1/N], projection='polar'))
+            if i in [best_predictors[-1][0], best_predictors[-2][0]]:
+                color = colors[3]
+            else:
+                color = colors[0]
+            visualize_importance(importance, axes[i],
+                                 yticklabels=False, xticklabels=False,
+                                 color=color)
+        # plot top 2 predictions, labeled  
+        if best_predictors[-1][0] < best_predictors[-2][0]:
+            locs = [.25, .75]
         else:
-            color = colors[0]
-        visualize_importance(importance, axes[i],
-                             yticklabels=False, xticklabels=False,
-                             color=color)
-    # plot top 2 predictions, labeled  
-    if best_predictors[-1][0] < best_predictors[-2][0]:
-        locs = [.25, .75]
-    else:
-        locs = [.75, .25]
-    label_importance = importances[best_predictors[-1][0]]
-    ratio = figsize[1]/figsize[0]
-    axes.append(fig.add_axes([locs[0]-.2*ratio,.56,.4*ratio,.4], projection='polar'))
-    visualize_importance(label_importance, axes[-1], yticklabels=False,
-                         xticklabels=True,
-                         label_size=figsize[1]*1.5,
-                         label_scale=.22,
-                         title=best_predictors[-1][1][0],
-                         color=colors[3])
-    # 2nd top
-    label_importance = importances[best_predictors[-2][0]]
-    ratio = figsize[1]/figsize[0]
-    axes.append(fig.add_axes([locs[1]-.2*ratio,.56,.4*ratio,.4], projection='polar'))
-    visualize_importance(label_importance, axes[-1], yticklabels=False,
-                         xticklabels=True,
-                         label_size=figsize[1]*1.5,
-                         label_scale=.23,
-                         title=best_predictors[-2][1][0],
-                         color=colors[3])
+            locs = [.75, .25]
+        label_importance = importances[best_predictors[-1][0]]
+        ratio = figsize[1]/figsize[0]
+        axes.append(fig.add_axes([locs[0]-.2*ratio,.56,.4*ratio,.4], projection='polar'))
+        visualize_importance(label_importance, axes[-1], yticklabels=False,
+                             xticklabels=True,
+                             label_size=figsize[1]*1.5,
+                             label_scale=.22,
+                             title=best_predictors[-1][1][0],
+                             color=colors[3])
+        # 2nd top
+        label_importance = importances[best_predictors[-2][0]]
+        ratio = figsize[1]/figsize[0]
+        axes.append(fig.add_axes([locs[1]-.2*ratio,.56,.4*ratio,.4], projection='polar'))
+        visualize_importance(label_importance, axes[-1], yticklabels=False,
+                             xticklabels=True,
+                             label_size=figsize[1]*1.5,
+                             label_scale=.23,
+                             title=best_predictors[-2][1][0],
+                             color=colors[3])
     
     if plot_dir is not None:
         if EFA:
