@@ -13,7 +13,7 @@ from dimensional_structure.results import Results
 from dimensional_structure.DA_plots import plot_DA
 from dimensional_structure.EFA_plots import plot_EFA
 from dimensional_structure.HCA_plots import plot_HCA
-from dimensional_structure.prediction_plots import plot_prediction
+from dimensional_structure.prediction_plots import plot_prediction, plot_prediction_comparison
 from selfregulation.utils.result_utils import load_results
 from selfregulation.utils.utils import get_info, get_recent_dataset
 
@@ -69,11 +69,11 @@ subsets = [{'name': 'task',
              {'name': 'all', 
             'regex': '.',
             'factor_names': []}]
-
+classifiers = ['lasso', 'ridge', 'tikhonov']
 ID = None # ID will be created
 results = None
 # create/run results for each subset
-for subset in subsets:
+for subset in subsets[0:2]:
     name = subset['name']
     if selected_subset is not None and name != selected_subset:
         continue
@@ -90,7 +90,8 @@ for subset in subsets:
                           name=subset['name'],
                           filter_regex=subset['regex'],
                           boot_iter=boot_iter,
-                          ID=ID)
+                          ID=ID,
+                          residualize_vars=['Age', 'Sex'])
         results.run_demographic_analysis(verbose=True, bootstrap=bootstrap)
         results.run_EFA_analysis(verbose=True, bootstrap=bootstrap)
         results.run_clustering_analysis(verbose=True, run_graphs=False)
@@ -104,8 +105,9 @@ for subset in subsets:
             results.HCA.name_clusters(cluster_names)
         results.DA.name_factors(demographic_factor_names)
         # run behavioral prediction using the factor results determined by BIC
-        results.run_prediction(verbose=True)
-        results.run_prediction(shuffle=True, verbose=True) # shuffled
+        for classifier in classifiers:
+            results.run_prediction(classifier=classifier, verbose=True)
+            results.run_prediction(classifier=classifier, shuffle=True, verbose=True) # shuffled
         run_time = time.time()-start
         
         # ***************************** saving ****************************************
@@ -116,18 +118,15 @@ for subset in subsets:
         copyfile(id_file, path.join(path.dirname(results.output_file), 
                                     '%s_results.pkl' % name))
         prediction_dir = path.join(results.output_file, 'prediction_outputs')
-        prediction_files = glob(path.join(prediction_dir, '*'))
-        # sort by creation time and get last two files
-        prediction_files = sorted(prediction_files, key = path.getmtime)[-2:]
-        for filey in prediction_files:
-            if 'shuffle' in filey:
+        for classifier in classifiers:
+            prediction_files = glob(path.join(prediction_dir, '*%s*' % classifier))
+            # sort by creation time and get last two files
+            prediction_files = sorted(prediction_files, key = path.getmtime)[-4:]
+            for filey in prediction_files:
+                filename = '_'.join(path.basename(filey).split('_')[:-1])
                 copyfile(filey, path.join(path.dirname(results.output_file), 
-                                          '%s_prediction_shuffle.pkl' % name))
-            else:
-                copyfile(filey, path.join(path.dirname(results.output_file), 
-                                          '%s_prediction.pkl' % name))
-    
-       
+                                          '%s_%s.pkl' % (name, filename)))
+
     # ****************************************************************************
     # Plotting
     # ****************************************************************************
@@ -164,10 +163,16 @@ for subset in subsets:
         plot_HCA(results, HCA_plot_dir)
         
         # Plot prediction
-        print("Plotting Prediction")
         target_order = results.DA.reorder_factors(results.DA.get_loading()).columns
-        plot_prediction(results, target_order=target_order, dpi=dpi,
-                        plot_dir=prediction_plot_dir)
+        for classifier in classifiers:
+            print("Plotting Prediction, classifier: %s" % classifier)
+            plot_prediction(results, target_order=target_order, EFA=True, 
+                            classifier=classifier, dpi=dpi, 
+                            plot_dir=prediction_plot_dir)
+            plot_prediction(results, target_order=target_order, EFA=False, 
+                            classifier=classifier, dpi=dpi, 
+                            plot_dir=prediction_plot_dir)
+        plot_prediction_comparison(results, dpi=dpi, plot_dir=prediction_plot_dir)
         
         # copy latest results and prediction to higher directory
         plot_dir = results.plot_file

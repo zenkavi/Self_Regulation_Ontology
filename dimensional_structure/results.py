@@ -12,7 +12,7 @@ from scipy.spatial.distance import squareform
 from scipy.stats import entropy
 from sklearn.preprocessing import scale
 
-from dimensional_structure.prediction_utils import run_EFA_prediction
+from dimensional_structure.prediction_utils import run_prediction
 from dimensional_structure.utils import (
         create_factor_tree, distcorr,  find_optimal_components, 
         get_loadings, get_scores_from_subset, get_top_factors, 
@@ -491,10 +491,11 @@ class HCA_Analysis():
 
 class Demographic_Analysis(EFA_Analysis):
     """ Runs Hierarchical Clustering Analysis """
-    def __init__(self, data, residualize=True, boot_iter=1000):
+    def __init__(self, data, residualize=True, residualize_vars=['Age', 'Sex'],
+                 boot_iter=1000):
         self.raw_data = data
         if residualize:
-            data = residualize_baseline(data)
+            data = residualize_baseline(data, residualize_vars)
         if 'BMI' in data.columns:
             data.drop(['WeightPounds', 'HeightInches'], axis=1, inplace=True)
         
@@ -509,7 +510,8 @@ class Results(EFA_Analysis, HCA_Analysis):
                  name='',
                  filter_regex='.',
                  ID=None,
-                 results_dir=None
+                 results_dir=None,
+                 residualize_vars=['Age', 'Sex']
                  ):
         """
         Args:
@@ -545,7 +547,9 @@ class Results(EFA_Analysis, HCA_Analysis):
         self.loading_thresh = None
         self.dist_metric = dist_metric
         # initialize analysis classes
-        self.DA = Demographic_Analysis(self.demographics, boot_iter=boot_iter)
+        self.DA = Demographic_Analysis(self.demographics, 
+                                       residualize_vars=residualize_vars,
+                                       boot_iter=boot_iter)
         self.EFA = EFA_Analysis(self.data, 
                                 self.data_no_impute, 
                                 boot_iter=boot_iter)
@@ -594,40 +598,66 @@ class Results(EFA_Analysis, HCA_Analysis):
                         verbose=verbose)
             return {'HCA': HCA, 'hdbscan': hdbscan}
     
-    def run_prediction(self, c=None, shuffle=False, no_baseline_vars=True,
-                       outfile=None, verbose=False):
+    def run_prediction(self, c=None, shuffle=False, classifier='lasso',
+                       include_raw_demographics=False, verbose=False):
         if verbose:
             print('*'*79)
-            print('Running Prediction, shuffle: %s' % shuffle)
+            print('Running Prediction, shuffle: %s, classifier: %s' % (shuffle, classifier))
             print('*'*79)
-        scores = self.EFA.get_scores(c)
-        demographics = self.DA.reorder_factors(self.DA.get_scores(c))
-        if outfile is None:
-            run_EFA_prediction(self.dataset, scores, demographics, 
-                               self.output_file,
-                               shuffle=shuffle, 
-                               no_baseline_vars=no_baseline_vars)
-        else:
-            run_EFA_prediction(self.dataset, scores, demographics,
-                               outfile,
-                               shuffle=shuffle, 
-                               no_baseline_vars=no_baseline_vars)
-    
-    def load_prediction_object(self, ID=None, shuffle=False):
+        factor_scores = self.EFA.get_scores(c)
+        demographic_factors = self.DA.reorder_factors(self.DA.get_scores(c))
+        c = factor_scores.shape[1]
+        # get raw data reorganized by clustering
+        clustering=self.HCA.results['clustering_input-EFA%s' % c]
+        labels = clustering['clustered_df'].columns
+        raw_data = self.data[labels]
+        
+        targets = [('demo_factors', demographic_factors)]
+        if include_raw_demographics:
+            targets.append(('demo_raw', self.demographics))
+        for name, target in targets:
+            # predicting using best EFA
+            run_prediction(factor_scores, 
+                           target, 
+                           self.output_file,
+                           outfile='EFA%s_%s_prediction' % (c, name), 
+                           shuffle=shuffle,
+                           classifier=classifier, 
+                           verbose=verbose)
+            # predict using raw variables
+            run_prediction(raw_data, 
+                           target, 
+                           self.output_file,
+                           outfile='IDM_%s_prediction' % name, 
+                           shuffle=shuffle,
+                           classifier=classifier,
+                           verbose=verbose)
+
+    def get_prediction_files(self, EFA=True, shuffle=True):
+        prefix = 'EFA' if EFA else 'IDM'
         prediction_files = glob.glob(path.join(self.output_file,
                                                'prediction_outputs',
-                                               '*'))
+                                               '%s*' % prefix))
         if shuffle:
             prediction_files = [f for f in prediction_files if 'shuffle' in f]
         else:
             prediction_files = [f for f in prediction_files if 'shuffle' not in f]
+        return prediction_files
+    
+    def load_prediction_object(self, ID=None, shuffle=False, EFA=True,
+                               classifier='lasso'):
+        prediction_files = self.get_prediction_files(EFA, shuffle)
+        prediction_files = [f for f in prediction_files if classifier in f]
         # sort by time
         if ID is not None:
             filey = [i for i in prediction_files if ID in i][0]
         else:
             prediction_files.sort(key=path.getmtime)
+        if len(prediction_files)>0:
             filey = prediction_files[-1]
-        behavpredict = pickle.load(open(filey,'rb'))
+            behavpredict = pickle.load(open(filey,'rb'))
+        else:
+            behavpredict = None
         return behavpredict
 
     def set_EFA(self, EFA):

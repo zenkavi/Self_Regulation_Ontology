@@ -16,7 +16,7 @@ from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV,ShuffleSplit
 
 from selfregulation.utils.get_balanced_folds import BalancedKFold
-import selfregulation.prediction.behavpredict as behavpredict
+import selfregulation.prediction.behavpredict_V1 as behavpredict
 importlib.reload(behavpredict)
 
 if __name__=='__main__':

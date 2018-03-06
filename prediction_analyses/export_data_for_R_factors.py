@@ -6,7 +6,7 @@ import pickle,numpy
 import pandas
 import os
 from selfregulation.utils.utils import get_info
-import selfregulation.prediction.behavpredict as behavpredict
+import selfregulation.prediction.behavpredict_V1 as behavpredict
 
 clf='lasso'
 data=pickle.load(open('singularity_analyses/ls5/%s_data.pkl'%clf,'rb'))

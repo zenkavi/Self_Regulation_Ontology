@@ -28,6 +28,7 @@ def plot_demo_factor_dist(results, c, figsize=12, dpi=300, ext='png', plot_dir=N
         filename = 'factor_correlations_DA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
         
 def plot_factor_correlation(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):
     DA = results.DA
@@ -51,6 +52,7 @@ def plot_factor_correlation(results, c, figsize=12, dpi=300, ext='png', plot_dir
         filename = 'factor_correlations_DA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
 
 def plot_bar_factors(results, c, figsize=20, thresh=75,
                      dpi=300, ext='png', plot_dir=None):
@@ -132,6 +134,7 @@ def plot_bar_factors(results, c, figsize=20, thresh=75,
         filename = 'factor_bars_DA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
         
 def plot_DA(results, plot_dir=None, verbose=False, dpi=300, ext='png',
              plot_task_kws={}):

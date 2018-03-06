@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from os import path
+import pandas as pd
+import pickle
 import seaborn as sns
 from dimensional_structure.plot_utils import get_short_names, plot_loadings, save_figure
 from selfregulation.utils.plot_utils import beautify_legend, CurvedText
@@ -58,6 +60,7 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
         ax.set_title(title, fontsize=label_size*1.5, y=1.1)
     # set up yticks
     if importance[1] is not None:
+        ax.set_ylim(bottom=0)
         if ymax:
             ax.set_ylim(top=ymax)
         ytick_locs = ax.yaxis.get_ticklocs()
@@ -69,10 +72,16 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
             labels = [replace_dict.get(i, i) for i in labels]
             ax.set_yticklabels(labels)
 
-def plot_prediction(results, target_order=None, include_shuffle=False, 
-                    ymax=None, figsize=(20,16),  dpi=300, plot_dir=None):
-    predictions = results.load_prediction_object()['data']
-    shuffled_predictions = results.load_prediction_object(shuffle=True)['data']
+def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
+                    include_shuffle=False,  ymax=None, figsize=(20,16),  
+                    dpi=300, plot_dir=None):
+    predictions = results.load_prediction_object(EFA=EFA, classifier=classifier)
+    if predictions is None:
+        print('No prediction object found!')
+        return
+    else:
+        predictions = predictions['data']
+    shuffled_predictions = results.load_prediction_object(EFA=EFA, classifier=classifier, shuffle=True)['data']
     
     if target_order is None:
         target_order = predictions.keys()
@@ -119,59 +128,97 @@ def plot_prediction(results, target_order=None, include_shuffle=False,
     # draw grid
     ax1.set_axisbelow(True)
     plt.grid(axis='y', linestyle='dotted')
-    # get importances
-    vals = [predictions[i] for i in target_order]
-    importances = [(i['predvars'], i['importances']) for i in vals]
-    # plot
-    axes=[]
-    N = len(importances)
-    best_predictors = sorted(enumerate(r2s), key = lambda x: x[1][1])
-    #if plot_heights is None:
-    ylim = ax1.get_ylim()[1]
-    plot_heights = [predictions[k]['scores_insample'][0]/ylim*.5+.018 for k in target_order]
-    xlow, xhigh = ax1.get_xlim()
-    plot_x = (ax1.get_xticks()-xlow)/(xhigh-xlow)-(1/N/2)
-    for i, importance in enumerate(importances):
-        axes.append(fig.add_axes([plot_x[i], plot_heights[i], 1/N,1/N], projection='polar'))
-        if i in [best_predictors[-1][0], best_predictors[-2][0]]:
-            color = colors[3]
+    # Plot Polar Plots for importances
+    if EFA == True:
+        # get importances
+        vals = [predictions[i] for i in target_order]
+        importances = [(i['predvars'], i['importances']) for i in vals]
+        # plot
+        axes=[]
+        N = len(importances)
+        best_predictors = sorted(enumerate(r2s), key = lambda x: x[1][1])
+        #if plot_heights is None:
+        ylim = ax1.get_ylim()[1]
+        plot_heights = [max(predictions[k]['scores_cv'][0], 
+                            predictions[k]['scores_insample'][0])/ylim*.5+.018 
+                        for k in target_order]
+        xlow, xhigh = ax1.get_xlim()
+        plot_x = (ax1.get_xticks()-xlow)/(xhigh-xlow)-(1/N/2)
+        for i, importance in enumerate(importances):
+            axes.append(fig.add_axes([plot_x[i], plot_heights[i], 1/N,1/N], projection='polar'))
+            if i in [best_predictors[-1][0], best_predictors[-2][0]]:
+                color = colors[3]
+            else:
+                color = colors[0]
+            visualize_importance(importance, axes[i],
+                                 yticklabels=False, xticklabels=False,
+                                 color=color)
+        # plot top 2 predictions, labeled  
+        if best_predictors[-1][0] < best_predictors[-2][0]:
+            locs = [.25, .75]
         else:
-            color = colors[0]
-        visualize_importance(importance, axes[i],
-                             yticklabels=False, xticklabels=False,
-                             color=color)
-    # plot top 2 predictions, labeled  
-    if best_predictors[-1][0] < best_predictors[-2][0]:
-        locs = [.25, .75]
-    else:
-        locs = [.75, .25]
-    label_importance = importances.pop(best_predictors[-1][0])
-    ratio = figsize[1]/figsize[0]
-    axes.append(fig.add_axes([locs[0]-.2*ratio,.56,.4*ratio,.4], projection='polar'))
-    visualize_importance(label_importance, axes[-1], yticklabels=False,
-                         xticklabels=True,
-                         label_size=figsize[1]*1.5,
-                         label_scale=.22,
-                         title=best_predictors[-1][1][0],
-                         color=colors[3])
-    # 2nd top
-    label_importance = importances.pop(best_predictors[-2][0])
-    ratio = figsize[1]/figsize[0]
-    axes.append(fig.add_axes([locs[1]-.2*ratio,.56,.4*ratio,.4], projection='polar'))
-    visualize_importance(label_importance, axes[-1], yticklabels=False,
-                         xticklabels=True,
-                         label_size=figsize[1]*1.5,
-                         label_scale=.23,
-                         title=best_predictors[-2][1][0],
-                         color=colors[3])
-    
+            locs = [.75, .25]
+        label_importance = importances[best_predictors[-1][0]]
+        ratio = figsize[1]/figsize[0]
+        axes.append(fig.add_axes([locs[0]-.2*ratio,.56,.4*ratio,.4], projection='polar'))
+        visualize_importance(label_importance, axes[-1], yticklabels=False,
+                             xticklabels=True,
+                             label_size=figsize[1]*1.5,
+                             label_scale=.22,
+                             title=best_predictors[-1][1][0],
+                             color=colors[3])
+        # 2nd top
+        label_importance = importances[best_predictors[-2][0]]
+        ratio = figsize[1]/figsize[0]
+        axes.append(fig.add_axes([locs[1]-.2*ratio,.56,.4*ratio,.4], projection='polar'))
+        visualize_importance(label_importance, axes[-1], yticklabels=False,
+                             xticklabels=True,
+                             label_size=figsize[1]*1.5,
+                             label_scale=.23,
+                             title=best_predictors[-2][1][0],
+                             color=colors[3])
     if plot_dir is not None:
-        filename = 'prediction_output.png'
+        if EFA:
+            filename = 'EFA_%s_prediction_output.png' % classifier
+        else:
+            filename = 'IDM_%s_prediction_output.png' % classifier
         save_figure(fig, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
 
     
 
+def plot_prediction_comparison(results, figsize=(14,8), dpi=300, plot_dir=None):
+    R2s = {}
+    for EFA in [False, True]:
+        predictions = results.get_prediction_files(EFA=EFA, shuffle=False)
+        for filey in predictions:
+            feature = 'EFA' if EFA else 'IDM'
+            prediction_object = pickle.load(open(filey, 'rb'))
+            name = prediction_object['info']['classifier']
+            R2 = [i['scores_cv'][0] for i in prediction_object['data'].values()]
+            R2s[feature+'_'+name] = R2
+        
 
+    R2s = pd.DataFrame(R2s).melt(var_name='Classifier', value_name='R2')
+    R2s['Feature'], R2s['Classifier'] = R2s.Classifier.str.split('_', 1).str
+    f = plt.figure(figsize=figsize)
+    sns.barplot(x='Classifier', y='R2', data=R2s, hue='Feature',
+                palette=colors[:2])
+    ax = plt.gca()
+    ax.tick_params(axis='y', labelsize=16)
+    ax.tick_params(axis='x', labelsize=18)
+    leg = ax.legend(fontsize=24, loc='upper right')
+    beautify_legend(leg, colors[:2])
+    plt.xlabel('Classifier', fontsize=20, labelpad=10)
+    plt.ylabel('R2', fontsize=20, labelpad=10)
+    plt.title('Comparison of Prediction Methods', fontsize=24, y=1.05)
+    
+    if plot_dir is not None:
+        filename = 'prediction_comparison'
+        save_figure(f, path.join(plot_dir, filename), 
+                    {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
+    
 
 

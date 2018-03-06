@@ -1,6 +1,5 @@
 # imports
 import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
@@ -52,6 +51,7 @@ def plot_BIC_SABIC(results, dpi=300, ext='png', plot_dir=None):
         if plot_dir is not None:
             save_figure(fig, path.join(plot_dir, 'BIC_SABIC_curves.%s' % ext),
                         {'bbox_inches': 'tight', 'dpi': dpi})
+            plt.close()
 
 def plot_communality(results, c, figsize=20, dpi=300, ext='png', plot_dir=None):
     EFA = results.EFA
@@ -126,7 +126,7 @@ def plot_communality(results, c, figsize=20, dpi=300, ext='png', plot_dir=None):
             filename = 'communality_dist-EFA%s.%s' % (c, ext)
             save_figure(f, path.join(plot_dir, filename), 
                         {'bbox_inches': 'tight', 'dpi': dpi})
-            
+            plt.close()
         
     
         
@@ -160,7 +160,8 @@ def plot_nesting(results, thresh=.5, dpi=300, figsize=12, ext='png', plot_dir=No
         filename = 'lower_nesting_heatmap.%s' % ext
         save_figure(fig, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
- 
+        plt.close()
+        
 def plot_factor_correlation(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):
     EFA = results.EFA
     loading = EFA.get_loading(c)
@@ -400,6 +401,7 @@ def plot_polar_factors(results, c, color_by_group=True,
     if plot_dir is not None:
         save_figure(fig, path.join(plot_dir, filename),
                     {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
 
     
 def plot_task_factors(results, c, task_sublists=None, normalize_loadings = False,
@@ -453,6 +455,7 @@ def plot_task_factors(results, c, task_sublists=None, normalize_loadings = False
                 filename = '%s.%s' % (task, ext)
                 save_figure(f, path.join(plot_dir, function_directory, filename),
                             {'bbox_inches': 'tight', 'dpi': dpi})
+                plt.close()
             
 def plot_entropies(results, dpi=300, figsize=(20,8), ext='png', plot_dir=None): 
     """ Plots factor analytic results as bars
@@ -487,6 +490,7 @@ def plot_entropies(results, dpi=300, figsize=(20,8), ext='png', plot_dir=None):
         if plot_dir is not None:
             f.savefig(path.join(plot_dir, 'entropies_across_factors.%s' % ext), 
                       bbox_inches='tight', dpi=dpi)
+            plt.close()
     
 # plot specific variable groups
 def plot_DDM(results, c, dpi=300, figsize=(20,8), ext='png', plot_dir=None): 
@@ -527,6 +531,7 @@ def plot_DDM(results, c, dpi=300, figsize=(20,8), ext='png', plot_dir=None):
     if plot_dir is not None:
         fig.savefig(path.join(plot_dir, 'DDM_factors.%s' % ext), 
                   bbox_inches='tight', dpi=dpi)
+        plt.close()
 
 
 

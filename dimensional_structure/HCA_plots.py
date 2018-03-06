@@ -95,6 +95,7 @@ def plot_clustering_similarity(results, plot_dir=None, verbose=False, ext='png')
         save_figure(dist_fig, path.join(plot_dir, 
                                    'distance_similarity_across_measures.%s' % ext),
                     {'bbox_inches': 'tight'})
+        plt.close()
     
     if verbose:
         # assess relationship between two measurements
@@ -230,6 +231,7 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
     dendro_ax.spines['left'].set_visible(False)
     if plot_loc is not None:
         save_figure(fig, plot_loc, {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
     else:
         return fig
     
@@ -418,6 +420,7 @@ def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=False,
             save_figure(fig, path.join(plot_dir, 
                                              'dendrogram_%s.%s' % (name, ext)),
                         {'bbox_inches': 'tight', 'dpi': dpi})
+            plt.close()
         
 def plot_graphs(HCA_graphs, plot_dir=None, ext='png'):
     if plot_dir is not None:
@@ -469,6 +472,7 @@ def MDS_visualization(results, c, plot_dir=None,
             plt.title(path.basename(filey)[:-4], fontsize=20)
         if filey is not None:
             save_figure(f, filey)
+            plt.close()
             
     # set up variables
     data = results.data
@@ -605,6 +609,7 @@ def plot_cluster_factors(results, c, inp='data', ext='png', plot_dir=None):
     if plot_dir is not None:
         save_figure(f, path.join(plot_dir, filename),
                     {'bbox_inches': 'tight'})
+        plt.close()
         
             
 def plot_HCA(results, plot_dir=None, verbose=False, ext='png'):
