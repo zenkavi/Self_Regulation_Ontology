@@ -28,8 +28,6 @@ psych = get_Rpsych()
 # ****************************************************************************
 # Peform factor analysis
 # ****************************************************************************
-# test if sample is suitable for factor analysis
-
 class EFA_Analysis:
     def __init__(self, data, data_no_impute=None, boot_iter=1000):
         self.results = {}
@@ -663,7 +661,3 @@ class Results(EFA_Analysis, HCA_Analysis):
     def set_HCA(self, HCA):
         """ replace current EFA object with another """
         self.HCA = HCA
-        
-
-    
-    

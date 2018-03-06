@@ -6,7 +6,7 @@ import svgutils.transform as sg
 
 from dimensional_structure.cross_results_plots import plot_corr_hist
 from dimensional_structure.HCA_plots import plot_dendrogram, plot_subbranches
-from dimensional_structure.utils import load_results
+from selfregulation.utils.result_utils import load_results
 
 # load data
 # parse arguments
