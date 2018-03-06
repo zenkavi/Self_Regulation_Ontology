@@ -69,7 +69,7 @@ def psychFA(data, n_components, return_attrs=['BIC', 'SABIC', 'RMSEA'],
         if verbose:  print('Too few DOF to specify model!')
         return None
     
-def glmer(data, formula):
+def glmer(data, formula, verbose=False):
     base = importr('base')
     lme4 = importr('lme4')
     rs = lme4.glmer(Formula(formula), data, family = 'binomial')
@@ -79,8 +79,27 @@ def glmer(data, formula):
                                   
     random_effects = lme4.random_effects(rs)[0]
     random_effects = pd.DataFrame([list(lst) for lst in random_effects], index = list(random_effects.colnames)).T
-    print(base.summary(rs))
+    if verbose:
+        print(base.summary(rs))
     return fixed_effects, random_effects
+
+def lmer(data, formula, verbose=False):
+    base = importr('base')
+    lme4 = importr('lme4')
+    rs = lme4.lmer(Formula(formula), data)
+    
+    fixed_effects = lme4.fixed_effects(rs)
+    fixed_effects = {k:v for k,v in zip(fixed_effects.names, list(fixed_effects))}
+                                  
+    random_effects = lme4.random_effects(rs)
+    random_df = pd.DataFrame()
+    for re in random_effects:
+        random_effects = pd.DataFrame([list(lst) for lst in re], index = list(re.colnames)).T
+        random_df = pd.concat([random_df, random_effects], axis=1)
+    random_variance = pandas2ri.ri2py(base.as_data_frame(lme4.VarCorr_merMod(rs)))
+    if verbose:
+        print(base.summary(rs))
+    return rs, random_variance, fixed_effects, random_df
 
 def psychICC(df):
     psych = importr('psych')
