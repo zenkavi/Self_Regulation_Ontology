@@ -90,7 +90,8 @@ for subset in subsets[0:2]:
                           name=subset['name'],
                           filter_regex=subset['regex'],
                           boot_iter=boot_iter,
-                          ID=ID)
+                          ID=ID,
+                          residualize_vars=['Age', 'Sex'])
         results.run_demographic_analysis(verbose=True, bootstrap=bootstrap)
         results.run_EFA_analysis(verbose=True, bootstrap=bootstrap)
         results.run_clustering_analysis(verbose=True, run_graphs=False)

@@ -510,7 +510,8 @@ class Results(EFA_Analysis, HCA_Analysis):
                  name='',
                  filter_regex='.',
                  ID=None,
-                 results_dir=None
+                 results_dir=None,
+                 residualize_vars=['Age', 'Sex']
                  ):
         """
         Args:
@@ -546,7 +547,9 @@ class Results(EFA_Analysis, HCA_Analysis):
         self.loading_thresh = None
         self.dist_metric = dist_metric
         # initialize analysis classes
-        self.DA = Demographic_Analysis(self.demographics, boot_iter=boot_iter)
+        self.DA = Demographic_Analysis(self.demographics, 
+                                       residualize_vars=residualize_vars,
+                                       boot_iter=boot_iter)
         self.EFA = EFA_Analysis(self.data, 
                                 self.data_no_impute, 
                                 boot_iter=boot_iter)

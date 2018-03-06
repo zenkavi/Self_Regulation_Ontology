@@ -178,13 +178,13 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
                              title=best_predictors[-2][1][0],
                              color=colors[3])
     if plot_dir is not None:
-        plt.close()
         if EFA:
             filename = 'EFA_%s_prediction_output.png' % classifier
         else:
             filename = 'IDM_%s_prediction_output.png' % classifier
         save_figure(fig, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
 
     
 
@@ -215,10 +215,10 @@ def plot_prediction_comparison(results, figsize=(14,8), dpi=300, plot_dir=None):
     plt.title('Comparison of Prediction Methods', fontsize=24, y=1.05)
     
     if plot_dir is not None:
-        plt.close()
         filename = 'prediction_comparison'
         save_figure(f, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
     
 
 

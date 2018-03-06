@@ -89,13 +89,13 @@ def plot_clustering_similarity(results, plot_dir=None, verbose=False, ext='png')
                   y=1.02)
         
     if plot_dir is not None:
-        plt.close()
         save_figure(clust_fig, path.join(plot_dir, 
                                    'cluster_similarity_across_measures.%s' % ext),
                     {'bbox_inches': 'tight'})
         save_figure(dist_fig, path.join(plot_dir, 
                                    'distance_similarity_across_measures.%s' % ext),
                     {'bbox_inches': 'tight'})
+        plt.close()
     
     if verbose:
         # assess relationship between two measurements
@@ -230,8 +230,8 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
     dendro_ax.spines['bottom'].set_visible(False)
     dendro_ax.spines['left'].set_visible(False)
     if plot_loc is not None:
-        plt.close()
         save_figure(fig, plot_loc, {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
     else:
         return fig
     
@@ -417,19 +417,17 @@ def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=False,
                     ax2.tick_params(labelleft='off') 
         
         if plot_dir is not None:
-            plt.close()
             save_figure(fig, path.join(plot_dir, 
                                              'dendrogram_%s.%s' % (name, ext)),
                         {'bbox_inches': 'tight', 'dpi': dpi})
+            plt.close()
         
 def plot_graphs(HCA_graphs, plot_dir=None, ext='png'):
     if plot_dir is not None:
-        plt.close()
         makedirs(path.join(plot_dir, 'graphs'))
     plot_options = {'inline': False,  'target': None}
     for i, GA in enumerate(HCA_graphs):
         if plot_dir is not None:
-            plt.close()
             plot_options['target'] = path.join(plot_dir, 
                                                 'graphs', 
                                                 'graph%s.%s' % (i, ext))
@@ -473,8 +471,8 @@ def MDS_visualization(results, c, plot_dir=None,
                     plt.text(x-offset*2,y-offset,i+1, font_dict)
             plt.title(path.basename(filey)[:-4], fontsize=20)
         if filey is not None:
-            plt.close()
             save_figure(f, filey)
+            plt.close()
             
     # set up variables
     data = results.data
@@ -529,7 +527,6 @@ def MDS_visualization(results, c, plot_dir=None,
     filey=None
     for label, space in distances.items():
         if plot_dir is not None:
-            plt.close()
             filey = path.join(plot_dir, 
                               'MDS_%s_metric-%s.%s' % (label, dist_metric, ext))
         scale_plot(space, data_colors=colors,
@@ -610,9 +607,9 @@ def plot_cluster_factors(results, c, inp='data', ext='png', plot_dir=None):
     
     filename = 'polar_factors_EFA%s_inp-%s.%s' % (c, inp, ext)
     if plot_dir is not None:
-        plt.close()
         save_figure(f, path.join(plot_dir, filename),
                     {'bbox_inches': 'tight'})
+        plt.close()
         
             
 def plot_HCA(results, plot_dir=None, verbose=False, ext='png'):
