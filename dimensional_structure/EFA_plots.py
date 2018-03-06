@@ -50,6 +50,7 @@ def plot_BIC_SABIC(results, dpi=300, ext='png', plot_dir=None):
         ax1.plot(np.nan, c='m', lw=3, label='SABIC')
         ax1.legend(loc='upper center')
         if plot_dir is not None:
+            plt.close()
             save_figure(fig, path.join(plot_dir, 'BIC_SABIC_curves.%s' % ext),
                         {'bbox_inches': 'tight', 'dpi': dpi})
 
@@ -123,6 +124,7 @@ def plot_communality(results, c, figsize=20, dpi=300, ext='png', plot_dir=None):
             ax.text(1, 1.25, 'Correlation Between Communality \nand Test-Retest: %s' % correlation,
                     size=figsize*2)
         if plot_dir:
+            plt.close()
             filename = 'communality_dist-EFA%s.%s' % (c, ext)
             save_figure(f, path.join(plot_dir, filename), 
                         {'bbox_inches': 'tight', 'dpi': dpi})
@@ -157,6 +159,7 @@ def plot_nesting(results, thresh=.5, dpi=300, figsize=12, ext='png', plot_dir=No
     ax.set_ylabel('Lower Factors (Explainee)', fontsize=25)
     ax.set_title('Nesting of Lower Level Factors based on R2', fontsize=30)
     if plot_dir is not None:
+        plt.close()
         filename = 'lower_nesting_heatmap.%s' % ext
         save_figure(fig, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
@@ -398,6 +401,7 @@ def plot_polar_factors(results, c, color_by_group=True,
         colors=['b']*len(loadings.columns)
     fig = visualize_factors(loadings, n_rows=2, groups=groups, colors=colors)
     if plot_dir is not None:
+        plt.close()
         save_figure(fig, path.join(plot_dir, filename),
                     {'bbox_inches': 'tight', 'dpi': dpi})
 
@@ -445,6 +449,7 @@ def plot_task_factors(results, c, task_sublists=None, normalize_loadings = False
                               y=1.14, fontsize=25)
             
             if plot_dir is not None:
+                plt.close()
                 if normalize_loadings:
                     function_directory = 'factor_DVnormdist_EFA%s_subset-%s' % (c, sublist_name)
                 else:
@@ -485,6 +490,7 @@ def plot_entropies(results, dpi=300, figsize=(20,8), ext='png', plot_dir=None):
         plt.ylabel('Entropy')
         plt.title('Distribution of Measure Specificity across Factor Solutions')
         if plot_dir is not None:
+            plt.close()
             f.savefig(path.join(plot_dir, 'entropies_across_factors.%s' % ext), 
                       bbox_inches='tight', dpi=dpi)
     
@@ -525,6 +531,7 @@ def plot_DDM(results, c, dpi=300, figsize=(20,8), ext='png', plot_dir=None):
     leg = plt.legend(fontsize=20)
     beautify_legend(leg, colors)      
     if plot_dir is not None:
+        plt.close()
         fig.savefig(path.join(plot_dir, 'DDM_factors.%s' % ext), 
                   bbox_inches='tight', dpi=dpi)
 

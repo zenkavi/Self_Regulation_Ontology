@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from os import path
+import pandas as pd
+import pickle
 import seaborn as sns
 from dimensional_structure.plot_utils import get_short_names, plot_loadings, save_figure
 from selfregulation.utils.plot_utils import beautify_legend, CurvedText
@@ -137,7 +139,9 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
         best_predictors = sorted(enumerate(r2s), key = lambda x: x[1][1])
         #if plot_heights is None:
         ylim = ax1.get_ylim()[1]
-        plot_heights = [predictions[k]['scores_insample'][0]/ylim*.5+.018 for k in target_order]
+        plot_heights = [max(predictions[k]['scores_cv'][0], 
+                            predictions[k]['scores_insample'][0])/ylim*.5+.018 
+                        for k in target_order]
         xlow, xhigh = ax1.get_xlim()
         plot_x = (ax1.get_xticks()-xlow)/(xhigh-xlow)-(1/N/2)
         for i, importance in enumerate(importances):
@@ -173,8 +177,8 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
                              label_scale=.23,
                              title=best_predictors[-2][1][0],
                              color=colors[3])
-    
     if plot_dir is not None:
+        plt.close()
         if EFA:
             filename = 'EFA_%s_prediction_output.png' % classifier
         else:
@@ -184,6 +188,37 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
 
     
 
+def plot_prediction_comparison(results, figsize=(14,8), dpi=300, plot_dir=None):
+    R2s = {}
+    for EFA in [False, True]:
+        predictions = results.get_prediction_files(EFA=EFA, shuffle=False)
+        for filey in predictions:
+            feature = 'EFA' if EFA else 'IDM'
+            prediction_object = pickle.load(open(filey, 'rb'))
+            name = prediction_object['info']['classifier']
+            R2 = [i['scores_cv'][0] for i in prediction_object['data'].values()]
+            R2s[feature+'_'+name] = R2
+        
 
+    R2s = pd.DataFrame(R2s).melt(var_name='Classifier', value_name='R2')
+    R2s['Feature'], R2s['Classifier'] = R2s.Classifier.str.split('_', 1).str
+    f = plt.figure(figsize=figsize)
+    sns.barplot(x='Classifier', y='R2', data=R2s, hue='Feature',
+                palette=colors[:2])
+    ax = plt.gca()
+    ax.tick_params(axis='y', labelsize=16)
+    ax.tick_params(axis='x', labelsize=18)
+    leg = ax.legend(fontsize=24, loc='upper right')
+    beautify_legend(leg, colors[:2])
+    plt.xlabel('Classifier', fontsize=20, labelpad=10)
+    plt.ylabel('R2', fontsize=20, labelpad=10)
+    plt.title('Comparison of Prediction Methods', fontsize=24, y=1.05)
+    
+    if plot_dir is not None:
+        plt.close()
+        filename = 'prediction_comparison'
+        save_figure(f, path.join(plot_dir, filename), 
+                    {'bbox_inches': 'tight', 'dpi': dpi})
+    
 
 

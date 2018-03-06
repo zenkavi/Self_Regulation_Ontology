@@ -13,7 +13,7 @@ from dimensional_structure.results import Results
 from dimensional_structure.DA_plots import plot_DA
 from dimensional_structure.EFA_plots import plot_EFA
 from dimensional_structure.HCA_plots import plot_HCA
-from dimensional_structure.prediction_plots import plot_prediction
+from dimensional_structure.prediction_plots import plot_prediction, plot_prediction_comparison
 from selfregulation.utils.result_utils import load_results
 from selfregulation.utils.utils import get_info, get_recent_dataset
 
@@ -171,6 +171,7 @@ for subset in subsets[0:2]:
             plot_prediction(results, target_order=target_order, EFA=False, 
                             classifier=classifier, dpi=dpi, 
                             plot_dir=prediction_plot_dir)
+        plot_prediction_comparison(results, dpi=dpi, plot_dir=prediction_plot_dir)
         
         # copy latest results and prediction to higher directory
         plot_dir = results.plot_file

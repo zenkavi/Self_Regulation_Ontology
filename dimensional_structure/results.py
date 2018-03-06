@@ -630,9 +630,7 @@ class Results(EFA_Analysis, HCA_Analysis):
                            classifier=classifier,
                            verbose=verbose)
 
-    
-    def load_prediction_object(self, ID=None, shuffle=False, EFA=True,
-                               classifier='lasso'):
+    def get_prediction_files(self, EFA=True, shuffle=True):
         prefix = 'EFA' if EFA else 'IDM'
         prediction_files = glob.glob(path.join(self.output_file,
                                                'prediction_outputs',
@@ -641,6 +639,11 @@ class Results(EFA_Analysis, HCA_Analysis):
             prediction_files = [f for f in prediction_files if 'shuffle' in f]
         else:
             prediction_files = [f for f in prediction_files if 'shuffle' not in f]
+        return prediction_files
+    
+    def load_prediction_object(self, ID=None, shuffle=False, EFA=True,
+                               classifier='lasso'):
+        prediction_files = self.get_prediction_files(EFA, shuffle)
         prediction_files = [f for f in prediction_files if classifier in f]
         # sort by time
         if ID is not None:

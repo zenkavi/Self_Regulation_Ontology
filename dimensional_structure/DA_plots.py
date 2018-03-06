@@ -25,6 +25,7 @@ def plot_demo_factor_dist(results, c, figsize=12, dpi=300, ext='png', plot_dir=N
     axes[-1].set_xlabel('N: %s, Female Percent: %s' % (len(scores), sex_percent), 
         labelpad=20)
     if plot_dir:
+        plt.close()
         filename = 'factor_correlations_DA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
@@ -48,6 +49,7 @@ def plot_factor_correlation(results, c, figsize=12, dpi=300, ext='png', plot_dir
         ax1.set_yticklabels(yticklabels, rotation = 0, ha="right")
         ax1.set_title('Demographic Factor Correlations', weight='bold', y=1.05)
     if plot_dir:
+        plt.close()
         filename = 'factor_correlations_DA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
@@ -129,6 +131,7 @@ def plot_bar_factors(results, c, figsize=20, thresh=75,
                         )
                 
     if plot_dir:
+        plt.close()
         filename = 'factor_bars_DA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
