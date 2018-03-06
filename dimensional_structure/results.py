@@ -12,7 +12,7 @@ from scipy.spatial.distance import squareform
 from scipy.stats import entropy
 from sklearn.preprocessing import scale
 
-from dimensional_structure.prediction_utils import run_EFA_prediction
+from dimensional_structure.prediction_utils import run_prediction
 from dimensional_structure.utils import (
         create_factor_tree, distcorr,  find_optimal_components, 
         get_loadings, get_scores_from_subset, get_top_factors, 
