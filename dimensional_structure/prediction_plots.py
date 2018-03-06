@@ -1,12 +1,10 @@
-import math
 import matplotlib.pyplot as plt
 import numpy as np
 from os import path
-import pandas as pd
 import seaborn as sns
-from plot_utils import get_short_names, plot_loadings, save_figure
-from utils import shorten_labels
+from dimensional_structure.plot_utils import get_short_names, plot_loadings, save_figure
 from selfregulation.utils.plot_utils import beautify_legend, CurvedText
+
 colors = sns.color_palette('Blues_d',3) + sns.color_palette('Reds_d',2)[:1]
 
 

@@ -1,11 +1,12 @@
 import argparse
-from cross_results_plots import plot_corr_hist
-from HCA_plots import plot_dendrogram, plot_subbranches
 import glob
 from os import path, remove
-from utils import load_results
 import seaborn as sns
 import svgutils.transform as sg
+
+from dimensional_structure.cross_results_plots import plot_corr_hist
+from dimensional_structure.HCA_plots import plot_dendrogram, plot_subbranches
+from selfregulation.utils.result_utils import load_results
 
 # load data
 # parse arguments

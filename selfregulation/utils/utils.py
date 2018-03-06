@@ -2,7 +2,7 @@
 some util functions
 """
 from glob import glob
-import os,json
+import os
 import pandas,numpy
 import re
 from sklearn.metrics import confusion_matrix
@@ -46,6 +46,13 @@ def sorting(L):
     month,day,year = date.split('-')
     return year, month, day
 
+def get_recent_dataset():
+    basedir=get_info('base_directory')
+    files = glob(os.path.join(basedir,'Data/Complete*'))
+    files.sort(key=sorting)
+    dataset = files[-1].split(os.sep)[-1]
+    return dataset
+
 def get_behav_data(dataset=None, file=None, filter_regex=None,
                 flip_valence=False, verbose=False, full_dataset=None):
     '''Retrieves a file from a data release.
@@ -64,11 +71,8 @@ def get_behav_data(dataset=None, file=None, filter_regex=None,
 
     basedir=get_info('base_directory')
     if dataset == None:
-        files = glob(os.path.join(basedir,'Data/Complete*'))
-        files.sort(key=sorting)
-        datadir = files[-1]
-    else:
-        datadir = os.path.join(basedir,'Data',dataset)
+        dataset = get_recent_dataset()
+    datadir = os.path.join(basedir,'Data',dataset)
     if file == None:
         file = 'meaningful_variables.csv'
     if verbose:
