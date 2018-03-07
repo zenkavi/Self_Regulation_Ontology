@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from rpy2.robjects import pandas2ri
+from sklearn.preprocessing import scale
 
 from selfregulation.utils.r_to_py_utils import lmer, get_Rpsych
 from selfregulation.utils.result_utils import load_results
@@ -16,13 +17,14 @@ data1 = get_behav_data(dataset,
 data2 = get_behav_data(dataset=dataset.replace('Complete', 'Retest'),
                        file='meaningful_variables_imputed.csv',
                        verbose=True)
+overlap_index = set(data1.index) & set(data2.index)
 overlap_columns = set(data1.columns) & set(data2.columns)
-data1 = data1.loc[data2.index, overlap_columns]
-data2 = data2.loc[:, overlap_columns]
-# calculate change
-change = data2-data1
-# standardize
-change = change/change.std()
+data1 = data1.loc[overlap_index, overlap_columns]
+data2 = data2.loc[overlap_index, overlap_columns]
+# calculate change and standardize
+change = pd.DataFrame(scale(data2-data1, with_mean=False),
+                      index=data2.index,
+                      columns=data2.columns)
 # add timepoints and concatenate
 data1.insert(0, 'timepoint', 1)
 data2.insert(0, 'timepoint', 2)
@@ -44,7 +46,7 @@ for v in variables:
     bad_subjects = var.groupby('Subject').value.count()<2
     bad_subjects = var.Subject.iloc[bad_subjects.tolist()]
     var = var.query('Subject not in %s' % list(bad_subjects))
-    rs, variance, a, b =lmer(var, 'value ~ (1|timepoint) + (1|Subject)')
+    rs, variance, a, b =lmer(var, 'value ~ (timepoint|group) + (1|Subject)')
     mixed_ICC = (variance.query('grp=="Subject"')['vcov']/variance.vcov.sum()).iloc[0]
     # calculate ICC using ICC function
     ICC_df = var.drop('variable', axis=1).pivot(columns='timepoint', index="Subject")
@@ -52,7 +54,7 @@ for v in variables:
     ICC_df=pandas2ri.ri2py(ICCfun(ICC_df)[0])
     print("Variable: %s\nMixed ICC: %s\nICC: %s" % (v, mixed_ICC, ICC_df.iloc[0,1]))
 
-
+'diff ~ (1|group)'
 
 
 

@@ -136,7 +136,7 @@ class EFA_Analysis:
                 BIC, parallel, SABIC, and CV. Default [BIC, parallel]
         """
         if metrics is None:
-            metrics = ['BIC', 'parallel']
+            metrics = ['BIC']
         if 'BIC' in metrics:
             BIC_c, BICs = find_optimal_components(self.data, metric='BIC')
             self.results['c_metric-BIC'] = BIC_c
@@ -144,7 +144,7 @@ class EFA_Analysis:
         if 'parallel' in metrics:
             # parallel analysis
             parallel_out = psych.fa_parallel(self.data, fa='fa', fm='ml',
-                                             plot=False, **{'n.iter': 100})
+                                             plot=False, **{'n.iter': 2})
             parallel_c = parallel_out[parallel_out.names.index('nfact')][0]
             self.results['c_metric-parallel'] = int(parallel_c)
         if 'SABIC' in metrics:
