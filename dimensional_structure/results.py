@@ -36,7 +36,7 @@ class EFA_Analysis:
             self.data_no_impute = data_no_impute
         self.boot_iter=boot_iter
         # global variables to hold certain aspects of the analysis
-        self.num_factors = 1
+        self.results['num_factors'] = 1
         self.results['factor_tree'] = {}
         self.results['factor_tree_Rout'] = {}
         self.results['factor2_tree'] = {}
@@ -45,7 +45,7 @@ class EFA_Analysis:
     # private methods
     def _get_attr(self, attribute, c=None):
         if c is None:
-            c = self.num_factors
+            c = self.results['num_factors']
             print('# of components not specified, using BIC determined #')
         return get_attr(self.results['factor_tree_Rout'][c],
                         attribute)
@@ -78,7 +78,7 @@ class EFA_Analysis:
     def compute_higher_order_factors(self, c=None):
         """ Return higher order EFA """
         if c is None:
-            c = self.num_factors
+            c = self.results['num_factors']
             print('# of components not specified, using BIC determined #')
         if ('factor_tree' in self.results.keys() and 
             c in self.results['factor_tree_Rout'].keys()):
@@ -100,14 +100,14 @@ class EFA_Analysis:
             
     def create_factor_tree(self, start=1, end=None):
         if end is None:
-            end = max(self.num_factors, start)
+            end = max(self.results['num_factors'], start)
         ftree, ftree_rout = create_factor_tree(self.data,  (start, end))
         self.results['factor_tree'] = ftree
         self.results['factor_tree_Rout'] = ftree_rout
     
     def get_boot_stats(self, c=None):
         if c is None:
-            c = self.num_factors
+            c = self.results['num_factors']
             print('# of components not specified, using BIC determined #')
         if c in self.results['factor_tree_Rout'].keys():
             bootstrap_Rout = self.results['factor_tree_Rout'][c]
@@ -164,14 +164,14 @@ class EFA_Analysis:
                       "data_no_impute not found.")
         # record max_factors
         best_cs = {k:v for k,v in self.results.items() if 'c_metric-' in k}
-        self.num_factors = BIC_c
+        self.results['num_factors'] = BIC_c
         if verbose:
                 print('Best Components: ', best_cs)
     
     def get_loading(self, c=None, bootstrap=False, recompute=False, copy=True):
         """ Return the loading for an EFA solution at the specified c """
         if c is None:
-            c = self.num_factors
+            c = self.results['num_factors']
             print('# of components not specified, using BIC determined #')
         n_iter = 1
         if bootstrap:
@@ -196,7 +196,7 @@ class EFA_Analysis:
     
     def get_loading_entropy(self, c=None):
         if c is None:
-            c = self.num_factors
+            c = self.results['num_factors']
             print('# of components not specified, using BIC determined #')
         assert c>1
         loading = self.get_loading(c)
@@ -207,7 +207,7 @@ class EFA_Analysis:
     
     def get_null_loading_entropy(self, c=None, reps=50):
         if c is None:
-            c = self.num_factors
+            c = self.results['num_factors']
             print('# of components not specified, using BIC determined #')
         assert c>1
         # get absolute loading
@@ -242,13 +242,13 @@ class EFA_Analysis:
     
     def get_factor_names(self, c=None):
         if c is None:
-            c = self.num_factors
+            c = self.results['num_factors']
             print('# of components not specified, using BIC determined #')
         return self.get_loading(c).columns
     
     def get_scores(self, c=None):
         if c is None:
-            c = self.num_factors
+            c = self.results['num_factors']
             print('# of components not specified, using BIC determined #')
         scores = self._get_attr('scores', c)
         names = self.get_factor_names(c)
@@ -259,7 +259,7 @@ class EFA_Analysis:
     def get_task_representations(self, tasks, c=None):
         """Take a list of tasks and reconstructs factor scores"""   
         if c is None:
-            c = self.num_factors
+            c = self.results['num_factors']
             print('# of components not specified, using BIC determined #')         
         fa_output = self.results['factor_tree_Rout'][c]
         output = {'weights': get_attr(fa_output, 'weights'),
@@ -288,7 +288,7 @@ class EFA_Analysis:
     
     def print_top_factors(self, c=None, n=5):
         if c is None:
-            c = self.num_factors
+            c = self.results['num_factors']
             print('# of components not specified, using BIC determined #')
         tmp = get_top_factors(self.get_loading(c), n=n, verbose=True)
       
@@ -315,7 +315,7 @@ class EFA_Analysis:
             
         # create factor tree
         if verbose: print('Creating Factor Tree')
-        self.get_loading(c=self.num_factors, bootstrap=bootstrap)
+        self.get_loading(c=self.results['num_factors'], bootstrap=bootstrap)
         # optional threshold
         if loading_thresh is not None:
             for c, loading in self.results['factor_tree'].items():
@@ -503,7 +503,8 @@ class Demographic_Analysis(EFA_Analysis):
         
 class Results(EFA_Analysis, HCA_Analysis):
     """ Class to hold olutput of EFA, HCA and graph analyses """
-    def __init__(self, datafile, 
+    def __init__(self, 
+                 datafile=None, 
                  loading_thresh=None,
                  dist_metric=distcorr,
                  boot_iter=1000,
@@ -511,51 +512,72 @@ class Results(EFA_Analysis, HCA_Analysis):
                  filter_regex='.',
                  ID=None,
                  results_dir=None,
-                 residualize_vars=['Age', 'Sex']
+                 residualize_vars=['Age', 'Sex'],
+                 saved_obj_file=None
                  ):
         """
         Args:
+            datafile: name of a directory in "Data"
             loading_thresh: threshold to use for factor analytic result
             dist_metric: distance metric for hierarchical clustering that is 
             passed to pdist
             name: string to append to ID, default to empty string
             filter_regex: regex string passed to data.filter
+            ID: specify if a specific ID is desired
+            results_dir: where to save results
         """
-        # load data
-        self.data = get_behav_data(dataset=datafile, 
-                                  file='meaningful_variables_imputed.csv',
-                                  filter_regex=filter_regex,
-                                  verbose=True)
-        self.data_no_impute = get_behav_data(dataset=datafile,
-                                             file='meaningful_variables_clean.csv',
-                                             filter_regex=filter_regex,
-                                             verbose=True)
-        self.demographics = get_demographics()
-        self.dataset = datafile
-        if ID is None:
-            self.ID =  '%s_%s' % (name, str(random.getrandbits(16)))
+        assert datafile is not None or saved_obj_file is not None
+        # initialize with the saved object if available
+        if saved_obj_file:
+            self._load_init(saved_obj_file)
         else:
-            self.ID = '%s_%s' % (name, str(ID))
-        # set up output files
-        if results_dir is None:
-            results_dir = get_info('results_directory')
-        self.plot_file = path.join(results_dir, 'dimensional_structure', datafile, 'Plots', self.ID)
-        self.output_file = path.join(results_dir, 'dimensional_structure', datafile, 'Output', self.ID)
-        makedirs(self.plot_file, exist_ok = True)
-        makedirs(self.output_file, exist_ok = True)
-        # set vars
-        self.loading_thresh = None
-        self.dist_metric = dist_metric
+            # set vars
+            self.dataset = datafile
+            self.loading_thresh = None
+            self.dist_metric = dist_metric
+            self.boot_iter = boot_iter
+            self.residualize_vars = residualize_vars
+            if ID is None:
+                self.ID =  '%s_%s' % (name, str(random.getrandbits(16)))
+            else:
+                self.ID = '%s_%s' % (name, str(ID))
+            # set up output files
+            self.results_dir = results_dir
+            if results_dir is None:
+                self.results_dir = get_info('results_directory')
+            # load data
+            self.data = get_behav_data(dataset=datafile, 
+                                      file='meaningful_variables_imputed.csv',
+                                      filter_regex=filter_regex,
+                                      verbose=True)
+            self.data_no_impute = get_behav_data(dataset=datafile,
+                                                 file='meaningful_variables_clean.csv',
+                                                 filter_regex=filter_regex,
+                                                 verbose=True)
+            self.demographics = get_demographics()
+            
+
+        self.plot_dir = path.join(self.results_dir, 'dimensional_structure', 
+                                   self.dataset, 'Plots', self.ID)
+        self.output_dir = path.join(self.results_dir, 'dimensional_structure', 
+                                     self.dataset, 'Output', self.ID)
+        makedirs(self.plot_dir, exist_ok = True)
+        makedirs(self.output_dir, exist_ok = True)
+        
         # initialize analysis classes
         self.DA = Demographic_Analysis(self.demographics, 
-                                       residualize_vars=residualize_vars,
-                                       boot_iter=boot_iter)
+                                       residualize_vars=self.residualize_vars,
+                                       boot_iter=self.boot_iter)
         self.EFA = EFA_Analysis(self.data, 
                                 self.data_no_impute, 
-                                boot_iter=boot_iter)
+                                boot_iter=self.boot_iter)
         self.HCA = HCA_Analysis(dist_metric=self.dist_metric)
         self.hdbscan = HDBScan_Analysis(dist_metric=self.dist_metric)
-     
+        
+        # load the results from the saved object
+        if saved_obj_file:
+            self._load_results(saved_obj_file)
+            
     def run_demographic_analysis(self, bootstrap=False, verbose=False):
         if verbose:
             print('*'*79)
@@ -619,7 +641,7 @@ class Results(EFA_Analysis, HCA_Analysis):
             # predicting using best EFA
             run_prediction(factor_scores, 
                            target, 
-                           self.output_file,
+                           self.output_dir,
                            outfile='EFA%s_%s_prediction' % (c, name), 
                            shuffle=shuffle,
                            classifier=classifier, 
@@ -627,7 +649,7 @@ class Results(EFA_Analysis, HCA_Analysis):
             # predict using raw variables
             run_prediction(raw_data, 
                            target, 
-                           self.output_file,
+                           self.output_dir,
                            outfile='IDM_%s_prediction' % name, 
                            shuffle=shuffle,
                            classifier=classifier,
@@ -635,7 +657,7 @@ class Results(EFA_Analysis, HCA_Analysis):
 
     def get_prediction_files(self, EFA=True, shuffle=True):
         prefix = 'EFA' if EFA else 'IDM'
-        prediction_files = glob.glob(path.join(self.output_file,
+        prediction_files = glob.glob(path.join(self.output_dir,
                                                'prediction_outputs',
                                                '%s*' % prefix))
         if shuffle:
@@ -667,3 +689,52 @@ class Results(EFA_Analysis, HCA_Analysis):
     def set_HCA(self, HCA):
         """ replace current EFA object with another """
         self.HCA = HCA
+        
+    # save and load functions
+                 
+
+    def save_results(self, save_dir=None):
+        save_obj = {}
+        # init vars
+        info = {
+                'dist_metric': self.dist_metric,
+                'loading_thresh': self.loading_thresh,
+                'boot_iter': self.boot_iter,
+                'ID': self.ID,
+                'results_dir': self.results_dir,
+                'residualize_vars': self.residualize_vars,
+                'dataset': self.dataset
+                }
+        # data
+        data = {'data': self.data,
+                'data_no_impute': self.data_no_impute,
+                'demographics': self.demographics}
+        # results
+        results = {}
+        results['DA'] = self.DA.results
+        results['EFA'] = self.EFA.results
+        results['HCA'] = self.HCA.results
+        results['hdbscan'] = self.hdbscan.results
+        
+        save_obj['info'] = info
+        save_obj['data'] = data
+        save_obj['results'] = results
+        if save_dir is None:
+            save_dir = self.output_dir
+        filey = path.join(save_dir, '%s_results.pkl' % self.ID)
+        pickle.dump(save_obj, open(filey,'wb'))
+    
+    def _load_init(self, filey):
+        save_obj = pickle.load(open(filey, 'rb'))
+        info = save_obj['info']
+        data = save_obj['data']
+        self.__dict__.update(info)
+        self.__dict__.update(data)
+        
+    def _load_results(self, filey):
+        save_obj = pickle.load(open(filey, 'rb'))
+        results = save_obj['results']
+        self.DA.results = results['DA']
+        self.EFA.results = results['EFA']
+        self.HCA.results = results['HCA']
+        self.hdbscan.results = results['hdbscan']

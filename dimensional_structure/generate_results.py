@@ -86,7 +86,8 @@ for subset in subsets[0:2]:
         # ****************************************************************************
         # run dimensional analysis
         start = time.time()
-        results = Results(datafile, dist_metric='abscorrelation',
+        results = Results(datafile=datafile, 
+                          dist_metric='abscorrelation',
                           name=subset['name'],
                           filter_regex=subset['regex'],
                           boot_iter=boot_iter,
@@ -112,19 +113,19 @@ for subset in subsets[0:2]:
         
         # ***************************** saving ****************************************
         print('Saving Subset: %s' % name)
-        id_file = path.join(results.output_file,  'results_ID-%s.pkl' % results.ID)
+        id_file = path.join(results.output_dir,  'results_ID-%s.pkl' % results.ID)
         pickle.dump(results, open(id_file,'wb'))
         # copy latest results and prediction to higher directory
-        copyfile(id_file, path.join(path.dirname(results.output_file), 
+        copyfile(id_file, path.join(path.dirname(results.output_dir), 
                                     '%s_results.pkl' % name))
-        prediction_dir = path.join(results.output_file, 'prediction_outputs')
+        prediction_dir = path.join(results.output_dir, 'prediction_outputs')
         for classifier in classifiers:
             prediction_files = glob(path.join(prediction_dir, '*%s*' % classifier))
             # sort by creation time and get last two files
             prediction_files = sorted(prediction_files, key = path.getmtime)[-4:]
             for filey in prediction_files:
                 filename = '_'.join(path.basename(filey).split('_')[:-1])
-                copyfile(filey, path.join(path.dirname(results.output_file), 
+                copyfile(filey, path.join(path.dirname(results.output_dir), 
                                           '%s_%s.pkl' % (name, filename)))
 
     # ****************************************************************************
@@ -133,10 +134,10 @@ for subset in subsets[0:2]:
     if run_plot==True:
         if results is None or name not in results.ID:
             results = load_results(datafile, name=name)[name]
-        DA_plot_dir = path.join(results.plot_file, 'DA')
-        EFA_plot_dir = path.join(results.plot_file, 'EFA')
-        HCA_plot_dir = path.join(results.plot_file, 'HCA')
-        prediction_plot_dir = path.join(results.plot_file, 'prediction')
+        DA_plot_dir = path.join(results.plot_dir, 'DA')
+        EFA_plot_dir = path.join(results.plot_dir, 'EFA')
+        HCA_plot_dir = path.join(results.plot_dir, 'HCA')
+        prediction_plot_dir = path.join(results.plot_dir, 'prediction')
         makedirs(DA_plot_dir, exist_ok = True)
         makedirs(EFA_plot_dir, exist_ok = True)
         makedirs(HCA_plot_dir, exist_ok = True)
@@ -175,7 +176,7 @@ for subset in subsets[0:2]:
         plot_prediction_comparison(results, dpi=dpi, plot_dir=prediction_plot_dir)
         
         # copy latest results and prediction to higher directory
-        plot_dir = results.plot_file
+        plot_dir = results.plot_dir
         generic_dir = '_'.join(plot_dir.split('_')[0:-1])
         if path.exists(generic_dir):
             rmtree(generic_dir)
