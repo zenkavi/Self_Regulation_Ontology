@@ -539,7 +539,7 @@ def plot_DDM(results, c, dpi=300, figsize=(20,8), ext='png', plot_dir=None):
 def plot_EFA(results, plot_dir=None, verbose=False, dpi=300, ext='png',
              plot_task_kws={}):
 
-    c = results.EFA.num_factors
+    c = results.EFA.results['num_factors']
     #if verbose: print("Plotting BIC/SABIC")
     #plot_BIC_SABIC(EFA, plot_dir)
     if verbose: print("Plotting communality")

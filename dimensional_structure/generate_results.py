@@ -113,8 +113,9 @@ for subset in subsets[0:2]:
         
         # ***************************** saving ****************************************
         print('Saving Subset: %s' % name)
+        results.save_results()
         id_file = path.join(results.output_dir,  'results_ID-%s.pkl' % results.ID)
-        pickle.dump(results, open(id_file,'wb'))
+        id_file = pickle.dump(results, open(id_file,'wb'))
         # copy latest results and prediction to higher directory
         copyfile(id_file, path.join(path.dirname(results.output_dir), 
                                     '%s_results.pkl' % name))

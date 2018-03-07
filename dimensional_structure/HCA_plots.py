@@ -613,7 +613,7 @@ def plot_cluster_factors(results, c, inp='data', ext='png', plot_dir=None):
         
             
 def plot_HCA(results, plot_dir=None, verbose=False, ext='png'):
-    c = results.EFA.num_factors
+    c = results.EFA.results['num_factors']
     # plots, woo
     if verbose: print("Plotting dendrogram heatmaps")
     plot_clusterings(results, inp='data', plot_dir=plot_dir, verbose=verbose, ext=ext)

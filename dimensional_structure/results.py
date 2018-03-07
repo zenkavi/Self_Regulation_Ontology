@@ -483,7 +483,7 @@ class HCA_Analysis():
         self.cluster_data(data)
         if cluster_EFA:
             if verbose: print("Clustering EFA")
-            self.cluster_EFA(EFA, EFA.num_factors)
+            self.cluster_EFA(EFA, EFA.results['num_factors'])
         if run_graphs == True:
             # run graph analysis on raw data
             graphs = self.build_graphs('data', data)
@@ -723,6 +723,7 @@ class Results(EFA_Analysis, HCA_Analysis):
             save_dir = self.output_dir
         filey = path.join(save_dir, '%s_results.pkl' % self.ID)
         pickle.dump(save_obj, open(filey,'wb'))
+        return filey
     
     def _load_init(self, filey):
         save_obj = pickle.load(open(filey, 'rb'))

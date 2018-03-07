@@ -138,7 +138,7 @@ def plot_bar_factors(results, c, figsize=20, thresh=75,
         
 def plot_DA(results, plot_dir=None, verbose=False, dpi=300, ext='png',
              plot_task_kws={}):
-    c = results.DA.num_factors
+    c = results.DA.results['num_factors']
     #if verbose: print("Plotting BIC/SABIC")
     #plot_BIC_SABIC(EFA, plot_dir)
     if verbose: print("Plotting Distributions")
