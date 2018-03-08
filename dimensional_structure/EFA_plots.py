@@ -99,6 +99,7 @@ def plot_communality(results, c, figsize=20, dpi=300, ext='png', plot_dir=None):
         filename = 'communality_bars-EFA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
     
     # plot communality histogram
     if len(retest_data) > 0:
@@ -374,6 +375,7 @@ def plot_bar_factors(results, c, figsize=20, thresh=75,
         filename = 'factor_bars_EFA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
 
 def plot_polar_factors(results, c, color_by_group=True, 
                        dpi=300, ext='png', plot_dir=None):

@@ -202,6 +202,7 @@ def dendroheatmap(link, dist_df, clusters=None,
                 
     if filename:
         fig.savefig(filename, bbox_inches='tight')
+        plt.close()
     return fig
 
 def get_dendrogram_color_fun(Z, labels, clusters, color_palette=sns.hls_palette):
