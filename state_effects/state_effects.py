@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 from rpy2.robjects import pandas2ri
 from sklearn.preprocessing import scale
@@ -25,6 +24,32 @@ data2 = data2.loc[overlap_index, overlap_columns]
 change = pd.DataFrame(scale(data2-data1, with_mean=False),
                       index=data2.index,
                       columns=data2.columns)
+# get reliability
+reliabilities = get_behav_data(dataset=dataset.replace('Complete', 'Retest'),
+                               file='bootstrap_merged.csv.gz')
+reliabilities = reliabilities.groupby('dv').icc.mean()
+# threshold by reliabilities
+change = change.loc[:, reliabilities[change.columns]>.2]
+                               
+# ANOVA of task change
+def cluster_state_analysis(change, subset='task'):
+    change = abs(filter_behav_data(change, subset)).assign(Subject=change.index)
+    results = load_results(dataset)[subset]
+    c = results.EFA.results['num_factors']
+    clusters = results.HCA.get_cluster_labels(inp='EFA%s' % c)
+    cluster_IDs={}
+    for c in change.columns[:-1]:
+        cluster_IDs[c] = [i for i, cluster in enumerate(clusters) if c in cluster][0]
+    # convert to absolute change between two conditions
+    change = change.melt(id_vars=['Subject'])
+    row_IDs = change.apply(lambda x: str(cluster_IDs[x['variable']]), axis=1)
+    change.insert(0, 'cluster_ID', row_IDs)
+    # analyze!
+    return lmer(change, 'value ~ (1|cluster_ID) + (1|Subject) + (1|variable)')
+    
+    
+    
+# model based ICC
 # add timepoints and concatenate
 data1.insert(0, 'timepoint', 1)
 data2.insert(0, 'timepoint', 2)
@@ -32,7 +57,6 @@ data = pd.concat([data1, data2])
 data.insert(0, 'Subject', data.index)
 data = data.melt(id_vars = ['Subject','timepoint'])
 
-# model based ICC
 variables = ['digit_span.forward_span',
              "ten_item_personality_survey.emotional_stability",
              "ravens.score",
@@ -53,30 +77,3 @@ for v in variables:
     ICCfun = get_Rpsych().ICC
     ICC_df=pandas2ri.ri2py(ICCfun(ICC_df)[0])
     print("Variable: %s\nMixed ICC: %s\nICC: %s" % (v, mixed_ICC, ICC_df.iloc[0,1]))
-
-'diff ~ (1|group)'
-
-
-
-# get results (for groups)
-results = load_results(dataset)
-
-# check for consistent time
-survey = filter_behav_data(change, 'survey')
-task = filter_behav_data(change, 'non_decision')
-
-
-def boot_change(data1, data2, reps=10):
-    N = data1.shape[0]//2
-    vals = []
-    for _ in range(reps):
-        random_order = np.random.permutation(data1.shape[0])    
-        time1 = pd.concat([data1.iloc[random_order[:N]],
-                           data2.iloc[random_order[N:]]])
-        time2 = pd.concat([data2.iloc[random_order[:N]],
-                           data1.iloc[random_order[N:]]])
-        change = time2-time1
-        # standardize
-        change = change/change.std()
-        vals.append(change.max().max())
-    return vals
