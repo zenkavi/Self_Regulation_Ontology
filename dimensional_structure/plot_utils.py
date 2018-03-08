@@ -1,9 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-from utils import reorder_data
 from scipy import array as scipyarray
 import seaborn as sns
+
+from dimensional_structure.utils import reorder_data
+from selfregulation.utils.plot_utils import CurvedText, beautify_legend
 
 def save_figure(fig, loc, save_kws=None):
     """ Saves figure in location and creates directory tree if needed """
@@ -13,6 +15,23 @@ def save_figure(fig, loc, save_kws=None):
     if directory != "":
         os.makedirs(directory, exist_ok=True)
     fig.savefig(loc, **save_kws)
+
+def get_short_names():
+    shortened_factors = {
+        'Sensation Seeking': 'SS',
+        'Mindfulness': 'Mind',
+        'Emotional Control': 'Em.Con.',
+        'Impulsivity': 'Impulse',
+        'Goal-Directedness': 'Goal',
+        'Reward Sensitivity': 'Reward',
+        'Risk Perception': 'RP',
+        'Eating Control': 'Eating',
+        'Ethical Risk-Taking': 'Ethical-RT',
+        'Social Risk-Taking': 'Social-RT',
+        'Financial Risk-Taking': 'Fin.RT',
+        'Agreeableness': 'Agr'
+        }
+    return shortened_factors
 
 # ****************************************************************************
 # helper functions for hierarchical plotting
@@ -87,7 +106,7 @@ def plot_loadings(ax, component_loadings, groups=None, colors=None,
     elif kind == 'line':
         theta = np.append(theta, theta[0])
         radii = np.append(radii, radii[0])
-        bars = ax.plot(theta, radii, linewidth=5, **plot_kws)
+        lines = ax.plot(theta, radii, linewidth=5, color=colors[0], **plot_kws)
     return colors
         
 def create_categorical_legend(labels,colors, ax):
@@ -137,14 +156,14 @@ def visualize_factors(loading_df, groups=None, n_rows=2,
     if input_axes is None:
         return fig
 
-def visualize_task_factors(task_loadings, ax, xticklabels=True, 
+def visualize_task_factors(task_loadings, ax, xticklabels=True, label_size=12,
                            yticklabels=False, pad=0, ymax=None, legend=True):
     """Plot task loadings on one axis"""
     n_measures = len(task_loadings)
-    colors = sns.hls_palette(len(task_loadings), l=.5, s=.8)
+    colors = sns.hls_palette(len(task_loadings), l=.4, s=.8)
     for i, (name, DV) in enumerate(task_loadings.iterrows()):
         plot_loadings(ax, abs(DV)+pad, width_scale=1/(n_measures), 
-                      colors = [colors.pop()], offset=i+.5,
+                      colors = [colors[i]], offset=i+.5,
                       kind='line',
                       plot_kws={'label': name, 'alpha': .8})
     # set up yticks
@@ -163,9 +182,37 @@ def visualize_task_factors(task_loadings, ax, xticklabels=True,
     ax.set_xticks(xtick_locs)
     ax.set_xticks(xtick_locs+np.pi/len(DV), minor=True)
     if xticklabels:
-        ax.set_xticklabels(task_loadings.columns,  y=.08, minor=True)
+        labels = task_loadings.columns
+        if type(labels[0]) != str:
+            labels = ['Fac %s' % str(i) for i in labels]
+        scale = 1.2
+        size = ax.get_position().expanded(scale, scale)
+        ax2=ax.get_figure().add_axes(size,zorder=2)
+        max_var_length = max([len(v) for v in labels])
+        for i, var in enumerate(labels):
+            offset=.3*25/len(labels)**2
+            start = (i-offset)*2*np.pi/len(labels)
+            end = (i+(1-offset))*2*np.pi/len(labels)
+            curve = [
+                np.cos(np.linspace(start,end,100)),
+                np.sin(np.linspace(start,end,100))
+            ]  
+            plt.plot(*curve, alpha=0)
+            # pad strings to longest length
+            num_spaces = (max_var_length-len(var))
+            var = ' '*(num_spaces//2) + var + ' '*(num_spaces-num_spaces//2)
+            curvetext = CurvedText(
+                x = curve[0][::-1],
+                y = curve[1][::-1],
+                text=var, #'this this is a very, very long text',
+                va = 'top',
+                axes = ax2,
+                fontsize=label_size##calls ax.add_artist in __init__
+            )
+            ax2.axis('off')
     if legend:
-        ax.legend(loc='upper center', bbox_to_anchor=(.5,-.15))
+        leg = ax.legend(loc='upper center', bbox_to_anchor=(.5,-.15), frameon=False)
+        beautify_legend(leg, colors[:len(task_loadings)])
         
 def plot_factor_tree(factor_tree, groups=None, filename=None):
     """

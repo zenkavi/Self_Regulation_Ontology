@@ -7,11 +7,11 @@ args = commandArgs(trailingOnly=TRUE)
 #test if all arguments are supplied
 # test if there is at least one argument: if not, return an error
 if (length(args)<3) {
-  stop("Arguments are missing. Usage: Rscript --vanilla bootstrap_retest.R data_dir df_name out_dir n dv_name", call.=FALSE)
+  stop("Arguments are missing. Usage: Rscript --vanilla bootstrap_retest.R t1_data t2_data out_dir n dv_name", call.=FALSE)
 } 
 
-data_dir <- args[1]
-df_name <- args[2]
+t1_data <- args[1]
+t2_data <- args[2]
 output_dir <- args[3]
 n <- as.numeric(args[4])
 dv_name <- args[5]
@@ -23,8 +23,8 @@ library(psych)
 
 
 #load data
-retest_subs_test_data <- read.csv(paste0(data_dir, 't1_data/',df_name))
-retest_data <- read.csv(paste0(data_dir, df_name))
+retest_subs_test_data <- read.csv(t1_data)
+retest_data <- read.csv(t2_data)
 
 names(retest_subs_test_data)[which(names(retest_subs_test_data) == "X")] <- "sub_id"
 names(retest_data)[which(names(retest_data) == "X")] <- "sub_id"

@@ -2,18 +2,15 @@ from collections import OrderedDict as odict
 from dynamicTreeCut import cutreeHybrid
 import fancyimpute
 import functools
+from glob import glob
 import hdbscan
 from itertools import combinations
-from glob import glob
 import numpy as np
 import os
 import pandas as pd
 import pickle
 from scipy.cluster.hierarchy import leaves_list, linkage
 from scipy.spatial.distance import pdist, squareform
-from selfregulation.utils.plot_utils import dendroheatmap
-from selfregulation.utils.r_to_py_utils import psychFA
-from selfregulation.utils.utils import get_info
 from sklearn.decomposition import FactorAnalysis
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
@@ -21,6 +18,9 @@ from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, scale
 
+from selfregulation.utils.plot_utils import dendroheatmap
+from selfregulation.utils.r_to_py_utils import psychFA
+from selfregulation.utils.utils import get_info
 
 def set_seed(seed):
     def seeded_fun_decorator(fun):
@@ -33,7 +33,7 @@ def set_seed(seed):
         return wrapper
     return seeded_fun_decorator
     
-    
+
 class Imputer(object):
     """ Imputation class so that fancyimpute can be used with scikit pipeline"""
     def __init__(self, imputer=None):
@@ -91,35 +91,6 @@ def abs_pdist(mat, square=False):
         absolute_distance = squareform(absolute_distance)
     return absolute_distance
 
-def load_results(datafile, name=None, results_dir=None):
-    if results_dir is None:
-        results_dir = get_info('results_directory')
-    results = {}
-    result_files = glob(os.path.join(results_dir, 'dimensional_structure/%s/Output/*results.pkl' % (datafile)))
-    if name is not None:
-        result_files = [i for i in result_files if name in i]
-    for filey in result_files:
-        name = os.path.basename(filey).split('_')[0]
-        results[name] = pickle.load(open(filey,'rb'))
-    return results
-
-def not_regex(txt):
-    return '^((?!%s).)*$' % txt
-
-def format_variable_names(variables):
-    """ formats a list of variable names """
-    # convert non_decision
-    new_vars = []
-    for var in variables:
-        var = var.replace('non_decision', 'non-decision')
-        var = var.replace('hddm_', 'DDM-')
-        var = var.replace('_cost', '-cost')
-        var = var.replace('_sensitivity', '-sensitivity')
-        var = var.replace('.', ': ')
-        var = ' '.join(var.split('_'))
-        new_vars.append(var)
-    return new_vars
-
 def shorten_labels(labels, conversions={}):
     lookup = []
     new_labels = []
@@ -137,7 +108,8 @@ def shorten_labels(labels, conversions={}):
 # helper functions for hierarchical clustering
 # ****************************************************************************
 def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None, 
-                         plot=False, cluster_kws=None, plot_kws=None):
+                         method='ward', plot=False, cluster_kws=None, 
+                         plot_kws=None):
     """
     plot hierarchical clustering and heatmap
     :df: a correlation matrix
@@ -163,7 +135,7 @@ def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None,
         dist_df = df
         dist_vec = squareform(df.values)
     #clustering
-    link = linkage(dist_vec, method='ward')    
+    link = linkage(dist_vec, method=method)    
     #dendrogram
     reorder_vec = leaves_list(link)
     clustered_df = dist_df.iloc[reorder_vec, reorder_vec]
@@ -494,12 +466,13 @@ def quantify_lower_nesting(factor_tree):
 # Helper functions for visualization of component loadings
 # ****************************************************************************
 from fancyimpute import SimpleFill
-def residualize_baseline(df):
+def residualize_baseline(df, baseline_vars=[]):
+    if len(baseline_vars) == 0:
+        baseline_vars = ['Age', 'Sex']
     # remove baseline vars
-    baseline=df[['Age','Sex']]
+    baseline=df[baseline_vars]
     data=df.copy()
-    del data['Age']
-    del data['Sex']
+    data.drop(baseline_vars, axis=1, inplace=True)
     #x=SimpleFill().complete(baseline)
     lr=LinearRegression()
     if data.isnull().sum().sum() > 0:

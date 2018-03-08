@@ -1,18 +1,20 @@
-from EFA_plots import plot_bar_factor
-from plot_utils import save_figure
 import matplotlib.pyplot as plt
 import numpy as np
 from os import  path
 import pandas as pd
 import seaborn as sns
+
+from dimensional_structure.EFA_plots import plot_bar_factor
+from dimensional_structure.plot_utils import save_figure
+from dimensional_structure.utils import get_factor_groups
+from selfregulation.utils.plot_utils import format_variable_names
 from selfregulation.utils.r_to_py_utils import get_attr
-from utils import format_variable_names, get_factor_groups
 
 
 def plot_demo_factor_dist(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):
     DA = results.DA
     sex = DA.raw_data['Sex']
-    sex_percent = "{0:0.1f}".format(np.mean(sex)*100)
+    sex_percent = "{0:0.1f}%".format(np.mean(sex)*100)
     scores = DA.get_scores(c)
     axes = scores.hist(bins=40, grid=False, figsize=(figsize*1.3,figsize))
     axes = axes.flatten()
@@ -23,9 +25,10 @@ def plot_demo_factor_dist(results, c, figsize=12, dpi=300, ext='png', plot_dir=N
     axes[-1].set_xlabel('N: %s, Female Percent: %s' % (len(scores), sex_percent), 
         labelpad=20)
     if plot_dir:
-        filename = 'factor_correlations_EFA%s.%s' % (c, ext)
+        filename = 'factor_correlations_DA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
         
 def plot_factor_correlation(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):
     DA = results.DA
@@ -35,18 +38,21 @@ def plot_factor_correlation(results, c, figsize=12, dpi=300, ext='png', plot_dir
     phi = get_attr(DA.results['factor_tree_Rout'][c],'Phi')
     phi = pd.DataFrame(phi, columns=loading.columns, index=loading.columns)
     phi = phi.iloc[reorder_vec, reorder_vec]
-    f = plt.figure(figsize=(figsize*5/4, figsize))
-    ax1 = f.add_axes([0,0,.9,.9])
-    ax1_cbar = f.add_axes([.92, .1, .03, .7])
-    sns.heatmap(phi, ax=ax1, square=True, vmax=.5, vmin=-.5,
-                cbar_ax = ax1_cbar,
-                cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
-    ax1.set_title('Demographic Factor Correlations', weight='bold')
-    
+    with sns.plotting_context('notebook', font_scale=2):
+        f = plt.figure(figsize=(figsize*5/4, figsize))
+        ax1 = f.add_axes([0,0,.9,.9])
+        ax1_cbar = f.add_axes([.92, .1, .03, .7])
+        sns.heatmap(phi, ax=ax1, square=True, vmax=.5, vmin=-.5,
+                    cbar_ax = ax1_cbar,
+                    cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
+        yticklabels = ax1.get_yticklabels()
+        ax1.set_yticklabels(yticklabels, rotation = 0, ha="right")
+        ax1.set_title('Demographic Factor Correlations', weight='bold', y=1.05)
     if plot_dir:
         filename = 'factor_correlations_DA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
 
 def plot_bar_factors(results, c, figsize=20, thresh=75,
                      dpi=300, ext='png', plot_dir=None):
@@ -125,13 +131,14 @@ def plot_bar_factors(results, c, figsize=20, thresh=75,
                         )
                 
     if plot_dir:
-        filename = 'factor_bars_EFA%s.%s' % (c, ext)
+        filename = 'factor_bars_DA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
         
 def plot_DA(results, plot_dir=None, verbose=False, dpi=300, ext='png',
              plot_task_kws={}):
-    c = results.DA.num_factors
+    c = results.DA.results['num_factors']
     #if verbose: print("Plotting BIC/SABIC")
     #plot_BIC_SABIC(EFA, plot_dir)
     if verbose: print("Plotting Distributions")

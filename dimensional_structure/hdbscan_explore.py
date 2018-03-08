@@ -16,7 +16,7 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import MDS
 from sklearn.metrics import adjusted_mutual_info_score
 from sklearn.preprocessing import scale
-from utils import abs_pdist, load_results, hierarchical_cluster
+from dimensional_structure.utils import abs_pdist, load_results, hierarchical_cluster
 from selfregulation.utils.plot_utils import dendroheatmap
 
 def plot_labels(data, labels, probs=None, labels_on=True, random_state=None,
