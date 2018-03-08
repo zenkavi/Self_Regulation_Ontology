@@ -88,19 +88,6 @@ retest_data.loc[:,'Measure Category'] = measure_cat
 Survey_N = np.sum(retest_data.loc[:, 'Measure Category']=='Survey')
 Task_N = len(retest_data)-Survey_N
 
-# plot
-save_dir = path.join(base_dir, 'Data', 'Plots', 'ICC_stripplot.%s' % ext)
-plt.figure(figsize=(12,8))
-ax = sns.pointplot(y='icc', x='Measure Category', 
-                   color='black',
-                   data=retest_data, 
-                   join=False)
-plt.setp(ax.collections, sizes=[200], zorder=20)
-ax = sns.stripplot(y='icc', x='Measure Category', 
-                    data=retest_data, 
-                    jitter=True, alpha=.5, size=10)
-plt.savefig(save_dir, dpi=300, bbox_inches='tight')
-
 # box plot
 colors = sns.color_palette('Blues_d',3) 
 save_dir = path.join(base_dir, 'Data', 'Plots', 'ICC_distplot.%s' % ext)
@@ -127,17 +114,3 @@ dist_ax.axis('off')
 plt.savefig(save_dir, dpi=300, bbox_inches='tight')
 
 
-# violin plot
-colors = sns.color_palette('Blues_d',3) 
-save_dir = path.join(base_dir, 'Data', 'Plots', 'ICC_violinplot.%s' % ext)
-plt.figure(figsize=(12,8))
-ax = sns.violinplot(y='icc', x='Measure Category', 
-                 data=retest_data,
-                 palette = colors, saturation=1)
-ax.text(.7, .3, '%s Task Measures' % Task_N, color=colors[0], fontsize=24)
-ax.text(.7, .2, '%s Survey Measures' % Survey_N, color=colors[1], fontsize=24)
-plt.ylabel('ICC', fontsize=24, labelpad=10)
-plt.xlabel('Measure Category', fontsize=24, labelpad=10)
-plt.tick_params(labelsize=20)
-
-plt.savefig(save_dir, dpi=300, bbox_inches='tight')

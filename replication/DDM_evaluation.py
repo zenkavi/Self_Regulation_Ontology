@@ -45,8 +45,7 @@ def plot_vars(tasks, contrasts, axes=None,  xlabel='Value', standardize=False):
             # add legend
             leg = axes[i].get_legend()
             leg.set_title('')
-            beautify_legend(leg, colors=colors)
-            plt.setp(leg.get_texts(), fontsize='14')
+            beautify_legend(leg, colors=colors, fontsize=14)
             # change axes
             max_val = subset.Value.abs().max()
             axes[i].set_xlim(-max_val, max_val)
@@ -60,12 +59,6 @@ def plot_vars(tasks, contrasts, axes=None,  xlabel='Value', standardize=False):
 hddm_contrasts = data.filter(regex='_hddm.*drift')
 
 # get rt contrasts
-EZ_columns = [c.replace('hddm_drift','EZ_drift') for c in hddm_contrasts]
-EZ_contrasts = pd.DataFrame()
-for c in EZ_columns:
-    EZ_contrasts = pd.concat([EZ_contrasts, data.filter(regex=c)], axis=1)
-    
-# get rt contrasts
 rt_columns = [c.replace('hddm_drift','rt') for c in hddm_contrasts]
 rt_contrasts = pd.DataFrame()
 for c in rt_columns:
@@ -77,19 +70,18 @@ acc_contrasts = pd.DataFrame()
 for c in acc_columns:
     acc_contrasts = pd.concat([acc_contrasts, data.filter(regex=c)], axis=1)
     
-cols = 4
-rows = math.ceil(len(tasks)*4/cols)
+cols = 3
+rows = math.ceil(len(tasks)*cols/cols)
 f, axes = plt.subplots(rows, cols, figsize=(cols*8, rows*6))
-hddm_axes = f.get_axes()[::4]
-ez_axes = f.get_axes()[1::4]
-rt_axes = f.get_axes()[2::4]
-acc_axes = f.get_axes()[3::4]
+hddm_axes = f.get_axes()[::cols]
+rt_axes = f.get_axes()[1::cols]
+acc_axes = f.get_axes()[2::cols]
 
 plot_vars(tasks, hddm_contrasts, hddm_axes, xlabel='HDDM Drift Rate')
-plot_vars(tasks, EZ_contrasts, ez_axes, xlabel='EZ Drift Rate')
 plot_vars(tasks, rt_contrasts, rt_axes, xlabel='RT (ms)')
 plot_vars(tasks, acc_contrasts, acc_axes, xlabel='Accuracy')
 
 # save
 save_dir = path.join(base_dir, 'Results', 'replication', 'Plots', 'DDM_rt_effects.%s' % ext)
 f.savefig(save_dir, dpi=300, bbox_inches='tight')
+plt.close()

@@ -29,12 +29,14 @@ def format_variable_names(variables):
 #***************************************************
 # ********* Plotting Functions **********************
 #**************************************************
-def beautify_legend(legend, colors):
+def beautify_legend(legend, colors, fontsize=None):
     for i, text in enumerate(legend.get_texts()):
         text.set_color(colors[i])
     for item in legend.legendHandles:
         item.set_visible(False)
     legend.get_frame().set_linewidth(0.0)
+    if fontsize:
+        plt.setp(legend.get_texts(), fontsize=fontsize)
         
 def DDM_plot(v,t,a, sigma = .1, n = 10, plot_n = 15, file = None):
     """ Make a plot of trajectories using ddm parameters (in seconds)
