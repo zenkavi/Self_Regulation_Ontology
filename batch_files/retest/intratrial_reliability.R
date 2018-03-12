@@ -2,7 +2,7 @@ library(dplyr)
 
 test_data_path = '/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Complete_02-03-2018/'
 
-retest_data_path = '/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_02-03-2018'
+retest_data_path = '/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_02-03-2018/'
 
 t1_tbt = read.csv(gzfile(paste0(test_data_path,'Individual_Measures/threebytwo.csv.gz'), 'rt'))
 
