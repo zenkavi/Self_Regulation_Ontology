@@ -42,31 +42,53 @@ calc_break_dvs = function(df, breaks=c(seq(0, 440, 10)[c(-1, -45)], 439)){
                      std_rt = sd(df_correct$rt),
                      missed_percent = missed_percent)
     
-    cue_switch_cost_rt_df = df_correct %>% group_by(CTI, cue_switch) %>% summarise(cue_switch_cost = median(rt)) %>% complete(cue_switch, CTI) %>% filter(cue_switch %in% c("stay", "switch")) %>% ungroup() %>% spread(cue_switch,cue_switch_cost, drop=FALSE) %>% group_by(CTI) %>% summarise(cue_switch_cost_rt = switch-stay)
+    cue_switch_cost_rt_df = df_correct %>% group_by(CTI, cue_switch) %>% summarise(cue_switch_cost = median(rt)) %>% complete(cue_switch, CTI) %>% filter(cue_switch %in% c("stay", "switch")) %>% ungroup() %>% spread(cue_switch,cue_switch_cost) %>% group_by(CTI) %>% summarise(cue_switch_cost_rt = switch-stay)
     
-    dvs$cue_switch_cost_rt_100 = cue_switch_cost_rt_df$cue_switch_cost_rt[cue_switch_cost_rt_df$CTI == 100]
-    dvs$cue_switch_cost_rt_900 = cue_switch_cost_rt_df$cue_switch_cost_rt[cue_switch_cost_rt_df$CTI == 900]
+    if(nrow(cue_switch_cost_rt_df)>0){
+      dvs$cue_switch_cost_rt_100 = cue_switch_cost_rt_df$cue_switch_cost_rt[cue_switch_cost_rt_df$CTI == 100]
+      dvs$cue_switch_cost_rt_900 = cue_switch_cost_rt_df$cue_switch_cost_rt[cue_switch_cost_rt_df$CTI == 900]
+    }
+    else{
+      dvs$cue_switch_cost_rt_100 = NA
+      dvs$cue_switch_cost_rt_900 = NA
+    }
     
     task_switch_rt = df_correct %>% mutate(task_switch = factor(ifelse(grepl("switch",task_switch), T, F))) %>% group_by(CTI, task_switch) %>% summarise(rt = median(rt)) %>% complete(task_switch, CTI) %>% ungroup() %>% filter(task_switch == T)
     
     cue_switch_rt = df_correct %>% group_by(CTI, cue_switch) %>% summarise(rt = median(rt)) %>% complete(cue_switch, CTI) %>% ungroup() %>% filter(cue_switch == "switch")
     
-    dvs$task_switch_cost_rt_100 = task_switch_rt$rt[task_switch_rt$CTI == 100] - cue_switch_rt$rt[cue_switch_rt$CTI == 100]
+    if(nrow(task_switch_rt)>0&nrow(cue_switch_rt)>0){
+      dvs$task_switch_cost_rt_100 = task_switch_rt$rt[task_switch_rt$CTI == 100] - cue_switch_rt$rt[cue_switch_rt$CTI == 100]
+      dvs$task_switch_cost_rt_900 = task_switch_rt$rt[task_switch_rt$CTI == 900] - cue_switch_rt$rt[cue_switch_rt$CTI == 900]
+    }
+    else{
+      dvs$task_switch_cost_rt_100 = NA
+      dvs$task_switch_cost_rt_900 = NA
+    }
     
-    dvs$task_switch_cost_rt_900 = task_switch_rt$rt[task_switch_rt$CTI == 900] - cue_switch_rt$rt[cue_switch_rt$CTI == 900]
+    cue_switch_cost_acc_df = df %>% group_by(CTI, cue_switch) %>% summarise(acc = mean(ifelse(correct == "True",1, 0))) %>% complete(cue_switch, CTI) %>% filter(cue_switch %in% c("stay", "switch")) %>% spread(cue_switch, acc) %>% ungroup() %>% group_by(CTI) %>% summarise(cue_switch_cost_acc = switch-stay)
     
-    cue_switch_cost_acc_df = df %>% group_by(CTI, cue_switch) %>% summarise(acc = mean(ifelse(correct == "True",1, 0))) %>% complete(cue_switch, CTI) %>% filter(cue_switch %in% c("stay", "switch")) %>% spread(cue_switch, acc, drop=FALSE) %>% ungroup() %>% group_by(CTI) %>% summarise(cue_switch_cost_acc = switch-stay)
-    
-    dvs$cue_switch_cost_acc_100 = cue_switch_cost_acc_df$cue_switch_cost_acc[cue_switch_cost_acc_df$CTI == 100]
-    dvs$cue_switch_cost_acc_900 = cue_switch_cost_acc_df$cue_switch_cost_acc[cue_switch_cost_acc_df$CTI == 900]
+    if(nrow(cue_switch_cost_acc_df)>0){
+      dvs$cue_switch_cost_acc_100 = cue_switch_cost_acc_df$cue_switch_cost_acc[cue_switch_cost_acc_df$CTI == 100]
+      dvs$cue_switch_cost_acc_900 = cue_switch_cost_acc_df$cue_switch_cost_acc[cue_switch_cost_acc_df$CTI == 900]
+    } 
+    else{
+      dvs$cue_switch_cost_acc_100 = NA
+      dvs$cue_switch_cost_acc_900 = NA
+    }
     
     task_switch_acc = df %>% mutate(task_switch = factor(ifelse(grepl("switch",task_switch), T, F))) %>% group_by(CTI, task_switch) %>% summarise(acc = mean(ifelse(correct == "True",1,0))) %>% complete(task_switch, CTI) %>%  ungroup() %>% filter(task_switch == T)
     
     cue_switch_acc = df %>% group_by(CTI, cue_switch) %>% summarise(acc = mean(ifelse(correct == "True",1,0))) %>% complete(cue_switch, CTI) %>% ungroup() %>% filter(cue_switch == "switch")
     
-    dvs$task_switch_cost_acc_100 = task_switch_acc$acc[task_switch_acc$CTI == 100] - cue_switch_acc$acc[cue_switch_acc$CTI == 100]
-    
-    dvs$task_switch_cost_acc_900 = task_switch_acc$acc[task_switch_acc$CTI == 900] - cue_switch_acc$acc[cue_switch_acc$CTI == 900]
+    if(nrow(task_switch_acc)>0&nrow(cue_switch_acc)>0){
+      dvs$task_switch_cost_acc_100 = task_switch_acc$acc[task_switch_acc$CTI == 100] - cue_switch_acc$acc[cue_switch_acc$CTI == 100]
+      dvs$task_switch_cost_acc_900 = task_switch_acc$acc[task_switch_acc$CTI == 900] - cue_switch_acc$acc[cue_switch_acc$CTI == 900]
+    }
+    else{
+      dvs$task_switch_cost_acc_100 = NA
+      dvs$task_switch_cost_acc_900 = NA 
+    }
     
     return(dvs)
   }
@@ -102,4 +124,73 @@ t1_dvs = t1_tbt %>%
   do(calc_break_dvs(.)) %>%
   rename(sub_id = worker_id)
 
-write.csv(t1_dvs, paste0(retest_data_path, 't1_dvs.csv'))
+write.csv(t1_dvs, paste0(retest_data_path, 't1_tbt_dvs.csv'))
+
+t2_dvs = t2_tbt %>%
+  group_by(worker_id) %>%
+  do(calc_break_dvs(.)) %>%
+  rename(sub_id = worker_id)
+
+write.csv(t2_dvs, paste0(retest_data_path, 't2_tbt_dvs.csv'))
+
+hr_merge = merge(t1_dvs, t2_dvs, by = c("sub_id", "breaks"))
+
+hr_merge = hr_merge %>%
+  gather(key, value, -sub_id, -breaks) %>%
+  separate(key, c("dv", "time"), sep="\\.") %>%
+  mutate(time = ifelse(time == "x", 1, 2))
+
+t1_dvs = hr_merge %>%
+  filter(time == 1) %>%
+  select(-time) %>%
+  spread(dv, value)
+
+t2_dvs = hr_merge %>%
+  filter(time == 2) %>%
+  select(-time) %>%
+  spread(dv, value)
+
+# calculate point estimates for reliability of each of the variables for each break
+# get_icc for each break of tmp_t1_dvs and tmp_t2_dvs
+
+trial_num_rel_df = data.frame(breaks=rep(NA, length(unique(t1_dvs$breaks))), 
+                              acc_icc=rep(NA, length(unique(t1_dvs$breaks))), 
+                              avg_rt_error_icc=rep(NA, length(unique(t1_dvs$breaks))),
+                              std_rt_error_icc=rep(NA, length(unique(t1_dvs$breaks))),
+                              avg_rt_icc=rep(NA, length(unique(t1_dvs$breaks))),
+                              std_rt_icc=rep(NA, length(unique(t1_dvs$breaks))),
+                              missed_percent_icc=rep(NA, length(unique(t1_dvs$breaks))),
+                              cue_switch_cost_rt_100_icc=rep(NA, length(unique(t1_dvs$breaks))),
+                              cue_switch_cost_rt_900_icc=rep(NA, length(unique(t1_dvs$breaks))),
+                              task_switch_cost_rt_100_icc=rep(NA, length(unique(t1_dvs$breaks))),
+                              task_switch_cost_rt_900_icc=rep(NA, length(unique(t1_dvs$breaks))),
+                              cue_switch_cost_acc_100_icc=rep(NA, length(unique(t1_dvs$breaks))),
+                              cue_switch_cost_acc_900_icc=rep(NA, length(unique(t1_dvs$breaks))),
+                              task_switch_cost_acc_100_icc=rep(NA, length(unique(t1_dvs$breaks))),
+                              task_switch_cost_acc_900_icc=rep(NA, length(unique(t1_dvs$breaks))))
+
+for(i in 1:length(unique(t1_dvs$breaks))){
+  cur_break = unique(t1_dvs$breaks)[i]
+  tmp_t1_dvs = t1_dvs %>% filter(breaks == cur_break)
+  tmp_t2_dvs = t2_dvs %>% filter(breaks == cur_break)
+  trial_num_rel_df$breaks[i] = cur_break
+  trial_num_rel_df$acc_icc[i] = get_icc("acc", tmp_t1_dvs, tmp_t2_dvs)
+  trial_num_rel_df$avg_rt_error_icc[i] = get_icc("avg_rt_error", tmp_t1_dvs, tmp_t2_dvs)
+  trial_num_rel_df$std_rt_error_icc[i] = get_icc("std_rt_error", tmp_t1_dvs, tmp_t2_dvs)
+  trial_num_rel_df$avg_rt_icc[i] = get_icc("avg_rt", tmp_t1_dvs, tmp_t2_dvs)
+  trial_num_rel_df$std_rt_icc[i] = get_icc("std_rt", tmp_t1_dvs, tmp_t2_dvs)
+  trial_num_rel_df$missed_percent_icc[i] = get_icc("missed_percent", tmp_t1_dvs, tmp_t2_dvs)
+  trial_num_rel_df$cue_switch_cost_rt_100_icc[i] = get_icc("cue_switch_cost_rt_100", tmp_t1_dvs, tmp_t2_dvs)
+  trial_num_rel_df$cue_switch_cost_rt_900_icc[i] = get_icc("cue_switch_cost_rt_900", tmp_t1_dvs, tmp_t2_dvs)
+  trial_num_rel_df$trial_switch_cost_rt_100_icc[i] = get_icc("task_switch_cost_rt_100", tmp_t1_dvs, tmp_t2_dvs)
+  trial_num_rel_df$trial_switch_cost_rt_900_icc[i] = get_icc("task_switch_cost_rt_900", tmp_t1_dvs, tmp_t2_dvs)
+  trial_num_rel_df$cue_switch_cost_acc_100_icc[i] = get_icc("cue_switch_cost_acc_100", tmp_t1_dvs, tmp_t2_dvs)
+  trial_num_rel_df$cue_switch_cost_acc_900_icc[i] = get_icc("cue_switch_cost_acc_900", tmp_t1_dvs, tmp_t2_dvs)
+  trial_num_rel_df$trial_switch_cost_acc_100_icc[i] = get_icc("task_switch_cost_acc_100", tmp_t1_dvs, tmp_t2_dvs)
+  trial_num_rel_df$trial_switch_cost_acc_900_icc[i] = get_icc("task_switch_cost_acc_900", tmp_t1_dvs, tmp_t2_dvs)
+}
+rm(i, cur_break, tmp_t1_dvs, tmp_t2_dvs)
+
+trial_num_rel_df$breaks = as.numeric(trial_num_rel_df$breaks)
+
+write.csv(trial_num_rel_df, paste0(retest_data_path, 'trial_num_rel_df_tbt.csv'))
