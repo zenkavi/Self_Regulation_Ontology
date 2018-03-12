@@ -65,7 +65,6 @@ setup(
     install_requires=[
         "dynamicTreeCut",
         #"expanalysis",
-        "fancyimpute>=0.2.0",
         "imbalanced-learn>=0.3.0",
         "ipdb",
         "IPython>=6.2.1",

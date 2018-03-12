@@ -5,6 +5,7 @@ from os import path
 import pandas as pd
 import seaborn as sns
 from selfregulation.utils.utils import get_behav_data, get_info, get_var_category
+from selfregulation.utils.plot_utils import format_num
 sns.set_palette("Set1", 8, .75)
 
 base_dir = get_info('base_directory')
@@ -44,57 +45,72 @@ plt.xlabel('Time (Hours)')
 
 """
 # Load worker completions if plot needs to be regenerated
-worker_completion_loc = ''
+worker_completion_loc = '/mnt/OAK/behavioral_data/admin/worker_counts.json'
 worker_completions = json.load(open(worker_completion_loc, 'r'))
 """
-save_dir = path.join(base_dir, 'Data', 'Plots', 'worker_completions.%s' % ext)
-completion_rate = np.mean(np.array(list(worker_completions.values())) ==63)
-completion_rate = "{0:0.1f}%".format(completion_rate*100)
-plt.figure(figsize=(12,8))
-plt.hist(worker_completions.values(), bins=40, width=5)
-ax = plt.gca()
-ax.spines['right'].set_visible(False)
-ax.spines['top'].set_visible(False)
-ax.text(5, 400, 'Completion Rate: %s' % completion_rate, size=20)
-plt.xlabel('Number of Tasks Completed')
+with sns.plotting_context('poster'):
+    save_dir = path.join(base_dir, 'Data', 'Plots', 'worker_completions.%s' % ext)
+    completion_rate = np.mean(np.array(list(worker_completions.values())) ==63)
+    completion_rate = format_num(completion_rate*100, 1)
+    analyzed_rate = 522/len(worker_completions)
+    analyzed_rate = format_num(analyzed_rate*100, 1)
+    plt.figure(figsize=(12,8))
+    plt.hist(worker_completions.values(), bins=40, width=5)
+    ax = plt.gca()
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.text(5, 400, 'Completion Rate: %s' % completion_rate, size=20)
+    ax.text(5, 350, 'Passed QC: %s' % analyzed_rate, size=20)
+    plt.xlabel('Number of Tasks Completed', fontsize=20)
 plt.savefig(save_dir, dpi=300, bbox_inches='tight')
 
-
+# ****************************************************************************
 # plot psychometric reliability
+# ****************************************************************************
+
 sns.set_context('poster')
-meaningful_vars = get_behav_data().columns
-retest_data = get_behav_data(dataset='Retest_01-23-2018', file='bootstrap_merged.csv.gz')
+meaningful_vars = get_behav_data(file='meaningful_variables_imputed.csv').columns
+meaningful_vars = [i.replace('.logTr','') for i in meaningful_vars]
+meaningful_vars = [i.replace('.ReflogTr','') for i in meaningful_vars]
+
+retest_data = get_behav_data(dataset='Retest_02-03-2018', file='bootstrap_merged.csv.gz')
+retest_data = retest_data.groupby('dv').mean()
+retest_data.rename({'dot_pattern_expectancy.BX.BY_hddm_drift': 'dot_pattern_expectancy.BX-BY_hddm_drift',
+                    'dot_pattern_expectancy.AY.BY_hddm_drift': 'dot_pattern_expectancy.AY-BY_hddm_drift'},
+                    axis='index',
+                    inplace=True)
 # onyl select meaningful variables
 retest_data = retest_data.query('dv in %s' % list(meaningful_vars))
 
 # create reliability dataframe
-ICC_reliability = pd.DataFrame(retest_data.groupby('dv').icc.mean())
-ICC_reliability.columns = ['ICC']
-measure_cat = [get_var_category(v).title() for v in ICC_reliability.index]
-ICC_reliability.loc[:,'Measure Category'] = measure_cat
-Survey_N = np.sum(ICC_reliability.loc[:, 'Measure Category']=='Survey')
-Task_N = len(ICC_reliability)-Survey_N
-# plot
-save_dir = path.join(base_dir, 'Data', 'Plots', 'ICC_stripplot.%s' % ext)
-plt.figure(figsize=(12,8))
-ax = sns.pointplot(y='ICC', x='Measure Category', 
-                   color='black',
-                   data=ICC_reliability, 
-                   join=False)
-plt.setp(ax.collections, sizes=[200], zorder=20)
-ax = sns.stripplot(y='ICC', x='Measure Category', 
-                    data=ICC_reliability, 
-                    jitter=True, alpha=.5, size=10)
+measure_cat = [get_var_category(v).title() for v in retest_data.index]
+retest_data.loc[:,'Measure Category'] = measure_cat
+Survey_N = np.sum(retest_data.loc[:, 'Measure Category']=='Survey')
+Task_N = len(retest_data)-Survey_N
+
+# box plot
+colors = sns.color_palette('Blues_d',3) 
+save_dir = path.join(base_dir, 'Data', 'Plots', 'ICC_distplot.%s' % ext)
+f = plt.figure(figsize=(12,8))
+# plot boxes
+box_ax = f.add_axes([0,0,1,.6]) 
+sns.boxplot(x='icc', y='Measure Category', ax=box_ax, data=retest_data,
+            palette={'Survey': colors[0], 'Task': colors[1]}, saturation=1,
+            width=.5)
+box_ax.text(0, 1.2, '%s Task Measures' % Task_N, color=colors[1], fontsize=24)
+box_ax.text(0, 1, '%s Survey Measures' % Survey_N, color=colors[0], fontsize=24)
+box_ax.set_ylabel('Measure Category', fontsize=24, labelpad=10)
+box_ax.set_xlabel('ICC', fontsize=24, labelpad=10)
+box_ax.tick_params(labelsize=20)
+# plot distributions
+dist_ax = f.add_axes([0,.6,1,.4]) 
+dist_ax.set_xlim(*box_ax.get_xlim())
+dist_ax.set_xticklabels('')
+dist_ax.tick_params(length=0)
+for i, (name, g) in enumerate(retest_data.groupby('Measure Category')):
+    sns.kdeplot(g['icc'], color=colors[i], ax=dist_ax, linewidth=4, 
+                shade=True, legend=False)
+dist_ax.axis('off')
 plt.savefig(save_dir, dpi=300, bbox_inches='tight')
 
-# boxplot
-colors = sns.color_palette(n_colors=2, desat=.75)
-save_dir = path.join(base_dir, 'Data', 'Plots', 'ICC_boxplot.%s' % ext)
-plt.figure(figsize=(12,8))
-ax = sns.boxplot(y='ICC', x='Measure Category', 
-                 data=ICC_reliability,
-                 palette = colors, saturation=1)
-ax.text(.7, .3, '%s Task Measures' % Task_N, color=colors[0])
-ax.text(.7, .2, '%s Survey Measures' % Survey_N, color=colors[1])
 
-plt.savefig(save_dir, dpi=300, bbox_inches='tight')

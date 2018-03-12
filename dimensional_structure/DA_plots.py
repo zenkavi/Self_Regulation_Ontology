@@ -1,12 +1,14 @@
-from EFA_plots import plot_bar_factor
-from plot_utils import save_figure
 import matplotlib.pyplot as plt
 import numpy as np
 from os import  path
 import pandas as pd
 import seaborn as sns
+
+from dimensional_structure.EFA_plots import plot_bar_factor
+from dimensional_structure.plot_utils import save_figure
+from dimensional_structure.utils import get_factor_groups
+from selfregulation.utils.plot_utils import format_variable_names
 from selfregulation.utils.r_to_py_utils import get_attr
-from utils import format_variable_names, get_factor_groups
 
 
 def plot_demo_factor_dist(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):
@@ -26,6 +28,7 @@ def plot_demo_factor_dist(results, c, figsize=12, dpi=300, ext='png', plot_dir=N
         filename = 'factor_correlations_DA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
         
 def plot_factor_correlation(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):
     DA = results.DA
@@ -49,6 +52,7 @@ def plot_factor_correlation(results, c, figsize=12, dpi=300, ext='png', plot_dir
         filename = 'factor_correlations_DA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
 
 def plot_bar_factors(results, c, figsize=20, thresh=75,
                      dpi=300, ext='png', plot_dir=None):
@@ -130,10 +134,11 @@ def plot_bar_factors(results, c, figsize=20, thresh=75,
         filename = 'factor_bars_DA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
         
 def plot_DA(results, plot_dir=None, verbose=False, dpi=300, ext='png',
              plot_task_kws={}):
-    c = results.DA.num_factors
+    c = results.DA.results['num_factors']
     #if verbose: print("Plotting BIC/SABIC")
     #plot_BIC_SABIC(EFA, plot_dir)
     if verbose: print("Plotting Distributions")

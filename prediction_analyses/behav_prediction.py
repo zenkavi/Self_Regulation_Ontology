@@ -29,7 +29,7 @@ from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV
 
 from selfregulation.utils.utils import get_info
-import selfregulation.prediction.behavpredict as behavpredict
+import selfregulation.prediction.behavpredict_V1 as behavpredict
 importlib.reload(behavpredict)
 
 import argparse

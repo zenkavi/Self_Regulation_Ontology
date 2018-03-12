@@ -2,11 +2,11 @@
 
 
 
-import pandas,numpy
+import numpy, os, pandas
+from selfregulation.utils.utils import get_info
 
-import rpy2.robjects as robjects
 #import pandas.rpy.common as com
-
+import rpy2.robjects as robjects
 from rpy2.robjects.packages import importr
 from rpy2.robjects import pandas2ri
 pandas2ri.activate()
@@ -15,8 +15,18 @@ base = importr('base')
 stats = importr('stats')
 mpath=importr('mpath')
 
-# create a class that implements prediction using functions from R
+# helper R functions for prediction
+def get_demographic_model_type(demographics, verbose=False):
+    base = get_info('base_directory')
+    R.source(os.path.join(base, 'selfregulation', 'utils', 'utils.R'))
+    
+    get_vartypes = robjects.globalenv['get_vartypes']
+    out=get_vartypes(demographics, verbose)
+    model_types = pandas.DataFrame(numpy.reshape(numpy.matrix(out),(-1,2), 'F'))
+    model_types.iloc[:, 0] = demographics.columns
+    return model_types
 
+# create a class that implements prediction using functions from R
 class RModel:
     def __init__(self,modeltype,verbose=True,ncores=2,nlambda=100,
                 lambda_preset=None):

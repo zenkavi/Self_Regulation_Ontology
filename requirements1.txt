@@ -1,8 +1,7 @@
 cython
 numpy>=1.11.3
 scipy>=0.19.1
-# dynamicTreeCut
-git+https://github.com/IanEisenberg/dynamicTreeCut@eb822ebb32482a81519e32e944fd631fb9176b67
+dynamicTreeCut
 imbalanced-learn>=0.3.0
 ipdb
 IPython>=6.2.1
