@@ -19,7 +19,8 @@ t2_tbt = t2_tbt[as.character(t2_tbt$worker_id) %in% retest_workers,]
 calc_break_dvs = function(df, breaks=c(seq(0, 440, 10)[c(-1, -45)], 439)){
   
   df = df %>%
-    filter(exp_stage != "practice")
+    filter(exp_stage != "practice") %>%
+    mutate(CTI = as.factor(CTI))
   
   calc_dvs = function(df){
     
@@ -42,53 +43,75 @@ calc_break_dvs = function(df, breaks=c(seq(0, 440, 10)[c(-1, -45)], 439)){
                      std_rt = sd(df_correct$rt),
                      missed_percent = missed_percent)
     
-    cue_switch_cost_rt_df = df_correct %>% group_by(CTI, cue_switch) %>% summarise(cue_switch_cost = median(rt)) %>% complete(cue_switch, CTI) %>% filter(cue_switch %in% c("stay", "switch")) %>% ungroup() %>% spread(cue_switch,cue_switch_cost) %>% group_by(CTI) %>% summarise(cue_switch_cost_rt = switch-stay)
     
-    if(nrow(cue_switch_cost_rt_df)>0){
+    if(nrow(df_correct)>0){
+      cue_switch_cost_rt_df = df_correct %>% group_by(CTI, cue_switch) %>% summarise(cue_switch_cost = median(rt)) %>% complete(cue_switch, CTI) %>% filter(cue_switch %in% c("stay", "switch")) %>% ungroup() %>% spread(cue_switch,cue_switch_cost) %>% group_by(CTI) %>% summarise(cue_switch_cost_rt = switch-stay) %>% mutate(CTI = as.numeric(as.character(CTI)))
+      
       dvs$cue_switch_cost_rt_100 = cue_switch_cost_rt_df$cue_switch_cost_rt[cue_switch_cost_rt_df$CTI == 100]
       dvs$cue_switch_cost_rt_900 = cue_switch_cost_rt_df$cue_switch_cost_rt[cue_switch_cost_rt_df$CTI == 900]
-    }
-    else{
-      dvs$cue_switch_cost_rt_100 = NA
-      dvs$cue_switch_cost_rt_900 = NA
-    }
-    
-    task_switch_rt = df_correct %>% mutate(task_switch = factor(ifelse(grepl("switch",task_switch), T, F))) %>% group_by(CTI, task_switch) %>% summarise(rt = median(rt)) %>% complete(task_switch, CTI) %>% ungroup() %>% filter(task_switch == T)
-    
-    cue_switch_rt = df_correct %>% group_by(CTI, cue_switch) %>% summarise(rt = median(rt)) %>% complete(cue_switch, CTI) %>% ungroup() %>% filter(cue_switch == "switch")
-    
-    if(nrow(task_switch_rt)>0&nrow(cue_switch_rt)>0){
+      
+      task_switch_rt = df_correct %>% mutate(task_switch = factor(ifelse(grepl("switch",task_switch), T, F))) %>% group_by(CTI, task_switch) %>% summarise(rt = median(rt)) %>% complete(task_switch, CTI) %>% ungroup() %>% filter(task_switch == T)
+      
+      cue_switch_rt = df_correct %>% group_by(CTI, cue_switch) %>% summarise(rt = median(rt)) %>% complete(cue_switch, CTI) %>% ungroup() %>% filter(cue_switch == "switch")
+      
       dvs$task_switch_cost_rt_100 = task_switch_rt$rt[task_switch_rt$CTI == 100] - cue_switch_rt$rt[cue_switch_rt$CTI == 100]
       dvs$task_switch_cost_rt_900 = task_switch_rt$rt[task_switch_rt$CTI == 900] - cue_switch_rt$rt[cue_switch_rt$CTI == 900]
     }
-    else{
+    else {
+      dvs$cue_switch_cost_rt_100 = NA
+      dvs$cue_switch_cost_rt_900 = NA
       dvs$task_switch_cost_rt_100 = NA
       dvs$task_switch_cost_rt_900 = NA
     }
     
-    cue_switch_cost_acc_df = df %>% group_by(CTI, cue_switch) %>% summarise(acc = mean(ifelse(correct == "True",1, 0))) %>% complete(cue_switch, CTI) %>% filter(cue_switch %in% c("stay", "switch")) %>% spread(cue_switch, acc) %>% ungroup() %>% group_by(CTI) %>% summarise(cue_switch_cost_acc = switch-stay)
+    # if(nrow(cue_switch_cost_rt_df)>0){
+    #   dvs$cue_switch_cost_rt_100 = cue_switch_cost_rt_df$cue_switch_cost_rt[cue_switch_cost_rt_df$CTI == 100]
+    #   dvs$cue_switch_cost_rt_900 = cue_switch_cost_rt_df$cue_switch_cost_rt[cue_switch_cost_rt_df$CTI == 900]
+    # }
+    # else{
+    #   dvs$cue_switch_cost_rt_100 = NA
+    #   dvs$cue_switch_cost_rt_900 = NA
+    # }
+    # 
     
-    if(nrow(cue_switch_cost_acc_df)>0){
-      dvs$cue_switch_cost_acc_100 = cue_switch_cost_acc_df$cue_switch_cost_acc[cue_switch_cost_acc_df$CTI == 100]
-      dvs$cue_switch_cost_acc_900 = cue_switch_cost_acc_df$cue_switch_cost_acc[cue_switch_cost_acc_df$CTI == 900]
-    } 
-    else{
-      dvs$cue_switch_cost_acc_100 = NA
-      dvs$cue_switch_cost_acc_900 = NA
-    }
+    # if(nrow(task_switch_rt)>0&nrow(cue_switch_rt)>0){
+    #   dvs$task_switch_cost_rt_100 = task_switch_rt$rt[task_switch_rt$CTI == 100] - cue_switch_rt$rt[cue_switch_rt$CTI == 100]
+    #   dvs$task_switch_cost_rt_900 = task_switch_rt$rt[task_switch_rt$CTI == 900] - cue_switch_rt$rt[cue_switch_rt$CTI == 900]
+    # }
+    # else{
+    #   dvs$task_switch_cost_rt_100 = NA
+    #   dvs$task_switch_cost_rt_900 = NA
+    # }
+    
+    cue_switch_cost_acc_df = df %>% group_by(CTI, cue_switch) %>% summarise(acc = mean(ifelse(correct == "True",1, 0))) %>% complete(cue_switch, CTI) %>% filter(cue_switch %in% c("stay", "switch")) %>% spread(cue_switch, acc) %>% ungroup() %>% group_by(CTI) %>% summarise(cue_switch_cost_acc = switch-stay)
+
+    dvs$cue_switch_cost_acc_100 = cue_switch_cost_acc_df$cue_switch_cost_acc[cue_switch_cost_acc_df$CTI == 100]
+    dvs$cue_switch_cost_acc_900 = cue_switch_cost_acc_df$cue_switch_cost_acc[cue_switch_cost_acc_df$CTI == 900]
+        
+    # if(nrow(cue_switch_cost_acc_df)>0){
+    #   dvs$cue_switch_cost_acc_100 = cue_switch_cost_acc_df$cue_switch_cost_acc[cue_switch_cost_acc_df$CTI == 100]
+    #   dvs$cue_switch_cost_acc_900 = cue_switch_cost_acc_df$cue_switch_cost_acc[cue_switch_cost_acc_df$CTI == 900]
+    # } 
+    # else{
+    #   dvs$cue_switch_cost_acc_100 = NA
+    #   dvs$cue_switch_cost_acc_900 = NA
+    # }
     
     task_switch_acc = df %>% mutate(task_switch = factor(ifelse(grepl("switch",task_switch), T, F))) %>% group_by(CTI, task_switch) %>% summarise(acc = mean(ifelse(correct == "True",1,0))) %>% complete(task_switch, CTI) %>%  ungroup() %>% filter(task_switch == T)
     
     cue_switch_acc = df %>% group_by(CTI, cue_switch) %>% summarise(acc = mean(ifelse(correct == "True",1,0))) %>% complete(cue_switch, CTI) %>% ungroup() %>% filter(cue_switch == "switch")
     
-    if(nrow(task_switch_acc)>0&nrow(cue_switch_acc)>0){
-      dvs$task_switch_cost_acc_100 = task_switch_acc$acc[task_switch_acc$CTI == 100] - cue_switch_acc$acc[cue_switch_acc$CTI == 100]
-      dvs$task_switch_cost_acc_900 = task_switch_acc$acc[task_switch_acc$CTI == 900] - cue_switch_acc$acc[cue_switch_acc$CTI == 900]
-    }
-    else{
-      dvs$task_switch_cost_acc_100 = NA
-      dvs$task_switch_cost_acc_900 = NA 
-    }
+    dvs$task_switch_cost_acc_100 = task_switch_acc$acc[task_switch_acc$CTI == 100] - cue_switch_acc$acc[cue_switch_acc$CTI == 100]
+    dvs$task_switch_cost_acc_900 = task_switch_acc$acc[task_switch_acc$CTI == 900] - cue_switch_acc$acc[cue_switch_acc$CTI == 900]
+    
+    # if(nrow(task_switch_acc)>0&nrow(cue_switch_acc)>0){
+    #   dvs$task_switch_cost_acc_100 = task_switch_acc$acc[task_switch_acc$CTI == 100] - cue_switch_acc$acc[cue_switch_acc$CTI == 100]
+    #   dvs$task_switch_cost_acc_900 = task_switch_acc$acc[task_switch_acc$CTI == 900] - cue_switch_acc$acc[cue_switch_acc$CTI == 900]
+    # }
+    # else{
+    #   dvs$task_switch_cost_acc_100 = NA
+    #   dvs$task_switch_cost_acc_900 = NA 
+    # }
     
     return(dvs)
   }
