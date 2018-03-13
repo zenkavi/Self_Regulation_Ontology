@@ -59,21 +59,29 @@ subsets = [{'name': 'task',
             'regex': 'task',
             'factor_names': ['Speeded IP', 'Strategic IP', 'Discounting',
                              'Perc / Resp', 'Caution'],
-            'cluster_names': []},
+            'cluster_names': [],
+            'predict': True},
             {'name': 'survey',
              'regex': 'survey',
              'factor_names':  ['Sensation Seeking', 'Mindfulness', 'Emotional Control', 
                                'Impulsivity', 'Goal-Directedness', 'Reward Sensitivity',
                                'Risk Perception', 'Eating Control', 'Ethical Risk-Taking', 
-                               'Social Risk-Taking', 'Financial Risk-Taking', 'Agreeableness']},
+                               'Social Risk-Taking', 'Financial Risk-Taking', 'Agreeableness'],
+             'predict': True},
+             {'name': 'main_subset', 
+            'regex': 'main',
+            'factor_names': [],
+            'cluster_names': [],
+            'predict': False},
              {'name': 'all', 
-            'regex': '.',
-            'factor_names': []}]
+              'regex': '.',
+              'factor_names': [],
+              'predict': False}]
 classifiers = ['lasso', 'ridge', 'tikhonov']
 ID = None # ID will be created
 results = None
 # create/run results for each subset
-for subset in subsets[0:2]:
+for subset in subsets[0:-1]:
     name = subset['name']
     if selected_subset is not None and name != selected_subset:
         continue

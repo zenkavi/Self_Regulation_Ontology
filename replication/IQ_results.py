@@ -1,5 +1,4 @@
-# replication of "Intelligence and socioeconomic success: A meta-analytic
-# review of longitudinal research"
+
 
 import math
 import matplotlib.pyplot as plt
@@ -8,7 +7,11 @@ from os import path
 import pandas as pd
 import seaborn as sns
 from selfregulation.utils.plot_utils import beautify_legend, format_num, format_variable_names
-from selfregulation.utils.utils import get_behav_data, get_demographics, get_info
+from selfregulation.utils.utils import filter_behav_data, get_behav_data, get_demographics, get_info
+
+# correlation of ravens and literature
+# replication of "Intelligence and socioeconomic success: A meta-analytic
+# review of longitudinal research"
 
 base_dir = get_info('base_directory')
 ext= 'png'
@@ -38,3 +41,16 @@ lit_demo_reliability['HouseholdIncome'] = .83
 correlations.insert(0, 'lit_target_reliability', lit_demo_reliability)
 lit_adjusted = correlations['ravens.score']/(lit_raven_reliability*correlations['lit_target_reliability'])**.5
 correlations.insert(0, 'lit_adjusted_correlation', lit_adjusted)
+
+
+# correlation of ravens and PCA of tasks
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import scale
+
+data = get_behav_data(file='meaningful_variables_imputed.csv')     
+task_data = filter_behav_data(data, 'task').drop('ravens.score', axis=1)
+pca = PCA(2)
+transformed = pca.fit_transform(scale(task_data))
+ravens_data = data['ravens.score']
+df = pd.DataFrame(transformed).assign(ravens = ravens_data.tolist())
+sns.heatmap(abs(df.corr()))

@@ -189,7 +189,7 @@ def drop_failed_QC_vars(df, data):
     failed_exps = data.query('passed_QC==False')
     for i, values in failed_exps[['experiment_exp_id','worker_id']].iterrows():
         df.loc[values[1],df.filter(regex = values[0]).columns] = np.nan
-        
+
 def drop_vars(data, drop_vars = [], saved_vars = []):
     if len(drop_vars) == 0:
         # variables that are calculated without regard to their actual interest
@@ -363,7 +363,7 @@ def get_worker_demographics(worker_id, data):
         return {'age': age, 'sex': sex, 'race': race, 'hispanic': hispanic}
     else:
         return np.nan
-
+    
 def print_time(data, time_col = 'ontask_time'):
     '''Prints time taken for each experiment in minutes
     :param time_col: Dataframe column of time in seconds

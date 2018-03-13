@@ -90,10 +90,13 @@ class EFA_Analysis:
             BIC_c, BICs = find_optimal_components(phi, 
                                                   metric='BIC', 
                                                   nobs=n_obs)
-            Rout, higher_order_out = psychFA(phi, BIC_c, nobs=n_obs)
-            loadings = get_loadings(higher_order_out, labels)
-            self.results['factor2_tree'][c] = loadings
-            self.results['factor2_tree_Rout'][c] = Rout
+            if BIC_c != 0:
+                Rout, higher_order_out = psychFA(phi, BIC_c, nobs=n_obs)
+                loadings = get_loadings(higher_order_out, labels)
+                self.results['factor2_tree'][c] = loadings
+                self.results['factor2_tree_Rout'][c] = Rout
+            else:
+                print('Higher order factors could not be calculated')
         else:
             print('No %s factor solution computed yet!' % c)
             

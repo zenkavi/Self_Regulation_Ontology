@@ -9,8 +9,8 @@ from sklearn.metrics import confusion_matrix
 import pkg_resources
 from collections import OrderedDict
 
-# Regex filtering helper functions
 
+# Regex filtering helper functions
 def not_regex(txt):
         return '^((?!%s).)*$' % txt
 
@@ -20,11 +20,58 @@ def filter_behav_data(data, filter_regex):
         filter_regex: regex expression to filter data columns on. Can also supply
             "survey(s)" or "task(s)" to return measures associated with those
     """
+    # main variables used to reduce task data down to its "main" variables
+    main_vars = ['adaptive_n_back.mean_load',
+             'angling_risk_task_always_sunny\..*_adjusted_clicks',
+             'angling_risk_task_always_sunny\.release_adjusted_clicks',
+             'attention_network_task\.alerting',
+             'attention_network_task\.orienting',
+             'attention_network_task\.conflict',
+             'bickel_titrator\.hyp_discount_rate_medium',
+             'choice_reaction_time',
+             'cognitive_reflection_survey\.correct_proportion',
+             'columbia_card_task_cold',
+             'columbia_card_task_hot'
+             'dietary_decision',
+             'digit_span',
+             'directed_forgetting\.proactive_interference_hddm_drift',
+             'discount_titrate\.percent_patient',
+             'dot_pattern_expectancy\.AY-BY',
+             'dot_pattern_expectancy\.BX-BY',
+             'go_nogo',
+             'hierarchical_rule\.score',
+             'holt_laury_survey\.risk_aversion',
+             'information_sampling_task\..*P_correct',
+             'keep_track\.score',
+             'kirby\.hyp_discount_rate_medium',
+             'local_global_letter\.conflict',
+             'local_global_letter\.global',
+             'local_global_letter\.switch',
+             'motor_selective_stop_signal\.SSRT',
+             'probabilistic_selection',
+             'psychological_refractory_period_two_choices',
+             'ravens\.score',
+             'recent_probes\.proactive_interference',
+             'shape_matching\.stimulus_interference',
+             'shift_task\.model',
+             'simon\.simon',
+             'simple_reaction_time',
+             'spatial_span',
+             'stim_selective_stop_signal\.SSRT',
+             '^stop_signal\.SSRT_high',
+             'stroop\.stroop',
+             'threebytwo\.cue_switch',
+             'threebytwp\.task_switch',
+             'tower_of_london\.planning_time',
+             'two_stage_decision\.model'
+             ]
     # filter columns if filter_regex is set
     if filter_regex.rstrip('s').lower() == 'survey':
         regex = not_regex(not_regex('survey')+'|cognitive_reflection|holt')
     elif filter_regex.rstrip('s').lower() == 'task':
         regex = not_regex('survey')+'|cognitive_reflection|holt'
+    elif filter_regex.lower() == 'main':
+        regex = '|'.join(main_vars)
     else:
         regex = filter_regex
     return data.filter(regex=regex)
