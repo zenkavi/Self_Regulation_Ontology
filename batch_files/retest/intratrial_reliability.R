@@ -106,12 +106,19 @@ calc_break_dvs = function(df, breaks=c(seq(0, 440, 10)[c(-1, -45)], 439)){
 }
 
 #get dv's for t1 and t2
-t1_tbt = t1_tbt %>% filter(worker_id %in% c("s005", "s007", "s009"))
+# t1_dvs = t1_tbt %>%
+#   group_by(worker_id) %>%
+#   do(calc_break_dvs(.)) %>%
+#   rename(sub_id = worker_id)
 
-t1_dvs = t1_tbt %>%
-  group_by(worker_id) %>%
-  do(calc_break_dvs(.)) %>%
-  rename(sub_id = worker_id)
+t1_dvs = data.frame()
+for(i in 1:length(unique(t1_tbt$worker_id))){
+  print(i)
+  cur_worker = t1_tbt$worker_id[i]
+  df = t1_tbt %>% filter(worker_id == cur_worker)
+  sub_dvs = calc_break_dvs(df)
+  t1_dvs = rbind(t1_dvs, sub_dvs)
+}
 
 write.csv(t1_dvs, paste0(retest_data_path, 't1_tbt_dvs.csv'))
 
