@@ -111,23 +111,33 @@ calc_break_dvs = function(df, breaks=c(seq(0, 440, 10)[c(-1, -45)], 439)){
 #   do(calc_break_dvs(.)) %>%
 #   rename(sub_id = worker_id)
 
-t1_dvs = data.frame()
-for(i in 1:length(unique(t1_tbt$worker_id))){
-  print(i)
-  cur_worker = t1_tbt$worker_id[i]
-  df = t1_tbt %>% filter(worker_id == cur_worker)
-  sub_dvs = calc_break_dvs(df)
-  t1_dvs = rbind(t1_dvs, sub_dvs)
-}
+# t1_dvs = data.frame()
+# for(i in 1:length(unique(t1_tbt$worker_id))){
+#   print(i)
+#   cur_worker = t1_tbt$worker_id[i]
+#   df = t1_tbt %>% filter(worker_id == cur_worker)
+#   sub_dvs = calc_break_dvs(df)
+#   t1_dvs = rbind(t1_dvs, sub_dvs)
+# }
 
-write.csv(t1_dvs, paste0(retest_data_path, 't1_tbt_dvs.csv'))
+# write.csv(t1_dvs, paste0(retest_data_path, 't1_tbt_dvs.csv'))
 
 # t2_dvs = t2_tbt %>%
 #   group_by(worker_id) %>%
 #   do(calc_break_dvs(.)) %>%
 #   rename(sub_id = worker_id)
 # 
-# write.csv(t2_dvs, paste0(retest_data_path, 't2_tbt_dvs.csv'))
+
+t2_dvs = data.frame()
+for(i in 1:length(unique(t2_tbt$worker_id))){
+  print(i)
+  cur_worker = t2_tbt$worker_id[i]
+  df = t2_tbt %>% filter(worker_id == cur_worker)
+  sub_dvs = calc_break_dvs(df)
+  t2_dvs = rbind(t2_dvs, sub_dvs)
+}
+
+write.csv(t2_dvs, paste0(retest_data_path, 't2_tbt_dvs.csv'))
 # 
 # hr_merge = merge(t1_dvs, t2_dvs, by = c("sub_id", "breaks"))
 # 
