@@ -118,6 +118,7 @@ for(i in 1:length(unique(t1_tbt$worker_id))){
   cur_worker = t1_tbt$worker_id[i]
   df = t1_tbt %>% filter(worker_id == cur_worker)
   sub_dvs = calc_break_dvs(df)
+  sub_dvs$sub_id = cur_worker
   t1_dvs = rbind(t1_dvs, sub_dvs)
 }
 
@@ -135,6 +136,7 @@ for(i in 1:length(unique(t2_tbt$worker_id))){
   cur_worker = t2_tbt$worker_id[i]
   df = t2_tbt %>% filter(worker_id == cur_worker)
   sub_dvs = calc_break_dvs(df)
+  sub_dvs$sub_id = cur_worker
   t2_dvs = rbind(t2_dvs, sub_dvs)
 }
 
