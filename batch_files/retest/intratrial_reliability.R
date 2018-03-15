@@ -106,21 +106,22 @@ calc_break_dvs = function(df, breaks=c(seq(0, 440, 10)[c(-1, -45)], 439)){
 }
 
 #get dv's for t1 and t2
+#for some reason couldn't get this to word with dplyr but with a loop
 # t1_dvs = t1_tbt %>%
 #   group_by(worker_id) %>%
 #   do(calc_break_dvs(.)) %>%
 #   rename(sub_id = worker_id)
 
-# t1_dvs = data.frame()
-# for(i in 1:length(unique(t1_tbt$worker_id))){
-#   print(i)
-#   cur_worker = t1_tbt$worker_id[i]
-#   df = t1_tbt %>% filter(worker_id == cur_worker)
-#   sub_dvs = calc_break_dvs(df)
-#   t1_dvs = rbind(t1_dvs, sub_dvs)
-# }
+t1_dvs = data.frame()
+for(i in 1:length(unique(t1_tbt$worker_id))){
+  print(i)
+  cur_worker = t1_tbt$worker_id[i]
+  df = t1_tbt %>% filter(worker_id == cur_worker)
+  sub_dvs = calc_break_dvs(df)
+  t1_dvs = rbind(t1_dvs, sub_dvs)
+}
 
-# write.csv(t1_dvs, paste0(retest_data_path, 't1_tbt_dvs.csv'))
+write.csv(t1_dvs, paste0(retest_data_path, 'Local/t1_tbt_dvs.csv'))
 
 # t2_dvs = t2_tbt %>%
 #   group_by(worker_id) %>%
@@ -137,66 +138,4 @@ for(i in 1:length(unique(t2_tbt$worker_id))){
   t2_dvs = rbind(t2_dvs, sub_dvs)
 }
 
-write.csv(t2_dvs, paste0(retest_data_path, 't2_tbt_dvs.csv'))
-# 
-# hr_merge = merge(t1_dvs, t2_dvs, by = c("sub_id", "breaks"))
-# 
-# hr_merge = hr_merge %>%
-#   gather(key, value, -sub_id, -breaks) %>%
-#   separate(key, c("dv", "time"), sep="\\.") %>%
-#   mutate(time = ifelse(time == "x", 1, 2))
-# 
-# t1_dvs = hr_merge %>%
-#   filter(time == 1) %>%
-#   select(-time) %>%
-#   spread(dv, value)
-# 
-# t2_dvs = hr_merge %>%
-#   filter(time == 2) %>%
-#   select(-time) %>%
-#   spread(dv, value)
-# 
-# # calculate point estimates for reliability of each of the variables for each break
-# # get_icc for each break of tmp_t1_dvs and tmp_t2_dvs
-# 
-# trial_num_rel_df = data.frame(breaks=rep(NA, length(unique(t1_dvs$breaks))), 
-#                               acc_icc=rep(NA, length(unique(t1_dvs$breaks))), 
-#                               avg_rt_error_icc=rep(NA, length(unique(t1_dvs$breaks))),
-#                               std_rt_error_icc=rep(NA, length(unique(t1_dvs$breaks))),
-#                               avg_rt_icc=rep(NA, length(unique(t1_dvs$breaks))),
-#                               std_rt_icc=rep(NA, length(unique(t1_dvs$breaks))),
-#                               missed_percent_icc=rep(NA, length(unique(t1_dvs$breaks))),
-#                               cue_switch_cost_rt_100_icc=rep(NA, length(unique(t1_dvs$breaks))),
-#                               cue_switch_cost_rt_900_icc=rep(NA, length(unique(t1_dvs$breaks))),
-#                               task_switch_cost_rt_100_icc=rep(NA, length(unique(t1_dvs$breaks))),
-#                               task_switch_cost_rt_900_icc=rep(NA, length(unique(t1_dvs$breaks))),
-#                               cue_switch_cost_acc_100_icc=rep(NA, length(unique(t1_dvs$breaks))),
-#                               cue_switch_cost_acc_900_icc=rep(NA, length(unique(t1_dvs$breaks))),
-#                               task_switch_cost_acc_100_icc=rep(NA, length(unique(t1_dvs$breaks))),
-#                               task_switch_cost_acc_900_icc=rep(NA, length(unique(t1_dvs$breaks))))
-# 
-# for(i in 1:length(unique(t1_dvs$breaks))){
-#   cur_break = unique(t1_dvs$breaks)[i]
-#   tmp_t1_dvs = t1_dvs %>% filter(breaks == cur_break)
-#   tmp_t2_dvs = t2_dvs %>% filter(breaks == cur_break)
-#   trial_num_rel_df$breaks[i] = cur_break
-#   trial_num_rel_df$acc_icc[i] = get_icc("acc", tmp_t1_dvs, tmp_t2_dvs)
-#   trial_num_rel_df$avg_rt_error_icc[i] = get_icc("avg_rt_error", tmp_t1_dvs, tmp_t2_dvs)
-#   trial_num_rel_df$std_rt_error_icc[i] = get_icc("std_rt_error", tmp_t1_dvs, tmp_t2_dvs)
-#   trial_num_rel_df$avg_rt_icc[i] = get_icc("avg_rt", tmp_t1_dvs, tmp_t2_dvs)
-#   trial_num_rel_df$std_rt_icc[i] = get_icc("std_rt", tmp_t1_dvs, tmp_t2_dvs)
-#   trial_num_rel_df$missed_percent_icc[i] = get_icc("missed_percent", tmp_t1_dvs, tmp_t2_dvs)
-#   trial_num_rel_df$cue_switch_cost_rt_100_icc[i] = get_icc("cue_switch_cost_rt_100", tmp_t1_dvs, tmp_t2_dvs)
-#   trial_num_rel_df$cue_switch_cost_rt_900_icc[i] = get_icc("cue_switch_cost_rt_900", tmp_t1_dvs, tmp_t2_dvs)
-#   trial_num_rel_df$trial_switch_cost_rt_100_icc[i] = get_icc("task_switch_cost_rt_100", tmp_t1_dvs, tmp_t2_dvs)
-#   trial_num_rel_df$trial_switch_cost_rt_900_icc[i] = get_icc("task_switch_cost_rt_900", tmp_t1_dvs, tmp_t2_dvs)
-#   trial_num_rel_df$cue_switch_cost_acc_100_icc[i] = get_icc("cue_switch_cost_acc_100", tmp_t1_dvs, tmp_t2_dvs)
-#   trial_num_rel_df$cue_switch_cost_acc_900_icc[i] = get_icc("cue_switch_cost_acc_900", tmp_t1_dvs, tmp_t2_dvs)
-#   trial_num_rel_df$trial_switch_cost_acc_100_icc[i] = get_icc("task_switch_cost_acc_100", tmp_t1_dvs, tmp_t2_dvs)
-#   trial_num_rel_df$trial_switch_cost_acc_900_icc[i] = get_icc("task_switch_cost_acc_900", tmp_t1_dvs, tmp_t2_dvs)
-# }
-# rm(i, cur_break, tmp_t1_dvs, tmp_t2_dvs)
-# 
-# trial_num_rel_df$breaks = as.numeric(trial_num_rel_df$breaks)
-# 
-# write.csv(trial_num_rel_df, paste0(retest_data_path, 'trial_num_rel_df_tbt.csv'))
+write.csv(t2_dvs, paste0(retest_data_path, 'Local/t2_tbt_dvs.csv'))
