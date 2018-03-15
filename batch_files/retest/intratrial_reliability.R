@@ -14,7 +14,7 @@ retest_workers = c('s198', 's409', 's473', 's286', 's017', 's092', 's403', 's103
 
 #get only retest subjects
 t1_tbt = t1_tbt[as.character(t1_tbt$worker_id) %in% retest_workers,]
-# t2_tbt = t2_tbt[as.character(t2_tbt$worker_id) %in% retest_workers,]
+t2_tbt = t2_tbt[as.character(t2_tbt$worker_id) %in% retest_workers,]
 
 #dv's
 calc_break_dvs = function(df, breaks=c(seq(0, 440, 10)[c(-1, -45)], 439)){
