@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
 # Script to generate results or plots across results objects
-
+from itertools import combinations
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import cross_val_score
 from selfregulation.utils.plot_utils import beautify_legend
 
 
@@ -66,4 +68,22 @@ def plot_corr_hist(results, colors, reps=100):
 
 
 
+
+def plot_EFA_relationships(results):
+    EFA_results = {k:v.EFA for k,v in results.items()}
+    scores = {k:v.get_scores() for k,v in EFA_results.items()}
+    # quantify relationships using linear regression
+    for name1, name2 in combinations(scores.keys(), 2):
+        scores1 = scores[name1]
+        scores2 = scores[name2]
+        lr = LinearRegression()  
+        cv_score = np.mean(cross_val_score(lr, scores1, scores2, cv=10))
+        print(name1, name2, cv_score)
     
+
+
+
+
+
+
+

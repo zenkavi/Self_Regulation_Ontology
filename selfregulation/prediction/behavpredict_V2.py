@@ -36,7 +36,6 @@ def get_git_revision_short_hash():
 
 class UserSchema(Schema):
     hostname = fields.Str()
-    dataset = fields.Str()
     drop_na_thresh = fields.Integer()
     n_jobs = fields.Integer()
     errors = fields.List(fields.Str())
@@ -112,7 +111,7 @@ class BehavPredict:
     def dump(self):
         schema = UserSchema()
         result = schema.dump(self)
-        return result.data
+        return result
     
     # data manipulation functions
     def binarize_ZI_demog_vars(self,vars=None,replace=False):
