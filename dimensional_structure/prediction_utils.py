@@ -6,7 +6,7 @@ import os
 import pandas as pd
 from selfregulation.prediction.behavpredict_V2 import BehavPredict
 
-def run_prediction(predictors, demographics, output_base, 
+def run_prediction(predictors, demographics, output_base='', 
                    outfile='prediction', save=True,
                    verbose=False, classifier='lasso',
                    shuffle=False, n_jobs=2, imputer="SimpleFill",
