@@ -282,8 +282,6 @@ class BehavPredict:
             clf = TikhonovCV()
         elif self.classifier=='svm':
             clf = svm.LinearSVR()
-        elif self.classifier=='rf':
-            clf = ExtraTreesRegressor()
         else:
             clf = self.classifier
         # run regression
@@ -458,8 +456,6 @@ class BehavPredict:
             clf = TikhonovCV()
         elif self.classifier=='svm':
             clf = svm.LinearSVR()
-        elif self.classifier=='rf':
-            clf = ExtraTreesRegressor()
         else:
             clf = self.classifier
         # set up crossvalidation
