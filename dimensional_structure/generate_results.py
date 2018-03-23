@@ -77,7 +77,7 @@ subsets = [{'name': 'task',
               'regex': '.',
               'factor_names': [],
               'predict': False}]
-classifiers = ['lasso', 'ridge', 'tikhonov']
+classifiers = ['lasso', 'ridge', 'tikhonov', 'svm', 'rf']
 ID = None # ID will be created
 results = None
 # create/run results for each subset

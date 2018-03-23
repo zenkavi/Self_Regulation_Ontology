@@ -67,9 +67,9 @@ def plot_corr_hist(results, colors, reps=100):
     
 
 
+from sklearn.decomposition import PCA
 
-
-def plot_EFA_relationships(results):
+def plot_EFA_relationships(results, colors):
     EFA_results = {k:v.EFA for k,v in results.items()}
     scores = {k:v.get_scores() for k,v in EFA_results.items()}
     # quantify relationships using linear regression
@@ -82,7 +82,34 @@ def plot_EFA_relationships(results):
     
 
 
+    
 
+    # plot
+    # plot task factors in task PCA space
+    pca = PCA(2)
+    task_pca = pca.fit_transform(scores['task'])
+    palettes = ['Reds', 'Blues', 'Greens']
+    all_colors = []
+    # plot scores in task PCA space
+    f, ax = plt.subplots(figsize=[12,8])
+    ax.set_facecolor('white')
+
+    for k,v in scores.items():
+        palette = sns.color_palette(palettes.pop(), n_colors = len(v.columns))
+        all_colors += palette
+        lr = LinearRegression()
+        lr.fit(task_pca, v)
+        for i, coef in enumerate(lr.coef_):
+            if i>=0:
+                plt.plot([0,coef[0]], [0, coef[1]], linewidth=3, 
+                         c=palette[i], label=k+'_'+str(v.columns[i]))
+            else:
+                plt.plot([0,coef[0]], [0, coef[1]], linewidth=3, 
+                         c=colors[color_index])
+    leg = plt.legend(bbox_to_anchor=(.8, .5))
+    frame = leg.get_frame()
+    frame.set_color('black')
+    beautify_legend(leg, all_colors)
 
 
 

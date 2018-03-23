@@ -16,11 +16,12 @@ import subprocess
 import warnings
 
 from sklearn.ensemble import ExtraTreesClassifier,ExtraTreesRegressor
-from sklearn.model_selection import cross_val_score,StratifiedKFold,ShuffleSplit,GridSearchCV
-from sklearn.metrics import roc_auc_score,r2_score,explained_variance_score,mean_absolute_error
-from sklearn.linear_model import (LassoCV,LinearRegression,LogisticRegressionCV,
-                                  Lasso,LogisticRegression,RidgeCV)
+from sklearn.model_selection import cross_val_score,StratifiedKFold,ShuffleSplit
+from sklearn.metrics import roc_auc_score,mean_absolute_error
+from sklearn.linear_model import (LassoCV,LogisticRegressionCV,
+                                  LogisticRegression,RidgeCV)
 from sklearn.preprocessing import StandardScaler
+from sklearn import svm
 from sklearn.utils.multiclass import type_of_target
 
 import fancyimpute
@@ -198,34 +199,36 @@ class BehavPredict:
 
     
     # linear models without cross validation for testing
-    def run_lm(self,v):
+    def run_prediction(self,v):
         """
         compute in-sample r^2/auroc
         """
         imputer=eval('fancyimpute.%s'%self.imputer)
 
         if self.data_models[v]=='binary':
-            return self.run_lm_binary(v,imputer)
+            return self.run_binary(v,imputer)
         else:
-            return self.run_lm_regression(v,imputer)
+            return self.run_regression(v,imputer)
 
-    def run_lm_binary(self,v,imputer):
+    def run_binary(self,v,imputer):
         if self.binary_classifier=='rf':
-            self.binary_clf=ExtraTreesClassifier()
+            binary_clf=ExtraTreesClassifier()
+        elif self.binary_classifier=='svm':
+            binary_clf = svm.LinearSVC()
         elif self.binary_classifier=='lasso':
             if self.lambda_optim is not None:
                 if self.lambda_optim[0]==0:
                     # sklearn uses different coding - 0 will break it
-                    self.binary_clf=LogReg()
+                    binary_clf=LogReg()
 
                 else:
                     if self.verbose:
                         print('using lambda_optim:',self.lambda_optim[0])
-                    self.binary_clf=LogisticRegression(C=self.lambda_optim[0],penalty='l1',solver='liblinear')
+                    binary_clf=LogisticRegression(C=self.lambda_optim[0],penalty='l1',solver='liblinear')
             else:
-                self.binary_clf=LogisticRegressionCV(Cs=100,penalty='l1',solver='liblinear')
+                binary_clf=LogisticRegressionCV(Cs=100,penalty='l1',solver='liblinear')
         else:
-            self.binary_clf = self.binary_classifier
+            binary_clf = self.binary_classifier
 
         Ydata=self.demogdata[v].dropna().copy()
         idx=Ydata.index
@@ -243,8 +246,8 @@ class BehavPredict:
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", message="Data with input dtype int64 was converted to float64 by StandardScaler.")
             Xdata=scale.fit_transform(Xdata)
-        self.binary_clf.fit(Xdata,Ydata)
-        self.pred=self.binary_clf.predict(Xdata)
+        binary_clf.fit(Xdata,Ydata)
+        self.pred=binary_clf.predict(Xdata)
         if numpy.var(self.pred)==0:
             if self.verbose:
                 print('zero variance in predictions')
@@ -252,15 +255,15 @@ class BehavPredict:
         else:
             scores=[roc_auc_score(Ydata,self.pred)]
 
-        if hasattr(self.binary_clf,'feature_importances_'):  # for random forest
-            importances=self.binary_clf.feature_importances_
-        elif hasattr(self.binary_clf,'coef_'):  # for lasso
-            importances=self.binary_clf.coef_
+        if hasattr(binary_clf,'feature_importances_'):  # for random forest
+            importances=binary_clf.feature_importances_
+        elif hasattr(binary_clf,'coef_'):  # for lasso
+            importances=binary_clf.coef_
         if self.verbose:
             print('overfit mean accuracy = %0.3f'%scores[0])
         return scores,importances
 
-    def run_lm_regression(self,v,imputer):
+    def run_regression(self,v,imputer):
         if self.classifier=='rf':
             clf=ExtraTreesRegressor()
         elif self.classifier=='lasso':
@@ -277,6 +280,10 @@ class BehavPredict:
             clf = RidgeCV()    
         elif self.classifier=='tikhonov':
             clf = TikhonovCV()
+        elif self.classifier=='svm':
+            clf = svm.LinearSVR()
+        elif self.classifier=='rf':
+            clf = ExtraTreesRegressor()
         else:
             clf = self.classifier
         # run regression
@@ -354,6 +361,8 @@ class BehavPredict:
             print('using classifier:',self.classifier)
         if self.binary_classifier=='rf':
             clf=ExtraTreesClassifier()
+        elif self.binary_classifier=='svm':
+            clf = svm.LinearSVC()
         elif self.binary_classifier=='lasso':
             clf=LogisticRegressionCV(Cs=100,penalty='l1',solver='liblinear')
         else:
@@ -447,6 +456,10 @@ class BehavPredict:
             clf = RidgeCV()      
         elif self.classifier=='tikhonov':
             clf = TikhonovCV()
+        elif self.classifier=='svm':
+            clf = svm.LinearSVR()
+        elif self.classifier=='rf':
+            clf = ExtraTreesRegressor()
         else:
             clf = self.classifier
         # set up crossvalidation

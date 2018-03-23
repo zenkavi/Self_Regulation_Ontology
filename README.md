@@ -56,7 +56,8 @@ mpath
 * source activate SRO
 * pip install -r requirements1.txt
 * pip install -r requirements2.txt
-* conda install rpy2
+* conda install -r rpy2 --no-update-depenencies
+* conda install -r r-essentials --no-update-depenencies
 
 ## Docker usage
 

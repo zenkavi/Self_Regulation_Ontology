@@ -6,7 +6,7 @@ import os
 import pandas as pd
 from selfregulation.prediction.behavpredict_V2 import BehavPredict
 
-def run_prediction(factor_scores, demographics, output_base, 
+def run_prediction(predictors, demographics, output_base, 
                    outfile='prediction', save=True,
                    verbose=False, classifier='lasso',
                    shuffle=False, n_jobs=2, imputer="SimpleFill",
@@ -14,7 +14,7 @@ def run_prediction(factor_scores, demographics, output_base,
     
     output_dir=os.path.join(output_base,'prediction_outputs')
     
-    bp = BehavPredict(behavdata=factor_scores,
+    bp = BehavPredict(behavdata=predictors,
                       demogdata=demographics,
                       classifier=classifier,
                       output_dir=output_dir,
@@ -26,25 +26,14 @@ def run_prediction(factor_scores, demographics, output_base,
         # run regression into non-null number is found. Should only be run once!
         # but occasionally a nan is returned for some reason
         cv_scores = insample_scores = [np.nan, np.nan]
-        cv_repeats = insample_repeats = 0
-        while pd.isnull(cv_scores[0]) and cv_repeats <= 2:
-            cv_repeats += 1
-            cv_scores, cv_importances = bp.run_crossvalidation(v,nlambda=100)
-        while pd.isnull(insample_scores[0]) and insample_repeats <= 2:
-            insample_repeats += 1
-            insample_scores,_ = bp.run_lm(v)
+        cv_scores, cv_importances = bp.run_crossvalidation(v,nlambda=100)
+        insample_scores,_ = bp.run_prediction(v)
         if verbose:
-            if insample_repeats == 2 or cv_repeats == 2:
-                print('Regressions was repeated var: %s.\n\
-                CV run %s times. Insample run %s times' % (v, 
-                                                           cv_repeats, 
-                                                           insample_repeats))
-            elif insample_repeats > 2 or cv_repeats > 2:
-                print('Regressions FAILED for var: %s.\n\
-                CV run %s times. Insample run %s times' % (v, 
-                                                           cv_repeats, 
-                                                           insample_repeats))
-                
+            print('Predicting %s' % v)
+            if pd.isnull(cv_scores[0]):
+                print('No predictor variance in CV model!')
+            if pd.isnull(insample_scores[0]):
+                print('No predictor variance in insample model!')
         bp.scores[v],bp.importances[v] = cv_scores, cv_importances
         bp.scores_insample[v] = insample_scores
         

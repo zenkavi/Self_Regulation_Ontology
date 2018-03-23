@@ -18,6 +18,14 @@ from selfregulation.utils.plot_utils import (CurvedText, dendroheatmap, format_n
                                              format_variable_names, 
                                              get_dendrogram_color_fun)
 
+# check if plotly exists
+import importlib
+plotly_spec = importlib.util.find_spec("plotly")
+plotly_exists = plotly_spec is not None
+if plotly_exists:
+    import plotly.plotly as py   
+    import plotly.offline as offline
+
 def plot_clusterings(results, plot_dir=None, inp='data', figsize=(50,50),
                      titles=None, show_clusters=True, verbose=False, ext='png'):    
     HCA = results.HCA
@@ -610,8 +618,87 @@ def plot_cluster_factors(results, c, inp='data', ext='png', plot_dir=None):
         save_figure(f, path.join(plot_dir, filename),
                     {'bbox_inches': 'tight'})
         plt.close()
-        
+
+
+# Plotly dependent Sankey plots
+
+def get_relationship(source_cluster, target_clusters):
+    links = {}
+    for DV in source_cluster:
+        target_index = [i for i,c in enumerate(target_clusters) if DV in c][0]
+        links[target_index] = links.get(target_index, 0) + 1
+    return links
+    
+    
+def plot_cluster_sankey(results):
+    if plotly_exists:
+        HCA = results.HCA
+        inputs = [i.split('-')[-1] for i in HCA.results.keys() if 'EFA' in i][::-1]
+        HCA.get_cluster_labels(inputs[0])
+        sources, targets, values = [], [], []
+        source_clusters = HCA.get_cluster_labels(inputs[0])
+        target_clusters = HCA.get_cluster_labels(inputs[1])
+        max_index = len(source_clusters)
+        for i, cluster in enumerate(source_clusters):
+            links = get_relationship(cluster, target_clusters)
+            t, v = zip(*links.items())
+            # adjust target index based on last max index
+            t = [i+max_index for i in t]
+            sources += [i] * len(t)
+            targets += t
+            values += v
+        sankey_df = pd.DataFrame({'Source': sources,
+                                 'Target': targets,
+                                 'Value': values})
             
+            
+    
+        cs = sns.color_palette('hls', len(source_clusters)).as_hex()
+        colors = [cs[s] for s in sources]
+        sankey_df = sankey_df.assign(Color=colors)
+        
+        
+        HCA.get_cluster_labels('EFA5')
+        data_trace = dict(
+            type='sankey',
+            domain = dict(
+              x =  [0,1],
+              y =  [0,1]
+            ),
+            orientation = "h",
+            valueformat = ".0f",
+            node = dict(
+              pad = 10,
+              thickness = 30,
+              line = dict(
+                color = "black",
+                width = 0.5
+              ),
+              label = sankey_df['Source'],
+              color = sankey_df['Color']
+            ),
+            link = dict(
+              source = sankey_df['Source'].dropna(axis=0, how='any'),
+              target = sankey_df['Target'].dropna(axis=0, how='any'),
+              value = sankey_df['Value'].dropna(axis=0, how='any'),
+              color = sankey_df['Color']
+          )
+        )
+        
+        layout =  dict(
+            title = "Test",
+            height = 772,
+            width = 950,
+            font = dict(
+              size = 10
+            ),    
+        )
+        fig = dict(data=[data_trace], layout=layout)
+        py.iplot(fig, validate=True)
+    else:
+        print("Plotly wasn't found, can't plot!")
+    
+
 def plot_HCA(results, plot_dir=None, verbose=False, ext='png'):
     c = results.EFA.results['num_factors']
     # plots, woo
