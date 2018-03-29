@@ -49,7 +49,7 @@ worker_completion_loc = '/mnt/OAK/behavioral_data/admin/worker_counts.json'
 worker_completions = json.load(open(worker_completion_loc, 'r'))
 """
 with sns.plotting_context('poster'):
-    save_dir = path.join(base_dir, 'Data', 'Plots', 'worker_completions.%s' % ext)
+    save_dir = path.join(base_dir, 'Results', 'data_collection', 'Plots', 'worker_completions.%s' % ext)
     completion_rate = np.mean(np.array(list(worker_completions.values())) ==63)
     completion_rate = format_num(completion_rate*100, 1)
     analyzed_rate = 522/len(worker_completions)
@@ -90,7 +90,7 @@ Task_N = len(retest_data)-Survey_N
 
 # box plot
 colors = sns.color_palette('Blues_d',3) 
-save_dir = path.join(base_dir, 'Data', 'Plots', 'ICC_distplot.%s' % ext)
+save_dir = path.join(base_dir, 'Results', 'data_collection', 'Plots', 'ICC_distplot.%s' % ext)
 f = plt.figure(figsize=(12,8))
 # plot boxes
 box_ax = f.add_axes([0,0,1,.6]) 
