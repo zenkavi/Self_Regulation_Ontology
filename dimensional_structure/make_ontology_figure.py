@@ -7,6 +7,7 @@ import svgutils.transform as sg
 from dimensional_structure.cross_results_plots import plot_corr_hist
 from dimensional_structure.HCA_plots import plot_dendrogram, plot_subbranches
 from selfregulation.utils.result_utils import load_results
+from selfregulation.utils.utils import get_recent_dataset
 
 # load data
 # parse arguments
@@ -15,8 +16,10 @@ parser.add_argument('-dataset', default=None)
 args = parser.parse_args()
 
 datafile = args.dataset
+if datafile == None:
+    datafile = get_recent_dataset()
 results = load_results(datafile)
-plot_file = path.dirname(results['task'].plot_file)
+plot_file = path.dirname(results['task'].plot_dir)
 
 # make histogram plot
 colors = sns.color_palette('Blues_d',3)[0:2] + sns.color_palette('Reds_d',2)[:1]
@@ -69,12 +72,12 @@ fig5 = sg.from_mpl(cluster_figs[1], {})
 
 #create new SVG figure
 # set height and width based on constituent plots
-size1 = [int(i[:-2]) for i in fig1.get_size()]
-size2 = [int(i[:-2]) for i in fig2.get_size()]
+size1 = [float(i[:-2]) for i in fig1.get_size()]
+size2 = [float(i[:-2]) for i in fig2.get_size()]
 
 width1 = max([size1[0], size2[0]]) 
-width2 = int(fig3.get_size()[0])
-width3 = int(fig4.get_size()[0])
+width2 = float(fig3.get_size()[0])
+width3 = float(fig4.get_size()[0])
 wpad = (width1 + width2)*.02
 width = width1 + width2 + wpad
 
