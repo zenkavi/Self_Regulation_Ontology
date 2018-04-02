@@ -642,6 +642,7 @@ class Results(EFA_Analysis, HCA_Analysis):
             targets.append(('demo_raw', self.demographics))
         for name, target in targets:
             # predicting using best EFA
+            if verbose: print('Predicting using factor scores')
             run_prediction(factor_scores, 
                            target, 
                            self.output_dir,
@@ -650,6 +651,7 @@ class Results(EFA_Analysis, HCA_Analysis):
                            classifier=classifier, 
                            verbose=verbose)
             # predict using raw variables
+            if verbose: print('Predicting using raw data')
             run_prediction(raw_data, 
                            target, 
                            self.output_dir,

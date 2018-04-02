@@ -69,7 +69,17 @@ acc_columns = [c.replace('hddm_drift','acc') for c in hddm_contrasts]
 acc_contrasts = pd.DataFrame()
 for c in acc_columns:
     acc_contrasts = pd.concat([acc_contrasts, data.filter(regex=c)], axis=1)
-    
+
+# get EZ contrasts
+EZ_columns = [c.replace('hddm','EZ') for c in hddm_contrasts]
+EZ_contrasts = pd.DataFrame()
+for c in EZ_columns:
+    EZ_contrasts = pd.concat([EZ_contrasts, data.filter(regex=c)], axis=1)
+
+# ***********************************************************************
+    # Plot DDM differences vs rt and accuracy
+# ***********************************************************************
+
 cols = 3
 rows = math.ceil(len(tasks)*cols/cols)
 f, axes = plt.subplots(rows, cols, figsize=(cols*8, rows*6))
@@ -83,5 +93,66 @@ plot_vars(tasks, acc_contrasts, acc_axes, xlabel='Accuracy')
 
 # save
 save_dir = path.join(base_dir, 'Results', 'replication', 'Plots', 'DDM_rt_effects.%s' % ext)
+f.savefig(save_dir, dpi=300, bbox_inches='tight')
+plt.close()
+
+# ***********************************************************************
+    # Plot drift rate vs difference scores
+# ***********************************************************************
+cols = 3
+rows = math.ceil(len(hddm_contrasts.columns)/cols)
+f, axes = plt.subplots(rows, cols, figsize=(cols*8, rows*6))
+axes = f.get_axes()
+index = 0
+for column, contrast in hddm_contrasts.iteritems():
+    base_drift_column = column.split('.')[0]+'.hddm_drift'
+    base_drift = data.loc[:,base_drift_column]
+    sns.regplot(base_drift, contrast, ax=axes[index])
+    axes[index].set_xlabel(base_drift_column, fontsize=20)
+    axes[index].set_ylabel(column, fontsize=16)
+    index+=1
+plt.subplots_adjust(hspace=.6)
+# save
+save_dir = path.join(base_dir, 'Results', 'replication', 'Plots', 'HDDM_difference_vs_drift.%s' % ext)
+f.savefig(save_dir, dpi=300, bbox_inches='tight')
+plt.close()  
+# ***********************************************************************
+    # Plot rt vs difference scores
+# ***********************************************************************
+cols = 3
+rows = math.ceil(len(hddm_contrasts.columns)/cols)
+f, axes = plt.subplots(rows, cols, figsize=(cols*8, rows*6))
+axes = f.get_axes()
+index = 0
+for column, contrast in rt_contrasts.iteritems():
+    base_drift_column = column.split('.')[0]+'.avg_rt'
+    base_drift = data.loc[:,base_drift_column]
+    sns.regplot(base_drift, contrast, ax=axes[index])
+    axes[index].set_xlabel(base_drift_column, fontsize=20)
+    axes[index].set_ylabel(column, fontsize=16)
+    index+=1
+plt.subplots_adjust(hspace=.6)
+# save
+save_dir = path.join(base_dir, 'Results', 'replication', 'Plots', 'RT_difference_vs_drift.%s' % ext)
+f.savefig(save_dir, dpi=300, bbox_inches='tight')
+plt.close()   
+# ***********************************************************************
+    # Plot EZ vs difference scores
+# ***********************************************************************
+cols = 3
+rows = math.ceil(len(hddm_contrasts.columns)/cols)
+f, axes = plt.subplots(rows, cols, figsize=(cols*8, rows*6))
+axes = f.get_axes()
+index = 0
+for column, contrast in EZ_contrasts.iteritems():
+    base_drift_column = column.split('.')[0]+'.EZ_drift'
+    base_drift = data.loc[:,base_drift_column]
+    sns.regplot(base_drift, contrast, ax=axes[index])
+    axes[index].set_xlabel(base_drift_column, fontsize=20)
+    axes[index].set_ylabel(column, fontsize=16)
+    index+=1
+plt.subplots_adjust(hspace=.6)
+# save
+save_dir = path.join(base_dir, 'Results', 'replication', 'Plots', 'EZ_difference_vs_drift.%s' % ext)
 f.savefig(save_dir, dpi=300, bbox_inches='tight')
 plt.close()

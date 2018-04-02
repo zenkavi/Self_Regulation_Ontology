@@ -86,9 +86,13 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
     if target_order is None:
         target_order = predictions.keys()
     # get prediction success
-    r2s = [(k,predictions[k]['scores_cv'][0]) for k in target_order]
-    insample_r2s = [(k, predictions[k]['scores_insample'][0]) for k in target_order]
-    shuffled_r2s = [(k, shuffled_predictions[k]['scores_cv'][0]) for k in target_order]
+    r2s = [[k,predictions[k]['scores_cv'][0]] for k in target_order]
+    insample_r2s = [[k, predictions[k]['scores_insample'][0]] for k in target_order]
+    shuffled_r2s = [[k, shuffled_predictions[k]['scores_cv'][0]] for k in target_order]
+    # convert nans to 0
+    r2s = [(i, k) if k==k else (i,0) for i, k in r2s]
+    insample_r2s = [(i, k) if k==k else (i,0) for i, k in insample_r2s]
+    shuffled_r2s = [(i, k) if k==k else (i,0) for i, k in shuffled_r2s]
     # plot
     fig = plt.figure(figsize=figsize)
     # plot bars
@@ -197,6 +201,7 @@ def plot_prediction_comparison(results, figsize=(14,8), dpi=300, plot_dir=None):
             prediction_object = pickle.load(open(filey, 'rb'))
             name = prediction_object['info']['classifier']
             R2 = [i['scores_cv'][0] for i in prediction_object['data'].values()]
+            R2 = np.nan_to_num(R2, 0)
             R2s[feature+'_'+name] = R2
         
 
