@@ -171,7 +171,8 @@ class EFA_Analysis:
         if verbose:
                 print('Best Components: ', best_cs)
     
-    def get_loading(self, c=None, bootstrap=False, recompute=False, copy=True):
+    def get_loading(self, c=None, bootstrap=False, rotate='oblimin',
+                    recompute=False, copy=True):
         """ Return the loading for an EFA solution at the specified c """
         if c is None:
             c = self.results['num_factors']
@@ -188,7 +189,8 @@ class EFA_Analysis:
                 return self.results['factor_tree'][c]
         else:
             print('No %s factor solution computed yet! Computing...' % c)
-            fa, output = psychFA(self.data, c, method='ml', n_iter=n_iter)
+            fa, output = psychFA(self.data, c, method='ml', rotate=rotate,
+                                 n_iter=n_iter)
             loadings = get_loadings(output, labels=self.data.columns)
             self.results['factor_tree'][c] = loadings
             self.results['factor_tree_Rout'][c] = fa
