@@ -231,7 +231,6 @@ def get_dendrogram_color_fun(Z, labels, clusters, color_palette=sns.hls_palette)
       c1, c2 = (link_cols[x] if x > len(Z) else D_leaf_colors[x]
         for x in i12)
       link_cols[i+1+len(Z)] = c1 if c1 == c2 else dflt_col
-    
     return lambda x: link_cols[x], color_palette
 
 def heatmap(df):

@@ -49,7 +49,16 @@ dvs.drop(['condition_sensitivity_hddm_drift', 'condition_sensitivity_hddm_thresh
 dvs.to_json(behav_path)
 
 # larger update
-
+task = 'local_global_letter'
+subset = 'retest'
+behav_path = '/mnt/OAK/mturk_%s_output/%s_mturk_%s_DV.json' % (subset, task, subset)
+fix_path = '/mnt/OAK/mturk_%s_fix/%s_mturk_%s_DV.json' % (subset, task, subset)
+dvs = pd.read_json(behav_path)
+fix_dvs = pd.read_json(fix_path)
+missing = set(fix_dvs)-set(dvs)
+dvs = pd.concat([dvs, fix_dvs.loc[:, missing]], axis=1)
+dvs.sort_index(1, inplace=True)
+dvs.to_json(behav_path)
 
 # update
 for subset in ['mturk_complete', 'mturk_retest']:
