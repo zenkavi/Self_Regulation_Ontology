@@ -332,7 +332,7 @@ def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=False,
 
     for name, clustering in clusterings:
         if titles is None:
-            title = subset.title() + " " + name.split('-')[1] + ' metric-' + HCA.dist_metric
+            title = subset.title() + " Sub-Metric Structure"
         else:
             title=titles.pop(0)
         # extract cluster vars
@@ -347,16 +347,19 @@ def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=False,
         link_function, colors = get_dendrogram_color_fun(link, clustering['reorder_vec'],
                                                          clustering['labels'])
         # set up axes' size based on orientation
+        heatmap_width = ordered_loading.shape[1]*.03
+        heat_size = [.05, heatmap_width]
+        dendro_size=[np.sum(heat_size), .3]
         if orientation == 'horizontal':
-            dendro_size = [0,.4,.95,.45]
-            heatmap_size = [0,.05,.95,.35]
+            dendro_size = [0,dendro_size[0], .95, dendro_size[1]]
+            heatmap_size = [0,heat_size[0],.95,heat_size[1]]
             cbar_size = [.97,.1,.02,.25]
             cbar_orientation='vertical'
             dendro_orient='top'
             ordered_loading = ordered_loading.T
         elif orientation == 'vertical':
-            dendro_size = [.4, 0, .45, .93]
-            heatmap_size = [.05, 0, .35, .93]
+            dendro_size = [dendro_size[0], 0, dendro_size[1], .93]
+            heatmap_size = [heat_size[0], 0, heat_size[1], .93]
             cbar_size = [.1,.97,.25,.02]
             cbar_orientation='horizontal'
             dendro_orient='right'
@@ -389,7 +392,7 @@ def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=False,
                 ax3.set_yticklabels([format_num(-max_val), 0, format_num(max_val)])
             else:
                 ax3.set_xticklabels([format_num(-max_val), 0, format_num(max_val)])
-            ax3.tick_params(labelsize=figsize[0]*1.5)
+            ax3.tick_params(labelsize=figsize[0]*1.2)
             # add lines to heatmap to distinguish clusters
             if break_lines == True:
                 xlim = ax2.get_xlim(); 
@@ -406,10 +409,10 @@ def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=False,
                                linewidth=2, colors=[.5,.5,.5])
             # change axis properties based on orientation
             if orientation == 'horizontal':
-                ax2.tick_params(labelsize=figsize[0]*6/c)
+                ax2.tick_params(labelsize=figsize[0]*heat_size[1]*25/c)
             elif orientation == 'vertical':
                 ax1.invert_yaxis()
-                ax2.tick_params(labelsize=figsize[1]*6/c)
+                ax2.tick_params(labelsize=figsize[1]*heat_size[1]*25/c)
             # add title
             ax1.set_title(title, fontsize=40, y=1.05)
             ax1.get_yaxis().set_visible(False)
