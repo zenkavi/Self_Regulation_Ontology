@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
 import numpy as np
 from os import path
 import pandas as pd
@@ -12,7 +13,7 @@ from selfregulation.utils.result_utils import load_results
 from selfregulation.utils.plot_utils import format_num
 
 # load data
-results = load_results('Complete_03-29-2018')
+results = load_results('Complete_02-03-2018')
 data = results['task'].data
 out = results['task'].EFA.get_loading()
 task_subset = pd.concat([
@@ -38,8 +39,6 @@ color_lookup = {'drift': colors[0],
                 'non-decision': colors[2],
                 'SSRT': colors[3]}
 f = plt.figure(figsize=(12,14))
-back = f.add_axes([0,0,1,1])
-back.axis('off')
 task1_ax = f.add_axes([0, .355, .2, .15])
 task2_ax = f.add_axes([0, .555, .2, .15])
 
@@ -52,7 +51,9 @@ loading_ax2 = f.add_axes([.625,.55,.25,.2])
 participant_mds = f.add_axes([.25,0,.25,.25]) 
 loading_mds = f.add_axes([.625,0,.25,.25]) 
 cbar_ax = f.add_axes([.92,.4,.03,.3]) 
-
+back = f.add_axes([0,0,1,1])
+back.axis('off')
+back.patch.set_alpha(0)
 # label 
 back.text(.05, .55, 'Measure', horizontalalignment='center', 
           verticalalignment='center',
@@ -60,10 +61,10 @@ back.text(.05, .55, 'Measure', horizontalalignment='center',
           fontweight='bold', rotation=90)
 back.text(.22, .77, 'Sub-Metric', horizontalalignment='center', fontsize=20,
           fontweight='bold')
-task1_ax.text(.5,.5, 'Stop Signal', fontsize=15,
+task1_ax.text(.5,.5, 'Choice Reaction Time', fontsize=15,
               horizontalalignment='center', verticalalignment='center',
               rotation=90)
-task2_ax.text(.5,.5, 'Choice Reaction Time', fontsize=15,
+task2_ax.text(.5,.5, 'Stop Signal', fontsize=15,
               horizontalalignment='center', verticalalignment='center',
               rotation=90)
 
@@ -88,7 +89,7 @@ for task_i in range(len(tasks)):
         else:
             name = 'SSRT'
         tick_names.append(name)
-        plot_vals = scale(vals[20:45])*.25+i*1.5
+        plot_vals = scale(vals[20:40])*.25+i*1.5
         ax.hlines(i*1.5, 0, len(plot_vals)*.8, alpha=.6,
                   linestyle='--', color=color_lookup[name])
         scatter_colors = [list(color_lookup[name])+[alpha] for alpha in np.linspace(1,0, len(plot_vals))]
@@ -125,6 +126,10 @@ for task_i in range(len(tasks)):
 participant_ax1.spines['bottom'].set_visible(True)
 participant_ax1.set_xlabel('Participant (n=522)', fontsize=15)
 loading_ax1.set_xlabel('Factor Loading', fontsize=15, labelpad=10)
+back.add_patch(Rectangle((.3385,.36), width=.011, height=.39, 
+                         facecolor="none", edgecolor='grey', linewidth=2))
+back.text(.3385, .755, 'One Participant', fontsize=10, 
+          horizontalalignment='center', color='grey')
 
 
 # arrows
