@@ -20,20 +20,19 @@ task_subset = pd.concat([
     out.filter(regex='^stop_signal', axis=0)[1:5]])
 
 task_subset_data = data.loc[:, task_subset.index]
-task_subset_data = pd.DataFrame(scale(task_subset_data), 
-                                 index=task_subset_data.index,
-                                 columns=task_subset_data.columns)
+
 var_subset =  pd.concat([
     out.filter(regex='\.hddm_drift$', axis=0),
-    out.filter(regex='\.hddm_thresh$', axis=0),
+    out.filter(regex='\.hddm_thresh', axis=0),
     out.filter(regex='\.hddm_non_decision$', axis=0),
     out.filter(regex='\.SSRT', axis=0)], axis=0)
 var_subset_data = data.loc[:, var_subset.index]
-var_subset_data = pd.DataFrame(scale(var_subset_data), 
-                                 index=var_subset_data.index,
-                                 columns=var_subset_data.columns)   
 
-colors = ['r', 'g', 'k', 'm']
+
+colors = [(1.0, 0.0, 0.0), 
+          (0.0, 0.5, 0.0), 
+          (0.0, 0.75, 0.75), 
+          (0.75, 0.0, 0.75)]
 color_lookup = {'drift': colors[0],
                 'thresh': colors[1], 
                 'non-decision': colors[2],
@@ -41,11 +40,11 @@ color_lookup = {'drift': colors[0],
 f = plt.figure(figsize=(12,14))
 back = f.add_axes([0,0,1,1])
 back.axis('off')
-task1_ax = f.add_axes([0, .375, .2, .15])
-task2_ax = f.add_axes([0, .575, .2, .15])
+task1_ax = f.add_axes([0, .355, .2, .15])
+task2_ax = f.add_axes([0, .555, .2, .15])
 
-participant_ax1 = f.add_axes([.25,.355,.25,.15]) 
-participant_ax2 = f.add_axes([.25,.55,.25,.2]) 
+participant_ax1 = f.add_axes([.25,.355,.28,.15]) 
+participant_ax2 = f.add_axes([.25,.55,.28,.2]) 
 
 loading_ax1 = f.add_axes([.625,.355,.25,.15]) 
 loading_ax2 = f.add_axes([.625,.55,.25,.2]) 
@@ -55,14 +54,16 @@ loading_mds = f.add_axes([.625,0,.25,.25])
 cbar_ax = f.add_axes([.92,.4,.03,.3]) 
 
 # label 
-back.text(0, .77, 'Measure', horizontalalignment='center', fontsize=17,
+back.text(.05, .55, 'Measure', horizontalalignment='center', 
+          verticalalignment='center',
+          fontsize=20,
+          fontweight='bold', rotation=90)
+back.text(.22, .77, 'Sub-Metric', horizontalalignment='center', fontsize=20,
           fontweight='bold')
-back.text(.22, .77, 'Sub-Metric', horizontalalignment='center', fontsize=17,
-          fontweight='bold')
-task1_ax.text(0,.5, 'Stop Signal', fontsize=15,
+task1_ax.text(.5,.5, 'Stop Signal', fontsize=15,
               horizontalalignment='center', verticalalignment='center',
               rotation=90)
-task2_ax.text(0,.5, 'Choice Reaction Time', fontsize=15,
+task2_ax.text(.5,.5, 'Choice Reaction Time', fontsize=15,
               horizontalalignment='center', verticalalignment='center',
               rotation=90)
 
@@ -74,7 +75,6 @@ participant_axes = [participant_ax1, participant_ax2]
 loading_axes = [loading_ax1, loading_ax2]
 for task_i in range(len(tasks)):
     tick_names = []
-
     # ***** plot participants on two tasks ***** 
     ax = participant_axes[task_i]
     plot_data = task_subset_data.filter(regex=tasks[task_i], axis=1)
@@ -88,11 +88,11 @@ for task_i in range(len(tasks)):
         else:
             name = 'SSRT'
         tick_names.append(name)
-        vals = pd.rolling_mean(vals, 20)
-        plot_vals = vals[::40]*.75+i
-        ax.hlines(i, 0, len(plot_vals), linestyle='--', color=color_lookup[name])
-        ax.plot(range(len(plot_vals)), plot_vals,
-                'o', linewidth=3, color=color_lookup[name])
+        plot_vals = scale(vals[20:45])*.25+i*1.5
+        ax.hlines(i*1.5, 0, len(plot_vals)*.8, alpha=.6,
+                  linestyle='--', color=color_lookup[name])
+        scatter_colors = [list(color_lookup[name])+[alpha] for alpha in np.linspace(1,0, len(plot_vals))]
+        ax.scatter(range(len(plot_vals)), plot_vals, color=scatter_colors)
     # make x ticks invisible
     ax.set_xticklabels('')
     ax.tick_params(axis='both', length=0)
@@ -102,7 +102,7 @@ for task_i in range(len(tasks)):
     ax.spines['bottom'].set_visible(False)
     ax.spines['left'].set_visible(False)
     # add tick labels
-    ax.set_yticks(range(len(tick_names)))
+    ax.set_yticks([x*1.5 for x in range(len(tick_names))])
     ax.set_yticklabels(tick_names, fontsize=15)
     # change tick color
     tick_colors = [color_lookup[name] for name in tick_names]
@@ -119,12 +119,14 @@ for task_i in range(len(tasks)):
     cbar_ax.set_yticklabels([format_num(-max_val), 0, format_num(max_val)])
     cbar_ax.tick_params(labelsize=15)
     for i in range(loading_data.shape[0]):
-        loading_axes[task_i].hlines(i, -.1, 5.1, color='white', linewidth=3)
+        loading_axes[task_i].hlines(i, -.1, 5.1, color='white', linewidth=4)
     
 # add labels and arrows
 participant_ax1.spines['bottom'].set_visible(True)
 participant_ax1.set_xlabel('Participant (n=522)', fontsize=15)
 loading_ax1.set_xlabel('Factor Loading', fontsize=15, labelpad=10)
+
+
 # arrows
 back.arrow(.52, .525, .05, 0, width=.005, facecolor='k')
 back.arrow(.375, .31, 0, -.02, width=.005, facecolor='k')
@@ -145,7 +147,8 @@ space_distances = squareform(abs_pdist(var_subset_data.T))
 mds = MDS(dissimilarity='precomputed')
 mds_out = mds.fit_transform(space_distances)
 participant_mds.scatter(mds_out[:,0], mds_out[:,1], 
-            s=200,
+            s=220,
+            marker='h',
             facecolors=colors,
             edgecolors='white')
 participant_mds.set_xticklabels(''); participant_mds.set_yticklabels('')
@@ -156,7 +159,8 @@ space_distances = squareform(abs_pdist(var_subset))
 mds = MDS(dissimilarity='precomputed')
 mds_out = mds.fit_transform(space_distances)
 loading_mds.scatter(mds_out[:,0], mds_out[:,1], 
-            s=200,
+            s=220,
+            marker='h',
             facecolors=colors,
             edgecolors='white')
 loading_mds.set_xticklabels(''); loading_mds.set_yticklabels('')
