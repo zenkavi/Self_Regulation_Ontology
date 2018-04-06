@@ -191,8 +191,6 @@ for i, label in enumerate(loading_distances.index):
     mds_colors[i] = color_lookup[name]
 # plot raw MDS
 np.random.seed(700)
-f, axes = plt.subplots(1,2, figsize=(10,5))
-participant_mds, loading_mds = axes
 mds = MDS(dissimilarity='precomputed')
 mds_out = mds.fit_transform(participant_distances)
 participant_mds.scatter(mds_out[:,0], mds_out[:,1], 
