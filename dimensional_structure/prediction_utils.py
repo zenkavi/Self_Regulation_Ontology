@@ -9,8 +9,8 @@ from selfregulation.prediction.behavpredict_V2 import BehavPredict
 def run_prediction(predictors, demographics, output_base='', 
                    outfile='prediction', save=True,
                    verbose=False, classifier='lasso',
-                   shuffle=False, n_jobs=2, imputer="SimpleFill",
-                   smote_threshold=.05, freq_threshold=.1):
+                   shuffle=False, n_jobs=2, imputer="SoftImpute",
+                   smote_cutoff=.3, freq_threshold=.1):
     
     output_dir=os.path.join(output_base,'prediction_outputs')
     
@@ -19,7 +19,11 @@ def run_prediction(predictors, demographics, output_base='',
                       classifier=classifier,
                       output_dir=output_dir,
                       outfile=outfile,
-                      shuffle=shuffle)
+                      shuffle=shuffle,
+                      n_jobs=n_jobs,
+                      imputer=imputer,
+                      smote_cutoff=smote_cutoff,
+                      freq_threshold=freq_threshold)
     bp.binarize_ZI_demog_vars()
     vars_to_test=[v for v in bp.demogdata.columns if not v in bp.skip_vars]
     for v in vars_to_test:

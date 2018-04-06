@@ -112,6 +112,8 @@ class BehavPredict:
     def dump(self):
         schema = UserSchema()
         result = schema.dump(self)
+        if len(result)==2:
+            result = result[0]
         return result
     
     # data manipulation functions

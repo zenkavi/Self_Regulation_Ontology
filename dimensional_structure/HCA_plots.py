@@ -103,7 +103,8 @@ def plot_clustering_similarity(results, plot_dir=None, verbose=False, ext='png')
         save_figure(dist_fig, path.join(plot_dir, 
                                    'distance_similarity_across_measures.%s' % ext),
                     {'bbox_inches': 'tight'})
-        plt.close()
+        plt.close(clust_fig)
+        plt.close(dist_fig)
     
     if verbose:
         # assess relationship between two measurements

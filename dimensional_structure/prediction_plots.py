@@ -201,7 +201,7 @@ def plot_prediction_comparison(results, figsize=(14,8), dpi=300, plot_dir=None):
             prediction_object = pickle.load(open(filey, 'rb'))
             name = prediction_object['info']['classifier']
             R2 = [i['scores_cv'][0] for i in prediction_object['data'].values()]
-            R2 = np.nan_to_num(R2, 0)
+            R2 = np.nan_to_num(R2)
             R2s[feature+'_'+name] = R2
         
 

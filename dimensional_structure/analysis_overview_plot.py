@@ -24,58 +24,39 @@ task_subset = pd.concat([
 
 task_subset_data = data.loc[:, task_subset.index]
 
-var_subset =  pd.concat([
-    out.filter(regex='\.hddm_drift$', axis=0),
-    out.filter(regex='\.hddm_thresh', axis=0),
-    out.filter(regex='\.hddm_non_decision$', axis=0),
-    out.filter(regex='\.SSRT', axis=0)], axis=0)
-var_subset_data = data.loc[:, var_subset.index]
-
-
 # Ridiculous analysis overview plot
-colors = [(1.0, 0.0, 0.0), 
-          (0.0, 0.5, 0.0), 
-          (0.0, 0.75, 0.75), 
-          (0.75, 0.0, 0.75)]
+colors = [[.7, 0.0, 0.0], 
+          [0.0, 0.5, 0.0], 
+          [0.0, 0.75, 0.75], 
+          [0.75, 0.0, 0.75]]
 color_lookup = {'drift': colors[0],
                 'thresh': colors[1], 
                 'non-decision': colors[2],
                 'SSRT': colors[3]}
 f = plt.figure(figsize=(12,12))
-task1_ax = f.add_axes([0, .555, .2, .15])
+task1_ax = f.add_axes([0, .555, .2, .16])
 task2_ax = f.add_axes([0, .755, .2, .2])
 task1_ax.axis('off'); task2_ax.axis('off')
 
-participant_ax1 = f.add_axes([.25,.555,.28,.15]) 
+participant_ax1 = f.add_axes([.25,.555,.28,.16]) 
 participant_ax2 = f.add_axes([.25,.75,.28,.2]) 
 
-loading_ax1 = f.add_axes([.625,.555,.25,.15]) 
-loading_ax2 = f.add_axes([.625,.75,.25,.2]) 
+loading_ax1 = f.add_axes([.625,.555,.25,.146]) 
+loading_ax2 = f.add_axes([.625,.75,.25,.189]) 
 
-participant_distance = f.add_axes([.3,.32,.15,.15]) 
-loading_distance = f.add_axes([.675,.32,.15,.15]) 
+participant_distance = f.add_axes([.3,.32,.16,.16]) 
+loading_distance = f.add_axes([.675,.32,.16,.16]) 
 #participant_distance.axis('off'); loading_distance.axis('off')
-
 participant_mds = f.add_axes([.25,0,.25,.25]) 
 loading_mds = f.add_axes([.625,0,.25,.25]) 
+# color bars for heatmaps
 cbar_ax = f.add_axes([.92,.6,.03,.3]) 
+cbar_ax2 = f.add_axes([.86,.34,.02,.12]) 
+# set background
 back = f.add_axes([0,0,1,1])
 back.axis('off')
 back.patch.set_alpha(0)
-# label 
-back.text(.05, .75, 'Measure', horizontalalignment='center', 
-          verticalalignment='center',
-          fontsize=20,
-          fontweight='bold', rotation=90)
-back.text(.22, .99, 'Sub-Metric', horizontalalignment='center', fontsize=20,
-          fontweight='bold')
-task1_ax.text(.5,.7, 'Choice Reaction Time', fontsize=15,
-              horizontalalignment='center', verticalalignment='center',
-              rotation=90)
-task2_ax.text(.5,.7, 'Stop Signal', fontsize=15,
-              horizontalalignment='center', verticalalignment='center',
-              rotation=90)
-
+back.set_xlim([0,1]); back.set_ylim([0,1])
 
 tasks = sorted(np.unique([i.split('.')[0] for i in task_subset.index]))
 task_axes = [task1_ax, task2_ax]
@@ -99,8 +80,10 @@ for task_i in range(len(tasks)):
             name = 'SSRT'
         tick_names.append(name)
         plot_vals = scale(vals[20:40])*.25+i*1.5
+        # add mean line
         ax.hlines(i*1.5, 0, len(plot_vals)*.8, alpha=.6,
                   linestyle='--', color=color_lookup[name])
+        # plot values
         scatter_colors = [list(color_lookup[name])+[alpha] for alpha in np.linspace(1,0, len(plot_vals))]
         ax.scatter(range(len(plot_vals)), plot_vals, color=scatter_colors)
     # make x ticks invisible
@@ -113,7 +96,7 @@ for task_i in range(len(tasks)):
     ax.spines['left'].set_visible(False)
     # add tick labels
     ax.set_yticks([x*1.5 for x in range(len(tick_names))])
-    ax.set_yticklabels(tick_names, fontsize=15)
+    ax.set_yticklabels(tick_names, fontsize=16)
     # change tick color
     tick_colors = [color_lookup[name] for name in tick_names]
     [t.set_color(i) for (i,t) in
@@ -128,43 +111,14 @@ for task_i in range(len(tasks)):
                 yticklabels=False, xticklabels=False,
                 cbar_ax=cbar_ax, vmax =  max_val, vmin = -max_val,
                 cbar_kws={'ticks': [-max_val, 0, max_val]},
-                cmap=sns.diverging_palette(220,15,n=100, as_cmap=True))
+                cmap=sns.diverging_palette(220,16,n=100, as_cmap=True))
     # format cbar
     cbar_ax.set_yticklabels([format_num(-max_val, 1), 0, format_num(max_val, 1)])
     cbar_ax.tick_params(axis='y', length=0)
-    cbar_ax.tick_params(labelsize=15)
+    cbar_ax.tick_params(labelsize=16)
     for i in range(loading_data.shape[0]):
         loading_axes[task_i].hlines(i, -.1, 5.1, color='white', linewidth=4)
     
-# add labels 
-participant_ax1.spines['bottom'].set_visible(True)
-participant_ax1.set_xlabel('Participant (n=522)', fontsize=15)
-loading_ax1.set_xlabel('Factor Loading', fontsize=15, labelpad=10)
-
-# loading ticks
-loading_ax2.xaxis.set_ticks_position('top')
-loading_ax2.set_xticks(np.arange(.5,5.5,1))
-loading_ax2.set_xticklabels(['Factor %s' % i for i in range(1,nfactors+1)],
-                            rotation=45, ha='left', fontsize=14)
-
-# participant box
-back.add_patch(Rectangle((.3385,.56), width=.013, height=.39, 
-                         facecolor="none", edgecolor='grey', linewidth=1.5))
-back.text(.3385, .96, 'One Participant', fontsize=12, 
-          horizontalalignment='center', color='grey')
-
-
-# arrows
-back.arrow(.52, .725, .05, 0, width=.005, facecolor='k')
-# from data to heatmap
-back.arrow(.375, .51, 0, -.01, width=.004, facecolor='k')
-back.arrow(.75, .51, 0, -.01, width=.004, facecolor='k')
-# from heatmap to MDS
-back.arrow(.375, .31, 0, -.01, width=.004, facecolor='k')
-back.arrow(.75, .31, 0, -.01, width=.004, facecolor='k')
-back.text(.567, .24, 'MDS Projection', fontsize=24, 
-          horizontalalignment='center')
-
 # ****************************************************************************
 # Distance Matrices
 # ****************************************************************************
@@ -174,33 +128,45 @@ loading_distances = results['task'].HCA.results['clustering_input-EFA5']['cluste
 sns.heatmap(participant_distances, ax=participant_distance,
             xticklabels=False, yticklabels=False, square=True, cbar=False)
 sns.heatmap(loading_distances, ax=loading_distance,
-            xticklabels=False, yticklabels=False, square=True, cbar=False)
+            xticklabels=False, yticklabels=False, square=True, 
+            cbar_kws={'ticks': [0, .99]}, cbar_ax=cbar_ax2)
 participant_distance.set_ylabel('Sub-Metric', fontsize=14)
+loading_distance.set_ylabel('Sub-Metric', fontsize=14)
+# format cbar
+cbar_ax2.set_yticklabels([0, 1])
+cbar_ax2.tick_params(axis='y', length=0)
+cbar_ax2.tick_params(labelsize=12)
 # ****************************************************************************
 # MDS Plots
 # ****************************************************************************
 
-mds_colors = [[.5, .5, .5]]*loading_distances.shape[0]
+mds_colors = np.array([[.5, .5, .5, .4]]*loading_distances.shape[0])
+interest_index = []
+misc_index = []
 for i, label in enumerate(loading_distances.index):
-    if 'drift' in label:
+    if '.hddm_drift' in label:
         name = 'drift'
-    elif 'thresh' in label:
+    elif '.hddm_thresh' in label:
         name = 'thresh'
-    elif 'non_decision' in label:
+    elif '.hddm_non_decision' in label:
         name = 'non-decision'
     elif 'SSRT' in label:
         name = 'SSRT'
     else:
+        misc_index.append(i)
         continue
-    mds_colors[i] = color_lookup[name]
+    interest_index.append(i)
+    mds_colors[i] = color_lookup[name]+[1]
+mds_index = misc_index + interest_index
+
 # plot raw MDS
 np.random.seed(700)
 mds = MDS(dissimilarity='precomputed')
 mds_out = mds.fit_transform(participant_distances)
-participant_mds.scatter(mds_out[:,0], mds_out[:,1], 
+participant_mds.scatter(mds_out[mds_index,0], mds_out[mds_index,1], 
             s=220,
             marker='h',
-            facecolors=mds_colors,
+            facecolors=mds_colors[mds_index],
             edgecolors='white')
 participant_mds.set_xticklabels(''); participant_mds.set_yticklabels('')
 participant_mds.tick_params(axis='both', length=0)
@@ -208,14 +174,132 @@ participant_mds.axis('off')
 # plot loading MDS
 mds = MDS(dissimilarity='precomputed')
 mds_out = mds.fit_transform(loading_distances)
-loading_mds.scatter(mds_out[:,0], mds_out[:,1], 
+loading_mds.scatter(mds_out[mds_index,0], mds_out[mds_index,1], 
             s=220,
             marker='h',
-            facecolors=mds_colors,
+            facecolors=mds_colors[mds_index],
             edgecolors='white')
 loading_mds.set_xticklabels(''); loading_mds.set_yticklabels('')
 loading_mds.tick_params(axis='both', length=0)
 loading_mds.axis('off'); 
+
+# get example points
+var_locs = []
+subplot_colors=[]
+for label in task_subset.index:
+    if 'drift' in label:
+        var_color = color_lookup['drift']
+    elif 'thresh' in label:
+        var_color = color_lookup['thresh']
+    elif 'non_decision' in label:
+        var_color = color_lookup['non-decision']
+    else:
+        var_color = color_lookup['SSRT']
+    index = np.where(loading_distances.index==label)[0][0]
+    var_loc = mds_out[index]
+    var_locs.append((label, var_loc))
+    subplot_colors.append(var_color)
+
+width = sum(np.abs(list(loading_mds.get_xlim())))
+height = sum(np.abs(list(loading_mds.get_ylim())))
+loading_mds.scatter([v[1][0] for v in var_locs],
+                    [v[1][1] for v in var_locs],
+                    edgecolors='white',
+                    facecolors=subplot_colors,
+                    marker='h',
+                    s=220)
+loading_mds.scatter([v[1][0] for v in var_locs],
+                    [v[1][1] for v in var_locs],
+                    edgecolors='white',
+                    facecolors='yellow',
+                    marker='.',
+                    s=150)
+# ****************************************************************************
+# Text and additional pretty lines
+# ****************************************************************************
+# label 
+back.text(.05, .75, 'Measure', horizontalalignment='center', 
+          verticalalignment='center',
+          fontsize=20,
+          fontweight='bold', rotation=90)
+back.text(.21, .94, 'Sub-Metric', horizontalalignment='center', fontsize=16,
+          fontweight='bold')
+task1_ax.text(.5,.7, 'Choice Reaction Time', fontsize=16,
+              horizontalalignment='center', verticalalignment='center',
+              rotation=90)
+task2_ax.text(.5,.7, 'Stop Signal', fontsize=16,
+              horizontalalignment='center', verticalalignment='center',
+              rotation=90)
+
+# add labels 
+participant_ax1.spines['bottom'].set_visible(True)
+participant_ax1.set_xlabel('Participants (n=522)', fontsize=16)
+cbar_ax.set_ylabel('Sub-Metric Loading', rotation=-90, fontsize=16)
+cbar_ax2.set_ylabel('Distance', rotation=-90, fontsize=14, labelpad=15)
+
+# loading ticks
+loading_ax2.xaxis.set_ticks_position('top')
+loading_ax2.set_xticks(np.arange(.5,5.5,1))
+loading_ax2.set_xticklabels(['Factor %s' % i for i in range(1,nfactors+1)],
+                            rotation=45, ha='left', fontsize=14)
+# participant box
+back.add_patch(Rectangle((.3385,.56), width=.0115, height=.39, 
+                         facecolor="none", edgecolor='grey', linewidth=1.5))
+back.text(.3385, .96, 'One Participant', fontsize=12, 
+          horizontalalignment='center', color='grey')
+# legend for mds
+back.text(.15, .18, 'Sub-Metrics (130)', fontsize=16, 
+          horizontalalignment='center')
+back.text(.15, .15, 'Thresh', fontsize=16, 
+          horizontalalignment='center', color=color_lookup['thresh'])
+back.text(.15, .125, 'Non-Decision', fontsize=16, 
+          horizontalalignment='center', color=color_lookup['non-decision'])
+back.text(.15, .1, 'Drift', fontsize=16, 
+          horizontalalignment='center', color=color_lookup['drift'])
+back.text(.15, .075, 'SSRT', fontsize=16, 
+          horizontalalignment='center', color=color_lookup['SSRT'])
+back.text(.15, .05, 'Other', fontsize=16, 
+          horizontalalignment='center', color='grey')
+
+# add connecting lines between participants and loading
+# top task
+back.hlines(.773, .53, .6, alpha=.4,linestyle=':')
+back.hlines(.82, .53, .6, alpha=.4,linestyle=':')
+back.hlines(.869, .53, .6, alpha=.4,linestyle=':')
+back.hlines(.918, .53, .6, alpha=.4,linestyle=':')
+# bottom task
+back.hlines(.677, .53, .6, alpha=.4,linestyle=':')
+back.hlines(.626, .53, .6, alpha=.4,linestyle=':')
+back.hlines(.575, .53, .6, alpha=.4,linestyle=':')
+
+back.vlines(.565, .3, .42, alpha=.4, linestyle='-')
+back.vlines(.565, .05, .2, alpha=.4, linestyle='-')
+
+# arrows
+back.arrow(.53, .725, .05, 0, width=.005, facecolor='k')
+back.text(.55, .735, 'EFA', fontsize=16, 
+          horizontalalignment='center')
+# from data to heatmap
+back.arrow(.375, .515, 0, -.01, width=.004, facecolor='k')
+back.arrow(.75, .515, 0, -.01, width=.004, facecolor='k')
+back.text(.567, .48, 'Pairwise Distance', fontsize=16, 
+          horizontalalignment='center')
+back.text(.567, .455, '1-abs(correlation)', fontsize=12, 
+          horizontalalignment='center')
+# from heatmap to MDS
+back.arrow(.375, .31, 0, -.01, width=.004, facecolor='k')
+back.arrow(.75, .31, 0, -.01, width=.004, facecolor='k')
+back.text(.567, .24, 'MDS Projection', fontsize=16, 
+          horizontalalignment='center')
+
+# figure labels
+back.text(.08, 1, 'a', fontsize=25, fontweight='bold')
+back.text(.62, 1, 'b', fontsize=25, fontweight='bold')
+back.text(.25, .49, 'c', fontsize=25, fontweight='bold')
+back.text(.85, .49, 'd', fontsize=25, fontweight='bold')
+back.text(.25, .24, 'e', fontsize=25, fontweight='bold')
+back.text(.85, .24, 'f', fontsize=25, fontweight='bold')
+
 
 """
 # save

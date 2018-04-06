@@ -625,14 +625,14 @@ class Results(EFA_Analysis, HCA_Analysis):
                         verbose=verbose)
             return {'HCA': HCA, 'hdbscan': hdbscan}
     
-    def run_prediction(self, c=None, shuffle=False, classifier='lasso',
+    def run_prediction(self, shuffle=False, classifier='lasso',
                        include_raw_demographics=False, verbose=False):
         if verbose:
             print('*'*79)
             print('Running Prediction, shuffle: %s, classifier: %s' % (shuffle, classifier))
             print('*'*79)
-        factor_scores = self.EFA.get_scores(c)
-        demographic_factors = self.DA.reorder_factors(self.DA.get_scores(c))
+        factor_scores = self.EFA.get_scores()
+        demographic_factors = self.DA.reorder_factors(self.DA.get_scores())
         c = factor_scores.shape[1]
         # get raw data reorganized by clustering
         clustering=self.HCA.results['clustering_input-EFA%s' % c]
@@ -644,7 +644,7 @@ class Results(EFA_Analysis, HCA_Analysis):
             targets.append(('demo_raw', self.demographics))
         for name, target in targets:
             # predicting using best EFA
-            if verbose: print('Predicting using factor scores')
+            if verbose: print('**Predicting using factor scores**')
             run_prediction(factor_scores, 
                            target, 
                            self.output_dir,
@@ -653,7 +653,7 @@ class Results(EFA_Analysis, HCA_Analysis):
                            classifier=classifier, 
                            verbose=verbose)
             # predict using raw variables
-            if verbose: print('Predicting using raw data')
+            if verbose: print('**Predicting using raw data**')
             run_prediction(raw_data, 
                            target, 
                            self.output_dir,
