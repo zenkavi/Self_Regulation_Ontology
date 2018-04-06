@@ -170,6 +170,7 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
     avg_factors = abs(subset_loading).mean(1)
     # format cbar axis
     cbar_ax.set_yticklabels([format_num(-max_val), 0, format_num(max_val)])
+    cbar_ax.tick_params(axis='y', length=0)
     cbar_ax.tick_params(labelsize=figsize[0]*3)
     
     # Plot polar plot

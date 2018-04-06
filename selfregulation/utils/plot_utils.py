@@ -38,7 +38,7 @@ def beautify_legend(legend, colors, fontsize=None):
     if fontsize:
         plt.setp(legend.get_texts(), fontsize=fontsize)
         
-def DDM_plot(v,t,a, sigma = .1, n = 10, plot_n = 15, file = None):
+def DDM_plot(v,t,a, sigma = .1, n = 10, plot_n = 15, plot_avg=False, file = None):
     """ Make a plot of trajectories using ddm parameters (in seconds)
     
     """
@@ -46,6 +46,9 @@ def DDM_plot(v,t,a, sigma = .1, n = 10, plot_n = 15, file = None):
     v = v/1000
     t =  t*1000
     timesteps = np.arange(2000)
+    avg_trajectory = [0]*int(t) + [i*v for i in range(len(timesteps)-int(t))]
+    crosspoint = np.where(np.array(avg_trajectory)>3)[0][0]
+    avg_trajectory = avg_trajectory[:crosspoint]
     trajectories = []
     while len(trajectories) < n:
         y = [0]
@@ -60,24 +63,17 @@ def DDM_plot(v,t,a, sigma = .1, n = 10, plot_n = 15, file = None):
             elif y[-1] < -a:
                 trajectories.append((y,'fail'))
                 break
+    # sort trajectories by length
+    trajectories = sorted(trajectories, key = lambda x: len(x[0]))
+    positive_trajectories = [t[0] for t in trajectories if t[1] == 'correct']
+    negative_trajectories = [t[0] for t in trajectories if t[1] == 'fail']
+    correct_rts = [len(t) for t in positive_trajectories]
+    incorrect_rts = [len(t) for t in negative_trajectories]
     # rts
-    p_correct = np.sum([1 for i in range(n) if trajectories[i][1] == 'correct'])/n
-    correct_rts = []
-    incorrect_rts = []
-    plot_trajectories = []
-    trajectory_count = [0,0]
-    positive_trace_num = np.round(p_correct*plot_n)
-    for y, valence in trajectories:
-        if valence == 'correct':
-            correct_rts.append(len(y))
-            if trajectory_count[1] < positive_trace_num:
-                plot_trajectories.append((y,valence))
-                trajectory_count[1]+=1
-        else:
-            incorrect_rts.append(len(y))
-            if trajectory_count[0] < (plot_n - positive_trace_num):
-                plot_trajectories.append((y,valence))
-                trajectory_count[0]+=1
+    p_correct = len(positive_trajectories)/len(trajectories)
+    plot_posn = int(plot_n*p_correct)
+    plot_posi = np.linspace(0,len(positive_trajectories)-1,plot_posn, dtype=int)
+    plot_negi = np.linspace(0,len(negative_trajectories)-1,plot_n-plot_posn, dtype=int)
     
     # plot
     sns.set_context('talk')
@@ -87,40 +83,60 @@ def DDM_plot(v,t,a, sigma = .1, n = 10, plot_n = 15, file = None):
     ax.set_xticklabels([])
     plt.hold(True)
     max_y = 0
-    for trajectory in plot_trajectories:
-        y = trajectory[0]
-        color = ['red','green'][trajectory[1] == 'correct']
-        plt.plot(timesteps[plot_start:len(y)],y[plot_start:], c = color)
+    for y in [positive_trajectories[i] for i in plot_posi]:
+        plt.plot(timesteps[plot_start:len(y)],y[plot_start:], c = 'green', alpha=.6)
         if len(y) > max_y:
             max_y = len(y)
-    plt.hlines([a,-a],0,max_y+50,linestyles = 'dashed')
+    for y in [negative_trajectories[i] for i in plot_negi]:
+        plt.plot(timesteps[plot_start:len(y)],y[plot_start:], c = 'red', alpha=.6)
+        if len(y) > max_y:
+            max_y = len(y)
     plt.xlim([plot_start,max_y+50])
     plt.ylim([-a*1.01,a*1.01])
-    plt.ylabel('Decision Variable', fontsize = 30)
-    plt.xticks(np.arange(*ax.get_xlim(), 200),
-               [format_num(i,0) for i in np.arange(*ax.get_xlim(), 200)],
-               fontsize=20)
-    plt.tick_params(axis='y', labelsize=20)
+    plt.yticks([-a, 0, a], [-a, 0, a])
+    ax.tick_params(axis='y', labelsize=20)
+    plt.ylabel('Decision Variable', fontsize = 24)
+    # plot average trajectory
+    if plot_avg:
+        plt.plot(timesteps[plot_start:len(avg_trajectory)], avg_trajectory[plot_start:],
+                 linewidth=5, color='b', linestyle='--')
     with sns.axes_style("white"):
+        # plot correct responses
         ax2 = fig.add_axes([0,.8,1,.2]) 
         sns.kdeplot(pd.Series(correct_rts), color = 'g', ax = ax2, shade = True)
         ax2.set_xticklabels([])
         ax2.set_yticklabels([])
+        ax2.text(np.sum(ax2.get_xlim())*.9, ax2.get_ylim()[1]*.5, 
+                 'Correct RT distribution', color='g',
+                 horizontalalignment='center')
+        # plot incorrect responses
         ax3 = fig.add_axes([0,.2*p_correct,1,.2*(1-p_correct)])
-        ax3.set_xlabel('Time Step (ms)', fontsize = 30, labelpad=50)
+        ax3.set_xlabel('Time Step (ms)', fontsize = 24, labelpad=50)
         if len(incorrect_rts) > 0:
             sns.kdeplot(pd.Series(incorrect_rts), color = 'r', ax = ax3, shade = True)
             ax3.set_yticklabels([])
             ax.tick_params(axis='x', pad=40)
         ax3.set_ylim(0, ax3.get_ylim()[1])
         ax3.set_xticklabels([])
+        ax3.text(np.sum(ax3.get_xlim())*.9, ax3.get_ylim()[1]*1.2, 
+                 'Incorrect RT distribution', color='r',
+                 horizontalalignment='center')
         ax3.invert_yaxis()
         #remove spines
         ax2.spines['top'].set_visible(False)
         ax3.spines['bottom'].set_visible(False)
         for axes in [ax, ax2, ax3]:
             axes.spines['right'].set_visible(False)
-    print(p_correct)
+    # normalize xlabels
+    xmax = max([ax.get_xlim()[1], ax2.get_xlim()[1], ax3.get_xlim()[1]])
+    ax.set_xlim(right=xmax)
+    ax2.set_xlim(right=xmax)
+    ax3.set_xlim(right=xmax)
+    # add dashed lines
+    ax.hlines([a,-a],0,xmax,linestyles = 'dashed')
+    ax.set_xticks(np.arange(*ax.get_xlim(), 200))
+    ax.set_xticklabels([format_num(i,0) for i in np.arange(*ax.get_xlim(), 200)],
+                       fontsize=20)
     if file:
         fig.savefig(file, dpi = 300)
     return fig, trajectories
