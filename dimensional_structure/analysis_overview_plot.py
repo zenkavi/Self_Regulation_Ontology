@@ -67,7 +67,7 @@ back.text(.05, .75, 'Measure', horizontalalignment='center',
           verticalalignment='center',
           fontsize=20,
           fontweight='bold', rotation=90)
-back.text(.22, .97, 'Sub-Metric', horizontalalignment='center', fontsize=20,
+back.text(.22, .99, 'Sub-Metric', horizontalalignment='center', fontsize=20,
           fontweight='bold')
 task1_ax.text(.5,.7, 'Choice Reaction Time', fontsize=15,
               horizontalalignment='center', verticalalignment='center',
@@ -137,7 +137,10 @@ for task_i in range(len(tasks)):
         loading_axes[task_i].hlines(i, -.1, 5.1, color='white', linewidth=4)
     
 # add labels 
+participant_ax1.spines['bottom'].set_visible(True)
+participant_ax1.set_xlabel('Participant (n=522)', fontsize=15)
 loading_ax1.set_xlabel('Factor Loading', fontsize=15, labelpad=10)
+
 # loading ticks
 loading_ax2.xaxis.set_ticks_position('top')
 loading_ax2.set_xticks(np.arange(.5,5.5,1))
@@ -145,9 +148,9 @@ loading_ax2.set_xticklabels(['Factor %s' % i for i in range(1,nfactors+1)],
                             rotation=45, ha='left', fontsize=14)
 
 # participant box
-back.add_patch(Rectangle((.3385,.55), width=.011, height=.39, 
+back.add_patch(Rectangle((.3385,.56), width=.013, height=.39, 
                          facecolor="none", edgecolor='grey', linewidth=1.5))
-back.text(.3385, .53, 'One Participant', fontsize=12, 
+back.text(.3385, .96, 'One Participant', fontsize=12, 
           horizontalalignment='center', color='grey')
 
 
@@ -159,7 +162,7 @@ back.arrow(.75, .51, 0, -.01, width=.004, facecolor='k')
 # from heatmap to MDS
 back.arrow(.375, .31, 0, -.01, width=.004, facecolor='k')
 back.arrow(.75, .31, 0, -.01, width=.004, facecolor='k')
-back.text(.567, .26, 'MDS Projection', fontsize=24, 
+back.text(.567, .24, 'MDS Projection', fontsize=24, 
           horizontalalignment='center')
 
 # ****************************************************************************
@@ -172,6 +175,7 @@ sns.heatmap(participant_distances, ax=participant_distance,
             xticklabels=False, yticklabels=False, square=True, cbar=False)
 sns.heatmap(loading_distances, ax=loading_distance,
             xticklabels=False, yticklabels=False, square=True, cbar=False)
+participant_distance.set_ylabel('Sub-Metric', fontsize=14)
 # ****************************************************************************
 # MDS Plots
 # ****************************************************************************
