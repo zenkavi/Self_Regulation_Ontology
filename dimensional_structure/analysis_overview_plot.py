@@ -35,7 +35,7 @@ color_lookup = {'drift rate': colors[0],
                 'SSRT': colors[3]}
 f = plt.figure(figsize=(4.6, 4.6))
 basefont = 6
-basemarker = 50
+basemarker = 40
 basewidth = .6
 
 #f = plt.figure(figsize=(12, 12))
@@ -92,7 +92,7 @@ for task_i in range(len(tasks)):
         # plot values
         scatter_colors = [list(color_lookup[name])+[alpha] for alpha in np.linspace(1,0, len(plot_vals))]
         ax.scatter(range(len(plot_vals)), plot_vals, color=scatter_colors,
-                   s=basemarker*.25)
+                   s=basemarker*.23)
     # make x ticks invisible
     ax.set_xticklabels('')
     ax.tick_params(axis='both', length=0)
@@ -234,9 +234,9 @@ back.text(.21, .94, 'DV', horizontalalignment='center', fontsize=basefont,
 #          verticalalignment='center',
 #          fontsize=basefont*1.56250,
  #         fontweight='bold', rotation=90)
-back.text(-.03,.62, 'Choice RT', fontsize=basefont, rotation=0, fontweight='bold',
+back.text(-.03,.62, 'Choice RT', fontsize=basefont, rotation=0, 
               horizontalalignment='center', verticalalignment='center')
-back.text(-.03,.87, 'Stop Signal', fontsize=basefont, rotation=0, fontweight='bold',
+back.text(-.03,.87, 'Stop Signal', fontsize=basefont, rotation=0, 
               horizontalalignment='center', verticalalignment='center')
 # other tasks
 back.text(-.03,.6, 'Bickel Titrator', fontsize=basefont, rotation=0, alpha=.5,
@@ -325,12 +325,12 @@ back.vlines(.565, .05, .2, alpha=.4, linestyle='-', linewidth=basewidth)
 # from tasks to DVs
 arrowcolor = [.5,.5,.5]
 back.arrow(.03,.62,.1,.06, width=basewidth/1000, color=arrowcolor)
-back.arrow(.03,.62,.08,.011, width=basewidth/1000, color=arrowcolor)
+back.arrow(.03,.62,.07,.011, width=basewidth/1000, color=arrowcolor)
 back.arrow(.03,.62,.1,-.04, width=basewidth/1000, color=arrowcolor)
 
-back.arrow(.05,.87,.09,.045, width=basewidth/1000, color=arrowcolor)
-back.arrow(.05,.87,.06,-.005, width=basewidth/1000, color=arrowcolor)
-back.arrow(.05,.87,.09,-.045, width=basewidth/1000, color=arrowcolor)
+back.arrow(.05,.87,.08,.045, width=basewidth/1000, color=arrowcolor)
+back.arrow(.05,.87,.07,-.005, width=basewidth/1000, color=arrowcolor)
+back.arrow(.05,.87,.08,-.045, width=basewidth/1000, color=arrowcolor)
 back.arrow(.05,.87,.1,-.075, width=basewidth/1000, color=arrowcolor)
 
 # from participant to EFA
@@ -361,11 +361,11 @@ back.text(.85, .24, 'g', fontsize=basefont*1.56255, fontweight='bold')
 
 
 
-## save
-#plot_file = path.dirname(results['task'].plot_dir)
-#f.savefig(path.join(plot_file, 'analysis_overview.pdf'), 
-#                bbox_inches='tight', 
-#                dpi=300)
+# save
+plot_file = path.dirname(results['task'].plot_dir)
+f.savefig(path.join(plot_file, 'analysis_overview.pdf'), 
+                bbox_inches='tight', 
+                dpi=300)
 
 """
 # example DDM plot
