@@ -1,10 +1,6 @@
 Data/Local
-Data/Retest_11-27-2017/Local
-Data/Retest_01-23-2018/Local
-Data/Retest_02-03-2018/Local
-Data/Retest_11-27-2017/batch_output
-Data/Retest_01-23-2018/batch_output
-Data/Retest_02-03-2018/batch_output
+Data/Retest_*/Local
+Data/Retest_*/batch_output
 data_preparation/old
 Plots
 .Rhistory
