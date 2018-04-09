@@ -196,6 +196,7 @@ def plot_factor_correlation(results, c, figsize=12, dpi=300, ext='png', plot_dir
         filename = 'factor_correlations_EFA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
         
 
 def plot_bar_factor(loading, ax=None, bootstrap_err=None, grouping=None,

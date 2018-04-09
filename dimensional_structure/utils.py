@@ -141,7 +141,7 @@ def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None,
     clustered_df = dist_df.iloc[reorder_vec, reorder_vec]
     # clustering
     if cluster_kws is None:
-        cluster_kws = {'minClusterSize': 1}
+        cluster_kws = {'minClusterSize': 3}
     clustering = cutreeHybrid(link, dist_vec, **cluster_kws)
     # reorder labels based on dendrogram position
     # reindex so the clusters are in order based on their proximity
@@ -266,7 +266,7 @@ def find_optimal_components(data, minc=1, maxc=50, nobs=0, metric='BIC'):
             curr_metric = output[metric]
             # iterate counter if new metric isn't better than previous metric
             if len(metrics) > 0:
-                if curr_metric >= (best_metric-2):
+                if curr_metric >= best_metric:
                     steps_since_best += 1
                 else:
                     steps_since_best = 0
