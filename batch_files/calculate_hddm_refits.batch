@@ -8,6 +8,7 @@
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=zenkavi@stanford.edu
 #SBATCH -p russpold
+module load system
 module load singularity
 export PYTHONPATH=""
 # scratch is automatically mounted
