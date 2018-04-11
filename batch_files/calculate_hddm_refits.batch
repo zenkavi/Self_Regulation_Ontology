@@ -8,6 +8,8 @@
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=zenkavi@stanford.edu
 #SBATCH -p owners,russpold,hns
+#SBATCH --qos=long 
+#SBATCH --time=168:00:00
 module load system
 module load singularity
 export PYTHONPATH=""
