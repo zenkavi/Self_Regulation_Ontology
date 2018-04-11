@@ -308,7 +308,7 @@ def plot_subbranches(results, c=None,  inp=None, cluster_range=None,
 def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=False,
                      break_lines=True, orientation='horizontal', 
                      absolute_loading=False,
-                     figsize=(20,12),  dpi=300, ext='png', plot_dir=None):
+                     size=4.6,  dpi=300, ext='png', plot_dir=None):
     """ Plots HCA results as dendrogram with loadings underneath
     
     Args:
@@ -322,6 +322,9 @@ def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=False,
         titles: list of titles. Should correspond to number of clusters in
                 results object if "inp" is not set. Otherwise should be a list of length 1.
     """
+    # set figure properties
+    figsize = (size, size*.6)
+    
     subset = results.ID.split('_')[0]
     HCA = results.HCA
     EFA = results.EFA
@@ -335,7 +338,7 @@ def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=False,
     for name, clustering in clusterings:
         if titles is None:
             title = subset.title() + " Sub-Metric Structure"
-        else:
+        elif titles != False:
             title=titles.pop(0)
         # extract cluster vars
         link = clustering['linkage']
@@ -355,20 +358,20 @@ def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=False,
         if orientation == 'horizontal':
             dendro_size = [0,dendro_size[0], .95, dendro_size[1]]
             heatmap_size = [0,heat_size[0],.95,heat_size[1]]
-            cbar_size = [.97,.1,.02,.25]
+            cbar_size = [.97,.05,.01,heat_size[1]]
             cbar_orientation='vertical'
             dendro_orient='top'
             ordered_loading = ordered_loading.T
         elif orientation == 'vertical':
             dendro_size = [dendro_size[0], 0, dendro_size[1], .93]
             heatmap_size = [heat_size[0], 0, heat_size[1], .93]
-            cbar_size = [.1,.97,.25,.02]
+            cbar_size = [.05,.97,heat_size[1],.01]
             cbar_orientation='horizontal'
             dendro_orient='right'
         with sns.axes_style('white'):
             fig = plt.figure(figsize=figsize)
             ax1 = fig.add_axes(dendro_size) 
-            with plt.rc_context({'lines.linewidth': 2.5}):
+            with plt.rc_context({'lines.linewidth': size*.125}):
                 dendrogram(link, ax=ax1, link_color_func=link_function,
                            orientation=dendro_orient)
             # change axis properties
@@ -381,7 +384,6 @@ def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=False,
             # if max_val is high, just make it 1
             if max_val > .95:
                 max_val = 1
-            
             sns.heatmap(ordered_loading, ax=ax2, 
                         cbar=True, cbar_ax=ax3,
                         yticklabels=True,
@@ -389,12 +391,16 @@ def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=False,
                         cbar_kws={'orientation': cbar_orientation,
                                   'ticks': [-max_val, 0, max_val]},
                         cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
+            ax2.tick_params(labelsize=size*heat_size[1]*25/c, pad=size/2)
             # format cbar axis
             if orientation == 'horizontal':
                 ax3.set_yticklabels([format_num(-max_val), 0, format_num(max_val)])
             else:
                 ax3.set_xticklabels([format_num(-max_val), 0, format_num(max_val)])
-            ax3.tick_params(labelsize=figsize[0]*1.2)
+            ax3.tick_params(labelsize=size*heat_size[1]*25/c, length=0, pad=size/2)
+            ax3.set_ylabel('Factor Loading', rotation=-90, 
+                           fontsize=size*heat_size[1]*25/c, labelpad=size/2)
+
             # add lines to heatmap to distinguish clusters
             if break_lines == True:
                 xlim = ax2.get_xlim(); 
@@ -403,20 +409,18 @@ def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=False,
                     step = xlim[1]/len(labels)
                     cluster_breaks = [i*step for i in np.cumsum(cluster_sizes)]
                     ax2.vlines(cluster_breaks[:-1], ylim[0], ylim[1], linestyles='dashed',
-                               linewidth=3, colors=[.5,.5,.5])
+                               linewidth=size*.125, colors=[.5,.5,.5])
                 elif orientation == 'vertical':
                     step = max(ylim)/len(labels)
                     cluster_breaks = [ylim[1]-i*step for i in np.cumsum(cluster_sizes)]
                     ax2.hlines(cluster_breaks[:-1], xlim[0], xlim[1], linestyles='dashed',
-                               linewidth=2, colors=[.5,.5,.5])
+                               linewidth=size*.15, colors=[.5,.5,.5])
             # change axis properties based on orientation
-            if orientation == 'horizontal':
-                ax2.tick_params(labelsize=figsize[0]*heat_size[1]*25/c)
-            elif orientation == 'vertical':
+            if orientation == 'vertical':
                 ax1.invert_yaxis()
-                ax2.tick_params(labelsize=figsize[1]*heat_size[1]*25/c)
             # add title
-            ax1.set_title(title, fontsize=40, y=1.05)
+            if titles != False:
+                ax1.set_title(title, fontsize=size*2, y=1.05)
             ax1.get_yaxis().set_visible(False)
             ax1.spines['top'].set_visible(False)
             ax1.spines['right'].set_visible(False)
@@ -711,8 +715,8 @@ def plot_HCA(results, plot_dir=None, verbose=False, ext='png'):
     plot_clusterings(results, inp='data', plot_dir=plot_dir, verbose=verbose, ext=ext)
     plot_clusterings(results, inp='EFA%s' % c, plot_dir=plot_dir, verbose=verbose, ext=ext)
     if verbose: print("Plotting dendrograms")
-    plot_dendrogram(results, c, inp='data', plot_dir=plot_dir, ext=ext)
-    plot_dendrogram(results, c, inp='EFA%s' % c, plot_dir=plot_dir, ext=ext)
+    plot_dendrogram(results, c, inp='data', titles=False, plot_dir=plot_dir, ext=ext)
+    plot_dendrogram(results, c, inp='EFA%s' % c, titles=False, plot_dir=plot_dir, ext=ext)
     if verbose: print("Plotting dendrogram subbranches")
     plot_subbranches(results, c,  inp='data', plot_dir=plot_dir, ext=ext)
     plot_subbranches(results, c,  inp='EFA%s' % c, plot_dir=plot_dir, ext=ext)

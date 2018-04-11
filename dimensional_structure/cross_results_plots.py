@@ -145,7 +145,7 @@ if __name__ == "__main__":
     # make histogram plot
     colors = sns.color_palette('Blues_d',3)[0:2] + sns.color_palette('Reds_d',2)[:1]
     f = plot_corr_hist(results, colors)
-    f.savefig(path.join(plot_file, 'within-across_correlations.png'), 
+    f.savefig(path.join(plot_file, 'within-across_correlations.pdf'), 
                     bbox_inches='tight', 
                     dpi=300)
 

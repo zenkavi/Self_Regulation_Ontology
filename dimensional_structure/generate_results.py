@@ -160,15 +160,16 @@ for subset in subsets[0:-1]:
          
             # Plot EFA
         print("Plotting EFA")
-        plot_DA(results, DA_plot_dir, verbose=True, dpi=dpi)
+        plot_DA(results, DA_plot_dir, verbose=True, dpi=dpi, ext='pdf',)
         
         # Plot EFA
         print("Plotting EFA")
-        plot_EFA(results, EFA_plot_dir, verbose=True,  dpi=dpi, plot_task_kws=plot_task_kws)
+        plot_EFA(results, EFA_plot_dir, verbose=True,  dpi=dpi, ext='pdf',
+                 plot_task_kws=plot_task_kws)
             
         # Plot HCA
         print("Plotting HCA")
-        plot_HCA(results, HCA_plot_dir)
+        plot_HCA(results, HCA_plot_dir, ext='pdf')
         
         # Plot prediction
         target_order = results.DA.reorder_factors(results.DA.get_loading()).columns
