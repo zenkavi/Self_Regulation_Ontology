@@ -8,7 +8,6 @@
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=zenkavi@stanford.edu
 #SBATCH -p russpold
-#SBATCH --qos=long
 #SBATCH --time=168:00:00
 module load system
 module load singularity
