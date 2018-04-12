@@ -215,7 +215,7 @@ for i, label in enumerate(loading_distances.index):
         misc_index.append(i)
         continue
     interest_index.append(i)
-    mds_colors[i] = color_lookup[name]+[1]
+    mds_colors[i] = list(sns.desaturate(color_lookup[name], .3))+[1]
 mds_index = misc_index + interest_index
 
 # plot raw MDS
@@ -242,39 +242,42 @@ loading_mds.set_xticklabels(''); loading_mds.set_yticklabels('')
 loading_mds.tick_params(axis='both', length=0)
 loading_mds.axis('off'); 
 
-"""
-# get example points
-var_locs = []
-subplot_colors=[]
-for label in task_subset.index:
-    if 'drift' in label:
-        var_color = color_lookup['drift rate']
-    elif 'thresh' in label:
-        var_color = color_lookup['threshold']
-    elif 'non_decision' in label:
-        var_color = color_lookup['non-decision']
-    else:
-        var_color = color_lookup['SSRT']
-    index = np.where(loading_distances.index==label)[0][0]
-    var_loc = mds_out[index]
-    var_locs.append((label, var_loc))
-    subplot_colors.append(var_color)
 
-width = sum(np.abs(list(loading_mds.get_xlim())))
-height = sum(np.abs(list(loading_mds.get_ylim())))
-loading_mds.scatter([v[1][0] for v in var_locs],
-                    [v[1][1] for v in var_locs],
-                    edgecolors='white',
-                    facecolors=subplot_colors,
-                    marker='h',
-                    s=basemarker)
-loading_mds.scatter([v[1][0] for v in var_locs],
-                    [v[1][1] for v in var_locs],
-                    edgecolors='white',
-                    facecolors='yellow',
-                    marker='.',
-                    s=basemarker*.7)
-"""
+# get example points
+for ax, distances in [(loading_mds, loading_distances), 
+                      (participant_mds, participant_distances)]:
+    var_locs = []
+    subplot_colors=[]
+    for label in task_subset.index:
+        if 'drift' in label:
+            var_color = color_lookup['drift rate']
+        elif 'thresh' in label:
+            var_color = color_lookup['threshold']
+        elif 'non_decision' in label:
+            var_color = color_lookup['non-decision']
+        else:
+            var_color = color_lookup['SSRT']
+        index = np.where(distances.index==label)[0][0]
+        var_loc = mds_out[index]
+        var_locs.append((label, var_loc))
+        subplot_colors.append(var_color)
+    
+    width = sum(np.abs(list(ax.get_xlim())))
+    height = sum(np.abs(list(ax.get_ylim())))
+    ax.scatter([v[1][0] for v in var_locs],
+                        [v[1][1] for v in var_locs],
+                        edgecolors='white',
+                        facecolors=subplot_colors,
+                        marker='h',
+                        s=basemarker)
+
+#    ax.scatter([v[1][0] for v in var_locs],
+#                        [v[1][1] for v in var_locs],
+#                        edgecolors='white',
+#                        facecolors='white',
+#                        marker='.',
+#                        s=basemarker*.4)
+
 # ****************************************************************************
 # Text and additional pretty lines
 # ****************************************************************************
@@ -312,6 +315,9 @@ back.text(-.03,.68, 'Dietary Decision', fontsize=basefont, rotation=0, alpha=alp
 back.text(-.03,.7, 'Digit Span', fontsize=basefont, rotation=0, alpha=alpha,
               horizontalalignment='center', verticalalignment='center')
 back.text(-.03,.72, 'Directed Forgetting', fontsize=basefont, rotation=0, alpha=alpha,
+              horizontalalignment='center', verticalalignment='center')
+
+back.text(-.03,.758, '...', fontsize=basefont*3, rotation=0, alpha=alpha,
               horizontalalignment='center', verticalalignment='center')
 
 back.text(-.03,.89, 'Stroop', fontsize=basefont, rotation=0, alpha=alpha,
