@@ -305,7 +305,7 @@ def plot_subbranches(results, c=None,  inp=None, cluster_range=None,
         return figs
                            
 
-def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=False,
+def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=True,
                      break_lines=True, orientation='horizontal', 
                      absolute_loading=False,
                      size=4.6,  dpi=300, ext='png', plot_dir=None):
@@ -391,7 +391,20 @@ def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=False,
                         cbar_kws={'orientation': cbar_orientation,
                                   'ticks': [-max_val, 0, max_val]},
                         cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
-            ax2.tick_params(labelsize=size*heat_size[1]*25/c, pad=size/2)
+            ax2.tick_params(axis='y', labelsize=size*heat_size[1]*25/c, pad=size/2)
+            # DV labels
+            gap=2
+            xticks = ax2.set_xticks(np.array(range(ordered_loading.shape[1]))[::gap]+.5)
+            xlabels = ax2.set_xticklabels(format_variable_names(loading.index[::gap]), 
+                                fontsize=size*.65)
+            ax2.tick_params(axis='x', pad=size/4, length=size/4, width=size/6)
+            # change tick colors
+            cum_clusters = np.cumsum(cluster_sizes)
+            for t, l in zip(xticks,xlabels):
+                l_index = int(l.get_position()[0])
+                cluster_index = np.digitize(l_index, cum_clusters)
+                t.get_children()[0].set_color(colors[cluster_index])
+                
             # format cbar axis
             if orientation == 'horizontal':
                 ax3.set_yticklabels([format_num(-max_val), 0, format_num(max_val)])
@@ -409,12 +422,12 @@ def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=False,
                     step = xlim[1]/len(labels)
                     cluster_breaks = [i*step for i in np.cumsum(cluster_sizes)]
                     ax2.vlines(cluster_breaks[:-1], ylim[0], ylim[1], linestyles='dashed',
-                               linewidth=size*.125, colors=[.5,.5,.5])
+                               linewidth=size*.1, colors=[.5,.5,.5])
                 elif orientation == 'vertical':
                     step = max(ylim)/len(labels)
                     cluster_breaks = [ylim[1]-i*step for i in np.cumsum(cluster_sizes)]
                     ax2.hlines(cluster_breaks[:-1], xlim[0], xlim[1], linestyles='dashed',
-                               linewidth=size*.15, colors=[.5,.5,.5])
+                               linewidth=size*.125, colors=[.5,.5,.5])
             # change axis properties based on orientation
             if orientation == 'vertical':
                 ax1.invert_yaxis()
@@ -432,7 +445,6 @@ def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=False,
                     ax2.tick_params(labelbottom='off')  
                 else:
                     ax2.tick_params(labelleft='off') 
-        
         if plot_dir is not None:
             save_figure(fig, path.join(plot_dir, 
                                              'dendrogram_%s.%s' % (name, ext)),
@@ -720,11 +732,11 @@ def plot_HCA(results, plot_dir=None, verbose=False, ext='png'):
     if verbose: print("Plotting dendrogram subbranches")
     plot_subbranches(results, c,  inp='data', plot_dir=plot_dir, ext=ext)
     plot_subbranches(results, c,  inp='EFA%s' % c, plot_dir=plot_dir, ext=ext)
-    if verbose: print("Plotting clustering similarity")
-    plot_clustering_similarity(results, plot_dir=plot_dir, verbose=verbose, ext=ext)
-    if verbose: print("Plotting cluster polar plots")
-    plot_cluster_factors(results, c, inp='data', plot_dir=plot_dir, ext=ext)
-    plot_cluster_factors(results, c, inp='EFA%s' % c, plot_dir=plot_dir, ext=ext)
+#    if verbose: print("Plotting clustering similarity")
+#    plot_clustering_similarity(results, plot_dir=plot_dir, verbose=verbose, ext=ext)
+#    if verbose: print("Plotting cluster polar plots")
+#    plot_cluster_factors(results, c, inp='data', plot_dir=plot_dir, ext=ext)
+#    plot_cluster_factors(results, c, inp='EFA%s' % c, plot_dir=plot_dir, ext=ext)
     if verbose: print("Plotting MDS space")
     for metric in ['abs_correlation']:
         MDS_visualization(results, c, plot_dir=plot_dir,

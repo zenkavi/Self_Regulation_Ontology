@@ -73,7 +73,7 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
             ax.set_yticklabels(labels)
 
 def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
-                    include_shuffle=False,  ymax=None, figsize=(20,16),  
+                    include_shuffle=False,  ymax=None, size=4.6,  
                     dpi=300, plot_dir=None):
     predictions = results.load_prediction_object(EFA=EFA, classifier=classifier)
     if predictions is None:
@@ -94,6 +94,8 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
     insample_r2s = [(i, k) if k==k else (i,0) for i, k in insample_r2s]
     shuffled_r2s = [(i, k) if k==k else (i,0) for i, k in shuffled_r2s]
     # plot
+    # plot variables
+    figsize = (size, size*.75)
     fig = plt.figure(figsize=figsize)
     # plot bars
     ind = np.arange(len(r2s))
@@ -117,16 +119,17 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
                         (tick_locs[i]-width+abs(xmin))/xrange, 
                         (tick_locs[i]+width+abs(xmin))/xrange,
                         color='w',
+                        linewidth=size/4,
                         linestyle='--')
-    ax1.set_xticklabels([i[0] for i in r2s], rotation=15, fontsize=figsize[0]*1.15)
-    ax1.set_ylabel('R2', fontsize=30, labelpad=10)
-    ax1.tick_params(axis='y', labelsize=20)
-    ax1.tick_params(length=5, width=2)
+    ax1.set_xticklabels([i[0] for i in r2s], rotation=15, fontsize=size*1.15)
+    ax1.set_ylabel('R2', fontsize=size, labelpad=10)
+    ax1.tick_params(axis='y', labelsize=size)
+    ax1.tick_params(length=size/4, width=size/10)
     ylim = ax1.get_ylim()
     if ymax is None:
         ymax = max(.15, ylim[1]+.1)
     ax1.set_ylim(ylim[0], ymax)
-    leg = ax1.legend(fontsize=24, loc='upper left')
+    leg = ax1.legend(fontsize=size, loc='upper left')
     beautify_legend(leg, colors[:3])
 
     # draw grid
