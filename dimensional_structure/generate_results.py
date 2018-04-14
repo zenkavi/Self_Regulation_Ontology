@@ -190,3 +190,5 @@ for subset in subsets[0:-1]:
             rmtree(generic_dir)
         copytree(plot_dir, generic_dir)
         
+if group_plot == True:
+    results = load_results(dataset)

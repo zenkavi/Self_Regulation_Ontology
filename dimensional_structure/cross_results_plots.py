@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Script to generate results or plots across results objects
+# Script to generate all_results or plots across all_results objects
 from itertools import combinations, product
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,20 +9,22 @@ import pandas as pd
 import seaborn as sns
 from sklearn.linear_model import LinearRegression, RidgeCV
 from sklearn.model_selection import cross_val_score
-from selfregulation.utils.plot_utils import beautify_legend
-from selfregulation.utils.result_utils import load_results
+from selfregulation.utils.plot_utils import beautify_legend, save_figure
+from selfregulation.utils.result_utils import load_all_results
 from selfregulation.utils.utils import get_recent_dataset
 
 def extract_tril(mat, k=0):
     return mat[np.tril_indices_from(mat, k=k)]
 
 
-def plot_corr_hist(results, colors, reps=100):
-    survey_corr = abs(results['survey'].data.corr())
-    task_corr = abs(results['task'].data.corr())
-    all_data = pd.concat([results['task'].data, results['survey'].data], axis=1)
-    datasets = [('survey', results['survey'].data), 
-                ('task', results['task'].data), 
+def plot_corr_hist(all_results, reps=100, size=2.3, 
+                   dpi=300, ext='png', save=False):
+    colors = sns.color_palette('Blues_d',3)[0:2] + sns.color_palette('Reds_d',2)[:1]
+    survey_corr = abs(all_results['survey'].data.corr())
+    task_corr = abs(all_results['task'].data.corr())
+    all_data = pd.concat([all_results['task'].data, all_results['survey'].data], axis=1)
+    datasets = [('survey', all_results['survey'].data), 
+                ('task', all_results['task'].data), 
                 ('all', all_data)]
     # get cross corr
     cross_corr = abs(all_data.corr()).loc[survey_corr.columns,
@@ -97,15 +99,23 @@ def plot_corr_hist(results, colors, reps=100):
             beautify_legend(leg, [colors[i]])
         axes[1].set_xlabel('Pearson Correlation', fontsize=20, labelpad=10)
         axes[0].set_ylabel('Normalized Density', fontsize=20, labelpad=10)
-    return f
+    
+    # save
+    if save==True:
+        plot_file = path.dirname(all_results['task'].plot_dir)
+        # make histogram plot
+        
+        save_figure(f, path.join(plot_file, 'within-across_correlations.pdf'),
+                                {'bbox_inches': 'tight', 'dpi': 300})
+        
     
     
 
 
 from sklearn.decomposition import PCA
-def plot_EFA_relationships(results):
-    EFA_results = {k:v.EFA for k,v in results.items()}
-    scores = {k:v.get_scores() for k,v in EFA_results.items()}
+def plot_EFA_relationships(all_results):
+    EFA_all_results = {k:v.EFA for k,v in all_results.items()}
+    scores = {k:v.get_scores() for k,v in EFA_all_results.items()}
     # quantify relationships using linear regression
     for name1, name2 in combinations(scores.keys(), 2):
         scores1 = scores[name1]
@@ -136,16 +146,61 @@ def plot_EFA_relationships(results):
     frame.set_color('black')
     beautify_legend(leg, all_colors)
 
-
+def plot_BIC(all_results, colors, size=4.6, dpi=300, ext='png', plot_dir=None):
+    """ Plots BIC and SABIC curves
+    
+    Args:
+        all_results: a dimensional structure all_results object
+        dpi: the final dpi for the image
+        ext: the extension for the saved figure
+        plot_dir: the directory to save the figure. If none, do not save
+    """
+    all_colors = [sns.color_palette('Blues_d',3)[0:3],
+              sns.color_palette('Reds_d',3)[0:3],
+              sns.color_palette('Greens_d',3)[0:3],
+              sns.color_palette('Oranges_d',3)[0:3]]
+    height= size*.75/len(all_results)
+    fig, axes = plt.subplots(1, len(all_results), figsize=(size, height))
+    for i, results in enumerate(all_results.values()):
+        ax1 = axes[i]
+        name = results.ID.split('_')[0].title()
+        EFA = results.EFA
+        # Plot BIC and SABIC curves
+        colors = all_colors[i]
+        with sns.axes_style('white'):
+            x = list(EFA.results['cscores_metric-BIC'].keys())
+            # score keys
+            keys = [k for k in EFA.results.keys() if 'cscores' in k]
+            for key in keys:
+                metric = key.split('-')[-1]
+                BIC_scores = [EFA.results[key][i] for i in x]
+                BIC_c = EFA.results['c_metric-%s' % metric]
+                ax1.plot(x, BIC_scores,  'o-', c=colors[0], lw=3, label=metric,
+                         markersize=height*2)
+                ax1.plot(BIC_c, BIC_scores[BIC_c-1], '.', color='white',
+                         markeredgecolor=colors[0], markeredgewidth=height/2, 
+                         markersize=height*4)
+            if i==0:
+                ax1.set_ylabel('Score', fontsize=height*3)
+                leg = ax1.legend(loc='right center',
+                                 fontsize=height*3, markerscale=0)
+                beautify_legend(leg, colors=colors)
+            ax1.set_xlabel('# Factors', fontsize=height*3)
+            ax1.tick_params(labelsize=height*2)
+            ax1.set_title(name, fontsize=height*4)
+    if plot_dir is not None:
+        save_figure(fig, path.join(plot_dir, 'BIC_SABIC_curves.%s' % ext),
+                    {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
+            
 if __name__ == "__main__":
     datafile = get_recent_dataset()
-    results = load_results(datafile)
-    plot_file = path.dirname(results['task'].plot_dir)
+    all_results = load_all_results(datafile)
+    plot_file = path.dirname(all_results['task'].plot_dir)
     
     # make histogram plot
     colors = sns.color_palette('Blues_d',3)[0:2] + sns.color_palette('Reds_d',2)[:1]
-    f = plot_corr_hist(results, colors)
-    f.savefig(path.join(plot_file, 'within-across_correlations.pdf'), 
-                    bbox_inches='tight', 
-                    dpi=300)
+    f = plot_corr_hist(all_results, colors)
+    save_figure(f, path.join(plot_file, 'within-across_correlations.pdf'),
+                            {'bbox_inches': 'tight', 'dpi': 300})
 

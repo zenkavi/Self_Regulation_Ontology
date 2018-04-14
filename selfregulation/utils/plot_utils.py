@@ -34,7 +34,8 @@ def beautify_legend(legend, colors, fontsize=None):
         text.set_color(colors[i])
     for item in legend.legendHandles:
         item.set_visible(False)
-    legend.get_frame().set_linewidth(0.0)
+    for item in legend.legendHandles:
+        item.set_visible(False)
     if fontsize:
         plt.setp(legend.get_texts(), fontsize=fontsize)
         

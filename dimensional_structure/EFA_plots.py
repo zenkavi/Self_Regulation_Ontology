@@ -18,7 +18,7 @@ sns.set_palette("Set1", 8, .75)
 
 
 
-def plot_BIC_SABIC(results, dpi=300, ext='png', plot_dir=None):
+def plot_BIC_SABIC(results, size=2.3, dpi=300, ext='png', plot_dir=None):
     """ Plots BIC and SABIC curves
     
     Args:
@@ -29,25 +29,36 @@ def plot_BIC_SABIC(results, dpi=300, ext='png', plot_dir=None):
     """
     EFA = results.EFA
     # Plot BIC and SABIC curves
+    colors = ['c', 'm']
     with sns.axes_style('white'):
         x = list(EFA.results['cscores_metric-BIC'].keys())
-        fig, ax1 = plt.subplots()
-        ax2 = ax1.twinx()
+        fig, ax1 = plt.subplots(1,1, figsize=(size, size*.75))
         # BIC
-        BIC_scores = list(EFA.results['cscores_metric-BIC'].values())
+        BIC_scores = [EFA.results['cscores_metric-BIC'][i] for i in x]
         BIC_c = EFA.results['c_metric-BIC']
-        ax1.plot(x, BIC_scores, c='c', lw=3, label='BIC')
-        ax1.set_ylabel('BIC', fontsize=20)
-        ax1.plot(BIC_c, BIC_scores[BIC_c],'k.', markersize=30)
-        # SABIC
-        SABIC_scores = list(EFA.results['cscores_metric-SABIC'].values())
-        SABIC_c = EFA.results['c_metric-SABIC']
-        ax2.plot(x, SABIC_scores, c='m', lw=3, label='SABIC')
-        ax2.set_ylabel('SABIC', fontsize=20)
-        ax2.plot(SABIC_c, SABIC_scores[SABIC_c],'k.', markersize=30)
-        # set up legend
-        ax1.plot(np.nan, c='m', lw=3, label='SABIC')
-        ax1.legend(loc='upper center')
+        ax1.plot(x, BIC_scores,  'o-', c=colors[0], lw=3, label='BIC',
+                 markersize=size*2)
+        ax1.set_xlabel('# Factors', fontsize=size*3)
+        ax1.set_ylabel('BIC', fontsize=size*3)
+        ax1.plot(BIC_c, BIC_scores[BIC_c-1], '.', color='white',
+                 markeredgecolor=colors[0], markeredgewidth=size/2, 
+                 markersize=size*4)
+        ax1.tick_params(labelsize=size*2)
+        if 'cscores_metric-SABIC' in EFA.results.keys():
+            # SABIC
+            ax2 = ax1.twinx()
+            SABIC_scores = list(EFA.results['cscores_metric-SABIC'].values())
+            SABIC_c = EFA.results['c_metric-SABIC']
+            ax2.plot(x, SABIC_scores, c=colors[1], lw=3, label='SABIC',
+                     markersize=size*2)
+            ax2.set_ylabel('SABIC', fontsize=size*4)
+            ax2.plot(SABIC_c, SABIC_scores[SABIC_c],'k.',
+                 markeredgecolor=colors[0], markeredgewidth=size/2, 
+                 markersize=size*4)
+            # set up legend
+            ax1.plot(np.nan, c='m', lw=3, label='SABIC')
+            leg = ax1.legend(loc='right center')
+            beautify_legend(leg, colors=colors)
         if plot_dir is not None:
             save_figure(fig, path.join(plot_dir, 'BIC_SABIC_curves.%s' % ext),
                         {'bbox_inches': 'tight', 'dpi': dpi})
@@ -214,6 +225,7 @@ def plot_bar_factor(loading, ax=None, bootstrap_err=None, grouping=None,
         label_loc: 'left', 'right', or None. Plots half the variables names, either
             on the left or the right
     """
+    
     # longest label for drawing lines
     DV_fontsize = height/(loading.shape[0]//2)*20
     longest_label = max([len(i) for i in loading.index])
