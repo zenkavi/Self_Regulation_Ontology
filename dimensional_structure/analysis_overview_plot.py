@@ -39,7 +39,7 @@ basemarker = 40
 basewidth = .6
 
 f = plt.figure(figsize=(12, 12))
-basefont = 16
+basefont = 14
 basemarker = 220
 basewidth = 1.5
 
@@ -47,8 +47,8 @@ basewidth = 1.5
 participant_ax1 = f.add_axes([.25,.555,.28,.16]) 
 participant_ax2 = f.add_axes([.25,.75,.28,.2]) 
 
-loading_ax1 = f.add_axes([.625,.55,.25,.162]) 
-loading_ax2 = f.add_axes([.625,.75,.25,.189]) 
+loading_ax1 = f.add_axes([.625,.545,.25,.162]) 
+loading_ax2 = f.add_axes([.625,.745,.25,.189]) 
 
 participant_distance = f.add_axes([.3,.29,.16,.16]) 
 loading_distance = f.add_axes([.675,.29,.16,.16]) 
@@ -56,7 +56,7 @@ loading_distance = f.add_axes([.675,.29,.16,.16])
 participant_mds = f.add_axes([.25,-.02,.25,.25]) 
 loading_mds = f.add_axes([.625,-.02,.25,.25]) 
 # color bars for heatmaps
-cbar_ax = f.add_axes([.92,.6,.03,.3]) 
+cbar_ax = f.add_axes([.92,.595,.03,.3]) 
 cbar_ax2 = f.add_axes([.86,.31,.02,.12]) 
 # set background
 back = f.add_axes([0,0,1,1])
@@ -116,6 +116,7 @@ for task_i in range(len(tasks)):
     loading_data = task_subset.filter(regex=tasks[task_i], axis=0)
     sns.heatmap(loading_data.iloc[::-1,:], ax=loading_axes[task_i], 
                 yticklabels=False, xticklabels=False,
+                linecolor='white', linewidth=basewidth,
                 cbar_ax=cbar_ax, vmax =  max_val, vmin = -max_val,
                 cbar_kws={'ticks': [-max_val, 0, max_val]},
                 cmap=sns.diverging_palette(220,16,n=100, as_cmap=True))
@@ -123,17 +124,21 @@ for task_i in range(len(tasks)):
     cbar_ax.set_yticklabels([format_num(-max_val, 1), 0, format_num(max_val, 1)])
     cbar_ax.tick_params(axis='y', length=0)
     cbar_ax.tick_params(labelsize=basefont)
-    for i in range(1,loading_data.shape[0]):
-        loading_axes[task_i].hlines(i, -.2, 6.1, color='white', linewidth=basewidth*3)
+    for i in range(1,loading_data.shape[0]+1):
+        #loading_axes[task_i].hlines(i, -.2, 6.1, color='white', linewidth=basewidth*3)
+        loading_axes[task_i].add_patch(Rectangle([-.1,i-.2], 
+                    width=5.2, height=.2, zorder=100,
+                    facecolor='white', edgecolor='white', 
+                    linewidth=basewidth, clip_on=False))
     # add boxes
     for i, t in enumerate(tick_names[::-1]):
         box_color = color_lookup[t]
-        box_pos = [-.15, i+.3]
+        box_pos = [-.15, i+.2]
         loading_axes[task_i].add_patch(Rectangle(box_pos, 
                     width=.15, height=.4, zorder=100,
                     facecolor=box_color, edgecolor=box_color, 
                     linewidth=basewidth, clip_on=False))
-        loading_axes[task_i].hlines(i+.5, -2, -.5, color=box_color, 
+        loading_axes[task_i].hlines(i+.4, -2, -.5, color=box_color, 
                     clip_on=False, linewidth=basewidth, linestyle=':')
         
 
@@ -215,7 +220,7 @@ for i, label in enumerate(loading_distances.index):
         misc_index.append(i)
         continue
     interest_index.append(i)
-    mds_colors[i] = list(sns.desaturate(color_lookup[name], .3))+[1]
+    mds_colors[i] = list(sns.desaturate(color_lookup[name], 1))+[1]
 mds_index = misc_index + interest_index
 
 # plot raw MDS
@@ -271,12 +276,12 @@ for ax, distances in [(loading_mds, loading_distances),
                         marker='h',
                         s=basemarker)
 
-#    ax.scatter([v[1][0] for v in var_locs],
-#                        [v[1][1] for v in var_locs],
-#                        edgecolors='white',
-#                        facecolors='white',
-#                        marker='.',
-#                        s=basemarker*.4)
+    ax.scatter([v[1][0] for v in var_locs],
+                        [v[1][1] for v in var_locs],
+                        edgecolors='white',
+                        facecolors='white',
+                        marker='.',
+                        s=basemarker*.4)
 
 # ****************************************************************************
 # Text and additional pretty lines
@@ -369,7 +374,10 @@ back.text(.13, .075, 'SSRT', fontsize=basefont,
           horizontalalignment='center', color=color_lookup['SSRT'])
 back.text(.13, .05, 'Other', fontsize=basefont, 
           horizontalalignment='center', color='grey')
-
+back.text(.13, .025, 'o indicates example DVs', fontsize=basefont*.75, 
+          horizontalalignment='center', color='k')
+back.text(.13, .01, 'from preceeding plots', fontsize=basefont*.75, 
+          horizontalalignment='center', color='k')
 # add connecting lines between participants and loading
 back.vlines(.565, .3, .42, alpha=.4, linestyle='-', linewidth=basewidth)
 back.vlines(.565, .05, .2, alpha=.4, linestyle='-', linewidth=basewidth)
@@ -402,7 +410,7 @@ back.text(.567, .435, '1-abs(correlation(x,y))', fontsize=basefont*.7,
 # from heatmap to MDS
 back.arrow(.375, .27, 0, -.01, width=basewidth/250, edgecolor='k', facecolor='white')
 back.arrow(.75, .27, 0, -.01, width=basewidth/250, facecolor='k')
-back.text(.567, .24, 'MDS Projection', fontsize=basefont, 
+back.text(.567, .24, 'Multidimensional Scaling', fontsize=basefont, 
           horizontalalignment='center')
 
 # figure labels

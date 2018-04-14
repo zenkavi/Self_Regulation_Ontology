@@ -9,7 +9,7 @@ import seaborn as sns
 
 from dimensional_structure.plot_utils import save_figure, visualize_factors, visualize_task_factors
 from dimensional_structure.utils import get_factor_groups
-from selfregulation.utils.plot_utils import beautify_legend, format_variable_names
+from selfregulation.utils.plot_utils import beautify_legend, format_num, format_variable_names
 from selfregulation.utils.r_to_py_utils import get_attr
 from selfregulation.utils.utils import get_behav_data
 
@@ -407,6 +407,89 @@ def plot_bar_factors(results, c, size=4.6, thresh=75,
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
 
+def plot_heatmap_factors(results, c, size=4.6, thresh=75,
+                     dpi=300, ext='png', plot_dir=None):
+    """ Plots factor analytic results as bars
+    
+    Args:
+        results: a dimensional structure results object
+        c: the number of components to use
+        dpi: the final dpi for the image
+        size: scalar - the width of the plot. The height is determined
+            by the number of factors
+        thresh: proportion of factor loadings to remove
+        ext: the extension for the saved figure
+        plot_dir: the directory to save the figure. If none, do not save
+    """
+    
+    
+    EFA = results.EFA
+    loadings = EFA.reorder_factors(EFA.get_loading(c))           
+    grouping = get_factor_groups(loadings)
+    flattened_factor_order = []
+    for sublist in [i[1] for i in grouping]:
+        flattened_factor_order += sublist
+    loadings = loadings.loc[flattened_factor_order]
+    # get threshold for loadings
+    if thresh>0:
+        thresh_val = np.percentile(abs(loadings).values, thresh)
+        print('Thresholding all loadings less than %s' % np.round(thresh_val, 3))
+        loadings = loadings.mask(abs(loadings) <= thresh_val, 0)
+        # remove variables that don't cross the threshold for any factor
+        kept_vars = list(loadings.index[loadings.mean(1)!=0])
+        print('%s Variables out of %s are kept after threshold' % (len(kept_vars), loadings.shape[0]))
+        loadings = loadings.loc[kept_vars]
+        # remove masked variabled from grouping
+        threshed_groups = []
+        for factor, group in grouping:
+            group = [x for x in group if x in kept_vars]
+            threshed_groups.append([factor,group])
+        grouping = threshed_groups
+    # change variable names to make them more readable
+    loadings.index = format_variable_names(loadings.index)
+    # set up plot variables
+    DV_fontsize = size*2/(loadings.shape[0]//2)*30
+    figsize = (size,size*2)
+    
+    f = plt.figure(figsize=figsize)
+    ax = f.add_axes([0, 0, .08*loadings.shape[1], 1]) 
+    cbar_ax = f.add_axes([.08*loadings.shape[1]+.02,0,.04,1]) 
+
+    max_val = abs(loadings).max().max()
+    sns.heatmap(loadings, ax=ax, cbar_ax=cbar_ax,
+                vmax =  max_val, vmin = -max_val,
+                cbar_kws={'ticks': [-max_val, -max_val/2, 0, max_val/2, max_val]},
+                linecolor='white', linewidth=.01,
+                cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
+    ax.set_yticks(np.arange(.5,loadings.shape[0]+.5,1))
+    ax.set_yticklabels(loadings.index, fontsize=DV_fontsize)
+    ax.set_xticklabels(loadings.columns, 
+                                fontsize=size*.08*20,
+                                ha='left',
+                                rotation=-30)
+    # format cbar
+    cbar_ax.set_yticklabels([format_num(-max_val, 2), 
+                             format_num(-max_val/2, 2),
+                             0, 
+                             format_num(-max_val/2, 2),
+                             format_num(max_val, 2)])
+    cbar_ax.tick_params(axis='y', length=0)
+    cbar_ax.tick_params(labelsize=DV_fontsize*1.5)
+    cbar_ax.set_ylabel('Factor Loading', rotation=-90, fontsize=DV_fontsize*2)
+    
+    # draw lines separating groups
+    if grouping is not None:
+        factor_breaks = np.cumsum([len(i[1]) for i in grouping])[:-1]
+        for y_val in factor_breaks:
+            ax.hlines(y_val, 0, loadings.shape[1], lw=size/5, 
+                      color='grey', linestyle='dashed')
+                
+    if plot_dir:
+        filename = 'factor_heatmap_EFA%s.%s' % (c, ext)
+        save_figure(f, path.join(plot_dir, filename), 
+                    {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
+        
 def plot_polar_factors(results, c, color_by_group=True, 
                        dpi=300, ext='png', plot_dir=None):
     """ Plots factor analytic results as polar plots
@@ -580,8 +663,8 @@ def plot_EFA(results, plot_dir=None, verbose=False, dpi=300, ext='png',
     plot_entropies(results, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting factor bars")
     plot_bar_factors(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext)
-    if verbose: print("Plotting factor polar")
-    plot_polar_factors(results, c=c, plot_dir=plot_dir, dpi=dpi,  ext=ext)
+    if verbose: print("Plotting factor heatmap")
+    plot_heatmap_factors(results, c=c, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting task factors")
     plot_task_factors(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)
     plot_task_factors(results, c, normalize_loadings=True, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)
