@@ -10,6 +10,7 @@ from shutil import copyfile, copytree, rmtree
 import time
 
 from dimensional_structure.results import Results
+from dimensional_structure.cross_results_plots import plot_corr_hist, plot_BIC
 from dimensional_structure.DA_plots import plot_DA
 from dimensional_structure.EFA_plots import plot_EFA
 from dimensional_structure.HCA_plots import plot_HCA
@@ -22,6 +23,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-dataset', default=None)
 parser.add_argument('-no_analysis', action='store_false')
 parser.add_argument('-no_plot', action='store_false')
+parser.add_argument('-group_plot', action='store_true')
 parser.add_argument('-bootstrap', action='store_true')
 parser.add_argument('-boot_iter', type=int, default=1000)
 parser.add_argument('-dpi', type=int, default=300)
@@ -31,6 +33,7 @@ args = parser.parse_args()
 dataset = args.dataset
 run_analysis = args.no_analysis
 run_plot = args.no_plot
+group_plot = args.group_plot
 bootstrap = args.bootstrap
 boot_iter = args.boot_iter
 dpi = args.dpi
@@ -42,6 +45,7 @@ print('Running Analysis? %s, Plotting? %s, Bootstrap? %s' % (['No', 'Yes'][run_a
 basedir=get_info('base_directory')
 if dataset == None:
     dataset = get_recent_dataset()
+    
 dataset = path.join(basedir,'Data',dataset)
 
 datafile = dataset.split(path.sep)[-1]
@@ -117,6 +121,9 @@ for subset in subsets[0:-1]:
         for classifier in classifiers:
             results.run_prediction(classifier=classifier, verbose=True)
             results.run_prediction(classifier=classifier, shuffle=True, verbose=True) # shuffled
+            # predict demographic changes
+            results.run_change_prediction(classifier=classifier, verbose=True)
+            results.run_change_prediction(classifier=classifier, shuffle=True, verbose=True) # shuffled
         run_time = time.time()-start
         
         # ***************************** saving ****************************************
@@ -139,6 +146,8 @@ for subset in subsets[0:-1]:
     # Plotting
     # ****************************************************************************
     if run_plot==True:
+        ext='pdf'
+        size=4.6
         if results is None or name not in results.ID:
             results = load_results(datafile, name=name)[name]
         DA_plot_dir = path.join(results.plot_dir, 'DA')
@@ -160,27 +169,31 @@ for subset in subsets[0:-1]:
          
             # Plot EFA
         print("Plotting EFA")
-        plot_DA(results, DA_plot_dir, verbose=True, dpi=dpi, ext='pdf',)
+        plot_DA(results, DA_plot_dir, verbose=True, size=size, dpi=dpi, ext=ext)
         
         # Plot EFA
         print("Plotting EFA")
-        plot_EFA(results, EFA_plot_dir, verbose=True,  dpi=dpi, ext='pdf',
-                 plot_task_kws=plot_task_kws)
+        plot_EFA(results, EFA_plot_dir, verbose=True, size=size, dpi=dpi, 
+                 ext=ext, plot_task_kws=plot_task_kws)
             
         # Plot HCA
         print("Plotting HCA")
-        plot_HCA(results, HCA_plot_dir, ext='pdf')
+        plot_HCA(results, HCA_plot_dir, size=size, dpi=dpi, ext=ext)
         
         # Plot prediction
         target_order = results.DA.reorder_factors(results.DA.get_loading()).columns
         for classifier in classifiers:
             print("Plotting Prediction, classifier: %s" % classifier)
             plot_prediction(results, target_order=target_order, EFA=True, 
-                            classifier=classifier, dpi=dpi, 
-                            plot_dir=prediction_plot_dir)
+                            classifier=classifier, plot_dir=prediction_plot_dir,
+                            dpi=dpi,
+                            ext=ext,
+                            size=size)
             plot_prediction(results, target_order=target_order, EFA=False, 
-                            classifier=classifier, dpi=dpi, 
-                            plot_dir=prediction_plot_dir)
+                            classifier=classifier, plot_dir=prediction_plot_dir,
+                            dpi=dpi,
+                            ext=ext,
+                            size=size)
         plot_prediction_comparison(results, dpi=dpi, plot_dir=prediction_plot_dir)
         
         # copy latest results and prediction to higher directory
@@ -191,4 +204,6 @@ for subset in subsets[0:-1]:
         copytree(plot_dir, generic_dir)
         
 if group_plot == True:
-    results = load_results(dataset)
+    results = load_results(datafile)
+    plot_corr_hist(results)
+    plot_BIC(results)
