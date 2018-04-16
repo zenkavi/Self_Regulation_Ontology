@@ -13,10 +13,11 @@ from sklearn.metrics import adjusted_mutual_info_score, adjusted_rand_score
 from sklearn.preprocessing import MinMaxScaler, scale
 
 from dimensional_structure.utils import abs_pdist, set_seed
-from dimensional_structure.plot_utils import get_short_names, save_figure, plot_loadings, plot_tree
+from dimensional_structure.plot_utils import get_short_names, plot_loadings, plot_tree
 from selfregulation.utils.plot_utils import (CurvedText, dendroheatmap, format_num,
                                              format_variable_names, 
-                                             get_dendrogram_color_fun)
+                                             get_dendrogram_color_fun,
+                                             save_figure)
 
 # check if plotly exists
 import importlib

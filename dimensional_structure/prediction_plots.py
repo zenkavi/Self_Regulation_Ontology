@@ -4,8 +4,8 @@ from os import path
 import pandas as pd
 import pickle
 import seaborn as sns
-from dimensional_structure.plot_utils import get_short_names, plot_loadings, save_figure
-from selfregulation.utils.plot_utils import beautify_legend, CurvedText
+from dimensional_structure.plot_utils import get_short_names, plot_loadings
+from selfregulation.utils.plot_utils import beautify_legend, CurvedText, save_figure
 
 colors = sns.color_palette('Blues_d',3) + sns.color_palette('Reds_d',2)[:1]
 
