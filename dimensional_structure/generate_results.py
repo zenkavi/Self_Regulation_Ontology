@@ -196,6 +196,24 @@ for subset in subsets[0:-1]:
                             size=size)
         plot_prediction_comparison(results, dpi=dpi, plot_dir=prediction_plot_dir)
         
+        # Plot prediction changes
+        change_target_order = [i + ' Change' for i in target_order]
+        for classifier in classifiers:
+            print("Plotting Prediction, classifier: %s" % classifier)
+            plot_prediction(results, target_order=change_target_order, 
+                            EFA=True, change=True,
+                            classifier=classifier, plot_dir=prediction_plot_dir,
+                            dpi=dpi,
+                            ext=ext,
+                            size=size)
+            plot_prediction(results, target_order=change_target_order, 
+                            EFA=False, change=True,
+                            classifier=classifier, plot_dir=prediction_plot_dir,
+                            dpi=dpi,
+                            ext=ext,
+                            size=size)
+        plot_prediction_comparison(results, dpi=dpi, plot_dir=prediction_plot_dir)
+        
         # copy latest results and prediction to higher directory
         plot_dir = results.plot_dir
         generic_dir = '_'.join(plot_dir.split('_')[0:-1])

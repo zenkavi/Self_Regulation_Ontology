@@ -38,7 +38,7 @@ def run_prediction(predictors, demographics, output_base='',
                 print('No predictor variance in CV model!')
             if pd.isnull(insample_scores[0]):
                 print('No predictor variance in insample model!')
-        bp.scores[v],bp.importances[v] = cv_scores, cv_importances
+        bp.scores[v], bp.importances[v] = cv_scores, cv_importances
         bp.scores_insample[v] = insample_scores
         
     if save == True:

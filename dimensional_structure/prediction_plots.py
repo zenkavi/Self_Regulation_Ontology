@@ -20,7 +20,7 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
     if importance[1] is not None:
         importance_vals = [abs(i)+pad for i in importance[1].T]
         plot_loadings(ax, importance_vals, kind='line', offset=.5, 
-                      colors=[color], plot_kws={'alpha': 1,})
+                      colors=[color], plot_kws={'alpha': 1, 'linewidth': label_size/4})
     else:
         ax.set_yticks([])
     # set up x ticks
@@ -33,27 +33,23 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
         scale = 1+label_scale
         size = ax.get_position().expanded(scale, scale)
         ax2=ax.get_figure().add_axes(size,zorder=2)
-        max_var_length = max([len(v) for v in importance_vars])
         for i, var in enumerate(importance_vars):
-            offset=.3*25/len(importance_vars)**2
-            start = (i-offset)*2*np.pi/len(importance_vars)
-            end = (i+(1-offset))*2*np.pi/len(importance_vars)
+            arc_start = (i+.1)*2*np.pi/len(importance_vars)
+            arc_end = (i+.9)*2*np.pi/len(importance_vars)
             curve = [
-                np.cos(np.linspace(start,end,100)),
-                np.sin(np.linspace(start,end,100))
+                .85*np.cos(np.linspace(arc_start,arc_end,100)),
+                .85*np.sin(np.linspace(arc_start,arc_end,100))
             ]  
             plt.plot(*curve, alpha=0)
-            # pad strings to longest length
-            num_spaces = (max_var_length-len(var))
-            var = ' '*(num_spaces//2) + var + ' '*(num_spaces-num_spaces//2)
             curvetext = CurvedText(
                 x = curve[0][::-1],
                 y = curve[1][::-1],
                 text=var, #'this this is a very, very long text',
-                va = 'top',
+                va = 'bottom',
                 axes = ax2,
-                fontsize=label_size##calls ax.add_artist in __init__
+                fontsize=label_size
             )
+            ax2.set_xlim([-1,1]); ax2.set_ylim([-1,1])
             ax2.axis('off')
         
     if title:
@@ -73,15 +69,20 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
             ax.set_yticklabels(labels)
 
 def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
-                    include_shuffle=False,  ymax=None, size=4.6,  
-                    dpi=300, plot_dir=None):
-    predictions = results.load_prediction_object(EFA=EFA, classifier=classifier)
+                    change=False, include_shuffle=False,  ymax=None, size=4.6,  
+                    dpi=300, ext='png', plot_dir=None):
+    predictions = results.load_prediction_object(EFA=EFA, 
+                                                 change=change,
+                                                 classifier=classifier)
     if predictions is None:
         print('No prediction object found!')
         return
     else:
         predictions = predictions['data']
-    shuffled_predictions = results.load_prediction_object(EFA=EFA, classifier=classifier, shuffle=True)['data']
+    shuffled_predictions = results.load_prediction_object(EFA=EFA, 
+                                                          classifier=classifier, 
+                                                          change=change,
+                                                          shuffle=True)['data']
     
     if target_order is None:
         target_order = predictions.keys()
@@ -186,9 +187,9 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
                              color=colors[3])
     if plot_dir is not None:
         if EFA:
-            filename = 'EFA_%s_prediction_output.png' % classifier
+            filename = 'EFA_%s_prediction_output.%s' % (classifier, ext)
         else:
-            filename = 'IDM_%s_prediction_output.png' % classifier
+            filename = 'IDM_%s_prediction_output.%s' % (classifier, ext)
         save_figure(fig, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()

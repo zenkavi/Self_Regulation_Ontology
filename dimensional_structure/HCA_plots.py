@@ -546,7 +546,7 @@ def visualize_importance(importance, ax, xticklabels=True,
     importance_vars = importance[0]
     importance_vals = [abs(i)+pad for i in importance[1].T]
     plot_loadings(ax, importance_vals, kind='line', offset=.5,
-                  plot_kws={'alpha': 1})
+                  plot_kws={'alpha': 1, 'linewidth': 3})
     # set up x ticks
     xtick_locs = np.arange(0.0, 2*np.pi, 2*np.pi/len(importance_vars))
     ax.set_xticks(xtick_locs)

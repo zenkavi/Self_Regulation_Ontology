@@ -499,13 +499,40 @@ class Demographic_Analysis(EFA_Analysis):
     def __init__(self, data, residualize=True, residualize_vars=['Age', 'Sex'],
                  boot_iter=1000):
         self.raw_data = data
+        self.residualize_vars = residualize_vars
         if residualize:
-            data = residualize_baseline(data, residualize_vars)
+            data = residualize_baseline(data, self.residualize_vars)
         if 'BMI' in data.columns:
             data.drop(['WeightPounds', 'HeightInches'], axis=1, inplace=True)
         
         super().__init__(data, boot_iter=boot_iter)
+    
+    def get_change(self, retest_dataset):
+        demographics = self.data
         
+        retest = get_demographics(retest_dataset)
+        retest = residualize_baseline(retest, self.residualize_vars)
+        if 'BMI' in retest.columns:
+            retest.drop(['WeightPounds', 'HeightInches'], axis=1, inplace=True)
+        # get common variables
+        common_index = sorted(list(set(demographics.index) & set(retest.index)))
+        common_columns = sorted(list(set(demographics.columns) & set(retest.columns)))
+        demographics = demographics.loc[common_index, common_columns] 
+        retest = retest.loc[common_index, common_columns]
+        raw_change = retest-demographics
+        # convert to scores
+        demographic_factor_weights = get_attr(self.DA.results['factor_tree_Rout'][9],'weights')
+        demographic_scores = scale(demographics).dot(demographic_factor_weights)
+        retest_scores = scale(retest).dot(demographic_factor_weights)
+        
+        
+        factor_change = pd.DataFrame(retest_scores-demographic_scores,
+                              index=common_index,
+                              columns = self.DA.get_scores().columns)
+        factor_change = self.DA.reorder_factors(factor_change)
+        factor_change.columns = [i + ' Change' for i in factor_change.columns]
+        return factor_change, raw_change
+    
 class Results(EFA_Analysis, HCA_Analysis):
     """ Class to hold olutput of EFA, HCA and graph analyses """
     def __init__(self, 
@@ -676,32 +703,8 @@ class Results(EFA_Analysis, HCA_Analysis):
         raw_data = self.data[labels]
         
         # get change scores
-        demographics = get_demographics()
-        demographics = residualize_baseline(demographics, ['Age', 'Sex'])
-        if 'BMI' in demographics.columns:
-            demographics.drop(['WeightPounds', 'HeightInches'], axis=1, inplace=True)
+        factor_change, raw_change = self.DA.get_change(self.dataset.replace('Complete', 'Retest'))
         
-        retest = get_demographics(self.dataset.replace('Complete', 'Retest'))
-        retest = residualize_baseline(retest, ['Age', 'Sex'])
-        if 'BMI' in retest.columns:
-            retest.drop(['WeightPounds', 'HeightInches'], axis=1, inplace=True)
-        # get common variables
-        common_index = sorted(list(set(demographics.index) & set(retest.index)))
-        common_columns = sorted(list(set(demographics.columns) & set(retest.columns)))
-        demographics = demographics.loc[common_index, common_columns] 
-        retest = retest.loc[common_index, common_columns]
-        raw_change = retest-demographics
-        # convert to scores
-        demographic_factor_weights = get_attr(self.DA.results['factor_tree_Rout'][9],'weights')
-        demographic_scores = scale(demographics).dot(demographic_factor_weights)
-        retest_scores = scale(retest).dot(demographic_factor_weights)
-        
-        
-        factor_change = pd.DataFrame(retest_scores-demographic_scores,
-                              index=common_index,
-                              columns = self.DA.get_scores().columns)
-        factor_change = self.DA.reorder_factors(factor_change)
-        factor_change.columns = [i + ' Change' for i in factor_change.columns]
         # predict
         targets = [('demo_factors_change', factor_change)]
         if include_raw_demographics:
@@ -728,14 +731,18 @@ class Results(EFA_Analysis, HCA_Analysis):
         
     def get_prediction_files(self, EFA=True, shuffle=True, change=False):
         prefix = 'EFA' if EFA else 'IDM'
-        change = '_change' if change else ''
         prediction_files = glob.glob(path.join(self.output_dir,
                                                'prediction_outputs',
-                                               '%s*%s*' % (prefix, change)))
+                                               '%s*' % prefix))
         if shuffle:
             prediction_files = [f for f in prediction_files if 'shuffle' in f]
         else:
             prediction_files = [f for f in prediction_files if 'shuffle' not in f]
+            
+        if change:
+            prediction_files = [f for f in prediction_files if 'change' in f]
+        else:
+            prediction_files = [f for f in prediction_files if 'change' not in f]
         return prediction_files
     
     def load_prediction_object(self, ID=None, shuffle=False, EFA=True, 
