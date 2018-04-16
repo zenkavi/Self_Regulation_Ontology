@@ -7,14 +7,7 @@ import seaborn as sns
 from dimensional_structure.utils import reorder_data
 from selfregulation.utils.plot_utils import CurvedText, beautify_legend
 
-def save_figure(fig, loc, save_kws=None):
-    """ Saves figure in location and creates directory tree if needed """
-    if save_kws is None:
-        save_kws = {}
-    directory = os.path.dirname(loc)
-    if directory != "":
-        os.makedirs(directory, exist_ok=True)
-    fig.savefig(loc, **save_kws)
+
 
 def get_short_names():
     shortened_factors = {

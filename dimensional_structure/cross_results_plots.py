@@ -10,7 +10,7 @@ import seaborn as sns
 from sklearn.linear_model import LinearRegression, RidgeCV
 from sklearn.model_selection import cross_val_score
 from selfregulation.utils.plot_utils import beautify_legend, save_figure
-from selfregulation.utils.result_utils import load_all_results
+from selfregulation.utils.result_utils import load_results
 from selfregulation.utils.utils import get_recent_dataset
 
 def extract_tril(mat, k=0):
@@ -195,7 +195,7 @@ def plot_BIC(all_results, colors, size=4.6, dpi=300, ext='png', plot_dir=None):
             
 if __name__ == "__main__":
     datafile = get_recent_dataset()
-    all_results = load_all_results(datafile)
+    all_results = load_results(datafile)
     plot_file = path.dirname(all_results['task'].plot_dir)
     
     # make histogram plot

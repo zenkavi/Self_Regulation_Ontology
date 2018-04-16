@@ -7,9 +7,9 @@ from os import makedirs, path
 import pandas as pd
 import seaborn as sns
 
-from dimensional_structure.plot_utils import save_figure, visualize_factors, visualize_task_factors
+from dimensional_structure.plot_utils import visualize_factors, visualize_task_factors
 from dimensional_structure.utils import get_factor_groups
-from selfregulation.utils.plot_utils import beautify_legend, format_num, format_variable_names
+from selfregulation.utils.plot_utils import beautify_legend, format_num, format_variable_names, save_figure
 from selfregulation.utils.r_to_py_utils import get_attr
 from selfregulation.utils.utils import get_behav_data
 
@@ -64,7 +64,7 @@ def plot_BIC_SABIC(results, size=2.3, dpi=300, ext='png', plot_dir=None):
                         {'bbox_inches': 'tight', 'dpi': dpi})
             plt.close()
 
-def plot_communality(results, c, figsize=20, dpi=300, ext='png', plot_dir=None):
+def plot_communality(results, c, size=20, dpi=300, ext='png', plot_dir=None):
     EFA = results.EFA
     loading = EFA.get_loading(c)
     communality = (loading**2).sum(1).sort_values()
@@ -95,17 +95,17 @@ def plot_communality(results, c, figsize=20, dpi=300, ext='png', plot_dir=None):
         
     # plot communality bars woo!
     if len(retest_data)>0:
-        f, axes = plt.subplots(1, 3, figsize=(3*(figsize/10), figsize))
+        f, axes = plt.subplots(1, 3, figsize=(3*(size/10), size))
     
-        plot_bar_factor(communality, axes[0], figsize=figsize,
-                        label_loc='left',  title='Communality')
-        plot_bar_factor(noise_ceiling, axes[1], figsize=figsize,
-                        label_loc=None,  title_loc='bottom', title='Test-Retest')
-        plot_bar_factor(adjusted_communality, axes[2], figsize=figsize,
-                        label_loc='right',  title='Adjusted Communality')
+        plot_bar_factor(communality, axes[0], width=size/10, height=size,
+                        label_loc='leftall',  title='Communality')
+        plot_bar_factor(noise_ceiling, axes[1], width=size/10, height=size,
+                        label_loc=None,  title='Test-Retest')
+        plot_bar_factor(adjusted_communality, axes[2], width=size/10, height=size,
+                        label_loc=None,  title='Adjusted Communality')
     else:
         f = plot_bar_factor(communality, label_loc='both', 
-                            figsize=figsize, title='Communality')
+                            width=size/3, height=size*2, title='Communality')
     if plot_dir:
         filename = 'communality_bars-EFA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
@@ -116,15 +116,17 @@ def plot_communality(results, c, figsize=20, dpi=300, ext='png', plot_dir=None):
     if len(retest_data) > 0:
         with sns.axes_style('white'):
             colors = sns.color_palette(n_colors=2, desat=.75)
-            f, ax = plt.subplots(1,1,figsize=(figsize,figsize))
+            f, ax = plt.subplots(1,1,figsize=(size,size))
             sns.kdeplot(communality, linewidth=3, 
                         shade=True, label='Communality', color=colors[0])
             sns.kdeplot(adjusted_communality, linewidth=3, 
                         shade=True, label='Adjusted Communality', color=colors[1])
-            leg=ax.legend(fontsize=figsize*2, loc='upper right')
+            leg=ax.legend(fontsize=size*2, loc='upper right')
             beautify_legend(leg, colors)
-            plt.xlabel('Communality', fontsize=figsize*2)
+            plt.xlabel('Communality', fontsize=size*2)
+            plt.ylabel('Normalized Density', fontsize=size*2)
             ax.set_yticks([])
+            ax.tick_params(labelsize=size)
             ax.set_ylim(0, ax.get_ylim()[1])
             ax.set_xlim(0, ax.get_xlim()[1])
             ax.spines['right'].set_visible(False)
@@ -133,7 +135,7 @@ def plot_communality(results, c, figsize=20, dpi=300, ext='png', plot_dir=None):
             # add correlation
             correlation = "{0:0.2f}".format(np.mean(correlation))
             ax.text(1, 1.25, 'Correlation Between Communality \nand Test-Retest: %s' % correlation,
-                    size=figsize*2)
+                    size=size*2)
         if plot_dir:
             filename = 'communality_dist-EFA%s.%s' % (c, ext)
             save_figure(f, path.join(plot_dir, filename), 
@@ -174,7 +176,7 @@ def plot_nesting(results, thresh=.5, dpi=300, figsize=12, ext='png', plot_dir=No
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
         
-def plot_factor_correlation(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):
+def plot_factor_correlation(results, c, size=4.6, dpi=300, ext='png', plot_dir=None):
     EFA = results.EFA
     loading = EFA.get_loading(c)
     # get factor correlation matrix
@@ -183,26 +185,23 @@ def plot_factor_correlation(results, c, figsize=12, dpi=300, ext='png', plot_dir
     phi = pd.DataFrame(phi, columns=loading.columns, index=loading.columns)
     phi = phi.iloc[reorder_vec, reorder_vec]
     with sns.plotting_context('notebook', font_scale=2):
-        f = plt.figure(figsize=(figsize*5/4, figsize))
-        ax1 = f.add_axes([0,0,.75,.75])
-        ax1_cbar = f.add_axes([.7, .05, .03, .65])
+        f = plt.figure(figsize=(size*5/4, size))
+        ax1 = f.add_axes([0,0,.9,.9])
+        cbar_ax = f.add_axes([.91, .05, .03, .8])
         sns.heatmap(phi, ax=ax1, square=True, vmax=.5, vmin=-.5,
-                    cbar_ax=ax1_cbar,
+                    cbar_ax=cbar_ax,
                     cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
         yticklabels = ax1.get_yticklabels()
         ax1.set_yticklabels(yticklabels, rotation = 0, ha="right")
-        ax1.set_title('%s 1st-Level Factor Correlations' % results.ID.split('_')[0],
-                  weight='bold', y=1.05)
-    # get higher order correlations
-    if 'factor2_tree' in EFA.results.keys() and c in EFA.results['factor2_tree'].keys():
-        higher_loading = EFA.results['factor2_tree'][c].iloc[reorder_vec]
-        max_val = np.max(np.max(abs(higher_loading)))
-        ax2 = f.add_axes([.85,0,.04*higher_loading.shape[1],.75])
-        sns.heatmap(higher_loading, ax=ax2, cbar=True,
-                    yticklabels=False, vmax=max_val, vmin=-max_val,
-                    cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
-        ax2.set_title('2nd-Order Factor Loadings', weight='bold', y=1.05)
-        ax2.yaxis.set_label_position('right')
+        ax1.set_title('%s Factor Correlations' % results.ID.split('_')[0].title(),
+                  weight='bold', y=1.05, fontsize=size*3)
+        ax1.tick_params(labelsize=size*3)
+        # format cbar
+        cbar_ax.set_yticklabels([-.5, -.25, 0, .25, .5])
+        cbar_ax.tick_params(axis='y', length=0)
+        cbar_ax.tick_params(labelsize=size*2)
+        cbar_ax.set_ylabel('Pearson Correlation', rotation=-90, labelpad=size*4, fontsize=size*3)
+    
     if plot_dir:
         filename = 'factor_correlations_EFA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
@@ -266,7 +265,7 @@ def plot_bar_factor(loading, ax=None, bootstrap_err=None, grouping=None,
         # add factor label to plot
         if title:
             ax.set_title(title, ha='left', va='bottom', fontsize=width*8,
-                          weight='bold', rotation=20, y=.99, x=0)
+                          weight='bold', rotation=20, y=1, x=0)
         ax.xaxis.set_tick_params(size=height/4, width=height/10, pad=height/2,
                                  color='#666666')
         # add labels of measures to top and bottom
@@ -663,23 +662,23 @@ def plot_DDM(results, c, dpi=300, figsize=(20,8), ext='png', plot_dir=None):
 
 
         
-def plot_EFA(results, plot_dir=None, verbose=False, dpi=300, ext='png',
+def plot_EFA(results, plot_dir=None, verbose=False, size=4.6, dpi=300, ext='png',
              plot_task_kws={}):
 
     c = results.EFA.results['num_factors']
     #if verbose: print("Plotting BIC/SABIC")
     #plot_BIC_SABIC(EFA, plot_dir)
     if verbose: print("Plotting communality")
-    plot_communality(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext)
-    if verbose: print("Plotting entropies")
-    plot_entropies(results, plot_dir=plot_dir, dpi=dpi,  ext=ext)
+    plot_communality(results, c, size=size, plot_dir=plot_dir, dpi=dpi,  ext=ext)
+#    if verbose: print("Plotting entropies")
+#    plot_entropies(results, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting factor bars")
-    plot_bar_factors(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext)
+    plot_bar_factors(results, c, size=size, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting factor heatmap")
-    plot_heatmap_factors(results, c=c, plot_dir=plot_dir, dpi=dpi,  ext=ext)
-    if verbose: print("Plotting task factors")
-    plot_task_factors(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)
-    plot_task_factors(results, c, normalize_loadings=True, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)
+    plot_heatmap_factors(results, c=c, size=size, plot_dir=plot_dir, dpi=dpi,  ext=ext)
+#    if verbose: print("Plotting task factors")
+#    plot_task_factors(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)
+#    plot_task_factors(results, c, normalize_loadings=True, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)
     if verbose: print("Plotting factor correlations")
     plot_factor_correlation(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting DDM factors")

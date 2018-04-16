@@ -29,7 +29,9 @@ def format_variable_names(variables):
 #***************************************************
 # ********* Plotting Functions **********************
 #**************************************************
-def beautify_legend(legend, colors, fontsize=None):
+def beautify_legend(legend, colors=None, fontsize=None):
+    if colors is None:
+        colors = [i.get_color() for i in legend.legendHandles]
     for i, text in enumerate(legend.get_texts()):
         text.set_color(colors[i])
     for item in legend.legendHandles:
@@ -265,7 +267,15 @@ def heatmap(df):
     ax.set_xticklabels(df.columns, rotation=-90, rotation_mode = "anchor", ha = 'left') 
     return fig
 
-
+def save_figure(fig, loc, save_kws=None):
+    """ Saves figure in location and creates directory tree if needed """
+    if save_kws is None:
+        save_kws = {}
+    directory = os.path.dirname(loc)
+    if directory != "":
+        os.makedirs(directory, exist_ok=True)
+    fig.savefig(loc, **save_kws)
+    
 class CurvedText(mtext.Text):
     """
     A text object that follows an arbitrary curve.
