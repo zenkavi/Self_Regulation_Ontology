@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import to_hex
 from matplotlib import text as mtext
 import numpy as np
+import os
 import pandas as pd
 from scipy.cluster.hierarchy import dendrogram
 import seaborn as sns
@@ -365,7 +366,9 @@ class CurvedText(mtext.Text):
         rads = np.arctan2((y_fig[1:] - y_fig[:-1]),(x_fig[1:] - x_fig[:-1]))
         degs = np.rad2deg(rads)
 
-        rel_pos = 10
+        # center text
+        text_width = np.sum([t.get_window_extent(renderer=renderer).width for c,t in self.__Characters])
+        rel_pos = max((l_fig[-1]-text_width)//2+1, 5)
         for c,t in self.__Characters:
             #finding the width of c:
             t.set_rotation(0)

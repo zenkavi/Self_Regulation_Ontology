@@ -30,7 +30,7 @@ def get_short_names():
 # helper functions for hierarchical plotting
 # ****************************************************************************
 
-def plot_tree(tree, pos=None, ax=None):
+def plot_tree(tree, pos=None, ax=None, linewidth=3):
     """ Plots a subset of a dendrogram 
     
     Args:
@@ -42,8 +42,6 @@ def plot_tree(tree, pos=None, ax=None):
     icoord = scipyarray( tree['icoord'] )
     dcoord = scipyarray( tree['dcoord'] )
     color_list = scipyarray( tree['color_list'] )
-    xmin, xmax = icoord.min(), icoord.max()
-    ymin, ymax = dcoord.min(), dcoord.max()
     if pos:
         icoord = icoord[pos]
         dcoord = dcoord[pos]
@@ -51,7 +49,7 @@ def plot_tree(tree, pos=None, ax=None):
     if ax is None:
         f, ax = plt.subplots(1,1)
     for xs, ys, color in zip(icoord, dcoord, color_list):
-        ax.plot(xs, ys,  color, linewidth=3)
+        ax.plot(xs, ys,  color, linewidth=linewidth)
     
     
 # ****************************************************************************
@@ -97,9 +95,11 @@ def plot_loadings(ax, component_loadings, groups=None, colors=None,
             color_index = sum((np.cumsum([len(g[1]) for g in groups])<i+1))
             bar.set_facecolor(colors[color_index])
     elif kind == 'line':
+        if 'linewidth' not in plot_kws.keys():
+            plot_kws['linewidth'] == 5
         theta = np.append(theta, theta[0])
         radii = np.append(radii, radii[0])
-        lines = ax.plot(theta, radii, linewidth=5, color=colors[0], **plot_kws)
+        lines = ax.plot(theta, radii, color=colors[0], **plot_kws)
     return colors
         
 def create_categorical_legend(labels,colors, ax):
