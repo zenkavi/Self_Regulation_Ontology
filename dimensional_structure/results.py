@@ -521,15 +521,16 @@ class Demographic_Analysis(EFA_Analysis):
         retest = retest.loc[common_index, common_columns]
         raw_change = retest-demographics
         # convert to scores
-        demographic_factor_weights = get_attr(self.DA.results['factor_tree_Rout'][9],'weights')
+        c = self.results['num_factors']
+        demographic_factor_weights = get_attr(self.results['factor_tree_Rout'][c],'weights')
         demographic_scores = scale(demographics).dot(demographic_factor_weights)
         retest_scores = scale(retest).dot(demographic_factor_weights)
         
         
         factor_change = pd.DataFrame(retest_scores-demographic_scores,
                               index=common_index,
-                              columns = self.DA.get_scores().columns)
-        factor_change = self.DA.reorder_factors(factor_change)
+                              columns = self.get_scores().columns)
+        factor_change = self.reorder_factors(factor_change)
         factor_change.columns = [i + ' Change' for i in factor_change.columns]
         return factor_change, raw_change
     

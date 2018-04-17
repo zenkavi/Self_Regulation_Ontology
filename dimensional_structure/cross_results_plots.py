@@ -17,8 +17,8 @@ def extract_tril(mat, k=0):
     return mat[np.tril_indices_from(mat, k=k)]
 
 
-def plot_corr_hist(all_results, reps=100, size=2.3, 
-                   dpi=300, ext='png', save=False):
+def plot_corr_hist(all_results, reps=100, size=4.6, 
+                   dpi=300, ext='png', plot_dir=None):
     colors = sns.color_palette('Blues_d',3)[0:2] + sns.color_palette('Reds_d',2)[:1]
     survey_corr = abs(all_results['survey'].data.corr())
     task_corr = abs(all_results['task'].data.corr())
@@ -101,11 +101,9 @@ def plot_corr_hist(all_results, reps=100, size=2.3,
         axes[0].set_ylabel('Normalized Density', fontsize=20, labelpad=10)
     
     # save
-    if save==True:
-        plot_file = path.dirname(all_results['task'].plot_dir)
+    if plot_dir is not None:
         # make histogram plot
-        
-        save_figure(f, path.join(plot_file, 'within-across_correlations.pdf'),
+        save_figure(f, path.join(plot_dir, 'within-across_correlations.pdf'),
                                 {'bbox_inches': 'tight', 'dpi': 300})
         
     
@@ -146,7 +144,7 @@ def plot_EFA_relationships(all_results):
     frame.set_color('black')
     beautify_legend(leg, all_colors)
 
-def plot_BIC(all_results, colors, size=4.6, dpi=300, ext='png', plot_dir=None):
+def plot_BIC(all_results, size=4.6, dpi=300, ext='png', plot_dir=None):
     """ Plots BIC and SABIC curves
     
     Args:
@@ -175,14 +173,14 @@ def plot_BIC(all_results, colors, size=4.6, dpi=300, ext='png', plot_dir=None):
                 metric = key.split('-')[-1]
                 BIC_scores = [EFA.results[key][i] for i in x]
                 BIC_c = EFA.results['c_metric-%s' % metric]
-                ax1.plot(x, BIC_scores,  'o-', c=colors[0], lw=3, label=metric,
+                ax1.plot(x, BIC_scores,  'o-', c=colors[0], lw=size/6, label=metric,
                          markersize=height*2)
                 ax1.plot(BIC_c, BIC_scores[BIC_c-1], '.', color='white',
                          markeredgecolor=colors[0], markeredgewidth=height/2, 
                          markersize=height*4)
             if i==0:
                 ax1.set_ylabel('Score', fontsize=height*3)
-                leg = ax1.legend(loc='right center',
+                leg = ax1.legend(loc='center right',
                                  fontsize=height*3, markerscale=0)
                 beautify_legend(leg, colors=colors)
             ax1.set_xlabel('# Factors', fontsize=height*3)
@@ -193,14 +191,5 @@ def plot_BIC(all_results, colors, size=4.6, dpi=300, ext='png', plot_dir=None):
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
             
-if __name__ == "__main__":
-    datafile = get_recent_dataset()
-    all_results = load_results(datafile)
-    plot_file = path.dirname(all_results['task'].plot_dir)
-    
-    # make histogram plot
-    colors = sns.color_palette('Blues_d',3)[0:2] + sns.color_palette('Reds_d',2)[:1]
-    f = plot_corr_hist(all_results, colors)
-    save_figure(f, path.join(plot_file, 'within-across_correlations.pdf'),
-                            {'bbox_inches': 'tight', 'dpi': 300})
+
 

@@ -8,10 +8,8 @@ from sklearn.manifold import MDS
 from sklearn.preprocessing import scale
 import seaborn as sns
 from dimensional_structure.HCA_plots import abs_pdist
-from dimensional_structure.plot_utils import  save_figure
-from selfregulation.utils.utils import get_behav_data
 from selfregulation.utils.result_utils import load_results
-from selfregulation.utils.plot_utils import format_num, DDM_plot
+from selfregulation.utils.plot_utils import format_num, DDM_plot, save_figure
 
 # load data
 results = load_results('Complete_03-29-2018')
@@ -247,7 +245,7 @@ loading_mds.set_xticklabels(''); loading_mds.set_yticklabels('')
 loading_mds.tick_params(axis='both', length=0)
 loading_mds.axis('off'); 
 
-
+"""
 # get example points
 for ax, distances in [(loading_mds, loading_distances), 
                       (participant_mds, participant_distances)]:
@@ -282,7 +280,7 @@ for ax, distances in [(loading_mds, loading_distances),
                         facecolors='white',
                         marker='.',
                         s=basemarker*.4)
-
+"""
 # ****************************************************************************
 # Text and additional pretty lines
 # ****************************************************************************
@@ -423,14 +421,14 @@ back.text(.25, .24, 'f', fontsize=basefont*1.56255, fontweight='bold')
 back.text(.85, .24, 'g', fontsize=basefont*1.56255, fontweight='bold')
 
 
-"""
+
 # save
 plot_file = path.dirname(results['task'].plot_dir)
 f.savefig(path.join(plot_file, 'analysis_overview.pdf'), 
                 bbox_inches='tight', 
                 dpi=300)
 
-"""
+
 """
 # example DDM plot
 np.random.seed(1000)

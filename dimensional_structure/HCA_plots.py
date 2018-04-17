@@ -696,18 +696,22 @@ def plot_cluster_sankey(results):
         print("Plotly wasn't found, can't plot!")
     
 
-def plot_HCA(results, plot_dir=None, verbose=False, ext='png'):
+def plot_HCA(results, plot_dir=None, size=10, dpi=300, verbose=False, ext='png'):
     c = results.EFA.results['num_factors']
     # plots, woo
-    if verbose: print("Plotting dendrogram heatmaps")
-    plot_clusterings(results, inp='data', plot_dir=plot_dir, verbose=verbose, ext=ext)
-    plot_clusterings(results, inp='EFA%s' % c, plot_dir=plot_dir, verbose=verbose, ext=ext)
+#    if verbose: print("Plotting dendrogram heatmaps")
+#    plot_clusterings(results, inp='data', plot_dir=plot_dir, verbose=verbose, ext=ext)
+#    plot_clusterings(results, inp='EFA%s' % c, plot_dir=plot_dir, verbose=verbose, ext=ext)
     if verbose: print("Plotting dendrograms")
-    plot_dendrogram(results, c, inp='data', titles=False, plot_dir=plot_dir, ext=ext)
-    plot_dendrogram(results, c, inp='EFA%s' % c, titles=False, plot_dir=plot_dir, ext=ext)
+    plot_dendrogram(results, c, size=size, inp='data', titles=False, 
+                    plot_dir=plot_dir, ext=ext, dpi=dpi)
+    plot_dendrogram(results, c, inp='EFA%s' % c, titles=False, 
+                    plot_dir=plot_dir, ext=ext, dpi=dpi)
     if verbose: print("Plotting dendrogram subbranches")
-    plot_subbranches(results, c,  inp='data', plot_dir=plot_dir, ext=ext)
-    plot_subbranches(results, c,  inp='EFA%s' % c, plot_dir=plot_dir, ext=ext)
+    plot_subbranches(results, c,  size=size/2, inp='data', 
+                     plot_dir=plot_dir, ext=ext, dpi=dpi)
+    plot_subbranches(results, c,  size=size/2, inp='EFA%s' % c, 
+                     plot_dir=plot_dir, ext=ext, dpi=dpi)
 #    if verbose: print("Plotting clustering similarity")
 #    plot_clustering_similarity(results, plot_dir=plot_dir, verbose=verbose, ext=ext)
 #    if verbose: print("Plotting cluster polar plots")

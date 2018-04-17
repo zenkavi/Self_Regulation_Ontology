@@ -160,6 +160,7 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
                 color = colors[0]
             visualize_importance(importance, axes[i],
                                  yticklabels=False, xticklabels=False,
+                                 label_size=figsize[1]*1,
                                  color=color)
         # plot top 2 predictions, labeled  
         if best_predictors[-1][0] < best_predictors[-2][0]:
@@ -186,20 +187,23 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
                              title=best_predictors[-2][1][0],
                              color=colors[3])
     if plot_dir is not None:
+        changestr = '_change' if change else ''
         if EFA:
-            filename = 'EFA_%s_prediction_output.%s' % (classifier, ext)
+            filename = 'EFA%s_%s_prediction_output.%s' % (changestr, classifier, ext)
         else:
-            filename = 'IDM_%s_prediction_output.%s' % (classifier, ext)
+            filename = 'IDM%s_%s_prediction_output.%s' % (changestr, classifier, ext)
         save_figure(fig, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
 
     
 
-def plot_prediction_comparison(results, figsize=(14,8), dpi=300, plot_dir=None):
+def plot_prediction_comparison(results, size=4.6, change=False,
+                               dpi=300, plot_dir=None):
     R2s = {}
     for EFA in [False, True]:
-        predictions = results.get_prediction_files(EFA=EFA, shuffle=False)
+        predictions = results.get_prediction_files(EFA=EFA, change=change, 
+                                                   shuffle=False)
         for filey in predictions:
             feature = 'EFA' if EFA else 'IDM'
             prediction_object = pickle.load(open(filey, 'rb'))
@@ -211,7 +215,7 @@ def plot_prediction_comparison(results, figsize=(14,8), dpi=300, plot_dir=None):
 
     R2s = pd.DataFrame(R2s).melt(var_name='Classifier', value_name='R2')
     R2s['Feature'], R2s['Classifier'] = R2s.Classifier.str.split('_', 1).str
-    f = plt.figure(figsize=figsize)
+    f = plt.figure(figsize=(size, size*.62))
     sns.barplot(x='Classifier', y='R2', data=R2s, hue='Feature',
                 palette=colors[:2])
     ax = plt.gca()

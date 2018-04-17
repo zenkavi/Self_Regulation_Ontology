@@ -5,7 +5,7 @@ import argparse
 from glob import glob
 import numpy as np
 from os import makedirs, path
-import pickle
+import seaborn as sns
 from shutil import copyfile, copytree, rmtree
 import time
 
@@ -23,7 +23,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-dataset', default=None)
 parser.add_argument('-no_analysis', action='store_false')
 parser.add_argument('-no_plot', action='store_false')
-parser.add_argument('-group_plot', action='store_true')
+parser.add_argument('-no_group', action='store_false')
 parser.add_argument('-bootstrap', action='store_true')
 parser.add_argument('-boot_iter', type=int, default=1000)
 parser.add_argument('-dpi', type=int, default=300)
@@ -33,7 +33,7 @@ args = parser.parse_args()
 dataset = args.dataset
 run_analysis = args.no_analysis
 run_plot = args.no_plot
-group_plot = args.group_plot
+group_plot = args.no_group
 bootstrap = args.bootstrap
 boot_iter = args.boot_iter
 dpi = args.dpi
@@ -145,9 +145,9 @@ for subset in subsets[0:-1]:
     # ****************************************************************************
     # Plotting
     # ****************************************************************************
+    ext='pdf'
+    size=4.6
     if run_plot==True:
-        ext='pdf'
-        size=4.6
         if results is None or name not in results.ID:
             results = load_results(datafile, name=name)[name]
         DA_plot_dir = path.join(results.plot_dir, 'DA')
@@ -223,5 +223,6 @@ for subset in subsets[0:-1]:
         
 if group_plot == True:
     results = load_results(datafile)
-    plot_corr_hist(results)
-    plot_BIC(results)
+    plot_file = path.dirname(results['task'].plot_dir)
+    plot_corr_hist(results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+    plot_BIC(results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
