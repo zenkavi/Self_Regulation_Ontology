@@ -87,9 +87,9 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
     if target_order is None:
         target_order = predictions.keys()
     # get prediction success
-    r2s = [[k,predictions[k]['scores_cv'][0]] for k in target_order]
-    insample_r2s = [[k, predictions[k]['scores_insample'][0]] for k in target_order]
-    shuffled_r2s = [[k, shuffled_predictions[k]['scores_cv'][0]] for k in target_order]
+    r2s = [[k,predictions[k]['scores_cv']['R2']] for k in target_order]
+    insample_r2s = [[k, predictions[k]['scores_insample']['R2']] for k in target_order]
+    shuffled_r2s = [[k, shuffled_predictions[k]['scores_cv']['R2']] for k in target_order]
     # convert nans to 0
     r2s = [(i, k) if k==k else (i,0) for i, k in r2s]
     insample_r2s = [(i, k) if k==k else (i,0) for i, k in insample_r2s]
@@ -120,7 +120,7 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
                         (tick_locs[i]-width+abs(xmin))/xrange, 
                         (tick_locs[i]+width+abs(xmin))/xrange,
                         color='w',
-                        linewidth=size/4,
+                        linewidth=size/5,
                         linestyle='--')
     ax1.set_xticklabels([i[0] for i in r2s], rotation=15, fontsize=size*1.15)
     ax1.set_ylabel('R2', fontsize=size, labelpad=10)
