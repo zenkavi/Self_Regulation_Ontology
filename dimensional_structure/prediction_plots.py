@@ -70,7 +70,7 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
             ax.set_yticklabels(labels)
 
 def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
-                    change=False, ymax=None, size=4.6,  
+                    change=False, size=4.6,  
                     dpi=300, ext='png', plot_dir=None):
     predictions = results.load_prediction_object(EFA=EFA, 
                                                  change=change,
@@ -127,14 +127,13 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
     xlow, xhigh = ax1.get_xlim()
     ax1.hlines(0, xlow, xhigh, color='k', lw=size/5)
     ax1.set_xlim(xlow,xhigh)
-    # change y max
+    # change y extents
     ylim = ax1.get_ylim()
-    ymax=None
-    if ymax is None:
-        r2_max = max(max(r2s, key=lambda x: x[1])[1],
-                     max(insample_r2s, key=lambda x: x[1])[1])
-        ymax = r2_max*1.5
-    ax1.set_ylim(ylim[0], ymax)
+    r2_max = max(max(r2s, key=lambda x: x[1])[1],
+                 max(insample_r2s, key=lambda x: x[1])[1])
+    ymax = r2_max*1.5
+    ymin = min(ylim[0], -.025)
+    ax1.set_ylim(ymin, ymax)
     # add a legend
     leg = ax1.legend(fontsize=size, loc='upper left')
     beautify_legend(leg, colors[:3])
@@ -143,7 +142,7 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
         ax1.yaxis.set_major_locator(ticker.MultipleLocator(.025))
     else:
         ax1.yaxis.set_major_locator(ticker.MultipleLocator(.05))
-        ax1.set_yticks(np.append([0, .025, .05, .075], np.arange(.1, .4, .05)))
+        ax1.set_yticks(np.append([-.025, 0, .025, .05, .075], np.arange(.1, .4, .05)))
 
     # draw grid
     ax1.set_axisbelow(True)
@@ -187,7 +186,7 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
         axes.append(fig.add_axes([locs[0]-.2*ratio,.56,.3*ratio,.3], projection='polar'))
         visualize_importance(label_importance, axes[-1], yticklabels=False,
                              xticklabels=True,
-                             label_size=figsize[1]*1.5,
+                             label_size=figsize[1]*1.2,
                              label_scale=.22,
                              title=best_predictors[-1][1][0],
                              color=colors[3])
@@ -197,7 +196,7 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
         axes.append(fig.add_axes([locs[1]-.2*ratio,.56,.3*ratio,.3], projection='polar'))
         visualize_importance(label_importance, axes[-1], yticklabels=False,
                              xticklabels=True,
-                             label_size=figsize[1]*1.5,
+                             label_size=figsize[1]*1.2,
                              label_scale=.23,
                              title=best_predictors[-2][1][0],
                              color=colors[3])
