@@ -70,7 +70,7 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
             ax.set_yticklabels(labels)
 
 def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
-                    change=False, size=4.6,  
+                    change=False, normalize=False, size=4.6,  
                     dpi=300, ext='png', plot_dir=None):
     predictions = results.load_prediction_object(EFA=EFA, 
                                                  change=change,
@@ -92,15 +92,20 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
     insample_r2s = [[k, predictions[k]['scores_insample'][0]['R2']] for k in target_order]
     # get shuffled values
     shuffled_r2s = []
+    insample_shuffled_r2s = []
     for i, k in enumerate(target_order):
         # normalize r2s to significance
         R2s = [i['R2'] for i in shuffled_predictions[k]['scores_cv']]
         R2_95 = np.percentile(R2s, 95)
-        r2s[i] = (r2s[i][0], r2s[i][1]-R2_95)
+        shuffled_r2s.append((k,R2_95))
+        if normalize:
+            r2s[i] = (r2s[i][0], r2s[i][1]-R2_95)
         # and insample
         R2s = [i['R2'] for i in shuffled_predictions[k]['scores_insample']]
         R2_95 = np.percentile(R2s, 95)
-        insample_r2s[i] = (insample_r2s[i][0], insample_r2s[i][1]-R2_95)
+        insample_shuffled_r2s.append((k,R2_95))
+        if normalize:
+            insample_r2s[i] = (insample_r2s[i][0], insample_r2s[i][1]-R2_95)
         
     # convert nans to 0
     r2s = [(i, k) if k==k else (i,0) for i, k in r2s]
@@ -119,31 +124,44 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
             label='Cross-Validated Prediction', color=colors[0])
     ax1.bar(ind+width, [i[1] for i in insample_r2s], width, 
             label='Insample Prediction', color=colors[1])
+    # plot shuffled values above
+    if not normalize:
+        ax1.bar(ind, [i[1] for i in shuffled_r2s], width, 
+                 color='none', edgecolor='k', 
+                linewidth=size/10, linestyle='--', label='95% Shuffled Prediction')
+        ax1.bar(ind+width, [i[1] for i in insample_shuffled_r2s], width, 
+                color='none', edgecolor='k', 
+                linewidth=size/10, linestyle='--')
+    
     ax1.set_xticks(np.arange(0,len(r2s))+width/2)
     ax1.set_xticklabels([i[0] for i in r2s], rotation=15, fontsize=size*1.15)
-    ax1.set_ylabel('Permutation Normalized R2', fontsize=size, labelpad=10)
     ax1.tick_params(axis='y', labelsize=size)
     ax1.tick_params(length=size/4, width=size/10)
     xlow, xhigh = ax1.get_xlim()
-    ax1.hlines(0, xlow, xhigh, color='k', lw=size/5)
-    ax1.set_xlim(xlow,xhigh)
+    if normalize:
+        ax1.set_ylabel('Permutation Normalized R2', fontsize=size, labelpad=10)
+        ax1.hlines(0, xlow, xhigh, color='k', lw=size/5)
+        ax1.set_xlim(xlow,xhigh)
+    else:
+        ax1.set_ylabel('R2', fontsize=size, labelpad=10)
+    # add a legend
+    leg = ax1.legend(fontsize=size, loc='upper left')
+    beautify_legend(leg, colors[:2]+[[0,0,0]])
     # change y extents
     ylim = ax1.get_ylim()
     r2_max = max(max(r2s, key=lambda x: x[1])[1],
                  max(insample_r2s, key=lambda x: x[1])[1])
     ymax = r2_max*1.5
-    ymin = min(ylim[0], -.025)
-    ax1.set_ylim(ymin, ymax)
-    # add a legend
-    leg = ax1.legend(fontsize=size, loc='upper left')
-    beautify_legend(leg, colors[:3])
+    ax1.set_ylim(ylim[0], ymax)
     # change yticks
     if ymax<.1:
         ax1.yaxis.set_major_locator(ticker.MultipleLocator(.025))
     else:
         ax1.yaxis.set_major_locator(ticker.MultipleLocator(.05))
-        ax1.set_yticks(np.append([-.025, 0, .025, .05, .075], np.arange(.1, .4, .05)))
-
+        if normalize:
+            ax1.set_yticks(np.append([-.025, 0, .025, .05, .075], np.arange(.1, .4, .05)))
+        else:
+            ax1.set_yticks(np.append([0, .025, .05, .075], np.arange(.1, .4, .05)))
     # draw grid
     ax1.set_axisbelow(True)
     plt.grid(axis='y', linestyle='dotted')
@@ -162,7 +180,10 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
         plot_heights = [int(r2s[i][1]>0)
                         *(max([r2s[i][1], insample_r2s[i][1]])/yrange)
                         for i, k in enumerate(target_order)]
-        plot_heights = [(i+zero_place+.02)*.5 if i>0 else np.nan for i in plot_heights]
+        plot_heights = [(h+zero_place+.02)*.5 for h in plot_heights]
+        # mask heights
+        plot_heights = [plot_heights[i] if r2s[i][1]>shuffled_r2s[i][1] else np.nan
+                        for i in range(len(plot_heights))]
         plot_x = (ax1.get_xticks()-xlow)/(xhigh-xlow)-(1/N/2)
         for i, importance in enumerate(importances):
             if pd.isnull(plot_heights[i]):
