@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 import numpy as np
 from os import path
 import pandas as pd
@@ -18,7 +19,7 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
     importance_vars = importance[0]
     importance_vars = [shortened_factors.get(v,v) for v in importance_vars]
     if importance[1] is not None:
-        importance_vals = [abs(i)+pad for i in importance[1].T]
+        importance_vals = [abs(i)+pad for i in importance[1][0].T]
         plot_loadings(ax, importance_vals, kind='line', offset=.5, 
                       colors=[color], plot_kws={'alpha': 1, 'linewidth': label_size/4})
     else:
@@ -55,7 +56,7 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
     if title:
         ax.set_title(title, fontsize=label_size*1.5, y=1.1)
     # set up yticks
-    if importance[1] is not None:
+    if len(importance[1][0]) != 0:
         ax.set_ylim(bottom=0)
         if ymax:
             ax.set_ylim(top=ymax)
@@ -69,7 +70,7 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
             ax.set_yticklabels(labels)
 
 def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
-                    change=False, include_shuffle=False,  ymax=None, size=4.6,  
+                    change=False, ymax=None, size=4.6,  
                     dpi=300, ext='png', plot_dir=None):
     predictions = results.load_prediction_object(EFA=EFA, 
                                                  change=change,
@@ -87,13 +88,25 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
     if target_order is None:
         target_order = predictions.keys()
     # get prediction success
-    r2s = [[k,predictions[k]['scores_cv']['R2']] for k in target_order]
-    insample_r2s = [[k, predictions[k]['scores_insample']['R2']] for k in target_order]
-    shuffled_r2s = [[k, shuffled_predictions[k]['scores_cv']['R2']] for k in target_order]
+    r2s = [[k,predictions[k]['scores_cv'][0]['R2']] for k in target_order]
+    insample_r2s = [[k, predictions[k]['scores_insample'][0]['R2']] for k in target_order]
+    # get shuffled values
+    shuffled_r2s = []
+    for i, k in enumerate(target_order):
+        # normalize r2s to significance
+        R2s = [i['R2'] for i in shuffled_predictions[k]['scores_cv']]
+        R2_95 = np.percentile(R2s, 95)
+        r2s[i] = (r2s[i][0], r2s[i][1]-R2_95)
+        # and insample
+        R2s = [i['R2'] for i in shuffled_predictions[k]['scores_insample']]
+        R2_95 = np.percentile(R2s, 95)
+        insample_r2s[i] = (insample_r2s[i][0], insample_r2s[i][1]-R2_95)
+        
     # convert nans to 0
     r2s = [(i, k) if k==k else (i,0) for i, k in r2s]
     insample_r2s = [(i, k) if k==k else (i,0) for i, k in insample_r2s]
     shuffled_r2s = [(i, k) if k==k else (i,0) for i, k in shuffled_r2s]
+    
     # plot
     # plot variables
     figsize = (size, size*.75)
@@ -106,32 +119,31 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
             label='Cross-Validated Prediction', color=colors[0])
     ax1.bar(ind+width, [i[1] for i in insample_r2s], width, 
             label='Insample Prediction', color=colors[1])
-    if include_shuffle:
-        ax1.bar(ind+width*2, [i[1] for i in shuffled_r2s], width, 
-                label='Shuffled Prediction', color=colors[2])
-        ax1.set_xticks(np.arange(0,len(r2s))+width)
-    else:
-        ax1.set_xticks(np.arange(0,len(r2s))+width/2)
-        tick_locs = ax1.get_xticks()
-        xmin, xmax = ax1.get_xlim()
-        xrange = xmax-xmin
-        for i, (name, val) in enumerate(shuffled_r2s):
-            ax1.axhline(val, 
-                        (tick_locs[i]-width+abs(xmin))/xrange, 
-                        (tick_locs[i]+width+abs(xmin))/xrange,
-                        color='w',
-                        linewidth=size/5,
-                        linestyle='--')
+    ax1.set_xticks(np.arange(0,len(r2s))+width/2)
     ax1.set_xticklabels([i[0] for i in r2s], rotation=15, fontsize=size*1.15)
-    ax1.set_ylabel('R2', fontsize=size, labelpad=10)
+    ax1.set_ylabel('Permutation Normalized R2', fontsize=size, labelpad=10)
     ax1.tick_params(axis='y', labelsize=size)
     ax1.tick_params(length=size/4, width=size/10)
+    xlow, xhigh = ax1.get_xlim()
+    ax1.hlines(0, xlow, xhigh, color='k', lw=size/5)
+    ax1.set_xlim(xlow,xhigh)
+    # change y max
     ylim = ax1.get_ylim()
+    ymax=None
     if ymax is None:
-        ymax = max(.15, ylim[1]+.1)
+        r2_max = max(max(r2s, key=lambda x: x[1])[1],
+                     max(insample_r2s, key=lambda x: x[1])[1])
+        ymax = r2_max*1.5
     ax1.set_ylim(ylim[0], ymax)
+    # add a legend
     leg = ax1.legend(fontsize=size, loc='upper left')
     beautify_legend(leg, colors[:3])
+    # change yticks
+    if ymax<.1:
+        ax1.yaxis.set_major_locator(ticker.MultipleLocator(.025))
+    else:
+        ax1.yaxis.set_major_locator(ticker.MultipleLocator(.05))
+        ax1.set_yticks(np.append([0, .025, .05, .075], np.arange(.1, .4, .05)))
 
     # draw grid
     ax1.set_axisbelow(True)
@@ -146,19 +158,22 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
         N = len(importances)
         best_predictors = sorted(enumerate(r2s), key = lambda x: x[1][1])
         #if plot_heights is None:
-        ylim = ax1.get_ylim()[1]
-        plot_heights = [max(predictions[k]['scores_cv'][0], 
-                            predictions[k]['scores_insample'][0])/ylim*.5+.018 
-                        for k in target_order]
-        xlow, xhigh = ax1.get_xlim()
+        ylim = ax1.get_ylim(); yrange = np.sum(np.abs(ylim))
+        zero_place = abs(ylim[0])/yrange
+        plot_heights = [int(r2s[i][1]>0)
+                        *(max([r2s[i][1], insample_r2s[i][1]])/yrange)
+                        for i, k in enumerate(target_order)]
+        plot_heights = [(i+zero_place+.02)*.5 if i>0 else np.nan for i in plot_heights]
         plot_x = (ax1.get_xticks()-xlow)/(xhigh-xlow)-(1/N/2)
         for i, importance in enumerate(importances):
+            if pd.isnull(plot_heights[i]):
+                continue
             axes.append(fig.add_axes([plot_x[i], plot_heights[i], 1/N,1/N], projection='polar'))
             if i in [best_predictors[-1][0], best_predictors[-2][0]]:
                 color = colors[3]
             else:
                 color = colors[0]
-            visualize_importance(importance, axes[i],
+            visualize_importance(importance, axes[-1],
                                  yticklabels=False, xticklabels=False,
                                  label_size=figsize[1]*1,
                                  color=color)
@@ -169,7 +184,7 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
             locs = [.75, .25]
         label_importance = importances[best_predictors[-1][0]]
         ratio = figsize[1]/figsize[0]
-        axes.append(fig.add_axes([locs[0]-.2*ratio,.56,.4*ratio,.4], projection='polar'))
+        axes.append(fig.add_axes([locs[0]-.2*ratio,.56,.3*ratio,.3], projection='polar'))
         visualize_importance(label_importance, axes[-1], yticklabels=False,
                              xticklabels=True,
                              label_size=figsize[1]*1.5,
@@ -179,7 +194,7 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
         # 2nd top
         label_importance = importances[best_predictors[-2][0]]
         ratio = figsize[1]/figsize[0]
-        axes.append(fig.add_axes([locs[1]-.2*ratio,.56,.4*ratio,.4], projection='polar'))
+        axes.append(fig.add_axes([locs[1]-.2*ratio,.56,.3*ratio,.3], projection='polar'))
         visualize_importance(label_importance, axes[-1], yticklabels=False,
                              xticklabels=True,
                              label_size=figsize[1]*1.5,

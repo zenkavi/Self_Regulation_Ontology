@@ -13,7 +13,8 @@ from sklearn.metrics import adjusted_mutual_info_score, adjusted_rand_score
 from sklearn.preprocessing import MinMaxScaler, scale
 
 from dimensional_structure.utils import abs_pdist, set_seed
-from dimensional_structure.plot_utils import get_short_names, plot_loadings, plot_tree
+from dimensional_structure.plot_utils import (get_short_names, get_var_group,
+                                              plot_loadings, plot_tree)
 from selfregulation.utils.plot_utils import (CurvedText, dendroheatmap, format_num,
                                              format_variable_names, 
                                              get_dendrogram_color_fun,
@@ -303,7 +304,7 @@ def plot_subbranches(results, c=None,  inp=None, cluster_range=None,
                            
 
 def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=True,
-                     break_lines=True, absolute_loading=False, var_gap=2,
+                     break_lines=True, absolute_loading=False, 
                      size=4.6,  dpi=300, ext='png', plot_dir=None):
     """ Plots HCA results as dendrogram with loadings underneath
     
@@ -316,9 +317,6 @@ def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=True,
         titles: list of titles. Should correspond to number of clusters in
                 results object if "inp" is not set. Otherwise should be a list of length 1.
     """
-    # set figure properties
-    figsize = (size, size*.6)
-    
     subset = results.ID.split('_')[0]
     HCA = results.HCA
     EFA = results.EFA
@@ -345,34 +343,47 @@ def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=True,
         cluster_sizes = [len(i) for i in cluster_labels]
         link_function, colors = get_dendrogram_color_fun(link, clustering['reorder_vec'],
                                                          clustering['labels'])
+        
+        # set figure properties
+        figsize = (size, size*.6)
         # set up axes' size 
-        heatmap_width = ordered_loading.shape[1]*.03
-        heat_size = [.05, heatmap_width]
+        heatmap_height = ordered_loading.shape[1]*.03
+        heat_size = [.2, heatmap_height]
         dendro_size=[np.sum(heat_size), .3]
         # set up plot axes
         dendro_size = [0,dendro_size[0], .95, dendro_size[1]]
         heatmap_size = [0,heat_size[0],.95,heat_size[1]]
-        cbar_size = [.97,.05,.01,heat_size[1]]
+        cbar_size = [.97,heat_size[0],.01,heat_size[1]]
         ordered_loading = ordered_loading.T
 
         with sns.axes_style('white'):
             fig = plt.figure(figsize=figsize)
             ax1 = fig.add_axes(dendro_size) 
+            # **********************************
+            # plot dendrogram
+            # **********************************
             with plt.rc_context({'lines.linewidth': size*.125}):
                 dendrogram(link, ax=ax1, link_color_func=link_function,
                            orientation='top')
             # change axis properties
             ax1.tick_params(axis='x', which='major', labelsize=14,
                             labelbottom='off')
+            ax1.get_yaxis().set_visible(False)
+            ax1.spines['top'].set_visible(False)
+            ax1.spines['right'].set_visible(False)
+            ax1.spines['bottom'].set_visible(False)
+            ax1.spines['left'].set_visible(False)
+            # **********************************
             # plot loadings as heatmap below
+             # **********************************
             ax2 = fig.add_axes(heatmap_size)
-            ax3 = fig.add_axes(cbar_size)
+            cbar_ax = fig.add_axes(cbar_size)
             max_val = np.max(abs(loading.values))
             # if max_val is high, just make it 1
             if max_val > .95:
                 max_val = 1
             sns.heatmap(ordered_loading, ax=ax2, 
-                        cbar=True, cbar_ax=ax3,
+                        cbar=True, cbar_ax=cbar_ax,
                         yticklabels=True,
                         xticklabels=True,
                         vmax =  max_val, vmin = -max_val,
@@ -381,27 +392,21 @@ def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=True,
                         cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
             ax2.tick_params(axis='y', labelsize=size*heat_size[1]*25/c, pad=size/2)
             ax2.tick_params(axis='x', pad=size/4, length=size/4, width=size/6)
-            # DV labels
-            
-            ax2.set_xticklabels(format_variable_names(ordered_loading), 
-                                fontsize=size*.65, rotation=90)
             # change tick colors
             xlabels=ax2.get_xticklabels()
             cum_clusters = np.cumsum(cluster_sizes)
+            var_colors = []
             for i, l in enumerate(ax2.xaxis.get_ticklines()[::2]):
-                if i%var_gap==0:
-                    color_index = np.digitize(int(l.get_xdata()[0]), cum_clusters)
-                    l.set_color(colors[color_index])
-                else:
-                    l.set_visible(False)
-                    xlabels[i].set_visible(False)
+                color_index = np.digitize(int(l.get_xdata()[0]), cum_clusters)
+                var_colors.append(colors[color_index])
+                l.set_visible(False)
+                xlabels[i].set_visible(False)
                 
             # format cbar axis
-            ax3.set_yticklabels([format_num(-max_val), 0, format_num(max_val)])
-            ax3.tick_params(labelsize=size*heat_size[1]*25/c, length=0, pad=size/2)
-            ax3.set_ylabel('Factor Loading', rotation=-90, 
+            cbar_ax.set_yticklabels([format_num(-max_val), 0, format_num(max_val)])
+            cbar_ax.tick_params(labelsize=size*heat_size[1]*25/c, length=0, pad=size/2)
+            cbar_ax.set_ylabel('Factor Loading', rotation=-90, 
                            fontsize=size*heat_size[1]*25/c, labelpad=size/2)
-
             # add lines to heatmap to distinguish clusters
             if break_lines == True:
                 xlim = ax2.get_xlim(); 
@@ -410,17 +415,47 @@ def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=True,
                 cluster_breaks = [i*step for i in np.cumsum(cluster_sizes)]
                 ax2.vlines(cluster_breaks[:-1], ylim[0], ylim[1], linestyles='dashed',
                            linewidth=size*.1, colors=[.5,.5,.5])
+            # **********************************
+            # plot variable identity
+            # **********************************
+            if var_labels:
+                ax3 = fig.add_axes([0,heat_size[0]*.2, .95, heat_size[0]*.7])
+                #f, ax3 = plt.subplots(1,1)
+                groups = [get_var_group(c) for c in ordered_loading.columns]
+                group_indices = np.array([g[0] for g in groups])
+                ax3.scatter(np.arange(len(groups))+.4, np.max(group_indices)-group_indices, 
+                         c=var_colors, s=size*2)
+                ax3.set_xlim(0,len(groups))
+                for i in range(max(group_indices)+1):
+                    ax3.hlines(i, 0, len(groups), colors=[.5,.5,.5], 
+                               linestyle=':', linewidth=size/20, 
+                               alpha=.5, zorder=-1)
+                if break_lines == True:
+                    xlim = ax3.get_xlim(); 
+                    ylim = ax3.get_ylim()
+                    step = xlim[1]/len(labels)
+                    cluster_breaks = np.cumsum(cluster_sizes)
+                    ax3.vlines(cluster_breaks[:-1], 0, max(group_indices), 
+                               linestyle=':', linewidth=size/20, colors=[.5,.5,.5])
+                # label groups
+                group_labels = sorted(set(groups))[::-1]
+                if group_labels[0][1] is None:
+                    group_labels[0] = (group_labels[0][0], 'Other')
+                ax3.set_yticks(range(max(group_indices)+1))
+                ax3.set_yticklabels([i[1] for i in group_labels],
+                                    fontsize=size/len(group_labels)*5)
+                ax3.tick_params('y', length=0)
+                ax3.get_xaxis().set_visible(False)
+                ax3.spines['top'].set_visible(False)
+                ax3.spines['right'].set_visible(False)
+                ax3.spines['bottom'].set_visible(False)
+                ax3.spines['left'].set_visible(False)
+            
             # add title
             if titles != False:
                 ax1.set_title(title, fontsize=size*2, y=1.05)
-            ax1.get_yaxis().set_visible(False)
-            ax1.spines['top'].set_visible(False)
-            ax1.spines['right'].set_visible(False)
-            ax1.spines['bottom'].set_visible(False)
-            ax1.spines['left'].set_visible(False)
-            # set label visibility
-            if not var_labels:
-                ax2.tick_params(labelbottom='off')  
+                
+            
         if plot_dir is not None:
             save_figure(fig, path.join(plot_dir, 
                                              'dendrogram_%s.%s' % (name, ext)),

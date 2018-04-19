@@ -13,18 +13,59 @@ def get_short_names():
     shortened_factors = {
         'Sensation Seeking': 'SS',
         'Mindfulness': 'Mind',
-        'Emotional Control': 'Em.Con.',
-        'Impulsivity': 'Impulse',
+        'Emotional Control': 'Em-Con.',
+        'Impulsivity': 'Imp',
         'Goal-Directedness': 'Goal',
-        'Reward Sensitivity': 'Reward',
+        'Reward Sensitivity': 'Rew.',
         'Risk Perception': 'RP',
-        'Eating Control': 'Eating',
-        'Ethical Risk-Taking': 'Ethical-RT',
-        'Social Risk-Taking': 'Social-RT',
-        'Financial Risk-Taking': 'Fin.RT',
+        'Eating Control': 'Eat',
+        'Ethical Risk-Taking': 'Eth-RT',
+        'Social Risk-Taking': 'Soc-RT',
+        'Financial Risk-Taking': 'Fin-RT',
         'Agreeableness': 'Agr'
         }
     return shortened_factors
+
+def get_var_group(label):
+    groups = ['Drift Rate', 'Threshold', 'Non-Decision', 'SSRT',
+              'Discounting', 'Memory', 'Learning']
+    group = {'drift': 0,
+            'thresh': 1, 
+            'non_decision': 2,
+            'SSRT': 3,
+            'discount': 4,
+            'kirby.percent_patient': 4,
+            'mean_load': 5,
+            'span': 5,
+            'keep_track': 5,
+            'two_stage_decision': 6,
+            'shift_task': 6,
+            'hierarchical_rule': 6
+            }
+    keys = group.keys()
+    key = [k for k in keys if k in label]
+    if len(key)==0:
+        return (7, None)
+    else:
+        assert len(key)==1
+        group_index = group[key[0]]
+        return group_index, groups[group_index]
+
+def get_var_color(label):
+    colors = [[.8, 0.62, 0.0], 
+              [0.0, 0.5, 0.0], 
+              [0.0, 0.7, 0.7], 
+              [0.75, 0.0, 0.75],
+              [0, .25, .7],
+              [.8, .25, 0],
+              [.4, 0, 0]]
+    group, group_name = get_var_group(label)
+    if group_name is None:
+        return [.5, .5, .5]
+    else:
+        return colors[group]
+    
+    
 
 # ****************************************************************************
 # helper functions for hierarchical plotting

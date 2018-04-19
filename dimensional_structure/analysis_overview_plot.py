@@ -7,6 +7,7 @@ from scipy.spatial.distance import  squareform
 from sklearn.manifold import MDS
 from sklearn.preprocessing import scale
 import seaborn as sns
+from dimensional_structure.plot_utils import get_color_lookup, get_var_color
 from dimensional_structure.HCA_plots import abs_pdist
 from selfregulation.utils.result_utils import load_results
 from selfregulation.utils.plot_utils import format_num, DDM_plot, save_figure
@@ -23,14 +24,6 @@ task_subset_data = data.loc[:, task_subset.index]
 task_variables = list(task_subset.index)
 
 # Ridiculous analysis overview plot
-colors = [[.8, 0.62, 0.0], 
-          [0.0, 0.5, 0.0], 
-          [0.0, 0.75, 0.75], 
-          [0.75, 0.0, 0.75]]
-color_lookup = {'drift rate': colors[0],
-                'threshold': colors[1], 
-                'non-decision': colors[2],
-                'SSRT': colors[3]}
 f = plt.figure(figsize=(4.6, 4.6))
 basefont = 6
 basemarker = 40
@@ -66,13 +59,14 @@ tasks = sorted(np.unique([i.split('.')[0] for i in task_subset.index]))
 participant_axes = [participant_ax1, participant_ax2]
 loading_axes = [loading_ax1, loading_ax2]
 for task_i in range(len(tasks)):
-    tick_names = []
+    tick_names = []; tick_colors = []
     # *************************************************************************
     # ***** plot participants on two tasks ***** 
     # *************************************************************************
     ax = participant_axes[task_i]
     plot_data = task_subset_data.filter(regex=tasks[task_i], axis=1)
     for i, (label, vals) in enumerate(plot_data.iteritems()):
+        color = get_var_color(label)
         if 'drift' in label:
             name = 'drift rate'
         elif 'thresh' in label:
@@ -82,13 +76,14 @@ for task_i in range(len(tasks)):
         else:
             name = 'SSRT'
         tick_names.append(name)
+        tick_colors.append(color)
         plot_vals = scale(vals[20:40])*.25+i*1.5
         # add mean line
         ax.hlines(i*1.5, 0, len(plot_vals)*.8, alpha=.6,
-                  linestyle='--', color=color_lookup[name],
+                  linestyle='--', color=color,
                   linewidth=basewidth)
         # plot values
-        scatter_colors = [list(color_lookup[name])+[alpha] for alpha in np.linspace(1,0, len(plot_vals))]
+        scatter_colors = [list(color)+[alpha] for alpha in np.linspace(1,0, len(plot_vals))]
         ax.scatter(range(len(plot_vals)), plot_vals, color=scatter_colors,
                    s=basemarker*.23)
     # make x ticks invisible
@@ -103,7 +98,7 @@ for task_i in range(len(tasks)):
     ax.set_yticks([x*1.5 for x in range(len(tick_names))])
     ax.set_yticklabels(tick_names, fontsize=basefont)
     # change tick color
-    tick_colors = [color_lookup[name] for name in tick_names]
+    tick_colors = tick_colors
     [t.set_color(i) for (i,t) in
          zip(tick_colors,ax.yaxis.get_ticklabels())]
     
@@ -130,7 +125,7 @@ for task_i in range(len(tasks)):
                     linewidth=basewidth, clip_on=False))
     # add boxes
     for i, t in enumerate(tick_names[::-1]):
-        box_color = color_lookup[t]
+        box_color = tick_colors[i]
         box_pos = [-.15, i+.2]
         loading_axes[task_i].add_patch(Rectangle(box_pos, 
                     width=.15, height=.4, zorder=100,
@@ -175,7 +170,7 @@ for label in task_variables:
         name = 'non-decision'
     else:
         name = 'SSRT'
-    line_color = color_lookup[name]
+    line_color = get_var_color(label)
     var_index = np.where(participant_distances.index==label)[0][0]+pad
     # plot pretty colors
     participant_distance.plot([var_index, var_index], 
@@ -202,7 +197,7 @@ cbar_ax2.tick_params(labelsize=basefont*.75)
 # MDS Plots
 # ****************************************************************************
 
-mds_colors = np.array([[.5, .5, .5, .4]]*loading_distances.shape[0])
+mds_colors = np.array([[.5, .5, .5, .3]]*loading_distances.shape[0])
 interest_index = []
 misc_index = []
 for i, label in enumerate(loading_distances.index):
@@ -218,7 +213,7 @@ for i, label in enumerate(loading_distances.index):
         misc_index.append(i)
         continue
     interest_index.append(i)
-    mds_colors[i] = list(sns.desaturate(color_lookup[name], 1))+[1]
+    mds_colors[i] = get_var_color(label) + [1]
 mds_index = misc_index + interest_index
 
 # plot raw MDS
@@ -252,14 +247,7 @@ for ax, distances in [(loading_mds, loading_distances),
     var_locs = []
     subplot_colors=[]
     for label in task_subset.index:
-        if 'drift' in label:
-            var_color = color_lookup['drift rate']
-        elif 'thresh' in label:
-            var_color = color_lookup['threshold']
-        elif 'non_decision' in label:
-            var_color = color_lookup['non-decision']
-        else:
-            var_color = color_lookup['SSRT']
+        var_color = get_var_color(label)
         index = np.where(distances.index==label)[0][0]
         var_loc = mds_out[index]
         var_locs.append((label, var_loc))
@@ -363,13 +351,13 @@ back.text(.3385, .96, 'One Participant', fontsize=basefont*.75,
 back.text(.13, .18, 'All Task DVs (130)', fontsize=basefont, 
           horizontalalignment='center')
 back.text(.13, .15, 'Threshold', fontsize=basefont, 
-          horizontalalignment='center', color=color_lookup['threshold'])
+          horizontalalignment='center', color=get_var_color('thresh'))
 back.text(.13, .125, 'Non-Decision', fontsize=basefont, 
-          horizontalalignment='center', color=color_lookup['non-decision'])
+          horizontalalignment='center', color=get_var_color('non_decision'))
 back.text(.13, .1, 'Drift Rate', fontsize=basefont, 
-          horizontalalignment='center', color=color_lookup['drift rate'])
+          horizontalalignment='center', color=get_var_color('drift'))
 back.text(.13, .075, 'SSRT', fontsize=basefont, 
-          horizontalalignment='center', color=color_lookup['SSRT'])
+          horizontalalignment='center', color=get_var_color('SSRT'))
 back.text(.13, .05, 'Other', fontsize=basefont, 
           horizontalalignment='center', color='grey')
 back.text(.13, .025, 'o indicates example DVs', fontsize=basefont*.75, 

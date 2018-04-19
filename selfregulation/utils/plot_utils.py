@@ -239,7 +239,7 @@ def get_dendrogram_color_fun(Z, labels, clusters, color_palette=sns.hls_palette)
         clusters: cluster assignments for the labels in the original order
     
     """
-    dflt_col = "#808080"   # Unclustered gray
+    dflt_col = "#808080" # Unclustered gray
     color_palette = color_palette(len(np.unique(clusters)))
     D_leaf_colors = {i: to_hex(color_palette[clusters[i]-1]) for i in labels}
     # notes:

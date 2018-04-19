@@ -81,11 +81,11 @@ subsets = [{'name': 'task',
               'regex': '.',
               'factor_names': [],
               'predict': False}]
-classifiers = ['lasso', 'ridge', 'tikhonov', 'svm', 'rf']
+classifiers = ['lasso', 'ridge',  'svm', 'rf'] # tikhonov
 ID = None # ID will be created
 results = None
 # create/run results for each subset
-for subset in subsets[0:-1]:
+for subset in subsets[0:-2]:
     name = subset['name']
     if selected_subset is not None and name != selected_subset:
         continue
@@ -120,10 +120,10 @@ for subset in subsets[0:-1]:
         # run behavioral prediction using the factor results determined by BIC
         for classifier in classifiers:
             results.run_prediction(classifier=classifier, verbose=True)
-            results.run_prediction(classifier=classifier, shuffle=True, verbose=True) # shuffled
+            results.run_prediction(classifier=classifier, shuffle=20, verbose=True) # shuffled
             # predict demographic changes
             results.run_change_prediction(classifier=classifier, verbose=True)
-            results.run_change_prediction(classifier=classifier, shuffle=True, verbose=True) # shuffled
+            results.run_change_prediction(classifier=classifier, shuffle=1, verbose=True) # shuffled
         run_time = time.time()-start
         
         # ***************************** saving ****************************************
@@ -225,4 +225,5 @@ if group_plot == True:
     results = load_results(datafile)
     plot_file = path.dirname(results['task'].plot_dir)
     plot_corr_hist(results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+    plot_corr_heatmap(results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
     plot_BIC(results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)

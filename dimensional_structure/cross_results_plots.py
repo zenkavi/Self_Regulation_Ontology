@@ -2,6 +2,7 @@
 
 # Script to generate all_results or plots across all_results objects
 from itertools import combinations, product
+from matplotlib.patches import Rectangle
 import matplotlib.pyplot as plt
 import numpy as np
 from os import path
@@ -107,7 +108,63 @@ def plot_corr_hist(all_results, reps=100, size=4.6,
                                 {'bbox_inches': 'tight', 'dpi': 300})
         
     
+def plot_corr_heatmap(all_results, EFA=False, size=4.6, 
+                   dpi=300, ext='png', plot_dir=None):
+    def get_EFA_HCA(results, EFA):
+        if EFA == False:
+            return results.HCA.results['clustering_input-data']
+        else:
+            c = results.EFA.results['num_factors']
+            return results.HCA.results['clustering_input-EFA%s' % c]
     
+
+    survey_order = get_EFA_HCA(all_results['survey'], EFA)['reorder_vec']
+    task_order = get_EFA_HCA(all_results['task'], EFA)['reorder_vec']
+    
+    if EFA == False:
+        all_data = pd.concat([all_results['task'].data.iloc[:, task_order], 
+                              all_results['survey'].data.iloc[:, survey_order]], 
+                            axis=1)
+    else:
+        all_data = pd.concat([all_results['task'].EFA.get_loading().T.iloc[:, task_order], 
+                              all_results['survey'].EFA.get_loading().T.iloc[:, survey_order]], 
+                            axis=1)
+
+    f = plt.figure(figsize=(size,size))
+    ax = f.add_axes([.05,.05,.9,.9])
+    cbar_ax = f.add_axes([.96,.15,.04,.7])
+    corr = abs(all_data.corr())
+    sns.heatmap(corr, square=True, ax=ax, cbar_ax=cbar_ax,
+                xticklabels=False, yticklabels=False,
+                vmax=1, vmin=0,
+                cbar_kws={'ticks': [0, 1]},
+                cmap=sns.color_palette('Reds', 100))
+    # add separating lines
+    ax.hlines(len(task_order), 0, all_data.shape[1], lw=size/4, 
+               color='k', linestyle='--')
+    ax.vlines(len(task_order), 0, all_data.shape[1], lw=size/4, 
+               color='k', linestyle='--')
+    # format cbar
+    cbar_ax.tick_params(axis='y', length=0)
+    cbar_ax.set_yticklabels([0, 1])
+    cbar_ax.tick_params(labelsize=size*2)
+    cbar_ax.set_ylabel('Pearson Correlation', rotation=-90, labelpad=size*2, fontsize=size*2)
+    # add bars to indicate category
+    left_ax = f.add_axes([0,.05,.04,.9])
+    bottom_ax = f.add_axes([.05,0,.9,.04])
+    left_ax.axis('off'); bottom_ax.axis('off')
+    perc_task = len(task_order)/all_data.shape[1]
+    # add labels
+    left_ax.text(0, 1-perc_task/2, 'Task DVs', rotation=90, va='center', fontsize=size*2.5)
+    left_ax.text(0, (1-perc_task)/2, 'Survey DVs', rotation=90, va='center', fontsize=size*2.5)
+    bottom_ax.text(perc_task/2, 0, 'Task DVs', ha='center', fontsize=size*2.5)
+    bottom_ax.text(1-(1-perc_task)/2, 0, 'Survey DVs', ha='center', fontsize=size*2.5)
+    
+    
+    if plot_dir is not None:
+        # make histogram plot
+        save_figure(f, path.join(plot_dir, 'data_correlations.pdf'),
+                                {'bbox_inches': 'tight', 'dpi': 300})   
 
 
 from sklearn.decomposition import PCA
