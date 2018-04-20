@@ -39,3 +39,13 @@ docker run --rm  \
 --mount type=bind,src=$data_loc,dst=/Data \
 --mount type=bind,src=$output_loc,dst=/output \
 -ti sro_dataprep python /SRO/batch_files/helper_funcs/calculate_exp_DVs.py ${exp_id} ${subset} --out_dir /output --hddm_samples 100 --hddm_burn 50
+
+# DATA ANALYSIS SCRIPTS
+# enter into docker environment with mounted data
+data_loc=~/Experiments/expfactory/Self_Regulation_Ontology/Data
+results_loc=~/Experiments/expfactory/Self_Regulation_Ontology/Results
+
+docker run --rm  \
+--mount type=bind,src=$data_loc,dst=/SRO/Data \
+--mount type=bind,src=$results_loc,dst=/Results \
+-ti sro_dataprep 

@@ -30,10 +30,7 @@ from imblearn.combine import SMOTETomek
 from selfregulation.utils.logreg import LogReg
 from selfregulation.utils.get_balanced_folds import BalancedKFold
 from selfregulation.prediction.prediction_utils import get_demographic_model_type, RModel
-from tikhonov.TikhonovRegression import find_tikhonov_from_covariance, TikhonovCV
 
-def get_git_revision_short_hash():
-    return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD'])
 
 class UserSchema(Schema):
     hostname = fields.Str()
@@ -50,7 +47,6 @@ class UserSchema(Schema):
     freq_threshold=fields.Integer()
     drop_threshold=fields.Integer()
     imputer=fields.Str()
-    git_commit=fields.Str()
 
 class BehavPredict:
     def __init__(self,
@@ -76,7 +72,6 @@ class BehavPredict:
         self.behavdata = behavdata
         self.demogdata = demogdata
         self.reliabilities = reliabilities
-        self.git_commit = get_git_revision_short_hash().strip()
         self.hostname = socket.gethostname()
         self.verbose = verbose
         self.shuffle = int(shuffle)
@@ -285,8 +280,6 @@ class BehavPredict:
                 clf=LassoCV(max_iter=5000)
         elif self.classifier=='ridge':
             clf = RidgeCV()    
-        elif self.classifier=='tikhonov':
-            clf = TikhonovCV()
         elif self.classifier=='svm':
             clf = svm.LinearSVR()
         else:
@@ -314,11 +307,7 @@ class BehavPredict:
                 Xdata=scale.fit_transform(Xdata)
     
             # run regression
-            if self.classifier == 'tikhonov':
-                L = find_tikhonov_from_covariance(numpy.corrcoef(Xdata.T))
-                clf.fit(Xdata,Ydata,L=L)
-            else:
-                clf.fit(Xdata,Ydata)
+            clf.fit(Xdata,Ydata)
             pred=clf.predict(Xdata)
     
             if numpy.var(pred)>0:
@@ -458,8 +447,6 @@ class BehavPredict:
                 clf=LassoCV(max_iter=5000)
         elif self.classifier=='ridge':
             clf = RidgeCV()      
-        elif self.classifier=='tikhonov':
-            clf = TikhonovCV()
         elif self.classifier=='svm':
             clf = svm.LinearSVR()
         else:
@@ -502,11 +489,7 @@ class BehavPredict:
                     Xtrain=scale.fit_transform(Xtrain)
                     Xtest=scale.transform(Xtest)
                 Ytrain=Ydata[train]
-                if self.classifier == 'tikhonov':
-                    L = find_tikhonov_from_covariance(numpy.corrcoef(Xtrain.T))
-                    clf.fit(Xtrain,Ytrain,L=L)
-                else:
-                    clf.fit(Xtrain,Ytrain)
+                clf.fit(Xtrain,Ytrain)
                 p=clf.predict(Xtest)
                 if len(p.shape)>1:
                     p=p[:,0]

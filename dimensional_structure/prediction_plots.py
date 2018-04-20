@@ -127,10 +127,10 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
     # plot shuffled values above
     if not normalize:
         ax1.bar(ind, [i[1] for i in shuffled_r2s], width, 
-                 color='none', edgecolor='k', 
+                 color='none', edgecolor=[.2,.2,.2], 
                 linewidth=size/10, linestyle='--', label='95% Shuffled Prediction')
         ax1.bar(ind+width, [i[1] for i in insample_shuffled_r2s], width, 
-                color='none', edgecolor='k', 
+                color='none', edgecolor=[.2,.2,.2], 
                 linewidth=size/10, linestyle='--')
     
     ax1.set_xticks(np.arange(0,len(r2s))+width/2)
@@ -178,7 +178,10 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
         ylim = ax1.get_ylim(); yrange = np.sum(np.abs(ylim))
         zero_place = abs(ylim[0])/yrange
         plot_heights = [int(r2s[i][1]>0)
-                        *(max([r2s[i][1], insample_r2s[i][1]])/yrange)
+                        *(max(r2s[i][1],
+                              insample_r2s[i][1],
+                              shuffled_r2s[i][1],
+                              insample_shuffled_r2s[i][1])/yrange)
                         for i, k in enumerate(target_order)]
         plot_heights = [(h+zero_place+.02)*.5 for h in plot_heights]
         # mask heights
