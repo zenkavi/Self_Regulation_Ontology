@@ -27,6 +27,7 @@ parser.add_argument('-no_plot', action='store_false')
 parser.add_argument('-no_group', action='store_false')
 parser.add_argument('-bootstrap', action='store_true')
 parser.add_argument('-boot_iter', type=int, default=1000)
+parser.add_argument('-shuffle_repeats', type=int, default=10)
 parser.add_argument('-dpi', type=int, default=300)
 parser.add_argument('-subset', nargs='+', default=['task', 'survey'])
 parser.add_argument('-plot_backend', default=None)
@@ -38,6 +39,7 @@ run_plot = args.no_plot
 group_plot = args.no_group
 bootstrap = args.bootstrap
 boot_iter = args.boot_iter
+shuffled_repeats = args.shuffle_repeats
 dpi = args.dpi
 selected_subset = args.subset
 if args.plot_backend:
@@ -93,7 +95,7 @@ ID = None # ID will be created
 # create/run results for each subset
 for subset in subsets:
     name = subset['name']
-    if selected_subset is not None and name in selected_subset:
+    if selected_subset is not None and name not in selected_subset:
         continue
     print('*'*79)
     print('*'*79)
@@ -126,10 +128,10 @@ for subset in subsets:
         # run behavioral prediction using the factor results determined by BIC
         for classifier in classifiers:
             results.run_prediction(classifier=classifier, verbose=True)
-            results.run_prediction(classifier=classifier, shuffle=20, verbose=True) # shuffled
+            results.run_prediction(classifier=classifier, shuffle=shuffle_repeats, verbose=True) # shuffled
             # predict demographic changes
             results.run_change_prediction(classifier=classifier, verbose=True)
-            results.run_change_prediction(classifier=classifier, shuffle=1, verbose=True) # shuffled
+            results.run_change_prediction(classifier=classifier, shuffle=shuffle_repeats, verbose=True) # shuffled
         run_time = time.time()-start
         
         # ***************************** saving ****************************************
@@ -205,7 +207,7 @@ for subset in subsets:
         # Plot prediction changes
         change_target_order = [i + ' Change' for i in target_order]
         for classifier in classifiers:
-            print("Plotting Prediction, classifier: %s" % classifier)
+            print("Plotting Change Prediction, classifier: %s" % classifier)
             plot_prediction(results, target_order=change_target_order, 
                             EFA=True, change=True,
                             classifier=classifier, plot_dir=prediction_plot_dir,
