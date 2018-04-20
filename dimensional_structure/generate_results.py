@@ -3,6 +3,7 @@
 # imports
 import argparse
 from glob import glob
+import matplotlib
 import numpy as np
 from os import makedirs, path
 import seaborn as sns
@@ -27,7 +28,8 @@ parser.add_argument('-no_group', action='store_false')
 parser.add_argument('-bootstrap', action='store_true')
 parser.add_argument('-boot_iter', type=int, default=1000)
 parser.add_argument('-dpi', type=int, default=300)
-parser.add_argument('-subset', default=None)
+parser.add_argument('-subset', nargs='+', default=['task', 'survey'])
+parser.add_argument('-plot_backend', default=None)
 args = parser.parse_args()
 
 dataset = args.dataset
@@ -38,18 +40,22 @@ bootstrap = args.bootstrap
 boot_iter = args.boot_iter
 dpi = args.dpi
 selected_subset = args.subset
-print('Running Analysis? %s, Plotting? %s, Bootstrap? %s' % (['No', 'Yes'][run_analysis], 
-                                                             ['No', 'Yes'][run_plot],
-                                                             ['No', 'Yes'][bootstrap]))
+if args.plot_backend:
+    matplotlib.use('Agg')
+print('Running Analysis? %s, Plotting? %s, Bootstrap? %s, Selected Subsets: %s' 
+    % (['No', 'Yes'][run_analysis],  
+        ['No', 'Yes'][run_plot], 
+        ['No', 'Yes'][bootstrap],
+        ', '.join(selected_subset)))
+
 # get dataset of interest
 basedir=get_info('base_directory')
 if dataset == None:
     dataset = get_recent_dataset()
-    
 dataset = path.join(basedir,'Data',dataset)
-
 datafile = dataset.split(path.sep)[-1]
 
+# label subsets
 demographic_factor_names = ['Drug Use', 
                             'Mental Health',
                             'Problem Drinking',
@@ -81,13 +87,13 @@ subsets = [{'name': 'task',
               'regex': '.',
               'factor_names': [],
               'predict': False}]
-classifiers = ['lasso', 'ridge',  'svm', 'rf'] # tikhonov
+
+classifiers = ['lasso', 'ridge',  'svm', 'rf']
 ID = None # ID will be created
-results = None
 # create/run results for each subset
-for subset in subsets[0:-2]:
+for subset in subsets:
     name = subset['name']
-    if selected_subset is not None and name != selected_subset:
+    if selected_subset is not None and name in selected_subset:
         continue
     print('*'*79)
     print('*'*79)
