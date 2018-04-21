@@ -2,23 +2,6 @@
 
 # imports
 import argparse
-from glob import glob
-import matplotlib
-import numpy as np
-from os import makedirs, path
-import seaborn as sns
-from shutil import copyfile, copytree, rmtree
-import time
-
-from dimensional_structure.results import Results
-from dimensional_structure.cross_results_plots import plot_corr_hist, plot_BIC
-from dimensional_structure.DA_plots import plot_DA
-from dimensional_structure.EFA_plots import plot_EFA
-from dimensional_structure.HCA_plots import plot_HCA
-from dimensional_structure.prediction_plots import plot_prediction, plot_prediction_comparison
-from selfregulation.utils.result_utils import load_results
-from selfregulation.utils.utils import get_info, get_recent_dataset
-
 # parse arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('-dataset', default=None)
@@ -39,11 +22,33 @@ run_plot = args.no_plot
 group_plot = args.no_group
 bootstrap = args.bootstrap
 boot_iter = args.boot_iter
-shuffled_repeats = args.shuffle_repeats
+shuffle_repeats = args.shuffle_repeats
 dpi = args.dpi
 selected_subset = args.subset
+
+# import matplotlib and set backend
+import matplotlib
 if args.plot_backend:
     matplotlib.use('Agg')
+    
+# imports
+from glob import glob
+import numpy as np
+from os import makedirs, path
+from shutil import copyfile, copytree, rmtree
+import time
+
+from dimensional_structure.results import Results
+from dimensional_structure.cross_results_plots import plot_corr_hist, plot_BIC
+from dimensional_structure.DA_plots import plot_DA
+from dimensional_structure.EFA_plots import plot_EFA
+from dimensional_structure.HCA_plots import plot_HCA
+from dimensional_structure.prediction_plots import plot_prediction, plot_prediction_comparison
+from selfregulation.utils.result_utils import load_results
+from selfregulation.utils.utils import get_info, get_recent_dataset
+
+
+
 print('Running Analysis? %s, Plotting? %s, Bootstrap? %s, Selected Subsets: %s' 
     % (['No', 'Yes'][run_analysis],  
         ['No', 'Yes'][run_plot], 
@@ -91,6 +96,7 @@ subsets = [{'name': 'task',
               'predict': False}]
 
 classifiers = ['lasso', 'ridge',  'svm', 'rf']
+results = None
 ID = None # ID will be created
 # create/run results for each subset
 for subset in subsets:
