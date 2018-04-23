@@ -576,8 +576,6 @@ class Results(EFA_Analysis, HCA_Analysis):
                 self.ID = '%s_%s' % (name, str(ID))
             # set up output files
             self.results_dir = results_dir
-            if results_dir is None:
-                self.results_dir = get_info('results_directory')
             # load data
             self.data = get_behav_data(dataset=datafile, 
                                       file='meaningful_variables_imputed.csv',
@@ -589,13 +587,6 @@ class Results(EFA_Analysis, HCA_Analysis):
                                                  verbose=True)
             self.demographics = get_demographics()
             
-
-        self.plot_dir = path.join(self.results_dir, 'dimensional_structure', 
-                                   self.dataset, 'Plots', self.ID)
-        self.output_dir = path.join(self.results_dir, 'dimensional_structure', 
-                                     self.dataset, 'Output', self.ID)
-        makedirs(self.plot_dir, exist_ok = True)
-        makedirs(self.output_dir, exist_ok = True)
         
         # initialize analysis classes
         self.DA = Demographic_Analysis(self.demographics, 
@@ -610,7 +601,27 @@ class Results(EFA_Analysis, HCA_Analysis):
         # load the results from the saved object
         if saved_obj_file:
             self._load_results(saved_obj_file)
-            
+    
+    def get_output_dir(self):
+        if self.results_dir is None:
+            results_dir = get_info('results_directory')
+        else:
+            results_dir = self.results_dir
+        output_dir = path.join(results_dir, 'dimensional_structure', 
+                               self.dataset, 'Output', self.ID)
+        makedirs(output_dir, exist_ok = True)
+        return output_dir
+        
+    def get_plot_dir(self):
+        if self.results_dir is None:
+            results_dir = get_info('results_directory')
+        else:
+            results_dir = self.results_dir
+        plot_dir = path.join(results_dir, 'dimensional_structure', 
+                             self.dataset, 'Plots', self.ID)
+        makedirs(plot_dir, exist_ok = True)
+        return plot_dir
+        
     def run_demographic_analysis(self, bootstrap=False, verbose=False):
         if verbose:
             print('*'*79)
@@ -671,25 +682,17 @@ class Results(EFA_Analysis, HCA_Analysis):
         if include_raw_demographics:
             targets.append(('demo_raw', self.demographics))
         for name, target in targets:
-            # predicting using best EFA
-            if verbose: print('**Predicting using factor scores**')
-            run_prediction(factor_scores, 
-                           target, 
-                           self.output_dir,
-                           outfile='EFA%s_%s_prediction' % (c, name), 
-                           shuffle=shuffle,
-                           classifier=classifier, 
-                           verbose=verbose)
-            # predict using raw variables
-            if verbose: print('**Predicting using raw data**')
-            run_prediction(raw_data, 
-                           target, 
-                           self.output_dir,
-                           outfile='IDM_%s_prediction' % name, 
-                           shuffle=shuffle,
-                           classifier=classifier,
-                           verbose=verbose)
-    
+            for predictors in [('EFA%s' % c, factor_scores), ('raw', raw_data)]:
+                # predicting using best EFA
+                if verbose: print('**Predicting using %s**' % predictors[0])
+                run_prediction(predictors[1], 
+                               target, 
+                               self.get_output_dir(),
+                               outfile='%s_%s_prediction' % (predictors[0], name), 
+                               shuffle=shuffle,
+                               classifier=classifier, 
+                               verbose=verbose)
+
     def run_change_prediction(self, shuffle=False, classifier='lasso',
                    include_raw_demographics=False, verbose=False):
         if verbose:
@@ -711,28 +714,22 @@ class Results(EFA_Analysis, HCA_Analysis):
         if include_raw_demographics:
             targets.append(('demo_raw_change', raw_change))
         for name, target in targets:
-            # predicting using best EFA
-            if verbose: print('**Predicting using factor scores**')
-            run_prediction(factor_scores, 
-                           target, 
-                           self.output_dir,
-                           outfile='EFA%s_%s_prediction' % (c, name), 
-                           shuffle=shuffle,
-                           classifier=classifier, 
-                           verbose=verbose)
-            # predict using raw variables
-            if verbose: print('**Predicting using raw data**')
-            run_prediction(raw_data, 
-                           target, 
-                           self.output_dir,
-                           outfile='IDM_%s_prediction' % name, 
-                           shuffle=shuffle,
-                           classifier=classifier,
-                           verbose=verbose)
+            for predictors in [('EFA%s' % c, factor_scores), ('raw', raw_data)]:
+                # predicting using best EFA
+                if verbose: print('**Predicting using %s**' % predictors[0])
+                run_prediction(predictors[1], 
+                               target, 
+                               self.get_output_dir(),
+                               outfile='%s_%s_prediction' % (predictors[0], name), 
+                               shuffle=shuffle,
+                               classifier=classifier, 
+                               verbose=verbose)
+
         
     def get_prediction_files(self, EFA=True, shuffle=True, change=False):
-        prefix = 'EFA' if EFA else 'IDM'
-        prediction_files = glob.glob(path.join(self.output_dir,
+        prefix = 'EFA' if EFA else 'raw'
+        output_dir = self.get_output_dir()
+        prediction_files = glob.glob(path.join(output_dir,
                                                'prediction_outputs',
                                                '%s*' % prefix))
         if shuffle:
@@ -800,7 +797,7 @@ class Results(EFA_Analysis, HCA_Analysis):
         save_obj['data'] = data
         save_obj['results'] = results
         if save_dir is None:
-            save_dir = self.output_dir
+            save_dir = self.get_output_dir()
         filey = path.join(save_dir, '%s_results.pkl' % self.ID)
         pickle.dump(save_obj, open(filey,'wb'))
         return filey

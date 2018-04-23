@@ -10,7 +10,7 @@ parser.add_argument('-no_plot', action='store_false')
 parser.add_argument('-no_group', action='store_false')
 parser.add_argument('-bootstrap', action='store_true')
 parser.add_argument('-boot_iter', type=int, default=1000)
-parser.add_argument('-shuffle_repeats', type=int, default=10)
+parser.add_argument('-shuffle_repeats', type=int, default=1)
 parser.add_argument('-dpi', type=int, default=300)
 parser.add_argument('-subset', nargs='+', default=['task', 'survey'])
 parser.add_argument('-plot_backend', default=None)
@@ -39,7 +39,7 @@ from shutil import copyfile, copytree, rmtree
 import time
 
 from dimensional_structure.results import Results
-from dimensional_structure.cross_results_plots import plot_corr_hist, plot_BIC
+from dimensional_structure.cross_results_plots import plot_corr_heatmap, plot_corr_hist, plot_BIC
 from dimensional_structure.DA_plots import plot_DA
 from dimensional_structure.EFA_plots import plot_EFA
 from dimensional_structure.HCA_plots import plot_HCA
@@ -103,10 +103,9 @@ for subset in subsets:
     name = subset['name']
     if selected_subset is not None and name not in selected_subset:
         continue
-    print('*'*79)
-    print('*'*79)
-    print('Running Subset: %s' % name)
     if run_analysis == True:
+        print('*'*79)
+        print('Analyzing Subset: %s' % name)
         # ****************************************************************************
         # Laad Data
         # ****************************************************************************
@@ -144,16 +143,16 @@ for subset in subsets:
         print('Saving Subset: %s' % name)
         id_file = results.save_results()
         # copy latest results and prediction to higher directory
-        copyfile(id_file, path.join(path.dirname(results.output_dir), 
+        copyfile(id_file, path.join(path.dirname(results.get_output_dir()), 
                                     '%s_results.pkl' % name))
-        prediction_dir = path.join(results.output_dir, 'prediction_outputs')
+        prediction_dir = path.join(results.get_output_dir(), 'prediction_outputs')
         for classifier in classifiers:
             prediction_files = glob(path.join(prediction_dir, '*%s*' % classifier))
             # sort by creation time and get last two files
             prediction_files = sorted(prediction_files, key = path.getmtime)[-4:]
             for filey in prediction_files:
                 filename = '_'.join(path.basename(filey).split('_')[:-1])
-                copyfile(filey, path.join(path.dirname(results.output_dir), 
+                copyfile(filey, path.join(path.dirname(results.get_output_dir()), 
                                           '%s_%s.pkl' % (name, filename)))
 
     # ****************************************************************************
@@ -162,12 +161,15 @@ for subset in subsets:
     ext='pdf'
     size=4.6
     if run_plot==True:
+        print('*'*79)
+        print('Plotting Subset: %s' % name)
         if results is None or name not in results.ID:
             results = load_results(datafile, name=name)[name]
-        DA_plot_dir = path.join(results.plot_dir, 'DA')
-        EFA_plot_dir = path.join(results.plot_dir, 'EFA')
-        HCA_plot_dir = path.join(results.plot_dir, 'HCA')
-        prediction_plot_dir = path.join(results.plot_dir, 'prediction')
+        plot_dir = results.get_plot_dir()
+        DA_plot_dir = path.join(plot_dir, 'DA')
+        EFA_plot_dir = path.join(plot_dir, 'EFA')
+        HCA_plot_dir = path.join(plot_dir, 'HCA')
+        prediction_plot_dir = path.join(plot_dir, 'prediction')
         makedirs(DA_plot_dir, exist_ok = True)
         makedirs(EFA_plot_dir, exist_ok = True)
         makedirs(HCA_plot_dir, exist_ok = True)
@@ -196,48 +198,39 @@ for subset in subsets:
         
         # Plot prediction
         target_order = results.DA.reorder_factors(results.DA.get_loading()).columns
-        for classifier in classifiers:
-            print("Plotting Prediction, classifier: %s" % classifier)
-            plot_prediction(results, target_order=target_order, EFA=True, 
-                            classifier=classifier, plot_dir=prediction_plot_dir,
-                            dpi=dpi,
-                            ext=ext,
-                            size=size)
-            plot_prediction(results, target_order=target_order, EFA=False, 
-                            classifier=classifier, plot_dir=prediction_plot_dir,
-                            dpi=dpi,
-                            ext=ext,
-                            size=size)
-        plot_prediction_comparison(results, dpi=dpi, plot_dir=prediction_plot_dir)
-        
-        # Plot prediction changes
         change_target_order = [i + ' Change' for i in target_order]
         for classifier in classifiers:
-            print("Plotting Change Prediction, classifier: %s" % classifier)
-            plot_prediction(results, target_order=change_target_order, 
-                            EFA=True, change=True,
-                            classifier=classifier, plot_dir=prediction_plot_dir,
-                            dpi=dpi,
-                            ext=ext,
-                            size=size)
-            plot_prediction(results, target_order=change_target_order, 
-                            EFA=False, change=True,
-                            classifier=classifier, plot_dir=prediction_plot_dir,
-                            dpi=dpi,
-                            ext=ext,
-                            size=size)
-        plot_prediction_comparison(results, dpi=dpi, plot_dir=prediction_plot_dir)
+            for EFA in [True, False]:
+                print("Plotting Prediction, classifier: %s, EFA: %s" % (classifier, EFA))
+                plot_prediction(results, target_order=target_order, EFA=EFA, 
+                                classifier=classifier, plot_dir=prediction_plot_dir,
+                                dpi=dpi,
+                                ext=ext,
+                                size=size)
+                print("Plotting Change Prediction, classifier: %s, EFA: %s" % (classifier, EFA))
+                plot_prediction(results, target_order=change_target_order, 
+                                EFA=EFA, change=True,
+                                classifier=classifier, plot_dir=prediction_plot_dir,
+                                dpi=dpi,
+                                ext=ext,
+                                size=size)
+        plot_prediction_comparison(results, change=False,
+                                   dpi=dpi, plot_dir=prediction_plot_dir)
+        plot_prediction_comparison(results, change=True,
+                                   dpi=dpi, plot_dir=prediction_plot_dir)
         
         # copy latest results and prediction to higher directory
-        plot_dir = results.plot_dir
         generic_dir = '_'.join(plot_dir.split('_')[0:-1])
         if path.exists(generic_dir):
             rmtree(generic_dir)
         copytree(plot_dir, generic_dir)
         
 if group_plot == True:
+    print('*'*79)
+    print('*'*79)
+    print("Group Plots")
     results = load_results(datafile)
-    plot_file = path.dirname(results['task'].plot_dir)
-    plot_corr_hist(results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+    plot_file = path.dirname(results['task'].get_plot_dir())
+    #plot_corr_hist(results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
     plot_corr_heatmap(results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
     plot_BIC(results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)

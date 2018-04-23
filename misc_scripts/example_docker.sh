@@ -42,11 +42,13 @@ docker run --rm  \
 
 # DATA ANALYSIS SCRIPTS
 # enter into docker environment for development
-SRO_loc=~/Experiments/expfactory/Self_Regulation_Ontology/
+scripts_loc=~/Experiments/expfactory/Self_Regulation_Ontology/dimensional_structure
+data_loc=~/Experiments/expfactory/Self_Regulation_Ontology/Data
 results_loc=~/Experiments/expfactory/Self_Regulation_Ontology/Results
 
 docker run --rm  \
---mount type=bind,src=$SRO_loc,dst=/SRO/ \
+--mount type=bind,src=$scripts_loc,dst=/SRO/dimensional_structure \
+--mount type=bind,src=$data_loc,dst=/SRO/Data \
 --mount type=bind,src=$results_loc,dst=/Results \
 -ti sro_dataprep 
 
