@@ -95,6 +95,6 @@ RUN echo "c.NotebookApp.allow_root = True" >> ~/.jupyter/jupyter_notebook_config
 WORKDIR /SRO
 
 # install the selfregulation directory 
-RUN python setup.py install
+RUN pip install -e /SRO
 
 CMD ["/bin/bash"]

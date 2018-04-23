@@ -246,7 +246,7 @@ def plot_prediction_comparison(results, size=4.6, change=False,
             feature = 'EFA' if EFA else 'IDM'
             prediction_object = pickle.load(open(filey, 'rb'))
             name = prediction_object['info']['classifier']
-            R2 = [i['scores_cv'][0] for i in prediction_object['data'].values()]
+            R2 = [i['scores_cv'][0]['R2'] for i in prediction_object['data'].values()]
             R2 = np.nan_to_num(R2)
             R2s[feature+'_'+name] = R2
         
@@ -257,13 +257,13 @@ def plot_prediction_comparison(results, size=4.6, change=False,
     sns.barplot(x='Classifier', y='R2', data=R2s, hue='Feature',
                 palette=colors[:2])
     ax = plt.gca()
-    ax.tick_params(axis='y', labelsize=16)
-    ax.tick_params(axis='x', labelsize=18)
-    leg = ax.legend(fontsize=24, loc='upper right')
+    ax.tick_params(axis='y', labelsize=size*1.8)
+    ax.tick_params(axis='x', labelsize=size*1.8)
+    leg = ax.legend(fontsize=size*2, loc='upper right')
     beautify_legend(leg, colors[:2])
-    plt.xlabel('Classifier', fontsize=20, labelpad=10)
-    plt.ylabel('R2', fontsize=20, labelpad=10)
-    plt.title('Comparison of Prediction Methods', fontsize=24, y=1.05)
+    plt.xlabel('Classifier', fontsize=size*2.2, labelpad=size/2)
+    plt.ylabel('R2', fontsize=size*2.2, labelpad=size/2)
+    plt.title('Comparison of Prediction Methods', fontsize=size*2.5, y=1.05)
     
     if plot_dir is not None:
         filename = 'prediction_comparison'

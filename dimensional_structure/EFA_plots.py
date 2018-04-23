@@ -70,7 +70,11 @@ def plot_communality(results, c, size=20, dpi=300, ext='png', plot_dir=None):
     communality = (loading**2).sum(1).sort_values()
     communality.index = [i.replace('.logTr','') for i in communality.index]
     # load retest data
-    retest_data = get_behav_data(dataset='Retest_02-03-2018', file='bootstrap_merged.csv.gz')
+    retest_data = get_behav_data(dataset=results.dataset.replace('Complete','Retest'), 
+                                 file='bootstrap_merged.csv.gz')
+    if retest_data is None:
+        print('No retest data found for datafile: %s' % results.dataset)
+        return
     retest_data = retest_data.groupby('dv').mean()    
     retest_data.rename({'dot_pattern_expectancy.BX.BY_hddm_drift': 'dot_pattern_expectancy.BX-BY_hddm_drift',
                         'dot_pattern_expectancy.AY.BY_hddm_drift': 'dot_pattern_expectancy.AY-BY_hddm_drift'},
