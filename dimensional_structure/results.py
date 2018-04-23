@@ -499,13 +499,41 @@ class Demographic_Analysis(EFA_Analysis):
     def __init__(self, data, residualize=True, residualize_vars=['Age', 'Sex'],
                  boot_iter=1000):
         self.raw_data = data
+        self.residualize_vars = residualize_vars
         if residualize:
-            data = residualize_baseline(data, residualize_vars)
+            data = residualize_baseline(data, self.residualize_vars)
         if 'BMI' in data.columns:
             data.drop(['WeightPounds', 'HeightInches'], axis=1, inplace=True)
         
         super().__init__(data, boot_iter=boot_iter)
+    
+    def get_change(self, retest_dataset):
+        demographics = self.data
         
+        retest = get_demographics(retest_dataset)
+        retest = residualize_baseline(retest, self.residualize_vars)
+        if 'BMI' in retest.columns:
+            retest.drop(['WeightPounds', 'HeightInches'], axis=1, inplace=True)
+        # get common variables
+        common_index = sorted(list(set(demographics.index) & set(retest.index)))
+        common_columns = sorted(list(set(demographics.columns) & set(retest.columns)))
+        demographics = demographics.loc[common_index, common_columns] 
+        retest = retest.loc[common_index, common_columns]
+        raw_change = retest-demographics
+        # convert to scores
+        c = self.results['num_factors']
+        demographic_factor_weights = get_attr(self.results['factor_tree_Rout'][c],'weights')
+        demographic_scores = scale(demographics).dot(demographic_factor_weights)
+        retest_scores = scale(retest).dot(demographic_factor_weights)
+        
+        
+        factor_change = pd.DataFrame(retest_scores-demographic_scores,
+                              index=common_index,
+                              columns = self.get_scores().columns)
+        factor_change = self.reorder_factors(factor_change)
+        factor_change.columns = [i + ' Change' for i in factor_change.columns]
+        return factor_change, raw_change
+    
 class Results(EFA_Analysis, HCA_Analysis):
     """ Class to hold olutput of EFA, HCA and graph analyses """
     def __init__(self, 
@@ -661,8 +689,48 @@ class Results(EFA_Analysis, HCA_Analysis):
                            shuffle=shuffle,
                            classifier=classifier,
                            verbose=verbose)
-
-    def get_prediction_files(self, EFA=True, shuffle=True):
+    
+    def run_change_prediction(self, shuffle=False, classifier='lasso',
+                   include_raw_demographics=False, verbose=False):
+        if verbose:
+            print('*'*79)
+            print('Running Change Prediction, shuffle: %s, classifier: %s' % (shuffle, classifier))
+            print('*'*79)
+        factor_scores = self.EFA.get_scores()
+        c = factor_scores.shape[1]
+        # get raw data reorganized by clustering
+        clustering=self.HCA.results['clustering_input-EFA%s' % c]
+        labels = clustering['clustered_df'].columns
+        raw_data = self.data[labels]
+        
+        # get change scores
+        factor_change, raw_change = self.DA.get_change(self.dataset.replace('Complete', 'Retest'))
+        
+        # predict
+        targets = [('demo_factors_change', factor_change)]
+        if include_raw_demographics:
+            targets.append(('demo_raw_change', raw_change))
+        for name, target in targets:
+            # predicting using best EFA
+            if verbose: print('**Predicting using factor scores**')
+            run_prediction(factor_scores, 
+                           target, 
+                           self.output_dir,
+                           outfile='EFA%s_%s_prediction' % (c, name), 
+                           shuffle=shuffle,
+                           classifier=classifier, 
+                           verbose=verbose)
+            # predict using raw variables
+            if verbose: print('**Predicting using raw data**')
+            run_prediction(raw_data, 
+                           target, 
+                           self.output_dir,
+                           outfile='IDM_%s_prediction' % name, 
+                           shuffle=shuffle,
+                           classifier=classifier,
+                           verbose=verbose)
+        
+    def get_prediction_files(self, EFA=True, shuffle=True, change=False):
         prefix = 'EFA' if EFA else 'IDM'
         prediction_files = glob.glob(path.join(self.output_dir,
                                                'prediction_outputs',
@@ -671,11 +739,16 @@ class Results(EFA_Analysis, HCA_Analysis):
             prediction_files = [f for f in prediction_files if 'shuffle' in f]
         else:
             prediction_files = [f for f in prediction_files if 'shuffle' not in f]
+            
+        if change:
+            prediction_files = [f for f in prediction_files if 'change' in f]
+        else:
+            prediction_files = [f for f in prediction_files if 'change' not in f]
         return prediction_files
     
-    def load_prediction_object(self, ID=None, shuffle=False, EFA=True,
-                               classifier='lasso'):
-        prediction_files = self.get_prediction_files(EFA, shuffle)
+    def load_prediction_object(self, ID=None, shuffle=False, EFA=True, 
+                               change=False,  classifier='lasso'):
+        prediction_files = self.get_prediction_files(EFA, shuffle, change)
         prediction_files = [f for f in prediction_files if classifier in f]
         # sort by time
         if ID is not None:

@@ -9,7 +9,8 @@ from selfregulation.utils.plot_utils import format_num
 sns.set_palette("Set1", 8, .75)
 
 base_dir = get_info('base_directory')
-ext = 'png'
+ext = 'pdf'
+dpi = 300
 """
 # Load data if plots need to be regenerated
 
@@ -91,26 +92,27 @@ Task_N = len(retest_data)-Survey_N
 # box plot
 colors = sns.color_palette('Blues_d',3) 
 save_dir = path.join(base_dir, 'Results', 'data_collection', 'Plots', 'ICC_distplot.%s' % ext)
-f = plt.figure(figsize=(12,8))
+size=4.6
+f = plt.figure(figsize=(size,size*.75))
 # plot boxes
 box_ax = f.add_axes([0,0,1,.6]) 
 sns.boxplot(x='icc', y='Measure Category', ax=box_ax, data=retest_data,
             palette={'Survey': colors[0], 'Task': colors[1]}, saturation=1,
-            width=.5)
-box_ax.text(0, 1.2, '%s Task Measures' % Task_N, color=colors[1], fontsize=24)
-box_ax.text(0, 1, '%s Survey Measures' % Survey_N, color=colors[0], fontsize=24)
-box_ax.set_ylabel('Measure Category', fontsize=24, labelpad=10)
-box_ax.set_xlabel('ICC', fontsize=24, labelpad=10)
-box_ax.tick_params(labelsize=20)
+            width=.5, linewidth=size/4)
+box_ax.text(0, 1.2, '%s Task Measures' % Task_N, color=colors[1], fontsize=size*2)
+box_ax.text(0, 1, '%s Survey Measures' % Survey_N, color=colors[0], fontsize=size*2)
+box_ax.set_ylabel('Measure Category', fontsize=size*2, labelpad=size)
+box_ax.set_xlabel('ICC', fontsize=size*2, labelpad=size)
+box_ax.tick_params(labelsize=size*1.5)
 # plot distributions
 dist_ax = f.add_axes([0,.6,1,.4]) 
 dist_ax.set_xlim(*box_ax.get_xlim())
 dist_ax.set_xticklabels('')
 dist_ax.tick_params(length=0)
 for i, (name, g) in enumerate(retest_data.groupby('Measure Category')):
-    sns.kdeplot(g['icc'], color=colors[i], ax=dist_ax, linewidth=4, 
+    sns.kdeplot(g['icc'], color=colors[i], ax=dist_ax, linewidth=size/3, 
                 shade=True, legend=False)
 dist_ax.axis('off')
-plt.savefig(save_dir, dpi=300, bbox_inches='tight')
+plt.savefig(save_dir, dpi=dpi, bbox_inches='tight')
 
 

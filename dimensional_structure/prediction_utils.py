@@ -34,11 +34,11 @@ def run_prediction(predictors, demographics, output_base='',
         insample_scores,_ = bp.run_prediction(v)
         if verbose:
             print('Predicting %s' % v)
-            if pd.isnull(cv_scores[0]):
+            if pd.isnull(cv_scores[0]['R2']):
                 print('No predictor variance in CV model!')
-            if pd.isnull(insample_scores[0]):
+            if pd.isnull(insample_scores[0]['R2']):
                 print('No predictor variance in insample model!')
-        bp.scores[v],bp.importances[v] = cv_scores, cv_importances
+        bp.scores[v], bp.importances[v] = cv_scores, cv_importances
         bp.scores_insample[v] = insample_scores
         
     if save == True:

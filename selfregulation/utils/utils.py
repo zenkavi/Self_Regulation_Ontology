@@ -263,6 +263,9 @@ def get_demographics(dataset=None, cleanup=True, num_response_thresh=10,
         q=demogdata.query('CaffienatedSodaCansPerDay<0')
         for i in q.index:
             demogdata.loc[i,'CaffienatedSodaCansPerDay']=numpy.nan
+        q=demogdata.query('CaffieneOtherSourcesDayMG>2000')
+        for i in q.index:
+            demogdata.loc[i,'CaffieneOtherSourcesDayMG']=numpy.nan
         if verbose and len(q)>0:
             print('replacing bad CaffienatedSodaCansPerDay value for', list(q.index))
 

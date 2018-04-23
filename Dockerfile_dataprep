@@ -69,7 +69,8 @@ RUN pip install \
     joblib==0.11 \
     multiprocess==0.70.05 \
     rpy2==2.8.5
-
+# packages just for analysis
+RUN pip install bctpy==0.5.0
   
 # Copy the directory (except Data and Results) into the docker container
 ADD . /SRO
@@ -94,6 +95,6 @@ RUN echo "c.NotebookApp.allow_root = True" >> ~/.jupyter/jupyter_notebook_config
 WORKDIR /SRO
 
 # install the selfregulation directory 
-RUN python setup.py install
+RUN pip install -e /SRO
 
 CMD ["/bin/bash"]

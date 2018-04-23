@@ -2,7 +2,6 @@ Data/Local
 Data/Retest_*/Local
 Data/Retest_*/batch_output
 data_preparation/old
-Plots
 .Rhistory
 .fuse*
 *.pyl

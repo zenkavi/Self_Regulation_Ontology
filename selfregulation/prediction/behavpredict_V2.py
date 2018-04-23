@@ -30,10 +30,7 @@ from imblearn.combine import SMOTETomek
 from selfregulation.utils.logreg import LogReg
 from selfregulation.utils.get_balanced_folds import BalancedKFold
 from selfregulation.prediction.prediction_utils import get_demographic_model_type, RModel
-from tikhonov.TikhonovRegression import find_tikhonov_from_covariance, TikhonovCV
 
-def get_git_revision_short_hash():
-    return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD'])
 
 class UserSchema(Schema):
     hostname = fields.Str()
@@ -50,7 +47,6 @@ class UserSchema(Schema):
     freq_threshold=fields.Integer()
     drop_threshold=fields.Integer()
     imputer=fields.Str()
-    git_commit=fields.Str()
 
 class BehavPredict:
     def __init__(self,
@@ -76,10 +72,9 @@ class BehavPredict:
         self.behavdata = behavdata
         self.demogdata = demogdata
         self.reliabilities = reliabilities
-        self.git_commit = get_git_revision_short_hash().strip()
         self.hostname = socket.gethostname()
         self.verbose = verbose
-        self.shuffle = shuffle
+        self.shuffle = int(shuffle)
         self.classifier = classifier
         self.output_dir = output_dir
         self.outfile = outfile
@@ -102,7 +97,6 @@ class BehavPredict:
         self.use_smote=use_smote
         self.smote_cutoff=smote_cutoff
         self.data_models=None
-        self.pred=None
         self.varsets={}
         
         # initialize
@@ -241,30 +235,36 @@ class BehavPredict:
             if self.verbose:
                 print('shuffling Y variable')
             numpy.random.shuffle(Ydata)
+        # loop over shuffle number. If no shuffle, just go through once
+        scores = []
+        importances = []
         Xdata=Xdata.values
-        if numpy.sum(numpy.isnan(Xdata))>0:
-            Xdata=imputer().complete(Xdata)
-        scores=[]
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", message="Data with input dtype int64 was converted to float64 by StandardScaler.")
-            Xdata=scale.fit_transform(Xdata)
-        binary_clf.fit(Xdata,Ydata)
-        self.pred=binary_clf.predict(Xdata)
-        if numpy.var(self.pred)==0:
-            if self.verbose:
-                print('zero variance in predictions')
-            scores=[numpy.nan]
-        else:
-            scores=[roc_auc_score(Ydata,self.pred)]
-
-        if hasattr(binary_clf,'feature_importances_'):  # for random forest
-            importances=binary_clf.feature_importances_
-        elif hasattr(binary_clf,'coef_'):  # for lasso
-            importances=binary_clf.coef_
+        for i in range(max(1,self.shuffle)):
+            pred=numpy.zeros(Ydata.shape[0])
+            scale=StandardScaler()
+            
+            if numpy.sum(numpy.isnan(Xdata))>0:
+                Xdata=imputer().complete(Xdata)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", message="Data with input dtype int64 was converted to float64 by StandardScaler.")
+                Xdata=scale.fit_transform(Xdata)
+            binary_clf.fit(Xdata,Ydata)
+            pred=binary_clf.predict(Xdata)
+            if numpy.var(self.pred)==0:
+                if self.verbose:
+                    print('zero variance in predictions')
+                scores.append({'ROC_AUC': numpy.nan})
+            else:
+                scores.append({'ROC_AUC': roc_auc_score(Ydata,pred)})
+    
+            if hasattr(binary_clf,'feature_importances_'):  # for random forest
+                importances.append(binary_clf.feature_importances_)
+            elif hasattr(binary_clf,'coef_'):  # for lasso
+                importances.append(binary_clf.coef_)
         if self.verbose:
             print('overfit mean accuracy = %0.3f'%scores[0])
         return scores,importances
-
+                
     def run_regression(self,v,imputer):
         if self.classifier=='rf':
             clf=ExtraTreesRegressor()
@@ -280,8 +280,6 @@ class BehavPredict:
                 clf=LassoCV(max_iter=5000)
         elif self.classifier=='ridge':
             clf = RidgeCV()    
-        elif self.classifier=='tikhonov':
-            clf = TikhonovCV()
         elif self.classifier=='svm':
             clf = svm.LinearSVR()
         else:
@@ -295,45 +293,42 @@ class BehavPredict:
                 print('shuffling Y variable')
             numpy.random.shuffle(Ydata)
         Xdata=Xdata.values
-
-        scores=[]
-        importances=[]
-        self.pred=numpy.zeros(Xdata.shape[0])
-        scale=StandardScaler()
-        # impute and scale data
-        if numpy.sum(numpy.isnan(Xdata))>0:
-            Xdata=imputer().complete(Xdata)
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", message="Data with input dtype int64 was converted to float64 by StandardScaler.")
-            Xdata=scale.fit_transform(Xdata)
-
-        # run regression
-        if self.classifier == 'tikhonov':
-            L = find_tikhonov_from_covariance(numpy.corrcoef(Xdata.T))
-            clf.fit(Xdata,Ydata,L=L)
-        else:
+        scores = []
+        importances = []
+        # loop over shuffle number. If no shuffle, just go through once
+        for i in range(max(1,self.shuffle)):
+            pred=numpy.zeros(Xdata.shape[0])
+            scale=StandardScaler()
+            # impute and scale data
+            if numpy.sum(numpy.isnan(Xdata))>0:
+                Xdata=imputer().complete(Xdata)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", message="Data with input dtype int64 was converted to float64 by StandardScaler.")
+                Xdata=scale.fit_transform(Xdata)
+    
+            # run regression
             clf.fit(Xdata,Ydata)
-        self.pred=clf.predict(Xdata)
-
-        if numpy.var(self.pred)>0:
-            scores=[numpy.corrcoef(Ydata,self.pred)[0,1]**2,
-                    mean_absolute_error(Ydata,self.pred)]
-        else:
-           if self.verbose:
-               print(v,'zero variance in predictions')
-           scores=[numpy.nan,numpy.nan]
-        if hasattr(clf,'feature_importances_'):  # for random forest
-            importances.append(clf.feature_importances_)
-        elif hasattr(clf,'coef_'):  # for lasso
-            importances.append(clf.coef_)
-
+            pred=clf.predict(Xdata)
+    
+            if numpy.var(pred)>0:
+                scores.append({'R2': numpy.corrcoef(Ydata,pred)[0,1]**2,
+                               'MAE': mean_absolute_error(Ydata,pred)})
+                
+            else:
+               if self.verbose:
+                   print(v,'zero variance in predictions')
+               scores.append({'R2': numpy.nan, 'MAE': numpy.nan})
+            if hasattr(clf,'feature_importances_'):  # for random forest
+                importances.append(clf.feature_importances_)
+            elif hasattr(clf,'coef_'):  # for lasso
+                importances.append(clf.coef_)
+            # shuffle again for next iteration
+            if i>0:
+                numpy.random.shuffle(Ydata)
+                
         if self.verbose:
             print('overfit scores:',scores)
-        try:
-            imp=numpy.vstack(importances)
-        except:
-            imp=None
-        return scores,imp
+        return scores, importances
     
     # linear models with cross validation
     def run_crossvalidation(self,v,outer_cv=None,
@@ -379,57 +374,55 @@ class BehavPredict:
             if self.verbose:
                 print('shuffling Y variable')
             numpy.random.shuffle(Ydata)
+        # loop over shuffle number. If no shuffle, just go through once
+        scores = []
+        importances = []
         Xdata=Xdata.values
-        scores=[]
-        importances=[]
-        self.pred=numpy.zeros(Ydata.shape[0])
-        scale=StandardScaler()
-        # run cross validation loops
-        for train,test in outer_cv.split(Xdata,Ydata):
-            Xtrain=Xdata[train,:]
-            Xtest=Xdata[test,:]
-            if numpy.sum(numpy.isnan(Xtrain))>0:
-                Xtrain=imputer().complete(Xdata[train,:])
-            if numpy.sum(numpy.isnan(Xtest))>0:
-                Xtest=imputer().complete(Xdata[test,:])
-            # scale data
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", message="Data with input dtype int64 was converted to float64 by StandardScaler.")
-                Xtrain=scale.fit_transform(Xtrain)
-                Xtest=scale.transform(Xtest)
-            Ytrain=Ydata[train]
-            # correct for imbalanced Y
-            if numpy.abs(numpy.mean(Ytrain)-0.5)>self.smote_cutoff and self.use_smote:
-                if self.verbose>1:
-                    print("using SMOTE to oversample")
-                smt = SMOTETomek()
-                Xtrain,Ytrain=smt.fit_sample(Xtrain.copy(),Ydata[train])
-            clf.fit(Xtrain,Ytrain)
-            self.pred[test]=clf.predict(Xtest)
-
-        if numpy.var(self.pred)>0:
-            scores=[roc_auc_score(Ydata,self.pred)]
-        else:
-           if self.verbose:
-               print(v,'zero variance in predictions')
-           scores=[numpy.nan]
-        if hasattr(clf,'C_'):
-            self.lambda_optim=[clf.C_[0]]
-            if self.verbose:
-                print('optimal lambdas:',self.lambda_optim)
-        # determine feature importance by fitting on the whole dataset
-        clf.fit(Xdata, Ydata)
-        if hasattr(clf,'feature_importances_'):  # for random forest
-            importances.append(clf.feature_importances_)
-        elif hasattr(clf,'coef_'):  # for lasso
-            importances.append(clf.coef_)
+        for i in range(max(1,self.shuffle)):
+            pred=numpy.zeros(Ydata.shape[0])
+            scale=StandardScaler()
+            # run cross validation loops
+            for train,test in outer_cv.split(Xdata,Ydata):
+                Xtrain=Xdata[train,:]
+                Xtest=Xdata[test,:]
+                if numpy.sum(numpy.isnan(Xtrain))>0:
+                    Xtrain=imputer().complete(Xdata[train,:])
+                if numpy.sum(numpy.isnan(Xtest))>0:
+                    Xtest=imputer().complete(Xdata[test,:])
+                # scale data
+                with warnings.catch_warnings():
+                    warnings.filterwarnings("ignore", message="Data with input dtype int64 was converted to float64 by StandardScaler.")
+                    Xtrain=scale.fit_transform(Xtrain)
+                    Xtest=scale.transform(Xtest)
+                Ytrain=Ydata[train]
+                # correct for imbalanced Y
+                if numpy.abs(numpy.mean(Ytrain)-0.5)>self.smote_cutoff and self.use_smote:
+                    if self.verbose>1:
+                        print("using SMOTE to oversample")
+                    smt = SMOTETomek()
+                    Xtrain,Ytrain=smt.fit_sample(Xtrain.copy(),Ydata[train])
+                clf.fit(Xtrain,Ytrain)
+                pred[test]=clf.predict(Xtest)
+    
+            if numpy.var(pred)>0:
+                scores.append({'ROC_AUC': roc_auc_score(Ydata,pred)})
+            else:
+               if self.verbose:
+                   print(v,'zero variance in predictions')
+               scores.append({'ROC_AUC': numpy.nan})
+            if hasattr(clf,'C_'):
+                self.lambda_optim=[clf.C_[0]]
+                if self.verbose:
+                    print('optimal lambdas:',self.lambda_optim)
+            # determine feature importance by fitting on the whole dataset
+            clf.fit(Xdata, Ydata)
+            if hasattr(clf,'feature_importances_'):  # for random forest
+                importances.append(clf.feature_importances_)
+            elif hasattr(clf,'coef_'):  # for lasso
+                importances.append(clf.coef_)
         if self.verbose:
             print('mean accuracy = %0.3f'%scores[0])
-        try:
-            imp=numpy.vstack(importances)
-        except:
-            imp=None
-        return scores,imp
+        return scores, importances
 
     def run_crossvalidation_regression(self,v,imputer,outer_cv=None,
                             nlambda=100):
@@ -454,8 +447,6 @@ class BehavPredict:
                 clf=LassoCV(max_iter=5000)
         elif self.classifier=='ridge':
             clf = RidgeCV()      
-        elif self.classifier=='tikhonov':
-            clf = TikhonovCV()
         elif self.classifier=='svm':
             clf = svm.LinearSVR()
         else:
@@ -469,65 +460,65 @@ class BehavPredict:
             if self.verbose:
                 print('shuffling Y variable')
             numpy.random.shuffle(Ydata)
+            
+            
+        # loop over shuffle number. If no shuffle, just go through once
+        scores = []
+        importances = []
         Xdata=Xdata.values
-        scores=[]
-        importances=[]
-        self.pred=numpy.zeros(Ydata.shape[0])
-        scale=StandardScaler()
-        # set up CV object
-        if not outer_cv:
-            if type_of_target(Ydata) == 'continuous':
-                outer_cv=BalancedKFold(nfolds=self.n_outer_splits)
-            else:
-                outer_cv=StratifiedKFold(n_splits=self.n_outer_splits,shuffle=True)
-        # run cross validation loops
-        for train,test in outer_cv.split(Xdata,Ydata):
-            Xtrain=Xdata[train,:]
-            Xtest=Xdata[test,:]
-            if numpy.sum(numpy.isnan(Xtrain))>0:
-                Xtrain=imputer().complete(Xdata[train,:])
-            if numpy.sum(numpy.isnan(Xtest))>0:
-                Xtest=imputer().complete(Xdata[test,:])
-
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", message="Data with input dtype int64 was converted to float64 by StandardScaler.")
-                Xtrain=scale.fit_transform(Xtrain)
-                Xtest=scale.transform(Xtest)
-            Ytrain=Ydata[train]
-            if self.classifier == 'tikhonov':
-                L = find_tikhonov_from_covariance(numpy.corrcoef(Xtrain.T))
-                clf.fit(Xtrain,Ytrain,L=L)
-            else:
+        for i in range(max(1,self.shuffle)):
+            pred=numpy.zeros(Ydata.shape[0])
+            scale=StandardScaler()
+            # set up CV object
+            if not outer_cv:
+                if type_of_target(Ydata) == 'continuous':
+                    outer_cv=BalancedKFold(nfolds=self.n_outer_splits)
+                else:
+                    outer_cv=StratifiedKFold(n_splits=self.n_outer_splits,shuffle=True)
+            # run cross validation loops
+            for train,test in outer_cv.split(Xdata,Ydata):
+                Xtrain=Xdata[train,:]
+                Xtest=Xdata[test,:]
+                if numpy.sum(numpy.isnan(Xtrain))>0:
+                    Xtrain=imputer().complete(Xdata[train,:])
+                if numpy.sum(numpy.isnan(Xtest))>0:
+                    Xtest=imputer().complete(Xdata[test,:])
+    
+                with warnings.catch_warnings():
+                    warnings.filterwarnings("ignore", message="Data with input dtype int64 was converted to float64 by StandardScaler.")
+                    Xtrain=scale.fit_transform(Xtrain)
+                    Xtest=scale.transform(Xtest)
+                Ytrain=Ydata[train]
                 clf.fit(Xtrain,Ytrain)
-            p=clf.predict(Xtest)
-            if len(p.shape)>1:
-                p=p[:,0]
-            self.pred[test]=p
-
-        if numpy.var(self.pred)>0:
-            scores=[numpy.corrcoef(Ydata,self.pred)[0,1]**2,
-                    mean_absolute_error(Ydata,self.pred)]
-        else:
-           if self.verbose:
-               print(v,'zero variance in predictions')
-           scores=[numpy.nan,numpy.nan]
-        # determine feature importance by fitting on the whole dataset
-        clf.fit(Xdata, Ydata)
-        if hasattr(clf,'feature_importances_'):  # for random forest
-            importances.append(clf.feature_importances_)
-        elif hasattr(clf,'coef_'):  # for lasso
-            importances.append(clf.coef_)
-        if hasattr(clf,'lambda_optim'):
-            self.lambda_optim=clf.lambda_optim
-            if self.verbose:
-                print('optimal lambdas:',self.lambda_optim)
+                p=clf.predict(Xtest)
+                if len(p.shape)>1:
+                    p=p[:,0]
+                pred[test]=p
+    
+            if numpy.var(pred)>0:
+                scores.append({'R2': numpy.corrcoef(Ydata,pred)[0,1]**2,
+                               'MAE': mean_absolute_error(Ydata,pred)})
+            else:
+               if self.verbose:
+                   print(v,'zero variance in predictions')
+               scores.append({'R2': numpy.nan, 'MAE': numpy.nan})
+            # determine feature importance by fitting on the whole dataset
+            clf.fit(Xdata, Ydata)
+            if hasattr(clf,'feature_importances_'):  # for random forest
+                importances.append(clf.feature_importances_)
+            elif hasattr(clf,'coef_'):  # for lasso
+                importances.append(clf.coef_)
+            if hasattr(clf,'lambda_optim'):
+                self.lambda_optim=clf.lambda_optim
+                if self.verbose:
+                    print('optimal lambdas:',self.lambda_optim)
+            # shuffle again for next iteration
+            if i>0:
+                numpy.random.shuffle(Ydata)
+            
         if self.verbose:
             print('scores:',scores)
-        try:
-            imp=numpy.vstack(importances)
-        except:
-            imp=None
-        return scores,imp
+        return scores,importances
     
     def write_data(self, vars):
         shuffle_flag='shuffle_' if self.shuffle else ''

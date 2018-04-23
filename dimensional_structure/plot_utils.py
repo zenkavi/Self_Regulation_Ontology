@@ -7,37 +7,71 @@ import seaborn as sns
 from dimensional_structure.utils import reorder_data
 from selfregulation.utils.plot_utils import CurvedText, beautify_legend
 
-def save_figure(fig, loc, save_kws=None):
-    """ Saves figure in location and creates directory tree if needed """
-    if save_kws is None:
-        save_kws = {}
-    directory = os.path.dirname(loc)
-    if directory != "":
-        os.makedirs(directory, exist_ok=True)
-    fig.savefig(loc, **save_kws)
+
 
 def get_short_names():
     shortened_factors = {
         'Sensation Seeking': 'SS',
         'Mindfulness': 'Mind',
-        'Emotional Control': 'Em.Con.',
-        'Impulsivity': 'Impulse',
+        'Emotional Control': 'Em-Con.',
+        'Impulsivity': 'Imp',
         'Goal-Directedness': 'Goal',
-        'Reward Sensitivity': 'Reward',
+        'Reward Sensitivity': 'Rew.',
         'Risk Perception': 'RP',
-        'Eating Control': 'Eating',
-        'Ethical Risk-Taking': 'Ethical-RT',
-        'Social Risk-Taking': 'Social-RT',
-        'Financial Risk-Taking': 'Fin.RT',
+        'Eating Control': 'Eat',
+        'Ethical Risk-Taking': 'Eth-RT',
+        'Social Risk-Taking': 'Soc-RT',
+        'Financial Risk-Taking': 'Fin-RT',
         'Agreeableness': 'Agr'
         }
     return shortened_factors
+
+def get_var_group(label):
+    groups = ['Drift Rate', 'Threshold', 'Non-Decision', 'SSRT',
+              'Discounting', 'Memory', 'Learning']
+    group = {'drift': 0,
+            'thresh': 1, 
+            'non_decision': 2,
+            'SSRT': 3,
+            'discount': 4,
+            'kirby.percent_patient': 4,
+            'mean_load': 5,
+            'span': 5,
+            'keep_track': 5,
+            'two_stage_decision': 6,
+            'shift_task': 6,
+            'hierarchical_rule': 6
+            }
+    keys = group.keys()
+    key = [k for k in keys if k in label]
+    if len(key)==0:
+        return (7, None)
+    else:
+        assert len(key)==1
+        group_index = group[key[0]]
+        return group_index, groups[group_index]
+
+def get_var_color(label):
+    colors = [[.8, 0.62, 0.0], 
+              [0.0, 0.5, 0.0], 
+              [0.0, 0.7, 0.7], 
+              [0.75, 0.0, 0.75],
+              [0, .25, .7],
+              [.8, .25, 0],
+              [.4, 0, 0]]
+    group, group_name = get_var_group(label)
+    if group_name is None:
+        return [.5, .5, .5]
+    else:
+        return colors[group]
+    
+    
 
 # ****************************************************************************
 # helper functions for hierarchical plotting
 # ****************************************************************************
 
-def plot_tree(tree, pos=None, ax=None):
+def plot_tree(tree, pos=None, ax=None, linewidth=3):
     """ Plots a subset of a dendrogram 
     
     Args:
@@ -49,8 +83,6 @@ def plot_tree(tree, pos=None, ax=None):
     icoord = scipyarray( tree['icoord'] )
     dcoord = scipyarray( tree['dcoord'] )
     color_list = scipyarray( tree['color_list'] )
-    xmin, xmax = icoord.min(), icoord.max()
-    ymin, ymax = dcoord.min(), dcoord.max()
     if pos:
         icoord = icoord[pos]
         dcoord = dcoord[pos]
@@ -58,7 +90,7 @@ def plot_tree(tree, pos=None, ax=None):
     if ax is None:
         f, ax = plt.subplots(1,1)
     for xs, ys, color in zip(icoord, dcoord, color_list):
-        ax.plot(xs, ys,  color, linewidth=3)
+        ax.plot(xs, ys,  color, linewidth=linewidth)
     
     
 # ****************************************************************************
@@ -104,9 +136,11 @@ def plot_loadings(ax, component_loadings, groups=None, colors=None,
             color_index = sum((np.cumsum([len(g[1]) for g in groups])<i+1))
             bar.set_facecolor(colors[color_index])
     elif kind == 'line':
+        if 'linewidth' not in plot_kws.keys():
+            plot_kws['linewidth'] == 5
         theta = np.append(theta, theta[0])
         radii = np.append(radii, radii[0])
-        lines = ax.plot(theta, radii, linewidth=5, color=colors[0], **plot_kws)
+        lines = ax.plot(theta, radii, color=colors[0], **plot_kws)
     return colors
         
 def create_categorical_legend(labels,colors, ax):

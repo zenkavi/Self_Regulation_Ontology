@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import to_hex
 from matplotlib import text as mtext
 import numpy as np
+import os
 import pandas as pd
 from scipy.cluster.hierarchy import dendrogram
 import seaborn as sns
@@ -29,12 +30,15 @@ def format_variable_names(variables):
 #***************************************************
 # ********* Plotting Functions **********************
 #**************************************************
-def beautify_legend(legend, colors, fontsize=None):
+def beautify_legend(legend, colors=None, fontsize=None):
+    if colors is None:
+        colors = [i.get_color() for i in legend.legendHandles]
     for i, text in enumerate(legend.get_texts()):
         text.set_color(colors[i])
     for item in legend.legendHandles:
         item.set_visible(False)
-    legend.get_frame().set_linewidth(0.0)
+    for item in legend.legendHandles:
+        item.set_visible(False)
     if fontsize:
         plt.setp(legend.get_texts(), fontsize=fontsize)
         
@@ -235,7 +239,7 @@ def get_dendrogram_color_fun(Z, labels, clusters, color_palette=sns.hls_palette)
         clusters: cluster assignments for the labels in the original order
     
     """
-    dflt_col = "#808080"   # Unclustered gray
+    dflt_col = "#808080" # Unclustered gray
     color_palette = color_palette(len(np.unique(clusters)))
     D_leaf_colors = {i: to_hex(color_palette[clusters[i]-1]) for i in labels}
     # notes:
@@ -264,7 +268,15 @@ def heatmap(df):
     ax.set_xticklabels(df.columns, rotation=-90, rotation_mode = "anchor", ha = 'left') 
     return fig
 
-
+def save_figure(fig, loc, save_kws=None):
+    """ Saves figure in location and creates directory tree if needed """
+    if save_kws is None:
+        save_kws = {}
+    directory = os.path.dirname(loc)
+    if directory != "":
+        os.makedirs(directory, exist_ok=True)
+    fig.savefig(loc, **save_kws)
+    
 class CurvedText(mtext.Text):
     """
     A text object that follows an arbitrary curve.
@@ -354,7 +366,9 @@ class CurvedText(mtext.Text):
         rads = np.arctan2((y_fig[1:] - y_fig[:-1]),(x_fig[1:] - x_fig[:-1]))
         degs = np.rad2deg(rads)
 
-        rel_pos = 10
+        # center text
+        text_width = np.sum([t.get_window_extent(renderer=renderer).width for c,t in self.__Characters])
+        rel_pos = max((l_fig[-1]-text_width)//2+1, 5)
         for c,t in self.__Characters:
             #finding the width of c:
             t.set_rotation(0)

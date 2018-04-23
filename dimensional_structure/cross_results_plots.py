@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-# Script to generate results or plots across results objects
+# Script to generate all_results or plots across all_results objects
 from itertools import combinations, product
+from matplotlib.patches import Rectangle
 import matplotlib.pyplot as plt
 import numpy as np
 from os import path
@@ -9,7 +10,7 @@ import pandas as pd
 import seaborn as sns
 from sklearn.linear_model import LinearRegression, RidgeCV
 from sklearn.model_selection import cross_val_score
-from selfregulation.utils.plot_utils import beautify_legend
+from selfregulation.utils.plot_utils import beautify_legend, save_figure
 from selfregulation.utils.result_utils import load_results
 from selfregulation.utils.utils import get_recent_dataset
 
@@ -17,12 +18,14 @@ def extract_tril(mat, k=0):
     return mat[np.tril_indices_from(mat, k=k)]
 
 
-def plot_corr_hist(results, colors, reps=100):
-    survey_corr = abs(results['survey'].data.corr())
-    task_corr = abs(results['task'].data.corr())
-    all_data = pd.concat([results['task'].data, results['survey'].data], axis=1)
-    datasets = [('survey', results['survey'].data), 
-                ('task', results['task'].data), 
+def plot_corr_hist(all_results, reps=100, size=4.6, 
+                   dpi=300, ext='png', plot_dir=None):
+    colors = sns.color_palette('Blues_d',3)[0:2] + sns.color_palette('Reds_d',2)[:1]
+    survey_corr = abs(all_results['survey'].data.corr())
+    task_corr = abs(all_results['task'].data.corr())
+    all_data = pd.concat([all_results['task'].data, all_results['survey'].data], axis=1)
+    datasets = [('survey', all_results['survey'].data), 
+                ('task', all_results['task'].data), 
                 ('all', all_data)]
     # get cross corr
     cross_corr = abs(all_data.corr()).loc[survey_corr.columns,
@@ -97,15 +100,77 @@ def plot_corr_hist(results, colors, reps=100):
             beautify_legend(leg, [colors[i]])
         axes[1].set_xlabel('Pearson Correlation', fontsize=20, labelpad=10)
         axes[0].set_ylabel('Normalized Density', fontsize=20, labelpad=10)
-    return f
+    
+    # save
+    if plot_dir is not None:
+        # make histogram plot
+        save_figure(f, path.join(plot_dir, 'within-across_correlations.pdf'),
+                                {'bbox_inches': 'tight', 'dpi': 300})
+        
+    
+def plot_corr_heatmap(all_results, EFA=False, size=4.6, 
+                   dpi=300, ext='png', plot_dir=None):
+    def get_EFA_HCA(results, EFA):
+        if EFA == False:
+            return results.HCA.results['clustering_input-data']
+        else:
+            c = results.EFA.results['num_factors']
+            return results.HCA.results['clustering_input-EFA%s' % c]
+    
+
+    survey_order = get_EFA_HCA(all_results['survey'], EFA)['reorder_vec']
+    task_order = get_EFA_HCA(all_results['task'], EFA)['reorder_vec']
+    
+    if EFA == False:
+        all_data = pd.concat([all_results['task'].data.iloc[:, task_order], 
+                              all_results['survey'].data.iloc[:, survey_order]], 
+                            axis=1)
+    else:
+        all_data = pd.concat([all_results['task'].EFA.get_loading().T.iloc[:, task_order], 
+                              all_results['survey'].EFA.get_loading().T.iloc[:, survey_order]], 
+                            axis=1)
+
+    f = plt.figure(figsize=(size,size))
+    ax = f.add_axes([.05,.05,.9,.9])
+    cbar_ax = f.add_axes([.96,.15,.04,.7])
+    corr = abs(all_data.corr())
+    sns.heatmap(corr, square=True, ax=ax, cbar_ax=cbar_ax,
+                xticklabels=False, yticklabels=False,
+                vmax=1, vmin=0,
+                cbar_kws={'ticks': [0, 1]},
+                cmap=sns.color_palette('Reds', 100))
+    # add separating lines
+    ax.hlines(len(task_order), 0, all_data.shape[1], lw=size/4, 
+               color='k', linestyle='--')
+    ax.vlines(len(task_order), 0, all_data.shape[1], lw=size/4, 
+               color='k', linestyle='--')
+    # format cbar
+    cbar_ax.tick_params(axis='y', length=0)
+    cbar_ax.set_yticklabels([0, 1])
+    cbar_ax.tick_params(labelsize=size*2)
+    cbar_ax.set_ylabel('Pearson Correlation', rotation=-90, labelpad=size*2, fontsize=size*2)
+    # add bars to indicate category
+    left_ax = f.add_axes([0,.05,.04,.9])
+    bottom_ax = f.add_axes([.05,0,.9,.04])
+    left_ax.axis('off'); bottom_ax.axis('off')
+    perc_task = len(task_order)/all_data.shape[1]
+    # add labels
+    left_ax.text(0, 1-perc_task/2, 'Task DVs', rotation=90, va='center', fontsize=size*2.5)
+    left_ax.text(0, (1-perc_task)/2, 'Survey DVs', rotation=90, va='center', fontsize=size*2.5)
+    bottom_ax.text(perc_task/2, 0, 'Task DVs', ha='center', fontsize=size*2.5)
+    bottom_ax.text(1-(1-perc_task)/2, 0, 'Survey DVs', ha='center', fontsize=size*2.5)
     
     
+    if plot_dir is not None:
+        # make histogram plot
+        save_figure(f, path.join(plot_dir, 'data_correlations.pdf'),
+                                {'bbox_inches': 'tight', 'dpi': 300})   
 
 
 from sklearn.decomposition import PCA
-def plot_EFA_relationships(results):
-    EFA_results = {k:v.EFA for k,v in results.items()}
-    scores = {k:v.get_scores() for k,v in EFA_results.items()}
+def plot_EFA_relationships(all_results):
+    EFA_all_results = {k:v.EFA for k,v in all_results.items()}
+    scores = {k:v.get_scores() for k,v in EFA_all_results.items()}
     # quantify relationships using linear regression
     for name1, name2 in combinations(scores.keys(), 2):
         scores1 = scores[name1]
@@ -136,16 +201,52 @@ def plot_EFA_relationships(results):
     frame.set_color('black')
     beautify_legend(leg, all_colors)
 
-
-if __name__ == "__main__":
-    datafile = get_recent_dataset()
-    results = load_results(datafile)
-    plot_file = path.dirname(results['task'].plot_dir)
+def plot_BIC(all_results, size=4.6, dpi=300, ext='png', plot_dir=None):
+    """ Plots BIC and SABIC curves
     
-    # make histogram plot
-    colors = sns.color_palette('Blues_d',3)[0:2] + sns.color_palette('Reds_d',2)[:1]
-    f = plot_corr_hist(results, colors)
-    f.savefig(path.join(plot_file, 'within-across_correlations.png'), 
-                    bbox_inches='tight', 
-                    dpi=300)
+    Args:
+        all_results: a dimensional structure all_results object
+        dpi: the final dpi for the image
+        ext: the extension for the saved figure
+        plot_dir: the directory to save the figure. If none, do not save
+    """
+    all_colors = [sns.color_palette('Blues_d',3)[0:3],
+              sns.color_palette('Reds_d',3)[0:3],
+              sns.color_palette('Greens_d',3)[0:3],
+              sns.color_palette('Oranges_d',3)[0:3]]
+    height= size*.75/len(all_results)
+    fig, axes = plt.subplots(1, len(all_results), figsize=(size, height))
+    for i, results in enumerate(all_results.values()):
+        ax1 = axes[i]
+        name = results.ID.split('_')[0].title()
+        EFA = results.EFA
+        # Plot BIC and SABIC curves
+        colors = all_colors[i]
+        with sns.axes_style('white'):
+            x = list(EFA.results['cscores_metric-BIC'].keys())
+            # score keys
+            keys = [k for k in EFA.results.keys() if 'cscores' in k]
+            for key in keys:
+                metric = key.split('-')[-1]
+                BIC_scores = [EFA.results[key][i] for i in x]
+                BIC_c = EFA.results['c_metric-%s' % metric]
+                ax1.plot(x, BIC_scores,  'o-', c=colors[0], lw=size/6, label=metric,
+                         markersize=height*2)
+                ax1.plot(BIC_c, BIC_scores[BIC_c-1], '.', color='white',
+                         markeredgecolor=colors[0], markeredgewidth=height/2, 
+                         markersize=height*4)
+            if i==0:
+                ax1.set_ylabel('Score', fontsize=height*3)
+                leg = ax1.legend(loc='center right',
+                                 fontsize=height*3, markerscale=0)
+                beautify_legend(leg, colors=colors)
+            ax1.set_xlabel('# Factors', fontsize=height*3)
+            ax1.tick_params(labelsize=height*2)
+            ax1.set_title(name, fontsize=height*4)
+    if plot_dir is not None:
+        save_figure(fig, path.join(plot_dir, 'BIC_SABIC_curves.%s' % ext),
+                    {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
+            
+
 

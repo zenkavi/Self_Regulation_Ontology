@@ -7,9 +7,9 @@ from os import makedirs, path
 import pandas as pd
 import seaborn as sns
 
-from dimensional_structure.plot_utils import save_figure, visualize_factors, visualize_task_factors
+from dimensional_structure.plot_utils import visualize_factors, visualize_task_factors
 from dimensional_structure.utils import get_factor_groups
-from selfregulation.utils.plot_utils import beautify_legend, format_variable_names
+from selfregulation.utils.plot_utils import beautify_legend, format_num, format_variable_names, save_figure
 from selfregulation.utils.r_to_py_utils import get_attr
 from selfregulation.utils.utils import get_behav_data
 
@@ -18,7 +18,7 @@ sns.set_palette("Set1", 8, .75)
 
 
 
-def plot_BIC_SABIC(results, dpi=300, ext='png', plot_dir=None):
+def plot_BIC_SABIC(results, size=2.3, dpi=300, ext='png', plot_dir=None):
     """ Plots BIC and SABIC curves
     
     Args:
@@ -29,37 +29,52 @@ def plot_BIC_SABIC(results, dpi=300, ext='png', plot_dir=None):
     """
     EFA = results.EFA
     # Plot BIC and SABIC curves
+    colors = ['c', 'm']
     with sns.axes_style('white'):
         x = list(EFA.results['cscores_metric-BIC'].keys())
-        fig, ax1 = plt.subplots()
-        ax2 = ax1.twinx()
+        fig, ax1 = plt.subplots(1,1, figsize=(size, size*.75))
         # BIC
-        BIC_scores = list(EFA.results['cscores_metric-BIC'].values())
+        BIC_scores = [EFA.results['cscores_metric-BIC'][i] for i in x]
         BIC_c = EFA.results['c_metric-BIC']
-        ax1.plot(x, BIC_scores, c='c', lw=3, label='BIC')
-        ax1.set_ylabel('BIC', fontsize=20)
-        ax1.plot(BIC_c, BIC_scores[BIC_c],'k.', markersize=30)
-        # SABIC
-        SABIC_scores = list(EFA.results['cscores_metric-SABIC'].values())
-        SABIC_c = EFA.results['c_metric-SABIC']
-        ax2.plot(x, SABIC_scores, c='m', lw=3, label='SABIC')
-        ax2.set_ylabel('SABIC', fontsize=20)
-        ax2.plot(SABIC_c, SABIC_scores[SABIC_c],'k.', markersize=30)
-        # set up legend
-        ax1.plot(np.nan, c='m', lw=3, label='SABIC')
-        ax1.legend(loc='upper center')
+        ax1.plot(x, BIC_scores,  'o-', c=colors[0], lw=3, label='BIC',
+                 markersize=size*2)
+        ax1.set_xlabel('# Factors', fontsize=size*3)
+        ax1.set_ylabel('BIC', fontsize=size*3)
+        ax1.plot(BIC_c, BIC_scores[BIC_c-1], '.', color='white',
+                 markeredgecolor=colors[0], markeredgewidth=size/2, 
+                 markersize=size*4)
+        ax1.tick_params(labelsize=size*2)
+        if 'cscores_metric-SABIC' in EFA.results.keys():
+            # SABIC
+            ax2 = ax1.twinx()
+            SABIC_scores = list(EFA.results['cscores_metric-SABIC'].values())
+            SABIC_c = EFA.results['c_metric-SABIC']
+            ax2.plot(x, SABIC_scores, c=colors[1], lw=3, label='SABIC',
+                     markersize=size*2)
+            ax2.set_ylabel('SABIC', fontsize=size*4)
+            ax2.plot(SABIC_c, SABIC_scores[SABIC_c],'k.',
+                 markeredgecolor=colors[0], markeredgewidth=size/2, 
+                 markersize=size*4)
+            # set up legend
+            ax1.plot(np.nan, c='m', lw=3, label='SABIC')
+            leg = ax1.legend(loc='right center')
+            beautify_legend(leg, colors=colors)
         if plot_dir is not None:
             save_figure(fig, path.join(plot_dir, 'BIC_SABIC_curves.%s' % ext),
                         {'bbox_inches': 'tight', 'dpi': dpi})
             plt.close()
 
-def plot_communality(results, c, figsize=20, dpi=300, ext='png', plot_dir=None):
+def plot_communality(results, c, size=20, dpi=300, ext='png', plot_dir=None):
     EFA = results.EFA
     loading = EFA.get_loading(c)
     communality = (loading**2).sum(1).sort_values()
     communality.index = [i.replace('.logTr','') for i in communality.index]
     # load retest data
-    retest_data = get_behav_data(dataset='Retest_02-03-2018', file='bootstrap_merged.csv.gz')
+    retest_data = get_behav_data(dataset=results.dataset.replace('Complete','Retest'), 
+                                 file='bootstrap_merged.csv.gz')
+    if retest_data is None:
+        print('No retest data found for datafile: %s' % results.dataset)
+        return
     retest_data = retest_data.groupby('dv').mean()    
     retest_data.rename({'dot_pattern_expectancy.BX.BY_hddm_drift': 'dot_pattern_expectancy.BX-BY_hddm_drift',
                         'dot_pattern_expectancy.AY.BY_hddm_drift': 'dot_pattern_expectancy.AY-BY_hddm_drift'},
@@ -84,17 +99,17 @@ def plot_communality(results, c, figsize=20, dpi=300, ext='png', plot_dir=None):
         
     # plot communality bars woo!
     if len(retest_data)>0:
-        f, axes = plt.subplots(1, 3, figsize=(3*(figsize/10), figsize))
+        f, axes = plt.subplots(1, 3, figsize=(3*(size/10), size))
     
-        plot_bar_factor(communality, axes[0], figsize=figsize,
-                        label_loc='left',  title='Communality')
-        plot_bar_factor(noise_ceiling, axes[1], figsize=figsize,
-                        label_loc=None,  title_loc='bottom', title='Test-Retest')
-        plot_bar_factor(adjusted_communality, axes[2], figsize=figsize,
-                        label_loc='right',  title='Adjusted Communality')
+        plot_bar_factor(communality, axes[0], width=size/10, height=size,
+                        label_loc='leftall',  title='Communality')
+        plot_bar_factor(noise_ceiling, axes[1], width=size/10, height=size,
+                        label_loc=None,  title='Test-Retest')
+        plot_bar_factor(adjusted_communality, axes[2], width=size/10, height=size,
+                        label_loc=None,  title='Adjusted Communality')
     else:
         f = plot_bar_factor(communality, label_loc='both', 
-                            figsize=figsize, title='Communality')
+                            width=size/3, height=size*2, title='Communality')
     if plot_dir:
         filename = 'communality_bars-EFA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
@@ -105,15 +120,17 @@ def plot_communality(results, c, figsize=20, dpi=300, ext='png', plot_dir=None):
     if len(retest_data) > 0:
         with sns.axes_style('white'):
             colors = sns.color_palette(n_colors=2, desat=.75)
-            f, ax = plt.subplots(1,1,figsize=(figsize,figsize))
+            f, ax = plt.subplots(1,1,figsize=(size,size))
             sns.kdeplot(communality, linewidth=3, 
                         shade=True, label='Communality', color=colors[0])
             sns.kdeplot(adjusted_communality, linewidth=3, 
                         shade=True, label='Adjusted Communality', color=colors[1])
-            leg=ax.legend(fontsize=figsize*2, loc='upper right')
+            leg=ax.legend(fontsize=size*2, loc='upper right')
             beautify_legend(leg, colors)
-            plt.xlabel('Communality', fontsize=figsize*2)
+            plt.xlabel('Communality', fontsize=size*2)
+            plt.ylabel('Normalized Density', fontsize=size*2)
             ax.set_yticks([])
+            ax.tick_params(labelsize=size)
             ax.set_ylim(0, ax.get_ylim()[1])
             ax.set_xlim(0, ax.get_xlim()[1])
             ax.spines['right'].set_visible(False)
@@ -122,7 +139,7 @@ def plot_communality(results, c, figsize=20, dpi=300, ext='png', plot_dir=None):
             # add correlation
             correlation = "{0:0.2f}".format(np.mean(correlation))
             ax.text(1, 1.25, 'Correlation Between Communality \nand Test-Retest: %s' % correlation,
-                    size=figsize*2)
+                    size=size*2)
         if plot_dir:
             filename = 'communality_dist-EFA%s.%s' % (c, ext)
             save_figure(f, path.join(plot_dir, filename), 
@@ -163,7 +180,7 @@ def plot_nesting(results, thresh=.5, dpi=300, figsize=12, ext='png', plot_dir=No
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
         
-def plot_factor_correlation(results, c, figsize=12, dpi=300, ext='png', plot_dir=None):
+def plot_factor_correlation(results, c, size=4.6, dpi=300, ext='png', plot_dir=None):
     EFA = results.EFA
     loading = EFA.get_loading(c)
     # get factor correlation matrix
@@ -172,26 +189,23 @@ def plot_factor_correlation(results, c, figsize=12, dpi=300, ext='png', plot_dir
     phi = pd.DataFrame(phi, columns=loading.columns, index=loading.columns)
     phi = phi.iloc[reorder_vec, reorder_vec]
     with sns.plotting_context('notebook', font_scale=2):
-        f = plt.figure(figsize=(figsize*5/4, figsize))
-        ax1 = f.add_axes([0,0,.75,.75])
-        ax1_cbar = f.add_axes([.7, .05, .03, .65])
+        f = plt.figure(figsize=(size*5/4, size))
+        ax1 = f.add_axes([0,0,.9,.9])
+        cbar_ax = f.add_axes([.91, .05, .03, .8])
         sns.heatmap(phi, ax=ax1, square=True, vmax=.5, vmin=-.5,
-                    cbar_ax=ax1_cbar,
+                    cbar_ax=cbar_ax,
                     cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
         yticklabels = ax1.get_yticklabels()
         ax1.set_yticklabels(yticklabels, rotation = 0, ha="right")
-        ax1.set_title('%s 1st-Level Factor Correlations' % results.ID.split('_')[0],
-                  weight='bold', y=1.05)
-    # get higher order correlations
-    if 'factor2_tree' in EFA.results.keys() and c in EFA.results['factor2_tree'].keys():
-        higher_loading = EFA.results['factor2_tree'][c].iloc[reorder_vec]
-        max_val = np.max(np.max(abs(higher_loading)))
-        ax2 = f.add_axes([.85,0,.04*higher_loading.shape[1],.75])
-        sns.heatmap(higher_loading, ax=ax2, cbar=True,
-                    yticklabels=False, vmax=max_val, vmin=-max_val,
-                    cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
-        ax2.set_title('2nd-Order Factor Loadings', weight='bold', y=1.05)
-        ax2.yaxis.set_label_position('right')
+        ax1.set_title('%s Factor Correlations' % results.ID.split('_')[0].title(),
+                  weight='bold', y=1.05, fontsize=size*3)
+        ax1.tick_params(labelsize=size*3)
+        # format cbar
+        cbar_ax.set_yticklabels([-.5, -.25, 0, .25, .5])
+        cbar_ax.tick_params(axis='y', length=0)
+        cbar_ax.tick_params(labelsize=size*2)
+        cbar_ax.set_ylabel('Pearson Correlation', rotation=-90, labelpad=size*4, fontsize=size*3)
+    
     if plot_dir:
         filename = 'factor_correlations_EFA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
@@ -200,7 +214,8 @@ def plot_factor_correlation(results, c, figsize=12, dpi=300, ext='png', plot_dir
         
 
 def plot_bar_factor(loading, ax=None, bootstrap_err=None, grouping=None,
-                    figsize=20, label_loc='left', title=None, title_loc='top'):
+                    width=4, height=8, label_loc='left', title=None,
+                    color_grouping=False, separate_ticklabels=True):
     """ Plots one factor loading as a vertical bar plot
     
     Args:
@@ -212,10 +227,15 @@ def plot_bar_factor(loading, ax=None, bootstrap_err=None, grouping=None,
             horizontal lines
         label_loc: 'left', 'right', or None. Plots half the variables names, either
             on the left or the right
-        title_loc: 'top', 'bottom', or None
     """
+    
+    # longest label for drawing lines
+    DV_fontsize = height/(loading.shape[0]//2)*20
+    longest_label = max([len(i) for i in loading.index])
+    line_length = DV_fontsize*longest_label*.013/width
+    # set up plot variables
     if ax is None:
-        f, ax = plt.subplots(1,1, figsize=(figsize/12, figsize))
+        f, ax = plt.subplots(1,1, figsize=(width, height))
     with sns.plotting_context(font_scale=1.3):
         # plot optimal factor breakdown in bar format to better see labels
         # plot actual values
@@ -226,12 +246,20 @@ def plot_bar_factor(loading, ax=None, bootstrap_err=None, grouping=None,
                                 width=.7)
         else:
             abs(loading).plot(kind='barh', ax=ax, color=ordered_colors,
-                                width=.7, xerr=bootstrap_err)
+                                width=.7, xerr=bootstrap_err, error_kw={'linewidth': height/10})
         # draw lines separating groups
         if grouping is not None:
             factor_breaks = np.cumsum([len(i[1]) for i in grouping])[:-1]
             for y_val in factor_breaks:
-                ax.hlines(y_val-.5, 0, 1.1, lw=2, color='grey', linestyle='dashed')
+                ax.hlines(y_val-.5, 0, 1.1, lw=height/10, 
+                          color='grey', linestyle='dashed')
+                if separate_ticklabels:
+                    if label_loc in ['left', 'leftall']:
+                        ax.hlines(y_val-.5, -line_length, 0, lw=height/20, 
+                                  clip_on=False)
+                    elif label_loc in ['right']:
+                        ax.hlines(y_val-.5, 1, 1+line_length, lw=height/20, 
+                                  clip_on=False)
         # set axes properties
         ax.set_xlim(0, max(max(abs(loading)), 1.1)); 
         ax.set_yticklabels(''); 
@@ -239,18 +267,18 @@ def plot_bar_factor(loading, ax=None, bootstrap_err=None, grouping=None,
         labels = ax.get_yticklabels()
         locs = ax.yaxis.get_ticklocs()
         # add factor label to plot
-        DV_fontsize = figsize/(len(labels)//2)*45
-        if title and title_loc == 'top':
-            ax.set_title(title, ha='center', fontsize=figsize*.75,
-                          weight='bold')
-        elif title and title_loc == 'bottom':
-            ax.set_xlabel(title, ha='center', fontsize=figsize*.75,
-                           weight='bold')
+        if title:
+            ax.set_title(title, ha='left', va='bottom', fontsize=width*8,
+                          weight='bold', rotation=20, y=1, x=0)
+        ax.xaxis.set_tick_params(size=height/4, width=height/10, pad=height/2,
+                                 color='#666666')
         # add labels of measures to top and bottom
         tick_colors = ['#000000','#444098']
         ax.set_facecolor('#DBDCE7')
         for location in locs[2::3]:
-            ax.axhline(y=location, xmin=0, xmax=1, color='w', zorder=-1)
+            ax.axhline(y=location, xmin=0, xmax=1, color='w', 
+                       zorder=-1, lw=height/10)
+        # if right or both given, plot half labels on the right side
         if label_loc in ['right', 'both']:
             for i, label in enumerate(labels):
                 label.set_text('%s  %s' % (i+1, label.get_text()))
@@ -259,8 +287,8 @@ def plot_bar_factor(loading, ax=None, bootstrap_err=None, grouping=None,
             ax_copy.set_yticks(locs[::2])
             right_labels = ax_copy.set_yticklabels(labels[::2], 
                                                    fontsize=DV_fontsize)
-            ax_copy.yaxis.set_tick_params(size=5, width=2, color='#666666')
-            if grouping is not None:
+            ax_copy.yaxis.set_tick_params(size=height/4, width=height/10, pad=width)
+            if grouping is not None and color_grouping:
                 # change colors of ticks based on factor group
                 color_i = 1
                 last_group = None
@@ -271,6 +299,7 @@ def plot_bar_factor(loading, ax=None, bootstrap_err=None, grouping=None,
                         last_group = group
                     color = tick_colors[color_i]
                     label.set_color(color) 
+        # if left or both given, plot half labels on left size
         if label_loc in ['left', 'both']:
             for i, label in enumerate(labels):
                 label.set_text('%s  %s' % (label.get_text(), i+1))
@@ -278,8 +307,8 @@ def plot_bar_factor(loading, ax=None, bootstrap_err=None, grouping=None,
             ax.set_yticks(locs[1::2])
             left_labels=ax.set_yticklabels(labels[1::2], 
                                            fontsize=DV_fontsize)
-            ax.yaxis.set_tick_params(size=5, width=2, color='#666666')
-            if grouping is not None:
+            ax.yaxis.set_tick_params(size=height/4, width=height/10, pad=width)
+            if grouping is not None and color_grouping:
                 # change colors of ticks based on factor group
                 color_i = 1
                 last_group = None
@@ -290,13 +319,32 @@ def plot_bar_factor(loading, ax=None, bootstrap_err=None, grouping=None,
                         last_group = group
                     color = tick_colors[color_i]
                     label.set_color(color) 
+        # if leftall given, plot all labels on left
+        if label_loc == 'leftall':
+            for i, label in enumerate(labels):
+                label.set_text('%s  %s' % (label.get_text(), i+1))
+            # and other half on bottom
+            ax.set_yticks(locs)
+            left_labels=ax.set_yticklabels(labels,fontsize=DV_fontsize)
+            ax.yaxis.set_tick_params(size=height/4, width=height/10, pad=width)
+            if grouping is not None and color_grouping:
+                # change colors of ticks based on factor group
+                color_i = 1
+                last_group = None
+                for j, label in enumerate(left_labels):
+                    group = np.digitize(locs[j], factor_breaks)
+                    if last_group is None or group != last_group:
+                        color_i = 1-color_i
+                        last_group = group
+                    color = tick_colors[color_i]
+                    label.set_color(color)             
         else:
             ax.set_yticklabels('')
             ax.yaxis.set_tick_params(size=0)
     if ax is None:
         return f
                 
-def plot_bar_factors(results, c, figsize=20, thresh=75,
+def plot_bar_factors(results, c, size=4.6, thresh=75,
                      dpi=300, ext='png', plot_dir=None):
     """ Plots factor analytic results as bars
     
@@ -304,12 +352,14 @@ def plot_bar_factors(results, c, figsize=20, thresh=75,
         results: a dimensional structure results object
         c: the number of components to use
         dpi: the final dpi for the image
-        figsize: scalar - the width of the plot. The height is determined
+        size: scalar - the width of the plot. The height is determined
             by the number of factors
         thresh: proportion of factor loadings to remove
         ext: the extension for the saved figure
         plot_dir: the directory to save the figure. If none, do not save
     """
+    # set up plot variables
+    
     EFA = results.EFA
     loadings = EFA.reorder_factors(EFA.get_loading(c))           
     grouping = get_factor_groups(loadings)
@@ -346,7 +396,7 @@ def plot_bar_factors(results, c, figsize=20, thresh=75,
         bootstrap_CI.index = format_variable_names(bootstrap_CI.index)
     # plot
     n_factors = len(loadings.columns)
-    f, axes = plt.subplots(1, n_factors, figsize=(n_factors*(figsize/12), figsize))
+    f, axes = plt.subplots(1, n_factors, figsize=(size, size*2))
     for i, k in enumerate(loadings.columns):
         loading = loadings[k]
         ax = axes[i]
@@ -355,29 +405,106 @@ def plot_bar_factors(results, c, figsize=20, thresh=75,
         else:
             bootstrap_err = None
         label_loc=None
-        title_loc = 'top'
         if i==0:
-            label_loc = 'left'
-        elif i==n_factors-1:
-            label_loc='right'
-        if i%2:
-            title_loc = 'bottom'
+            label_loc = 'leftall'
         plot_bar_factor(loading, 
                         ax,
                         bootstrap_err, 
-                        figsize=figsize,
+                        width=size/n_factors,
+                        height=size*2,
                         grouping=grouping,
                         label_loc=label_loc,
-                        title_loc=title_loc,
                         title=k
                         )
-                
     if plot_dir:
         filename = 'factor_bars_EFA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
 
+def plot_heatmap_factors(results, c, size=4.6, thresh=75,
+                     dpi=300, ext='png', plot_dir=None):
+    """ Plots factor analytic results as bars
+    
+    Args:
+        results: a dimensional structure results object
+        c: the number of components to use
+        dpi: the final dpi for the image
+        size: scalar - the width of the plot. The height is determined
+            by the number of factors
+        thresh: proportion of factor loadings to remove
+        ext: the extension for the saved figure
+        plot_dir: the directory to save the figure. If none, do not save
+    """
+    
+    
+    EFA = results.EFA
+    loadings = EFA.reorder_factors(EFA.get_loading(c))           
+    grouping = get_factor_groups(loadings)
+    flattened_factor_order = []
+    for sublist in [i[1] for i in grouping]:
+        flattened_factor_order += sublist
+    loadings = loadings.loc[flattened_factor_order]
+    # get threshold for loadings
+    if thresh>0:
+        thresh_val = np.percentile(abs(loadings).values, thresh)
+        print('Thresholding all loadings less than %s' % np.round(thresh_val, 3))
+        loadings = loadings.mask(abs(loadings) <= thresh_val, 0)
+        # remove variables that don't cross the threshold for any factor
+        kept_vars = list(loadings.index[loadings.mean(1)!=0])
+        print('%s Variables out of %s are kept after threshold' % (len(kept_vars), loadings.shape[0]))
+        loadings = loadings.loc[kept_vars]
+        # remove masked variabled from grouping
+        threshed_groups = []
+        for factor, group in grouping:
+            group = [x for x in group if x in kept_vars]
+            threshed_groups.append([factor,group])
+        grouping = threshed_groups
+    # change variable names to make them more readable
+    loadings.index = format_variable_names(loadings.index)
+    # set up plot variables
+    DV_fontsize = size*2/(loadings.shape[0]//2)*30
+    figsize = (size,size*2)
+    
+    f = plt.figure(figsize=figsize)
+    ax = f.add_axes([0, 0, .08*loadings.shape[1], 1]) 
+    cbar_ax = f.add_axes([.08*loadings.shape[1]+.02,0,.04,1]) 
+
+    max_val = abs(loadings).max().max()
+    sns.heatmap(loadings, ax=ax, cbar_ax=cbar_ax,
+                vmax =  max_val, vmin = -max_val,
+                cbar_kws={'ticks': [-max_val, -max_val/2, 0, max_val/2, max_val]},
+                linecolor='white', linewidth=.01,
+                cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
+    ax.set_yticks(np.arange(.5,loadings.shape[0]+.5,1))
+    ax.set_yticklabels(loadings.index, fontsize=DV_fontsize)
+    ax.set_xticklabels(loadings.columns, 
+                                fontsize=size*.08*20,
+                                ha='left',
+                                rotation=-30)
+    # format cbar
+    cbar_ax.set_yticklabels([format_num(-max_val, 2), 
+                             format_num(-max_val/2, 2),
+                             0, 
+                             format_num(-max_val/2, 2),
+                             format_num(max_val, 2)])
+    cbar_ax.tick_params(axis='y', length=0)
+    cbar_ax.tick_params(labelsize=DV_fontsize*1.5)
+    cbar_ax.set_ylabel('Factor Loading', rotation=-90, fontsize=DV_fontsize*2)
+    
+    # draw lines separating groups
+    if grouping is not None:
+        factor_breaks = np.cumsum([len(i[1]) for i in grouping])[:-1]
+        for y_val in factor_breaks:
+            ax.hlines(y_val, 0, loadings.shape[1], lw=size/5, 
+                      color='grey', linestyle='dashed')
+                
+    if plot_dir:
+        filename = 'factor_heatmap_EFA%s.%s' % (c, ext)
+        save_figure(f, path.join(plot_dir, filename), 
+                    {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
+        
 def plot_polar_factors(results, c, color_by_group=True, 
                        dpi=300, ext='png', plot_dir=None):
     """ Plots factor analytic results as polar plots
@@ -539,23 +666,23 @@ def plot_DDM(results, c, dpi=300, figsize=(20,8), ext='png', plot_dir=None):
 
 
         
-def plot_EFA(results, plot_dir=None, verbose=False, dpi=300, ext='png',
+def plot_EFA(results, plot_dir=None, verbose=False, size=4.6, dpi=300, ext='png',
              plot_task_kws={}):
 
     c = results.EFA.results['num_factors']
     #if verbose: print("Plotting BIC/SABIC")
     #plot_BIC_SABIC(EFA, plot_dir)
     if verbose: print("Plotting communality")
-    plot_communality(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext)
-    if verbose: print("Plotting entropies")
-    plot_entropies(results, plot_dir=plot_dir, dpi=dpi,  ext=ext)
+    plot_communality(results, c, size=size, plot_dir=plot_dir, dpi=dpi,  ext=ext)
+#    if verbose: print("Plotting entropies")
+#    plot_entropies(results, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting factor bars")
-    plot_bar_factors(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext)
-    if verbose: print("Plotting factor polar")
-    plot_polar_factors(results, c=c, plot_dir=plot_dir, dpi=dpi,  ext=ext)
-    if verbose: print("Plotting task factors")
-    plot_task_factors(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)
-    plot_task_factors(results, c, normalize_loadings=True, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)
+    plot_bar_factors(results, c, size=size, plot_dir=plot_dir, dpi=dpi,  ext=ext)
+    if verbose: print("Plotting factor heatmap")
+    plot_heatmap_factors(results, c=c, size=size, plot_dir=plot_dir, dpi=dpi,  ext=ext)
+#    if verbose: print("Plotting task factors")
+#    plot_task_factors(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)
+#    plot_task_factors(results, c, normalize_loadings=True, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)
     if verbose: print("Plotting factor correlations")
     plot_factor_correlation(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting DDM factors")
