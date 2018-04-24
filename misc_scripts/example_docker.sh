@@ -69,4 +69,4 @@ results_loc=~/Experiments/expfactory/Self_Regulation_Ontology/Results
 docker run --rm  \
 --mount type=bind,src=$data_loc,dst=/SRO/Data \
 --mount type=bind,src=$results_loc,dst=/Results \
--ti sro_dataprep python /SRO/dimensional_structure/generate_results.py -shuffle_repeats 10 -plot_backend Agg
+-ti sro_dataprep python /SRO/dimensional_structure/generate_results.py -bootstrap -shuffle_repeats 10 -plot_backend Agg
