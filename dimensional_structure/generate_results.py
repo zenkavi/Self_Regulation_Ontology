@@ -6,25 +6,31 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('-dataset', default=None)
 parser.add_argument('-no_analysis', action='store_false')
+parser.add_argument('-no_prediction', action='store_false')
 parser.add_argument('-no_plot', action='store_false')
 parser.add_argument('-no_group', action='store_false')
 parser.add_argument('-bootstrap', action='store_true')
 parser.add_argument('-boot_iter', type=int, default=1000)
-parser.add_argument('-shuffle_repeats', type=int, default=10)
+parser.add_argument('-shuffle_repeats', type=int, default=1)
 parser.add_argument('-dpi', type=int, default=300)
-parser.add_argument('-subset', nargs='+', default=['task', 'survey'])
+parser.add_argument('-subsets', nargs='+', default=['task', 'survey'])
+parser.add_argument('-classifiers', nargs='+', default=['lasso', 'ridge',  'svm', 'rf'])
 parser.add_argument('-plot_backend', default=None)
+parser.add_argument('-quiet', action='store_false')
 args = parser.parse_args()
 
 dataset = args.dataset
 run_analysis = args.no_analysis
+run_prediction = args.no_prediction
 run_plot = args.no_plot
 group_plot = args.no_group
 bootstrap = args.bootstrap
 boot_iter = args.boot_iter
 shuffle_repeats = args.shuffle_repeats
 dpi = args.dpi
-selected_subset = args.subset
+classifiers = args.classifiers
+selected_subsets = args.subsets
+verbose = args.quiet
 
 # import matplotlib and set backend
 import matplotlib
@@ -39,7 +45,7 @@ from shutil import copyfile, copytree, rmtree
 import time
 
 from dimensional_structure.results import Results
-from dimensional_structure.cross_results_plots import plot_corr_hist, plot_BIC
+from dimensional_structure.cross_results_plots import plot_corr_heatmap, plot_corr_hist, plot_BIC
 from dimensional_structure.DA_plots import plot_DA
 from dimensional_structure.EFA_plots import plot_EFA
 from dimensional_structure.HCA_plots import plot_HCA
@@ -48,12 +54,13 @@ from selfregulation.utils.result_utils import load_results
 from selfregulation.utils.utils import get_info, get_recent_dataset
 
 
-
-print('Running Analysis? %s, Plotting? %s, Bootstrap? %s, Selected Subsets: %s' 
-    % (['No', 'Yes'][run_analysis],  
-        ['No', 'Yes'][run_plot], 
-        ['No', 'Yes'][bootstrap],
-        ', '.join(selected_subset)))
+if verbose:
+    print('Running Analysis? %s, Prediction? %s, Plotting? %s, Bootstrap? %s, Selected Subsets: %s' 
+        % (['No', 'Yes'][run_analysis],  
+            ['No', 'Yes'][run_prediction], 
+            ['No', 'Yes'][run_plot], 
+            ['No', 'Yes'][bootstrap],
+            ', '.join(selected_subsets)))
 
 # get dataset of interest
 basedir=get_info('base_directory')
@@ -95,18 +102,20 @@ subsets = [{'name': 'task',
               'factor_names': [],
               'predict': False}]
 
-classifiers = ['lasso', 'ridge',  'svm', 'rf']
 results = None
 ID = None # ID will be created
 # create/run results for each subset
 for subset in subsets:
+    if verbose:
+        print('*'*79)
+        print('SUBSET: %s' % name.upper())
+        print('*'*79)
     name = subset['name']
-    if selected_subset is not None and name not in selected_subset:
+    if selected_subsets is not None and name not in selected_subsets:
         continue
-    print('*'*79)
-    print('*'*79)
-    print('Running Subset: %s' % name)
     if run_analysis == True:
+        print('*'*79)
+        print('Analyzing Subset: %s' % name)
         # ****************************************************************************
         # Laad Data
         # ****************************************************************************
@@ -119,9 +128,9 @@ for subset in subsets:
                           boot_iter=boot_iter,
                           ID=ID,
                           residualize_vars=['Age', 'Sex'])
-        results.run_demographic_analysis(verbose=True, bootstrap=bootstrap)
-        results.run_EFA_analysis(verbose=True, bootstrap=bootstrap)
-        results.run_clustering_analysis(verbose=True, run_graphs=False)
+        results.run_demographic_analysis(verbose=verbose, bootstrap=bootstrap)
+        results.run_EFA_analysis(verbose=verbose, bootstrap=bootstrap)
+        results.run_clustering_analysis(verbose=verbose, run_graphs=False)
         ID = results.ID.split('_')[1]
         # name factors and clusters
         factor_names = subset.get('factor_names', None)
@@ -131,29 +140,35 @@ for subset in subsets:
         if cluster_names:
             results.HCA.name_clusters(cluster_names)
         results.DA.name_factors(demographic_factor_names)
+        if verbose: print('Saving Subset: %s' % name)
+        id_file = results.save_results()
+        # ***************************** saving ****************************************
+        # copy latest results and prediction to higher directory
+        copyfile(id_file, path.join(path.dirname(results.get_output_dir()), 
+                                    '%s_results.pkl' % name))
+
+    if run_prediction == True:   
+        if verbose:
+            print('*'*79)
+            print('Running prediction: %s' % name)
+        if results is None or name not in results.ID:
+            results = load_results(datafile, name=name)[name]
         # run behavioral prediction using the factor results determined by BIC
         for classifier in classifiers:
-            results.run_prediction(classifier=classifier, verbose=True)
-            results.run_prediction(classifier=classifier, shuffle=shuffle_repeats, verbose=True) # shuffled
+            results.run_prediction(classifier=classifier, verbose=verbose)
+            results.run_prediction(classifier=classifier, shuffle=shuffle_repeats, verbose=verbose) # shuffled
             # predict demographic changes
-            results.run_change_prediction(classifier=classifier, verbose=True)
-            results.run_change_prediction(classifier=classifier, shuffle=shuffle_repeats, verbose=True) # shuffled
-        run_time = time.time()-start
-        
+            results.run_change_prediction(classifier=classifier, verbose=verbose)
+            results.run_change_prediction(classifier=classifier, shuffle=shuffle_repeats, verbose=verbose) # shuffled
         # ***************************** saving ****************************************
-        print('Saving Subset: %s' % name)
-        id_file = results.save_results()
-        # copy latest results and prediction to higher directory
-        copyfile(id_file, path.join(path.dirname(results.output_dir), 
-                                    '%s_results.pkl' % name))
-        prediction_dir = path.join(results.output_dir, 'prediction_outputs')
+        prediction_dir = path.join(results.get_output_dir(), 'prediction_outputs')
         for classifier in classifiers:
             prediction_files = glob(path.join(prediction_dir, '*%s*' % classifier))
             # sort by creation time and get last two files
             prediction_files = sorted(prediction_files, key = path.getmtime)[-4:]
             for filey in prediction_files:
                 filename = '_'.join(path.basename(filey).split('_')[:-1])
-                copyfile(filey, path.join(path.dirname(results.output_dir), 
+                copyfile(filey, path.join(path.dirname(results.get_output_dir()), 
                                           '%s_%s.pkl' % (name, filename)))
 
     # ****************************************************************************
@@ -162,12 +177,16 @@ for subset in subsets:
     ext='pdf'
     size=4.6
     if run_plot==True:
+        if verbose:
+            print('*'*79)
+            print('Plotting Subset: %s' % name)
         if results is None or name not in results.ID:
             results = load_results(datafile, name=name)[name]
-        DA_plot_dir = path.join(results.plot_dir, 'DA')
-        EFA_plot_dir = path.join(results.plot_dir, 'EFA')
-        HCA_plot_dir = path.join(results.plot_dir, 'HCA')
-        prediction_plot_dir = path.join(results.plot_dir, 'prediction')
+        plot_dir = results.get_plot_dir()
+        DA_plot_dir = path.join(plot_dir, 'DA')
+        EFA_plot_dir = path.join(plot_dir, 'EFA')
+        HCA_plot_dir = path.join(plot_dir, 'HCA')
+        prediction_plot_dir = path.join(plot_dir, 'prediction')
         makedirs(DA_plot_dir, exist_ok = True)
         makedirs(EFA_plot_dir, exist_ok = True)
         makedirs(HCA_plot_dir, exist_ok = True)
@@ -182,62 +201,54 @@ for subset in subsets:
             plot_task_kws={}
          
             # Plot EFA
-        print("Plotting EFA")
-        plot_DA(results, DA_plot_dir, verbose=True, size=size, dpi=dpi, ext=ext)
+        if verbose:: print("Plotting EFA")
+        plot_DA(results, DA_plot_dir, verbose=verbose, size=size, dpi=dpi, ext=ext)
         
         # Plot EFA
-        print("Plotting EFA")
-        plot_EFA(results, EFA_plot_dir, verbose=True, size=size, dpi=dpi, 
+        if verbose: print("Plotting EFA")
+        plot_EFA(results, EFA_plot_dir, verbose=verbose, size=size, dpi=dpi, 
                  ext=ext, plot_task_kws=plot_task_kws)
             
         # Plot HCA
-        print("Plotting HCA")
+        if verbose: print("Plotting HCA")
         plot_HCA(results, HCA_plot_dir, size=size, dpi=dpi, ext=ext)
         
         # Plot prediction
         target_order = results.DA.reorder_factors(results.DA.get_loading()).columns
-        for classifier in classifiers:
-            print("Plotting Prediction, classifier: %s" % classifier)
-            plot_prediction(results, target_order=target_order, EFA=True, 
-                            classifier=classifier, plot_dir=prediction_plot_dir,
-                            dpi=dpi,
-                            ext=ext,
-                            size=size)
-            plot_prediction(results, target_order=target_order, EFA=False, 
-                            classifier=classifier, plot_dir=prediction_plot_dir,
-                            dpi=dpi,
-                            ext=ext,
-                            size=size)
-        plot_prediction_comparison(results, dpi=dpi, plot_dir=prediction_plot_dir)
-        
-        # Plot prediction changes
         change_target_order = [i + ' Change' for i in target_order]
         for classifier in classifiers:
-            print("Plotting Change Prediction, classifier: %s" % classifier)
-            plot_prediction(results, target_order=change_target_order, 
-                            EFA=True, change=True,
-                            classifier=classifier, plot_dir=prediction_plot_dir,
-                            dpi=dpi,
-                            ext=ext,
-                            size=size)
-            plot_prediction(results, target_order=change_target_order, 
-                            EFA=False, change=True,
-                            classifier=classifier, plot_dir=prediction_plot_dir,
-                            dpi=dpi,
-                            ext=ext,
-                            size=size)
-        plot_prediction_comparison(results, dpi=dpi, plot_dir=prediction_plot_dir)
+            for EFA in [True, False]:
+                print("Plotting Prediction, classifier: %s, EFA: %s" % (classifier, EFA))
+                plot_prediction(results, target_order=target_order, EFA=EFA, 
+                                classifier=classifier, plot_dir=prediction_plot_dir,
+                                dpi=dpi,
+                                ext=ext,
+                                size=size)
+                print("Plotting Change Prediction, classifier: %s, EFA: %s" % (classifier, EFA))
+                plot_prediction(results, target_order=change_target_order, 
+                                EFA=EFA, change=True,
+                                classifier=classifier, plot_dir=prediction_plot_dir,
+                                dpi=dpi,
+                                ext=ext,
+                                size=size)
+        plot_prediction_comparison(results, change=False,
+                                   dpi=dpi, plot_dir=prediction_plot_dir)
+        plot_prediction_comparison(results, change=True,
+                                   dpi=dpi, plot_dir=prediction_plot_dir)
         
         # copy latest results and prediction to higher directory
-        plot_dir = results.plot_dir
         generic_dir = '_'.join(plot_dir.split('_')[0:-1])
         if path.exists(generic_dir):
             rmtree(generic_dir)
         copytree(plot_dir, generic_dir)
         
 if group_plot == True:
+    if verbose:
+        print('*'*79)
+        print('*'*79)
+        print("Group Plots")
     results = load_results(datafile)
-    plot_file = path.dirname(results['task'].plot_dir)
-    plot_corr_hist(results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+    plot_file = path.dirname(results['task'].get_plot_dir())
+    #plot_corr_hist(results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
     plot_corr_heatmap(results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
     plot_BIC(results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
