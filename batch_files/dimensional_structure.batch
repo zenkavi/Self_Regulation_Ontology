@@ -21,8 +21,8 @@ results_loc=../Results/
 
 if [ "{CLASSIFIER}" == "NONE" ]; then
     singularity exec -B ${data_loc}:/SRO/Data -B ${results_loc}:/Results ${singularity_loc} \
-        python /SRO/dimensional_structure/generate_results.py -bootstrap -plot_backend Agg -shuffle_repeats 2000 -subset {SUBSET} -no_prediction -no_plot -no_group -dpi 600
+        python /SRO/dimensional_structure/generate_results.py -bootstrap -subset {SUBSET} -no_prediction -no_plot -no_group 
 else
     singularity exec -B ${data_loc}:/SRO/Data -B ${results_loc}:/Results ${singularity_loc} \
-    python /SRO/dimensional_structure/generate_results.py -bootstrap -plot_backend Agg -shuffle_repeats 2000 -subset {SUBSET} -classifier {CLASSIFIER} -no_plot -no_group -dpi 600
+    python /SRO/dimensional_structure/generate_results.py -bootstrap -shuffle_repeats 2000 -subset {SUBSET} -classifier {CLASSIFIER} -no_analysis -no_plot -no_group
 fi
