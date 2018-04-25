@@ -106,11 +106,11 @@ results = None
 ID = None # ID will be created
 # create/run results for each subset
 for subset in subsets:
+    name = subset['name']
     if verbose:
         print('*'*79)
         print('SUBSET: %s' % name.upper())
         print('*'*79)
-    name = subset['name']
     if selected_subsets is not None and name not in selected_subsets:
         continue
     if run_analysis == True:
@@ -201,7 +201,7 @@ for subset in subsets:
             plot_task_kws={}
          
             # Plot EFA
-        if verbose:: print("Plotting EFA")
+        if verbose: print("Plotting EFA")
         plot_DA(results, DA_plot_dir, verbose=verbose, size=size, dpi=dpi, ext=ext)
         
         # Plot EFA
