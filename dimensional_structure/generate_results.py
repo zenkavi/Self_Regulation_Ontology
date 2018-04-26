@@ -163,13 +163,16 @@ for subset in subsets:
         # ***************************** saving ****************************************
         prediction_dir = path.join(results.get_output_dir(), 'prediction_outputs')
         for classifier in classifiers:
-            prediction_files = glob(path.join(prediction_dir, '*%s*' % classifier))
-            # sort by creation time and get last two files
-            prediction_files = sorted(prediction_files, key = path.getmtime)[-4:]
-            for filey in prediction_files:
-                filename = '_'.join(path.basename(filey).split('_')[:-1])
-                copyfile(filey, path.join(path.dirname(results.get_output_dir()), 
-                                          '%s_%s.pkl' % (name, filename)))
+            for change_flag in [False, True]:
+                prediction_files = glob(path.join(prediction_dir, '*%s*' % classifier))
+                # filter by change
+                prediction_files = filter(lambda x: ('change' in x) == change_flag, prediction_files)
+                # sort by creation time and get last two files
+                prediction_files = sorted(prediction_files, key = path.getmtime)[-4:]
+                for filey in prediction_files:
+                    filename = '_'.join(path.basename(filey).split('_')[:-1])
+                    copyfile(filey, path.join(path.dirname(results.get_output_dir()), 
+                                              '%s_%s.pkl' % (name, filename)))
 
     # ****************************************************************************
     # Plotting
