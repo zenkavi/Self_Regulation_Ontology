@@ -4,6 +4,7 @@
 from itertools import combinations, product
 from matplotlib.patches import Rectangle
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 import numpy as np
 from os import path
 import pandas as pd
@@ -138,7 +139,7 @@ def plot_corr_heatmap(all_results, EFA=False, size=4.6,
                 xticklabels=False, yticklabels=False,
                 vmax=1, vmin=0,
                 cbar_kws={'ticks': [0, 1]},
-                cmap=sns.color_palette('Reds', 100))
+                cmap=ListedColormap(sns.color_palette('Reds', 100)))
     # add separating lines
     ax.hlines(len(task_order), 0, all_data.shape[1], lw=size/4, 
                color='k', linestyle='--')
@@ -165,6 +166,7 @@ def plot_corr_heatmap(all_results, EFA=False, size=4.6,
         # make histogram plot
         save_figure(f, path.join(plot_dir, 'data_correlations.pdf'),
                                 {'bbox_inches': 'tight', 'dpi': 300})   
+        plt.close()
 
 
 from sklearn.decomposition import PCA
