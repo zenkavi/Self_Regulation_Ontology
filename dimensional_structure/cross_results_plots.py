@@ -105,8 +105,8 @@ def plot_corr_hist(all_results, reps=100, size=4.6,
     # save
     if plot_dir is not None:
         # make histogram plot
-        save_figure(f, path.join(plot_dir, 'within-across_correlations.pdf'),
-                                {'bbox_inches': 'tight', 'dpi': 300})
+        save_figure(f, path.join(plot_dir, 'within-across_correlations.%s' % ext),
+                                {'bbox_inches': 'tight', 'dpi': dpi})
         
     
 def plot_corr_heatmap(all_results, EFA=False, size=4.6, 
@@ -141,7 +141,7 @@ def plot_corr_heatmap(all_results, EFA=False, size=4.6,
                 cbar_kws={'ticks': [0, 1]},
                 cmap=ListedColormap(sns.color_palette('Reds', 100)))
     # add separating lines
-    ax.hlines(len(task_order), 0, all_data.shape[1], lw=size/4, 
+    ax.hlines(len(survey_order), 0, all_data.shape[1], lw=size/4, 
                color='k', linestyle='--')
     ax.vlines(len(task_order), 0, all_data.shape[1], lw=size/4, 
                color='k', linestyle='--')
@@ -164,8 +164,8 @@ def plot_corr_heatmap(all_results, EFA=False, size=4.6,
     
     if plot_dir is not None:
         # make histogram plot
-        save_figure(f, path.join(plot_dir, 'data_correlations.pdf'),
-                                {'bbox_inches': 'tight', 'dpi': 300})   
+        save_figure(f, path.join(plot_dir, 'data_correlations.%s' % ext),
+                                {'bbox_inches': 'tight', 'dpi': dpi})   
         plt.close()
 
 

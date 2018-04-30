@@ -1,5 +1,7 @@
+import argparse
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
+from matplotlib.colors import ListedColormap
 import numpy as np
 from os import path
 import pandas as pd
@@ -7,13 +9,31 @@ from scipy.spatial.distance import  squareform
 from sklearn.manifold import MDS
 from sklearn.preprocessing import scale
 import seaborn as sns
-from dimensional_structure.plot_utils import get_color_lookup, get_var_color
+from dimensional_structure.plot_utils import get_var_color
 from dimensional_structure.HCA_plots import abs_pdist
 from selfregulation.utils.result_utils import load_results
-from selfregulation.utils.plot_utils import format_num, DDM_plot, save_figure
+from selfregulation.utils.plot_utils import format_num
+from selfregulation.utils.utils import get_info, get_recent_dataset
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-dataset', default=None)
+parser.add_argument('-dpi', type=int, default=300)
+parser.add_argument('-size', type=int, default=4.6)
+parser.add_argument('-ext', default='pdf')
+args = parser.parse_args()
+
+dataset = args.dataset
+
+# get dataset of interest
+basedir=get_info('base_directory')
+if dataset == None:
+    dataset = get_recent_dataset()
+dataset = path.join(basedir,'Data',dataset)
+datafile = dataset.split(path.sep)[-1]
+
 
 # load data
-results = load_results('Complete_03-29-2018')
+results = load_results(datafile)
 data = results['task'].data
 out = results['task'].EFA.get_loading()
 nfactors = out.shape[1]
@@ -23,16 +43,12 @@ task_subset = pd.concat([
 task_subset_data = data.loc[:, task_subset.index]
 task_variables = list(task_subset.index)
 
-# Ridiculous analysis overview plot
-f = plt.figure(figsize=(4.6, 4.6))
-basefont = 6
-basemarker = 40
-basewidth = .6
 
+size = args.size
 f = plt.figure(figsize=(12, 12))
-basefont = 14
-basemarker = 220
-basewidth = 1.5
+basefont = size*1.1
+basemarker = size*18
+basewidth = size*.12
 
 
 participant_ax1 = f.add_axes([.25,.555,.28,.16]) 
@@ -143,11 +159,11 @@ participant_distances = squareform(abs_pdist(data.T))
 participant_distances = results['task'].HCA.results['clustering_input-data']['clustered_df']
 loading_distances = results['task'].HCA.results['clustering_input-EFA5']['clustered_df']
 sns.heatmap(participant_distances, ax=participant_distance,
-            cmap=sns.color_palette('gray', n_colors=100),
+            cmap=ListedColormap(sns.color_palette('gray', n_colors=100)),
             xticklabels=False, yticklabels=False, square=True, cbar=False)
 sns.heatmap(loading_distances, ax=loading_distance,
             xticklabels=False, yticklabels=False, square=True, 
-            cmap=sns.color_palette('gray', n_colors=100),
+            cmap=ListedColormap(sns.color_palette('gray', n_colors=100)),
             cbar_kws={'ticks': [0, .99]}, cbar_ax=cbar_ax2)
 participant_distance.set_ylabel('DV', fontsize=basefont*.875)
 loading_distance.set_ylabel('DV', fontsize=basefont*.875)
@@ -159,8 +175,8 @@ loading_distance.set_title('x,y = DV vector in R^5', fontsize=basefont*.6)
 pad = 0
 lim = list(participant_distance.get_xlim())
 lim[0]-=pad; lim[1]+=pad
-participant_distance.set_xlim(lim); participant_distance.set_ylim(lim[::-1])
-loading_distance.set_xlim(lim); loading_distance.set_ylim(lim[::-1])
+participant_distance.set_xlim(lim); participant_distance.set_ylim(lim)
+loading_distance.set_xlim(lim); loading_distance.set_ylim(lim)
 for label in task_variables:
     if 'drift' in label:
         name = 'drift rate'
@@ -360,10 +376,10 @@ back.text(.13, .075, 'SSRT', fontsize=basefont,
           horizontalalignment='center', color=get_var_color('SSRT'))
 back.text(.13, .05, 'Other', fontsize=basefont, 
           horizontalalignment='center', color='grey')
-back.text(.13, .025, 'o indicates example DVs', fontsize=basefont*.75, 
-          horizontalalignment='center', color='k')
-back.text(.13, .01, 'from preceeding plots', fontsize=basefont*.75, 
-          horizontalalignment='center', color='k')
+#back.text(.13, .025, 'o indicates example DVs', fontsize=basefont*.75, 
+#          horizontalalignment='center', color='k')
+#back.text(.13, .01, 'from preceeding plots', fontsize=basefont*.75, 
+#          horizontalalignment='center', color='k')
 # add connecting lines between participants and loading
 back.vlines(.565, .3, .42, alpha=.4, linestyle='-', linewidth=basewidth)
 back.vlines(.565, .05, .2, alpha=.4, linestyle='-', linewidth=basewidth)
@@ -391,7 +407,7 @@ back.text(.567, .48, 'Pairwise Distance', fontsize=basefont,
           horizontalalignment='center')
 back.text(.567, .46, 'Between DVs', fontsize=basefont, 
           horizontalalignment='center')
-back.text(.567, .435, '1-abs(correlation(x,y))', fontsize=basefont*.7, 
+back.text(.567, .435, '1-abs(correlation(x,y))', fontsize=basefont, 
           horizontalalignment='center')
 # from heatmap to MDS
 back.arrow(.375, .27, 0, -.01, width=basewidth/250, edgecolor='k', facecolor='white')
@@ -411,10 +427,12 @@ back.text(.85, .24, 'g', fontsize=basefont*1.56255, fontweight='bold')
 
 
 # save
-plot_file = path.dirname(results['task'].plot_dir)
-f.savefig(path.join(plot_file, 'analysis_overview.pdf'), 
+dpi = args.dpi
+ext = args.ext
+plot_file = path.dirname(results['task'].get_plot_dir())
+f.savefig(path.join(plot_file, 'analysis_overview.%s' % ext), 
                 bbox_inches='tight', 
-                dpi=300)
+                dpi=dpi)
 
 
 """

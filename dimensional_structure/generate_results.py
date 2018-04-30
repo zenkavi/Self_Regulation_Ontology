@@ -12,10 +12,12 @@ parser.add_argument('-no_group', action='store_false')
 parser.add_argument('-bootstrap', action='store_true')
 parser.add_argument('-boot_iter', type=int, default=1000)
 parser.add_argument('-shuffle_repeats', type=int, default=1)
-parser.add_argument('-dpi', type=int, default=300)
 parser.add_argument('-subsets', nargs='+', default=['task', 'survey'])
 parser.add_argument('-classifiers', nargs='+', default=['lasso', 'ridge',  'svm', 'rf'])
 parser.add_argument('-plot_backend', default=None)
+parser.add_argument('-dpi', type=int, default=300)
+parser.add_argument('-size', type=int, default=4.6)
+parser.add_argument('-ext', default='pdf')
 parser.add_argument('-quiet', action='store_false')
 args = parser.parse_args()
 
@@ -27,7 +29,6 @@ group_plot = args.no_group
 bootstrap = args.bootstrap
 boot_iter = args.boot_iter
 shuffle_repeats = args.shuffle_repeats
-dpi = args.dpi
 classifiers = args.classifiers
 selected_subsets = args.subsets
 verbose = args.quiet
@@ -177,8 +178,9 @@ for subset in subsets:
     # ****************************************************************************
     # Plotting
     # ****************************************************************************
-    ext='pdf'
-    size=4.6
+    dpi = args.dpi
+    ext = args.ext
+    size = args.size
     if run_plot==True:
         if verbose:
             print('*'*79)
