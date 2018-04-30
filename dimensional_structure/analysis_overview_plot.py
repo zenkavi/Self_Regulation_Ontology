@@ -193,7 +193,7 @@ for label in task_variables:
                               lim,
                               color=line_color)
     participant_distance.plot(lim,
-                              [var_index, var_index],
+                              [lim[1]-var_index, lim[1]-var_index],
                               color=line_color)
     
     var_index = np.where(loading_distances.index==label)[0][0]+pad
@@ -201,7 +201,7 @@ for label in task_variables:
                           lim,
                           color=line_color)
     loading_distance.plot(lim, 
-                          [var_index, var_index],
+                          [lim[1]-var_index, lim[1]-var_index],
                           color=line_color)
 
 

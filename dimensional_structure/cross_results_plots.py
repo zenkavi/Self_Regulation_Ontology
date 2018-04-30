@@ -165,7 +165,8 @@ def plot_corr_heatmap(all_results, EFA=False, size=4.6,
     if plot_dir is not None:
         # make histogram plot
         save_figure(f, path.join(plot_dir, 'data_correlations.%s' % ext),
-                                {'bbox_inches': 'tight', 'dpi': dpi})   
+                                {'bbox_inches': 'tight', 'dpi': dpi,
+                                 'transparent': True})   
         plt.close()
 
 
