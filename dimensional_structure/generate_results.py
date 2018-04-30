@@ -228,15 +228,19 @@ for subset in subsets:
                                 ext=ext,
                                 size=size)
                 print("Plotting Change Prediction, classifier: %s, EFA: %s" % (classifier, EFA))
-                plot_prediction(results, target_order=change_target_order, 
-                                EFA=EFA, change=True,
-                                classifier=classifier, plot_dir=prediction_plot_dir,
-                                dpi=dpi,
-                                ext=ext,
-                                size=size)
-        plot_prediction_comparison(results, change=False,
+                try:
+                    plot_prediction(results, target_order=change_target_order, 
+                                    EFA=EFA, change=True,
+                                    classifier=classifier, plot_dir=prediction_plot_dir,
+                                    dpi=dpi,
+                                    ext=ext,
+                                    size=size)
+                except AssertionError:
+                    print('No shuffled data was found for %s change predictions, EFA: %s' % (name, EFA))
+                    
+        plot_prediction_comparison(results, change=False, size=size,
                                    dpi=dpi, plot_dir=prediction_plot_dir)
-        plot_prediction_comparison(results, change=True,
+        plot_prediction_comparison(results, change=True, size=size,
                                    dpi=dpi, plot_dir=prediction_plot_dir)
         
         # copy latest results and prediction to higher directory

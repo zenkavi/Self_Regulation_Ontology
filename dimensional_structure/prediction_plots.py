@@ -15,7 +15,7 @@ shortened_factors = get_short_names()
 
 def visualize_importance(importance, ax, xticklabels=True, yticklabels=True, 
                          label_size=10, pad=0, label_scale=0, title=None, 
-                         ymax=None, color=colors[0]):
+                         ymax=None, color=colors[1]):
     importance_vars = importance[0]
     importance_vars = [shortened_factors.get(v,v) for v in importance_vars]
     if importance[1] is not None:
@@ -75,6 +75,7 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
     predictions = results.load_prediction_object(EFA=EFA, 
                                                  change=change,
                                                  classifier=classifier)
+    sns.set_style('white')
     if predictions is None:
         print('No prediction object found!')
         return
@@ -83,7 +84,9 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
     shuffled_predictions = results.load_prediction_object(EFA=EFA, 
                                                           classifier=classifier, 
                                                           change=change,
-                                                          shuffle=True)['data']
+                                                          shuffle=True)
+    assert shuffled_predictions is not None
+    shuffled_predictions = shuffled_predictions['data']
     
     if target_order is None:
         target_order = predictions.keys()
@@ -121,16 +124,16 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
     width=.25
     ax1 = fig.add_axes([0,0,1,.5]) 
     ax1.bar(ind, [i[1] for i in r2s], width, 
-            label='Cross-Validated Prediction', color=colors[0])
+            label='Cross-Validated Prediction', color=colors[1])
     ax1.bar(ind+width, [i[1] for i in insample_r2s], width, 
-            label='Insample Prediction', color=colors[1])
+            label='Insample Prediction', color=colors[2])
     # plot shuffled values above
     if not normalize:
         ax1.bar(ind, [i[1] for i in shuffled_r2s], width, 
-                 color='none', edgecolor=[.2,.2,.2], 
+                 color='none', edgecolor=[.4,.4,.4], 
                 linewidth=size/10, linestyle='--', label='95% Shuffled Prediction')
         ax1.bar(ind+width, [i[1] for i in insample_shuffled_r2s], width, 
-                color='none', edgecolor=[.2,.2,.2], 
+                color='none', edgecolor=[.4,.4,.4], 
                 linewidth=size/10, linestyle='--')
     
     ax1.set_xticks(np.arange(0,len(r2s))+width/2)
@@ -154,7 +157,8 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
     ymax = r2_max*1.5
     ax1.set_ylim(ylim[0], ymax)
     # change yticks
-    if ymax<.1:
+    if ymax<.08:
+        ax1.set_ylim(ylim[0], .08)
         ax1.yaxis.set_major_locator(ticker.MultipleLocator(.025))
     else:
         ax1.yaxis.set_major_locator(ticker.MultipleLocator(.05))
@@ -195,7 +199,7 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
             if i in [best_predictors[-1][0], best_predictors[-2][0]]:
                 color = colors[3]
             else:
-                color = colors[0]
+                color = colors[1]
             visualize_importance(importance, axes[-1],
                                  yticklabels=False, xticklabels=False,
                                  label_size=figsize[1]*1,
@@ -242,25 +246,27 @@ def plot_prediction_comparison(results, size=4.6, change=False,
     for EFA in [False, True]:
         predictions = results.get_prediction_files(EFA=EFA, change=change, 
                                                    shuffle=False)
-        for filey in predictions:
-            feature = 'EFA' if EFA else 'IDM'
-            prediction_object = pickle.load(open(filey, 'rb'))
-            name = prediction_object['info']['classifier']
-            R2 = [i['scores_cv'][0]['R2'] for i in prediction_object['data'].values()]
+        predictions = sorted(predictions, key = path.getmtime)
+        classifiers = np.unique([i.split('_')[-2] for i in predictions])
+        # get last prediction file of each type
+        for classifier in classifiers:
+            filey = [i for i in predictions if classifier in i][-1]
+            prediction_object = pickle.load(open(filey, 'rb'))['data']
+            R2 = [i['scores_cv'][0]['R2'] for i in prediction_object.values()]
             R2 = np.nan_to_num(R2)
-            R2s[feature+'_'+name] = R2
-        
+            feature = 'EFA' if EFA else 'IDM'
+            R2s[feature+'_'+classifier] = R2
 
     R2s = pd.DataFrame(R2s).melt(var_name='Classifier', value_name='R2')
     R2s['Feature'], R2s['Classifier'] = R2s.Classifier.str.split('_', 1).str
     f = plt.figure(figsize=(size, size*.62))
     sns.barplot(x='Classifier', y='R2', data=R2s, hue='Feature',
-                palette=colors[:2])
+                palette=colors[1:3], errwidth=size/5)
     ax = plt.gca()
     ax.tick_params(axis='y', labelsize=size*1.8)
     ax.tick_params(axis='x', labelsize=size*1.8)
     leg = ax.legend(fontsize=size*2, loc='upper right')
-    beautify_legend(leg, colors[:2])
+    beautify_legend(leg, colors[1:3])
     plt.xlabel('Classifier', fontsize=size*2.2, labelpad=size/2)
     plt.ylabel('R2', fontsize=size*2.2, labelpad=size/2)
     plt.title('Comparison of Prediction Methods', fontsize=size*2.5, y=1.05)
