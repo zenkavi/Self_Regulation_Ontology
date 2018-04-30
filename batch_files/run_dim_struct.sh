@@ -8,7 +8,7 @@ do
         sed  -e "s/{SUBSET}/$subset/g" -e "s/{CLASSIFIER}/NONE/g" dimensional_structure.batch | sbatch
     else
         # then run each classification
-        for classifier in lasso ridge svm rf
+        for classifier in lasso ridge rf svm
         do
             sed  -e "s/{SUBSET}/$subset/g" -e "s/{CLASSIFIER}/$classifier/g" dimensional_structure.batch | sbatch
         done
