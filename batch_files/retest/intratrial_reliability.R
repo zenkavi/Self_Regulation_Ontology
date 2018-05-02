@@ -148,7 +148,7 @@ if(t=="t2"){
   t2_dvs = data.frame()
   for(i in 1:length(unique(t2_tbt$worker_id))){
     print(i)
-    cur_worker = unique(t2_tbt$worker_id[i])
+    cur_worker = unique(t2_tbt$worker_id)[i]
     df = t2_tbt %>% filter(worker_id == cur_worker)
     sub_dvs = calc_break_dvs(df)
     sub_dvs$sub_id = cur_worker
