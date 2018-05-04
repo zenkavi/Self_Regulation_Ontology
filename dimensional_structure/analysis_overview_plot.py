@@ -175,8 +175,8 @@ loading_distance.set_title('x,y = DV vector in R^5', fontsize=basefont*.6)
 pad = 0
 lim = list(participant_distance.get_xlim())
 lim[0]-=pad; lim[1]+=pad
-participant_distance.set_xlim(lim); participant_distance.set_ylim(lim)
-loading_distance.set_xlim(lim); loading_distance.set_ylim(lim)
+participant_distance.set_xlim(lim); participant_distance.set_ylim(lim[::-1])
+loading_distance.set_xlim(lim); loading_distance.set_ylim(lim[::-1])
 for label in task_variables:
     if 'drift' in label:
         name = 'drift rate'
@@ -193,7 +193,7 @@ for label in task_variables:
                               lim,
                               color=line_color)
     participant_distance.plot(lim,
-                              [lim[1]-var_index, lim[1]-var_index],
+                              [var_index, var_index],
                               color=line_color)
     
     var_index = np.where(loading_distances.index==label)[0][0]+pad
@@ -201,7 +201,7 @@ for label in task_variables:
                           lim,
                           color=line_color)
     loading_distance.plot(lim, 
-                          [lim[1]-var_index, lim[1]-var_index],
+                          [var_index, var_index],
                           color=line_color)
 
 
