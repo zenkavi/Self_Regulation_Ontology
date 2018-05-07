@@ -12,10 +12,12 @@ parser.add_argument('-no_group', action='store_false')
 parser.add_argument('-bootstrap', action='store_true')
 parser.add_argument('-boot_iter', type=int, default=1000)
 parser.add_argument('-shuffle_repeats', type=int, default=1)
-parser.add_argument('-dpi', type=int, default=300)
 parser.add_argument('-subsets', nargs='+', default=['task', 'survey'])
 parser.add_argument('-classifiers', nargs='+', default=['lasso', 'ridge',  'svm', 'rf'])
 parser.add_argument('-plot_backend', default=None)
+parser.add_argument('-dpi', type=int, default=300)
+parser.add_argument('-size', type=int, default=4.6)
+parser.add_argument('-ext', default='pdf')
 parser.add_argument('-quiet', action='store_false')
 args = parser.parse_args()
 
@@ -27,7 +29,6 @@ group_plot = args.no_group
 bootstrap = args.bootstrap
 boot_iter = args.boot_iter
 shuffle_repeats = args.shuffle_repeats
-dpi = args.dpi
 classifiers = args.classifiers
 selected_subsets = args.subsets
 verbose = args.quiet
@@ -177,8 +178,9 @@ for subset in subsets:
     # ****************************************************************************
     # Plotting
     # ****************************************************************************
-    ext='pdf'
-    size=4.6
+    dpi = args.dpi
+    ext = args.ext
+    size = args.size
     if run_plot==True:
         if verbose:
             print('*'*79)
@@ -228,15 +230,19 @@ for subset in subsets:
                                 ext=ext,
                                 size=size)
                 print("Plotting Change Prediction, classifier: %s, EFA: %s" % (classifier, EFA))
-                plot_prediction(results, target_order=change_target_order, 
-                                EFA=EFA, change=True,
-                                classifier=classifier, plot_dir=prediction_plot_dir,
-                                dpi=dpi,
-                                ext=ext,
-                                size=size)
-        plot_prediction_comparison(results, change=False,
+                try:
+                    plot_prediction(results, target_order=change_target_order, 
+                                    EFA=EFA, change=True,
+                                    classifier=classifier, plot_dir=prediction_plot_dir,
+                                    dpi=dpi,
+                                    ext=ext,
+                                    size=size)
+                except AssertionError:
+                    print('No shuffled data was found for %s change predictions, EFA: %s' % (name, EFA))
+                    
+        plot_prediction_comparison(results, change=False, size=size,
                                    dpi=dpi, plot_dir=prediction_plot_dir)
-        plot_prediction_comparison(results, change=True,
+        plot_prediction_comparison(results, change=True, size=size,
                                    dpi=dpi, plot_dir=prediction_plot_dir)
         
         # copy latest results and prediction to higher directory

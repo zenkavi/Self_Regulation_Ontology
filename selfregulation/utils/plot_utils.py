@@ -51,7 +51,7 @@ def DDM_plot(v,t,a, sigma = .1, n = 10, plot_n = 15, plot_avg=False, file = None
     t =  t*1000
     timesteps = np.arange(2000)
     avg_trajectory = [0]*int(t) + [i*v for i in range(len(timesteps)-int(t))]
-    crosspoint = np.where(np.array(avg_trajectory)>3)[0][0]
+    crosspoint = np.where(np.array(avg_trajectory)>a)[0][0]
     avg_trajectory = avg_trajectory[:crosspoint]
     trajectories = []
     while len(trajectories) < n:

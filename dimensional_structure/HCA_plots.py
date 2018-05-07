@@ -119,6 +119,7 @@ def plot_clustering_similarity(results, plot_dir=None, verbose=False, ext='png')
     
 def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
                    avg_bar=True, size=2.3, dpi=300, plot_loc=None):
+    sns.set_style('white')
     colormap = sns.diverging_palette(220,15,n=100,as_cmap=True)
     # get variables in subbranch based on coloring
     curr_index = 0
@@ -424,7 +425,7 @@ def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=True,
                 groups = [get_var_group(c) for c in ordered_loading.columns]
                 group_indices = np.array([g[0] for g in groups])
                 ax3.scatter(np.arange(len(groups))+.4, np.max(group_indices)-group_indices, 
-                         c=var_colors, s=size*2)
+                         c=var_colors, s=size*.75)
                 ax3.set_xlim(0,len(groups))
                 for i in range(max(group_indices)+1):
                     ax3.hlines(i, 0, len(groups), colors=[.5,.5,.5], 
@@ -738,10 +739,10 @@ def plot_HCA(results, plot_dir=None, size=10, dpi=300, verbose=False, ext='png')
 #    plot_clusterings(results, inp='data', plot_dir=plot_dir, verbose=verbose, ext=ext)
 #    plot_clusterings(results, inp='EFA%s' % c, plot_dir=plot_dir, verbose=verbose, ext=ext)
     if verbose: print("Plotting dendrograms")
-    plot_dendrogram(results, c, size=size, inp='data', titles=False, 
-                    plot_dir=plot_dir, ext=ext, dpi=dpi)
-    plot_dendrogram(results, c, inp='EFA%s' % c, titles=False, 
-                    plot_dir=plot_dir, ext=ext, dpi=dpi)
+    plot_dendrogram(results, c, size=size, inp='data', var_labels=False,
+                    titles=False,  plot_dir=plot_dir, ext=ext, dpi=dpi)
+    plot_dendrogram(results, c, inp='EFA%s' % c, var_labels=False,
+                    titles=False, plot_dir=plot_dir, ext=ext, dpi=dpi)
     if verbose: print("Plotting dendrogram subbranches")
     plot_subbranches(results, c,  size=size/2, inp='data', 
                      plot_dir=plot_dir, ext=ext, dpi=dpi)
