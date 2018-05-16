@@ -141,8 +141,12 @@ def plot_corr_heatmap(all_results, EFA=False, size=4.6,
                 cbar_kws={'ticks': [0, 1]},
                 cmap=ListedColormap(sns.color_palette('Reds', 100)))
     # add separating lines
-    ax.hlines(len(survey_order), 0, all_data.shape[1], lw=size/4, 
-               color='k', linestyle='--')
+    if ax.get_ylim()[0] > ax.get_ylim()[1]:
+        ax.hlines(len(task_order), 0, all_data.shape[1], lw=size/4, 
+                   color='k', linestyle='--')
+    else:
+        ax.hlines(len(survey_order), 0, all_data.shape[1], lw=size/4, 
+                   color='k', linestyle='--')
     ax.vlines(len(task_order), 0, all_data.shape[1], lw=size/4, 
                color='k', linestyle='--')
     # format cbar
