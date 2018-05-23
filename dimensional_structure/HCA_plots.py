@@ -12,21 +12,13 @@ from sklearn.manifold import MDS
 from sklearn.metrics import adjusted_mutual_info_score, adjusted_rand_score
 from sklearn.preprocessing import MinMaxScaler, scale
 
-from dimensional_structure.utils import abs_pdist, set_seed
+from dimensional_structure.utils import abs_pdist, set_seed, silhouette_analysis
 from dimensional_structure.plot_utils import (get_short_names, get_var_group,
                                               plot_loadings, plot_tree)
 from selfregulation.utils.plot_utils import (CurvedText, dendroheatmap, format_num,
                                              format_variable_names, 
                                              get_dendrogram_color_fun,
                                              save_figure)
-
-# check if plotly exists
-import importlib
-plotly_spec = importlib.util.find_spec("plotly")
-plotly_exists = plotly_spec is not None
-if plotly_exists:
-    import plotly.plotly as py   
-    import plotly.offline as offline
 
 def plot_clusterings(results, plot_dir=None, inp='data', figsize=(50,50),
                      titles=None, show_clusters=True, verbose=False, ext='png'):    
@@ -652,8 +644,37 @@ def plot_cluster_factors(results, c, inp='data', ext='png', plot_dir=None):
                     {'bbox_inches': 'tight'})
         plt.close()
 
+def plot_silhouette(clustering):
+    sample_scores, avg_score = silhouette_analysis(clustering)
+    labels = clustering['labels']
+    n_clusters = len(np.unique(labels))
+    f, ax =  plt.subplots(figsize=(12,8))
+    y_lower = 5
+    for i in range(1,n_clusters+1):
+        # Aggregate the silhouette scores for samples belonging to
+        # cluster i, and sort them
+        ith_cluster_silhouette_values = sample_scores[labels == i]
+        ith_cluster_silhouette_values.sort()
+        size_cluster_i = ith_cluster_silhouette_values.shape[0]
+        # update y range and plot
+        y_upper = y_lower + size_cluster_i
+        ax.fill_betweenx(np.arange(y_lower, y_upper),
+                          0, ith_cluster_silhouette_values,
+                          alpha=0.7)
+        # Label the silhouette plots with their cluster numbers at the middle
+        ax.text(-0.05, y_lower + 0.25 * size_cluster_i, str(i))
+        # Compute the new y_lower for next plot
+        y_lower = y_upper + 5  # 10 for the 0 samples
+    ax.axvline(x=avg_score, color="red", linestyle="--")
 
 # Plotly dependent Sankey plots
+# check if plotly exists
+import importlib
+plotly_spec = importlib.util.find_spec("plotly")
+plotly_exists = plotly_spec is not None
+if plotly_exists:
+    import plotly.plotly as py   
+    import plotly.offline as offline
 
 def get_relationship(source_cluster, target_clusters):
     links = {}

@@ -2,25 +2,21 @@ from collections import OrderedDict as odict
 from dynamicTreeCut import cutreeHybrid
 import fancyimpute
 import functools
-from glob import glob
 import hdbscan
 from itertools import combinations
 import numpy as np
-import os
 import pandas as pd
-import pickle
-from scipy.cluster.hierarchy import leaves_list, linkage
+from scipy.cluster.hierarchy import leaves_list, linkage, cut_tree
 from scipy.spatial.distance import pdist, squareform
 from sklearn.decomposition import FactorAnalysis
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import r2_score
+from sklearn.metrics import r2_score, silhouette_samples, silhouette_score
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, scale
 
 from selfregulation.utils.plot_utils import dendroheatmap
 from selfregulation.utils.r_to_py_utils import psychFA
-from selfregulation.utils.utils import get_info
 
 def set_seed(seed):
     def seeded_fun_decorator(fun):
@@ -108,7 +104,7 @@ def shorten_labels(labels, conversions={}):
 # helper functions for hierarchical clustering
 # ****************************************************************************
 def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None, 
-                         method='ward', plot=False, cluster_kws=None, 
+                         method='average', plot=False, cluster_kws=None, 
                          plot_kws=None):
     """
     plot hierarchical clustering and heatmap
@@ -221,7 +217,35 @@ def hdbscan_cluster(df, compute_dist=True,  pdist_kws=None,
             'link': link}
 
 
-        
+def silhouette_analysis(clustering):
+    distance_df = clustering['distance_df']
+    labels = clustering['labels']
+    sample_scores = silhouette_samples(distance_df, metric='precomputed', labels=labels)
+    score = np.mean(sample_scores)
+    return sample_scores, score
+
+def get_constant_height_labels(clustering):
+    """
+    use silhouette analysis to select the best heigh to cut a linkage matrix
+    :df: a correlation matrix
+    parse_heatmap: int (optional). If defined, devides the columns of the 
+                    heatmap based on cutting the dendrogram
+    """
+    max_score=-1
+    best_height=-1
+    for height in np.arange(.01,2,.01):
+        labels = cut_tree(clustering['linkage'], height=height)
+        try:
+            score = silhouette_score(clustering['distance_df'], 
+                                     labels, metric='precomputed')
+        except ValueError:
+            continue
+        print(height, score)
+        if score>max_score:
+            max_score = score
+            best_height = height
+    labels = cut_tree(clustering['linkage'], height=best_height)
+    
 # ****************************************************************************
 # helper functions for dealing with factor analytic results
 # ****************************************************************************

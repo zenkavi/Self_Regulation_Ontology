@@ -279,8 +279,8 @@ def plot_prediction_comparison(results, size=4.6, change=False,
         plt.close()
     
 def plot_prediction_relevance(results, EFA=True, classifier='lasso',
-                              change=False, normalize=False, size=4.6,  
-                              dpi=300, ext='png', plot_dir=None):
+                              change=False, size=4.6, dpi=300, 
+                              ext='png', plot_dir=None):
     predictions = results.load_prediction_object(EFA=EFA, 
                                                  change=change,
                                                  classifier=classifier)['data']
@@ -305,9 +305,9 @@ def plot_prediction_relevance(results, EFA=True, classifier='lasso',
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
 
-def plot_prediction_similarity(results, EFA=True, classifier='lasso',
-                               change=False, normalize=False, size=4.6,  
-                               dpi=300, ext='png', plot_dir=None):
+def plot_prediction_similarity(results, EFA=True, classifier='lasso', 
+                               change=False, size=4.6, dpi=300, ext='png', 
+                               plot_dir=None):
     predictions = results.load_prediction_object(EFA=EFA, 
                                                  change=change,
                                                  classifier=classifier)['data']
@@ -319,7 +319,8 @@ def plot_prediction_similarity(results, EFA=True, classifier='lasso',
     df = pd.DataFrame(importances, index=targets, columns=predictors)
     melted = df.melt(var_name='Factor', value_name='Importance')
     plt.figure(figsize=(8,12))
-    f=sns.clustermap(df.T.corr())
+    f=sns.clustermap(df.T.corr(),
+                     cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
     if plot_dir is not None:
         filename = 'prediction_relevance'
         save_figure(f, path.join(plot_dir, filename), 
