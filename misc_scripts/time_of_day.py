@@ -10,7 +10,7 @@ from selfregulation.utils.utils import get_behav_data
 def convert_to_time(date_str):
     dt = datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S')
     time = dt.time()
-    return time.hour
+    return (time.hour-5)%24 # convert from GMT to CST
 
 def plot_time_effects(measure_DVs, melted_DVs, title=None):
     f, (ax1,ax2) = plt.subplots(1, 2, figsize=(16,8))
@@ -29,7 +29,7 @@ behav_data = get_behav_data(file='meaningful_variables_imputed.csv')
 measures = np.unique([i.split('.')[0] for i in behav_data.columns])
 time_effects = {}
 
-for measure_name in measures[0:2]:
+for measure_name in measures[0:10]:
     measure = get_behav_data(file='Individual_Measures/%s.csv.gz' % measure_name)
     measure_DVs = behav_data.filter(regex=measure_name)
     measure_DVs.columns = [i.split('.')[1] for i in measure_DVs.columns]
@@ -48,6 +48,7 @@ for measure_name in measures[0:2]:
     
     # basic regression
     time_effects[measure_name] = {}
+    if verbose: print('Measure Name\n', ['*']*79)
     for name in measure_DVs.columns[:-2]:
         rs = smf.ols(formula = '%s ~ hour' % name, data=measure_DVs).fit()
         time_effects[measure_name][name] = {'Beta': rs.params.hour,
