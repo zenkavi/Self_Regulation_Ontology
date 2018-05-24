@@ -1,4 +1,5 @@
 # imports
+from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import numpy as np
 from os import makedirs, path
@@ -9,7 +10,7 @@ from dimensional_structure.plot_utils import visualize_factors, visualize_task_f
 from dimensional_structure.utils import get_factor_groups
 from selfregulation.utils.plot_utils import beautify_legend, format_num, format_variable_names, save_figure
 from selfregulation.utils.r_to_py_utils import get_attr
-from selfregulation.utils.utils import get_behav_data
+from selfregulation.utils.utils import get_behav_data, get_retest_data
 
 sns.set_context('notebook', font_scale=1.4)
 sns.set_palette("Set1", 8, .75)
@@ -68,16 +69,11 @@ def plot_communality(results, c, size=20, dpi=300, ext='png', plot_dir=None):
     communality = (loading**2).sum(1).sort_values()
     communality.index = [i.replace('.logTr','') for i in communality.index]
     # load retest data
-    retest_data = get_behav_data(dataset=results.dataset.replace('Complete','Retest'), 
-                                 file='bootstrap_merged.csv.gz')
+    retest_data = get_retest_data(dataset=results.dataset.replace('Complete','Retest'))
     if retest_data is None:
         print('No retest data found for datafile: %s' % results.dataset)
         return
-    retest_data = retest_data.groupby('dv').mean()    
-    retest_data.rename({'dot_pattern_expectancy.BX.BY_hddm_drift': 'dot_pattern_expectancy.BX-BY_hddm_drift',
-                        'dot_pattern_expectancy.AY.BY_hddm_drift': 'dot_pattern_expectancy.AY-BY_hddm_drift'},
-                        axis='index',
-                        inplace=True)
+    
     # reorder data in line with communality
     retest_data = retest_data.loc[communality.index]
     # reformat variable names

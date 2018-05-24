@@ -787,7 +787,7 @@ def plot_HCA(results, plot_dir=None, size=10, dpi=300, verbose=False, ext='png')
     plot_subbranches(results, c,  size=size/2, inp='EFA%s' % c, 
                      plot_dir=plot_dir, ext=ext, dpi=dpi)
     if verbose: print("Plotting silhouette analysis")
-    plot_silhouette(results, inp='data' % c, size=size, 
+    plot_silhouette(results, inp='data', size=size, 
                     plot_dir=plot_dir, ext=ext, dpi=dpi)
     plot_silhouette(results, inp='EFA%s' % c, size=size,
                     plot_dir=plot_dir, ext=ext, dpi=dpi)
