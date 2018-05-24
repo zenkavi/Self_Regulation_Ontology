@@ -660,7 +660,7 @@ def plot_silhouette(results, inp='data', labels=None, size=4.6,  dpi=300,
         ax.text(-0.05, y_lower + 0.25 * size_cluster_i, str(i), fontsize=size/1.6)
         # Compute the new y_lower for next plot
         y_lower = y_upper + 5  # 10 for the 0 samples
-    ax.axvline(x=avg_score, color="red", linestyle="--")
+    ax.axvline(x=avg_score, color="red", linestyle="--", linewidth=size*.2)
     ax.set_xlabel('Silhouette Score', fontsize=size, labelpad=10)
     ax.set_ylabel('Cluster Separated DVs', fontsize=size)
     ax.set_yticklabels([]); ax.set_yticks([])
