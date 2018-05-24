@@ -46,7 +46,7 @@ from shutil import copyfile, copytree, rmtree
 import time
 
 from dimensional_structure.results import Results
-from dimensional_structure.cross_results_plots import plot_corr_heatmap, plot_corr_hist, plot_BIC
+from dimensional_structure.cross_results_plots import plot_corr_heatmap, plot_BIC
 from dimensional_structure.DA_plots import plot_DA
 from dimensional_structure.EFA_plots import plot_EFA
 from dimensional_structure.HCA_plots import plot_HCA
@@ -258,6 +258,5 @@ if group_plot == True:
         print("Group Plots")
     results = load_results(datafile)
     plot_file = path.dirname(results['task'].get_plot_dir())
-    #plot_corr_hist(results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
     plot_corr_heatmap(results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
     plot_BIC(results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)

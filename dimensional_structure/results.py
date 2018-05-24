@@ -353,16 +353,15 @@ class HDBScan_Analysis():
     
     def cluster_data(self, data):
         output = hierarchical_cluster(data.T)
-        self.results['clustering_input-data'] = output
+        self.results['data'] = output
         
     def cluster_EFA(self, EFA, c):
         loading = EFA.get_loading(c)
         output = hdbscan_cluster(loading)
-        self.results['clustering_input-EFA%s' % c] = output
+        self.results['EFA%s' % c] = output
         
-    
-    def get_cluster_labels(self, inp='data'):
-        cluster = self.results['clustering_input-%s' % inp]
+    def get_cluster_DVs(self, inp='data'):
+        cluster = self.results['%s' % inp]
         dist = cluster['distance_df']
         labels = cluster['labels']
         probs = cluster['probs']
@@ -372,7 +371,7 @@ class HDBScan_Analysis():
         return label_names
     
     def get_cluster_loading(self, EFA, inp, c):
-        cluster_labels = self.get_cluster_labels(inp)
+        cluster_labels = self.get_cluster_DVs(inp)
         cluster_loadings = []
         for cluster in cluster_labels:
             subset = abs(EFA.get_loading(c).loc[cluster,:])
@@ -406,7 +405,7 @@ class HCA_Analysis():
             label_append = '_dist-%s' % dist_metric
         output = hierarchical_cluster(data.T, method=method,
                                       pdist_kws={'metric': dist_metric})
-        self.results['clustering_input-data%s' % label_append] = output
+        self.results['data%s' % label_append] = output
         
     def cluster_EFA(self, EFA, c, dist_metric=None, method='average'):
         if dist_metric is None:
@@ -417,16 +416,16 @@ class HCA_Analysis():
         loading = EFA.get_loading(c)
         output = hierarchical_cluster(loading, method=method,
                                       pdist_kws={'metric': dist_metric})
-        self.results['clustering_input-EFA%s%s' % (c, label_append)] = output
+        self.results['EFA%s%s' % (c, label_append)] = output
         
-    def get_cluster_labels(self, inp='data'):
-        cluster = self.results['clustering_input-%s' % inp]
-        labels = cluster['clustered_df'].index
+    def get_cluster_DVs(self, inp='data'):
+        cluster = self.results['%s' % inp]
+        DVs = cluster['clustered_df'].index
         reorder_vec = cluster['reorder_vec']
-        cluster_index = cluster['labels'][reorder_vec]
-        cluster_labels = [[labels[i] for i,index in enumerate(cluster_index) \
-                           if index == j] for j in np.unique(cluster_index)]
-        return cluster_labels
+        cluster_labels = cluster['labels'][reorder_vec]
+        cluster_DVs= [[DVs[i] for i,index in enumerate(cluster_labels) \
+                           if index == j] for j in np.unique(cluster_labels)]
+        return cluster_DVs
     
     def build_graphs(self, inp, graph_data):
         """ Build graphs from clusters from HCA analysis
@@ -436,7 +435,7 @@ class HCA_Analysis():
                 inp. This data will be passed to a graph analysis. E.G, 
                 graph_data can be the original data matrix or a EF embedding
         """
-        cluster_labels = self.get_cluster_labels(inp)
+        cluster_labels = self.get_cluster_DVs(inp)
         graphs = []
         for cluster in cluster_labels:
             if len(cluster)>1:
@@ -451,7 +450,7 @@ class HCA_Analysis():
         return graphs
     
     def get_cluster_loading(self, EFA, inp, c):
-        cluster_labels = self.get_cluster_labels(inp)
+        cluster_labels = self.get_cluster_DVs(inp)
         cluster_loadings = []
         for cluster in cluster_labels:
             subset = abs(EFA.get_loading(c).loc[cluster,:])
@@ -460,7 +459,7 @@ class HCA_Analysis():
         return cluster_loadings
     
     def get_cluster_names(self, inp):
-        cluster = self.results['clustering_input-%s' % inp]
+        cluster = self.results['%s' % inp]
         num_clusters = np.max(cluster['labels'])
         if 'cluster_names' in cluster.keys():
             return cluster['cluster_names']
@@ -477,10 +476,10 @@ class HCA_Analysis():
         return graph_vars
     
     def name_clusters(self, names, inp):
-        cluster_labels = self.results['clustering_input-%s' % inp]['labels']
+        cluster_labels = self.results['%s' % inp]['labels']
         num_clusters = np.max(cluster_labels)
         assert len(names) == num_clusters
-        self.results['clustering_input-%s' % inp]['cluster_names'] = names
+        self.results['%s' % inp]['cluster_names'] = names
         
     def run(self, data, EFA, cluster_EFA=False,
             run_graphs=False, verbose=False):
@@ -492,7 +491,7 @@ class HCA_Analysis():
         if run_graphs == True:
             # run graph analysis on raw data
             graphs = self.build_graphs('data', data)
-            self.results['clustering_input-data']['graphs'] = graphs
+            self.results['data']['graphs'] = graphs
 
 class Demographic_Analysis(EFA_Analysis):
     """ Runs Hierarchical Clustering Analysis """
@@ -674,7 +673,7 @@ class Results(EFA_Analysis, HCA_Analysis):
         demographic_factors = self.DA.reorder_factors(self.DA.get_scores())
         c = factor_scores.shape[1]
         # get raw data reorganized by clustering
-        clustering=self.HCA.results['clustering_input-EFA%s' % c]
+        clustering=self.HCA.results['EFA%s' % c]
         labels = clustering['clustered_df'].columns
         raw_data = self.data[labels]
         
@@ -702,7 +701,7 @@ class Results(EFA_Analysis, HCA_Analysis):
         factor_scores = self.EFA.get_scores()
         c = factor_scores.shape[1]
         # get raw data reorganized by clustering
-        clustering=self.HCA.results['clustering_input-EFA%s' % c]
+        clustering=self.HCA.results['EFA%s' % c]
         labels = clustering['clustered_df'].columns
         raw_data = self.data[labels]
         

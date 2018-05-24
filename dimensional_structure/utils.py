@@ -103,9 +103,25 @@ def shorten_labels(labels, conversions={}):
 # ****************************************************************************
 # helper functions for hierarchical clustering
 # ****************************************************************************
+def reorder_labels(labels, linkage):
+    """ reorder labels based on a linkage matrix
+    
+    reorder labels based on dendrogram position
+    reindex so the clusters are in order based on their proximity
+    in the dendrogram
+    """
+    reorder_vec = leaves_list(linkage)
+    cluster_swap = {}
+    last_group = 1
+    for i in labels[reorder_vec]:
+        if i not in cluster_swap.keys():
+            cluster_swap[i] = last_group
+            last_group += 1
+    cluster_reindex = np.array([cluster_swap[i] for i in labels])
+    return cluster_reindex
+    
 def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None, 
-                         method='average', plot=False, cluster_kws=None, 
-                         plot_kws=None):
+                         method='average', cluster_kws=None):
     """
     plot hierarchical clustering and heatmap
     :df: a correlation matrix
@@ -121,6 +137,9 @@ def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None,
         if pdist_kws['metric'] == 'abscorrelation':
             # convert to absolute correlations
             dist_vec = abs_pdist(df)
+        elif pdist_kws['metric'] == 'sqcorrelation':
+            # convert to squared correlations
+            dist_vec = squareform(1-df.T.corr()**2)
         else:
             dist_vec = pdist(df, **pdist_kws)
         dist_df = pd.DataFrame(squareform(dist_vec), 
@@ -139,31 +158,15 @@ def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None,
     if cluster_kws is None:
         cluster_kws = {'minClusterSize': 3}
     clustering = cutreeHybrid(link, dist_vec, **cluster_kws)
-    # reorder labels based on dendrogram position
-    # reindex so the clusters are in order based on their proximity
-    # in the dendrogram
-    cluster_swap = {}
-    last_group = 1
-    for i in clustering['labels'][reorder_vec]:
-        if i not in cluster_swap.keys():
-            cluster_swap[i] = last_group
-            last_group += 1
-    cluster_reindex = np.array([cluster_swap[i] for i in clustering['labels']])
-    if plot == True:
-        if plot_kws is None:
-            plot_kws = {}
-        dendroheatmap(link, dist_df, clustering['labels'], **plot_kws)
-        
+    labels = reorder_labels(clustering['labels'], link)
     return {'linkage': link, 
             'distance_df': dist_df, 
             'clustered_df': clustered_df,
             'reorder_vec': reorder_vec,
             'clustering': clustering,
-            'labels': cluster_reindex}
+            'labels': labels}
 
-
-def hdbscan_cluster(df, compute_dist=True,  pdist_kws=None, 
-                    plot=False, cluster_kws=None, plot_kws=None):
+def hdbscan_cluster(df, compute_dist=True,  pdist_kws=None, cluster_kws=None):
     """
     plot hierarchical clustering and heatmap
     :df: a correlation matrix
@@ -179,6 +182,9 @@ def hdbscan_cluster(df, compute_dist=True,  pdist_kws=None,
         if pdist_kws['metric'] == 'abscorrelation':
             # convert to absolute correlations
             dist_vec = abs_pdist(df)
+        elif pdist_kws['metric'] == 'sqcorrelation':
+            # convert to squared correlations
+            dist_vec = squareform(1-df.corr()**2)
         else:
             dist_vec = pdist(df, **pdist_kws)
         dist_df = pd.DataFrame(squareform(dist_vec), 
@@ -203,48 +209,50 @@ def hdbscan_cluster(df, compute_dist=True,  pdist_kws=None,
     reorder_vec = leaves_list(link)
     clustered_df = dist_df.iloc[reorder_vec, reorder_vec]
     
-    # clustering
-    if plot == True:
-        if plot_kws is None:
-            plot_kws = {}
-        dendroheatmap(link, dist_df, labels, **plot_kws)
-        
     return {'clusterer': clusterer,
             'distance_df': dist_df,
             'clustered_df': clustered_df,
             'labels': labels,
             'probs': probs,
-            'link': link}
+            'linkage': link}
 
 
-def silhouette_analysis(clustering):
+def silhouette_analysis(clustering, labels=None):
     distance_df = clustering['distance_df']
-    labels = clustering['labels']
+    if labels is None:
+        labels = clustering['labels']
     sample_scores = silhouette_samples(distance_df, metric='precomputed', labels=labels)
     score = np.mean(sample_scores)
     return sample_scores, score
 
-def get_constant_height_labels(clustering):
+def get_constant_height_labels(clustering, n_clusters=None):
     """
     use silhouette analysis to select the best heigh to cut a linkage matrix
     :df: a correlation matrix
     parse_heatmap: int (optional). If defined, devides the columns of the 
                     heatmap based on cutting the dendrogram
     """
-    max_score=-1
-    best_height=-1
-    for height in np.arange(.01,2,.01):
-        labels = cut_tree(clustering['linkage'], height=height)
-        try:
-            score = silhouette_score(clustering['distance_df'], 
-                                     labels, metric='precomputed')
-        except ValueError:
-            continue
-        print(height, score)
-        if score>max_score:
-            max_score = score
-            best_height = height
-    labels = cut_tree(clustering['linkage'], height=best_height)
+    N_variables = len(clustering['reorder_vec'])
+    scores = []
+    if n_clusters is None:
+        for k_clusters in range(2,N_variables//3):
+            labels = cut_tree(clustering['linkage'], n_clusters=k_clusters)
+            try:
+                score = silhouette_score(clustering['distance_df'], 
+                                         labels, metric='precomputed')
+            except ValueError:
+                continue
+            scores.append((k_clusters,score))
+        best_k = max(scores, key=lambda x: x[1])[0]
+        labels = cut_tree(clustering['linkage'], n_clusters=best_k)
+
+    else:
+        labels = cut_tree(clustering['linkage'], n_clusters=n_clusters)
+        score = silhouette_score(clustering['distance_df'], 
+                                         labels, metric='precomputed')
+        scores.append((n_clusters, score))
+    labels = reorder_labels(labels.flatten(), clustering['linkage'])
+    return labels, scores
     
 # ****************************************************************************
 # helper functions for dealing with factor analytic results
