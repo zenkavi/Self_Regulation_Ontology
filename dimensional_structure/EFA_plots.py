@@ -475,7 +475,8 @@ def plot_heatmap_factors(results, c, size=4.6, thresh=75, rotate='oblimin',
                 linecolor='white', linewidth=.01,
                 cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
     ax.set_yticks(np.arange(.5,loadings.shape[0]+.5,1))
-    ax.set_yticklabels(loadings.index, fontsize=DV_fontsize)
+    # check which direction the heatmap yticks are going
+    ax.set_yticklabels(loadings.index[::-1], fontsize=DV_fontsize)
     ax.set_xticklabels(loadings.columns, 
                                 fontsize=size*.08*20,
                                 ha='left',
@@ -492,7 +493,7 @@ def plot_heatmap_factors(results, c, size=4.6, thresh=75, rotate='oblimin',
     
     # draw lines separating groups
     if grouping is not None:
-        factor_breaks = np.cumsum([len(i[1]) for i in grouping])[:-1]
+        factor_breaks = np.cumsum([len(i[1]) for i in grouping[::-1]])[:-1]
         for y_val in factor_breaks:
             ax.hlines(y_val, 0, loadings.shape[1], lw=size/5, 
                       color='grey', linestyle='dashed')
@@ -623,7 +624,8 @@ def plot_entropies(results, rotate='oblimin',
             plt.close()
     
 # plot specific variable groups
-def plot_DDM(results, c, dpi=300, figsize=(20,8), ext='png', plot_dir=None): 
+def plot_DDM(results, c, rotate='oblimin', 
+             dpi=300, figsize=(20,8), ext='png', plot_dir=None): 
     EFA = results.EFA
     loading = abs(EFA.get_loading(c, rotate=rotate))
     cats = []

@@ -290,7 +290,7 @@ def plot_subbranches(results, c=None,  rotate='oblimin', inp=None,
                            
 
 def plot_dendrogram(results, c=None,  rotate='oblimin', inp=None, titles=None, 
-                    labels=None,n var_labels=True, break_lines=True, 
+                    labels=None, var_labels=True, break_lines=True, 
                     absolute_loading=False,  size=4.6,  dpi=300, ext='png', 
                     plot_dir=None):
     """ Plots HCA results as dendrogram with loadings underneath

@@ -37,10 +37,6 @@ class EFA_Analysis:
         self.boot_iter=boot_iter
         # global variables to hold certain aspects of the analysis
         self.results['num_factors'] = 1
-        self.results['factor_tree'] = {}
-        self.results['factor_tree_Rout'] = {}
-        self.results['factor2_tree'] = {}
-        self.results['factor2_tree_Rout'] = {}
 
     # private methods
     def _get_attr(self, attribute, c=None, rotate='oblimin'):
@@ -91,6 +87,9 @@ class EFA_Analysis:
                                                   metric='BIC', 
                                                   nobs=n_obs)
             if BIC_c != 0:
+                if 'factor2_tree_%s' % rotate not in self.results.keys():
+                    self.results['factor2_tree_%s' % rotate] = {}
+                    self.results['factor2_tree_Rout_%s' % rotate] = {}
                 Rout, higher_order_out = psychFA(phi, BIC_c, nobs=n_obs)
                 loadings = get_loadings(higher_order_out, labels)
                 self.results['factor2_tree_%s' % rotate][c] = loadings

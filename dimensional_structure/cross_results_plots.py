@@ -113,10 +113,10 @@ def plot_corr_heatmap(all_results, EFA=False, size=4.6,
                    dpi=300, ext='png', plot_dir=None):
     def get_EFA_HCA(results, EFA):
         if EFA == False:
-            return results.HCA.results['clustering_input-data']
+            return results.HCA.results['data']
         else:
             c = results.EFA.results['num_factors']
-            return results.HCA.results['clustering_input-EFA%s' % c]
+            return results.HCA.results['EFA%s' % c]
     
 
     survey_order = get_EFA_HCA(all_results['survey'], EFA)['reorder_vec']
