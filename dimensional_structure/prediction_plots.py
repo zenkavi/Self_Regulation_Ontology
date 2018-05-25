@@ -71,11 +71,12 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
             ax.set_yticklabels(labels)
 
 def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
-                    change=False, normalize=False, size=4.6,  
+                    rotate='oblimin', change=False, normalize=False, size=4.6,  
                     dpi=300, ext='png', plot_dir=None):
     predictions = results.load_prediction_object(EFA=EFA, 
                                                  change=change,
-                                                 classifier=classifier)
+                                                 classifier=classifier,
+                                                 rotate=rotate)
     sns.set_style('white')
     if predictions is None:
         print('No prediction object found!')
@@ -85,6 +86,7 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
     shuffled_predictions = results.load_prediction_object(EFA=EFA, 
                                                           classifier=classifier, 
                                                           change=change,
+                                                          rotate=rotate,
                                                           shuffle=True)
     assert shuffled_predictions is not None
     shuffled_predictions = shuffled_predictions['data']
