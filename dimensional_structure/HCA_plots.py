@@ -234,8 +234,8 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
     else:
         return fig
     
-def plot_subbranches(results, c=None,  inp=None, cluster_range=None,
-                     absolute_loading=False,
+def plot_subbranches(results, c=None,  rotate='oblimin', inp=None, 
+                     cluster_range=None, absolute_loading=False,
                      size=2.3, dpi=300, ext='png', plot_dir=None):
     """ Plots HCA results as dendrogram with loadings underneath
     
@@ -251,7 +251,7 @@ def plot_subbranches(results, c=None,  inp=None, cluster_range=None,
     """
     HCA = results.HCA
     EFA = results.EFA
-    loading = EFA.reorder_factors(EFA.get_loading(c))
+    loading = EFA.reorder_factors(EFA.get_loading(c, rotate=rotate))
     loading.index = format_variable_names(loading.index)
     clustering = HCA.results[inp]
     name = inp
@@ -289,9 +289,10 @@ def plot_subbranches(results, c=None,  inp=None, cluster_range=None,
     return figs
                            
 
-def plot_dendrogram(results, c=None,  inp=None, titles=None, labels=None,
-                    var_labels=True, break_lines=True, absolute_loading=False, 
-                    size=4.6,  dpi=300, ext='png', plot_dir=None):
+def plot_dendrogram(results, c=None,  rotate='oblimin', inp=None, titles=None, 
+                    labels=None,n var_labels=True, break_lines=True, 
+                    absolute_loading=False,  size=4.6,  dpi=300, ext='png', 
+                    plot_dir=None):
     """ Plots HCA results as dendrogram with loadings underneath
     
     Args:
@@ -305,7 +306,7 @@ def plot_dendrogram(results, c=None,  inp=None, titles=None, labels=None,
     subset = results.ID.split('_')[0]
     HCA = results.HCA
     EFA = results.EFA
-    loading = EFA.reorder_factors(EFA.get_loading(c))
+    loading = EFA.reorder_factors(EFA.get_loading(c, rotate=rotate))
     clustering = HCA.results[inp]
     name = inp
 
@@ -459,7 +460,7 @@ def plot_graphs(HCA_graphs, plot_dir=None, ext='png'):
     
     
 @set_seed(seed=15)
-def MDS_visualization(results, c, plot_dir=None, 
+def MDS_visualization(results, c, rotate='oblimin', plot_dir=None, 
                       dist_metric='abs_correlation', ext='png', **plot_kws):
     """ visualize EFA loadings and compares to raw space """
     def scale_plot(input_data, data_colors=None, cluster_colors=None,
@@ -503,7 +504,7 @@ def MDS_visualization(results, c, plot_dir=None,
     
     cluster_loadings = HCA.get_cluster_loading(EFA, 'data', c)
     cluster_loadings_mat = np.vstack([i[1] for i in cluster_loadings])
-    EFA_loading = abs(EFA.get_loading(c))
+    EFA_loading = abs(EFA.get_loading(c, rotate=rotate))
     EFA_loading_mat = EFA_loading.values
     EFA_space = np.vstack([cluster_loadings_mat, EFA_loading_mat])
     

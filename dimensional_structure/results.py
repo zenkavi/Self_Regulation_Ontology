@@ -43,11 +43,11 @@ class EFA_Analysis:
         self.results['factor2_tree_Rout'] = {}
 
     # private methods
-    def _get_attr(self, attribute, c=None):
+    def _get_attr(self, attribute, c=None, rotate='oblimin'):
         if c is None:
             c = self.results['num_factors']
             print('# of components not specified, using BIC determined #')
-        return get_attr(self.results['factor_tree_Rout'][c],
+        return get_attr(self.results['factor_tree_Rout_%s' % rotate][c],
                         attribute)
     
     def _thresh_loading(loading, threshold=.2):
@@ -55,9 +55,9 @@ class EFA_Analysis:
         rejected = loading.index[~over_thresh]
         return loading.loc[over_thresh,:], rejected
     
-    def _get_factor_reorder(self, c):
+    def _get_factor_reorder(self, c, rotate='oblimin'):
         # reorder factors based on correlation matrix
-        phi=get_attr(self.results['factor_tree_Rout'][c],'Phi')
+        phi=get_attr(self.results['factor_tree_Rout_%s' % rotate][c],'Phi')
         new_order = list(leaves_list(linkage(squareform(np.round(1-phi,3)))))
         return new_order[::-1] # reversing because it works better for task EFA
             
@@ -75,47 +75,48 @@ class EFA_Analysis:
                   ['No', 'Yes'][adequate])
         return adequate, {'Barlett_p': Barlett_p, 'KMO': KMO_MSA}
     
-    def compute_higher_order_factors(self, c=None):
+    def compute_higher_order_factors(self, c=None, rotate='oblimin'):
         """ Return higher order EFA """
         if c is None:
             c = self.results['num_factors']
             print('# of components not specified, using BIC determined #')
-        if ('factor_tree' in self.results.keys() and 
-            c in self.results['factor_tree_Rout'].keys()):
+        if ('factor_tree_%s' % rotate in self.results.keys() and 
+            c in self.results['factor_tree_Rout_%s' % rotate].keys()):
             # get factor correlation matrix
-            scores = get_attr(self.results['factor_tree_Rout'][c], 'scores')
+            scores = get_attr(self.results['factor_tree_Rout_%s' % rotate][c], 'scores')
             phi = pd.DataFrame(np.corrcoef(scores.T))
             n_obs = self.data.shape[0]
-            labels = list(self.results['factor_tree'][c].columns)
+            labels = list(self.results['factor_tree_%s' % rotate][c].columns)
             BIC_c, BICs = find_optimal_components(phi, 
                                                   metric='BIC', 
                                                   nobs=n_obs)
             if BIC_c != 0:
                 Rout, higher_order_out = psychFA(phi, BIC_c, nobs=n_obs)
                 loadings = get_loadings(higher_order_out, labels)
-                self.results['factor2_tree'][c] = loadings
-                self.results['factor2_tree_Rout'][c] = Rout
+                self.results['factor2_tree_%s' % rotate][c] = loadings
+                self.results['factor2_tree_Rout_%s' % rotate][c] = Rout
             else:
                 print('Higher order factors could not be calculated')
         else:
             print('No %s factor solution computed yet!' % c)
             
             
-    def create_factor_tree(self, start=1, end=None):
+    def create_factor_tree(self, start=1, end=None, rotate='oblimin'):
         if end is None:
             end = max(self.results['num_factors'], start)
-        ftree, ftree_rout = create_factor_tree(self.data,  (start, end))
-        self.results['factor_tree'] = ftree
-        self.results['factor_tree_Rout'] = ftree_rout
+        ftree, ftree_rout = create_factor_tree(self.data,  (start, end),
+                                               rotate=rotate)
+        self.results['factor_tree_%s' % rotate] = ftree
+        self.results['factor_tree_Rout_%s' % rotate] = ftree_rout
     
-    def get_boot_stats(self, c=None):
+    def get_boot_stats(self, c=None, rotate='oblimin'):
         if c is None:
             c = self.results['num_factors']
             print('# of components not specified, using BIC determined #')
-        if c in self.results['factor_tree_Rout'].keys():
-            bootstrap_Rout = self.results['factor_tree_Rout'][c]
+        if c in self.results['factor_tree_Rout_%s' % rotate].keys():
+            bootstrap_Rout = self.results['factor_tree_Rout_%s' % rotate][c]
             if 'cis' in bootstrap_Rout.names:
-                loadings = self.get_loading(c)
+                loadings = self.get_loading(c, rotate=rotate)
                 bootstrap_stats = get_attr(bootstrap_Rout, 'cis')
                 means = pd.DataFrame(get_attr(bootstrap_stats,'means'), 
                                      index=loadings.index,
@@ -180,43 +181,46 @@ class EFA_Analysis:
         n_iter = 1
         if bootstrap:
             n_iter = self.boot_iter
-        if (not recompute and 'factor_tree' in self.results.keys() and 
-            c in self.results['factor_tree'].keys() and
-            (n_iter==1 or 'cis' in self.results['factor_tree_Rout'][c].names)):
+        if 'factor_tree_%s' % rotate not in self.results.keys():
+            self.results['factor_tree_%s' % rotate] = {}
+            self.results['factor_tree_Rout_%s' % rotate] = {}
+        if (not recompute and# recomputing isn't wanted
+            c in self.results['factor_tree_%s' % rotate].keys() and # c factors have been computed
+            (n_iter==1 or 'cis' in self.results['factor_tree_Rout_%s' % rotate][c].names)):
             if copy:
-                return self.results['factor_tree'][c].copy()
+                return self.results['factor_tree_%s' % rotate][c].copy()
             else:
-                return self.results['factor_tree'][c]
+                return self.results['factor_tree_%s' % rotate][c]
         else:
             print('No %s factor solution computed yet! Computing...' % c)
             fa, output = psychFA(self.data, c, method='ml', rotate=rotate,
                                  n_iter=n_iter)
             loadings = get_loadings(output, labels=self.data.columns)
-            self.results['factor_tree'][c] = loadings
-            self.results['factor_tree_Rout'][c] = fa
+            self.results['factor_tree_%s' % rotate][c] = loadings
+            self.results['factor_tree_Rout_%s' % rotate][c] = fa
             if copy:
                 return loadings.copy()
             else:
                 return loadings
     
-    def get_loading_entropy(self, c=None):
+    def get_loading_entropy(self, c=None, rotate='oblimin'):
         if c is None:
             c = self.results['num_factors']
             print('# of components not specified, using BIC determined #')
         assert c>1
-        loading = self.get_loading(c)
+        loading = self.get_loading(c, rotate=rotate)
         # calculate entropy of each variable
         loading_entropy = abs(loading).apply(entropy, 1)
         max_entropy = entropy([1/loading.shape[1]]*loading.shape[1])
         return loading_entropy/max_entropy
     
-    def get_null_loading_entropy(self, c=None, reps=50):
+    def get_null_loading_entropy(self, c=None, reps=50, rotate='oblimin'):
         if c is None:
             c = self.results['num_factors']
             print('# of components not specified, using BIC determined #')
         assert c>1
         # get absolute loading
-        loading = abs(self.get_loading(c))
+        loading = abs(self.get_loading(c, rotate=rotate))
         max_entropy = entropy([1/loading.shape[1]]*loading.shape[1])
         permuted_entropies = np.array([])
         for _ in range(reps):
@@ -230,14 +234,14 @@ class EFA_Analysis:
                                            (loading_entropy/max_entropy).values)
         return permuted_entropies
     
-    def get_factor_entropies(self):
+    def get_factor_entropies(self, rotate='oblimin'):
         # calculate entropy for each measure at different c's
         entropies = {}
         null_entropies = {}
-        for c in self.results['factor_tree'].keys():
+        for c in self.results['factor_tree_%s' % rotate].keys():
             if c > 1:
-                entropies[c] = self.get_loading_entropy(c)
-                null_entropies[c] = self.get_null_loading_entropy(c)
+                entropies[c] = self.get_loading_entropy(c, rotate=rotate)
+                null_entropies[c] = self.get_null_loading_entropy(c, rotate=rotate)
         self.results['entropies'] = pd.DataFrame(entropies)
         self.results['null_entropies'] = pd.DataFrame(null_entropies)
         
@@ -245,28 +249,28 @@ class EFA_Analysis:
         metric_cs = {k:v for k,v in self.results.items() if 'c_metric-' in k}
         return metric_cs
     
-    def get_factor_names(self, c=None):
+    def get_factor_names(self, c=None, rotate='oblimin'):
         if c is None:
             c = self.results['num_factors']
             print('# of components not specified, using BIC determined #')
-        return self.get_loading(c).columns
+        return self.get_loading(c, rotate=rotate).columns
     
-    def get_scores(self, c=None):
+    def get_scores(self, c=None, rotate='oblimin'):
         if c is None:
             c = self.results['num_factors']
             print('# of components not specified, using BIC determined #')
-        scores = self._get_attr('scores', c)
-        names = self.get_factor_names(c)
+        scores = self._get_attr('scores', c, rotate=rotate)
+        names = self.get_factor_names(c, rotate=rotate)
         scores = pd.DataFrame(scores, index=self.data.index,
                               columns=names)
         return scores
         
-    def get_task_representations(self, tasks, c=None):
+    def get_task_representations(self, tasks, c=None, rotate='oblimin'):
         """Take a list of tasks and reconstructs factor scores"""   
         if c is None:
             c = self.results['num_factors']
             print('# of components not specified, using BIC determined #')         
-        fa_output = self.results['factor_tree_Rout'][c]
+        fa_output = self.results['factor_tree_Rout_%s' % rotate][c]
         output = {'weights': get_attr(fa_output, 'weights'),
                   'scores': get_attr(fa_output, 'scores')}
         subset_scores, r2_scores = get_scores_from_subset(self.data,
@@ -274,8 +278,8 @@ class EFA_Analysis:
                                                           tasks)
         return subset_scores, r2_scores
         
-    def get_nesting_matrix(self, explained_threshold=.5):
-        factor_tree = self.results['factor_tree']
+    def get_nesting_matrix(self, explained_threshold=.5, rotate='oblimin'):
+        factor_tree = self.results['factor_tree_%s' % rotate]
         explained_scores = -np.ones((len(factor_tree), len(factor_tree)-1))
         sum_explained = np.zeros((len(factor_tree), len(factor_tree)-1))
         for key in self.results['lower_nesting'].keys():
@@ -287,19 +291,19 @@ class EFA_Analysis:
             sum_explained[key[1]-1, key[0]-1] = (np.sum(adequately_explained/key[0]))
         return explained_scores, sum_explained
     
-    def name_factors(self, labels):
-        loading = self.get_loading(len(labels), copy=False)
+    def name_factors(self, labels, rotate='oblimin'):
+        loading = self.get_loading(len(labels), rotate=rotate, copy=False)
         loading.columns = labels
     
-    def print_top_factors(self, c=None, n=5):
+    def print_top_factors(self, c=None, n=5, rotate='oblimin'):
         if c is None:
             c = self.results['num_factors']
             print('# of components not specified, using BIC determined #')
-        tmp = get_top_factors(self.get_loading(c), n=n, verbose=True)
+        tmp = get_top_factors(self.get_loading(c, rotate=rotate), n=n, verbose=True)
       
-    def reorder_factors(self, mat):
+    def reorder_factors(self, mat, rotate='oblimin'):
         c = mat.shape[1]
-        reorder_vec = self._get_factor_reorder(c)
+        reorder_vec = self._get_factor_reorder(c, rotate=rotate)
         if type(mat) == pd.core.frame.DataFrame:
             mat = mat.iloc[:, reorder_vec]
         else:
@@ -323,9 +327,9 @@ class EFA_Analysis:
         self.get_loading(c=self.results['num_factors'], bootstrap=bootstrap)
         # optional threshold
         if loading_thresh is not None:
-            for c, loading in self.results['factor_tree'].items():
+            for c, loading in self.results['factor_tree_oblimin'].items():
                 thresh_loading = self._thresh_loading(loading, loading_thresh)
-                self.results['factor_tree'][c], rejected = thresh_loading
+                self.results['factor_tree_oblimin'][c], rejected = thresh_loading
         # get higher level factor solution
         if verbose: print('Determining Higher Order Factors')
         self.compute_higher_order_factors()
@@ -355,8 +359,8 @@ class HDBScan_Analysis():
         output = hierarchical_cluster(data.T)
         self.results['data'] = output
         
-    def cluster_EFA(self, EFA, c):
-        loading = EFA.get_loading(c)
+    def cluster_EFA(self, EFA, c, rotate='oblimin'):
+        loading = EFA.get_loading(c, rotate=rotate)
         output = hdbscan_cluster(loading)
         self.results['EFA%s' % c] = output
         
@@ -370,11 +374,11 @@ class HDBScan_Analysis():
                         for ii in np.unique(labels)]
         return label_names
     
-    def get_cluster_loading(self, EFA, inp, c):
+    def get_cluster_loading(self, EFA, inp, c, rotate='oblimin'):
         cluster_labels = self.get_cluster_DVs(inp)
         cluster_loadings = []
         for cluster in cluster_labels:
-            subset = abs(EFA.get_loading(c).loc[cluster,:])
+            subset = abs(EFA.get_loading(c, rotate=rotate).loc[cluster,:])
             cluster_vec = subset.mean(0)
             cluster_loadings.append((cluster, cluster_vec))
         return cluster_loadings
@@ -407,13 +411,14 @@ class HCA_Analysis():
                                       pdist_kws={'metric': dist_metric})
         self.results['data%s' % label_append] = output
         
-    def cluster_EFA(self, EFA, c, dist_metric=None, method='average'):
+    def cluster_EFA(self, EFA, c, dist_metric=None, 
+                    method='average', rotate='oblimin'):
         if dist_metric is None:
             dist_metric = self.dist_metric
             label_append = ''
         else:
             label_append = '_dist-%s' % dist_metric
-        loading = EFA.get_loading(c)
+        loading = EFA.get_loading(c, rotate=rotate)
         output = hierarchical_cluster(loading, method=method,
                                       pdist_kws={'metric': dist_metric})
         self.results['EFA%s%s' % (c, label_append)] = output
@@ -449,11 +454,11 @@ class HCA_Analysis():
                 graphs.append(np.nan)
         return graphs
     
-    def get_cluster_loading(self, EFA, inp, c):
+    def get_cluster_loading(self, EFA, inp, c, rotate='oblimin'):
         cluster_labels = self.get_cluster_DVs(inp)
         cluster_loadings = []
         for cluster in cluster_labels:
-            subset = abs(EFA.get_loading(c).loc[cluster,:])
+            subset = abs(EFA.get_loading(c, rotate=rotate).loc[cluster,:])
             cluster_vec = subset.mean(0)
             cluster_loadings.append((cluster, cluster_vec))
         return cluster_loadings
@@ -521,7 +526,7 @@ class Demographic_Analysis(EFA_Analysis):
         raw_change = retest-demographics
         # convert to scores
         c = self.results['num_factors']
-        demographic_factor_weights = get_attr(self.results['factor_tree_Rout'][c],'weights')
+        demographic_factor_weights = get_attr(self.results['factor_tree_Rout_oblimin'][c],'weights')
         demographic_scores = scale(demographics).dot(demographic_factor_weights)
         retest_scores = scale(retest).dot(demographic_factor_weights)
         
@@ -664,12 +669,13 @@ class Results(EFA_Analysis, HCA_Analysis):
             return {'HCA': HCA, 'hdbscan': hdbscan}
     
     def run_prediction(self, shuffle=False, classifier='lasso',
-                       include_raw_demographics=False, verbose=False):
+                       include_raw_demographics=False, rotate='oblimin',
+                       verbose=False):
         if verbose:
             print('*'*79)
             print('Running Prediction, shuffle: %s, classifier: %s' % (shuffle, classifier))
             print('*'*79)
-        factor_scores = self.EFA.get_scores()
+        factor_scores = self.EFA.get_scores(rotate=rotate)
         demographic_factors = self.DA.reorder_factors(self.DA.get_scores())
         c = factor_scores.shape[1]
         # get raw data reorganized by clustering
@@ -693,12 +699,13 @@ class Results(EFA_Analysis, HCA_Analysis):
                                verbose=verbose)
 
     def run_change_prediction(self, shuffle=False, classifier='lasso',
-                   include_raw_demographics=False, verbose=False):
+                   include_raw_demographics=False, rotate='oblimin',
+                   verbose=False):
         if verbose:
             print('*'*79)
             print('Running Change Prediction, shuffle: %s, classifier: %s' % (shuffle, classifier))
             print('*'*79)
-        factor_scores = self.EFA.get_scores()
+        factor_scores = self.EFA.get_scores(rotate=rotate)
         c = factor_scores.shape[1]
         # get raw data reorganized by clustering
         clustering=self.HCA.results['EFA%s' % c]

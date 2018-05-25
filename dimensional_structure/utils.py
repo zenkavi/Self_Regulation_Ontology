@@ -362,7 +362,8 @@ def reorder_data(data, groups, axis=1):
     new_data = data.reindex_axis(ordered_cols, axis)
     return new_data
 
-def create_factor_tree(data, component_range=(1,13), component_list=None):
+def create_factor_tree(data, component_range=(1,13), component_list=None,
+                       rotate='oblimin'):
     """
     Runs "visualize_factors" at multiple dimensionalities and saves them
     to a pdf
@@ -388,7 +389,7 @@ def create_factor_tree(data, component_range=(1,13), component_list=None):
     else:
         components = component_list
     for c in components:
-        fa, output = psychFA(data, c, method='ml')
+        fa, output = psychFA(data, c, method='ml', rotate=rotate)
         tmp_loading_df = get_loadings(output, labels=data.columns)
         if (c-1) in EFA_results.keys():
             reorder_index = get_similarity_order(tmp_loading_df, EFA_results[c-1])

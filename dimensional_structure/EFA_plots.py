@@ -10,7 +10,7 @@ from dimensional_structure.plot_utils import visualize_factors, visualize_task_f
 from dimensional_structure.utils import get_factor_groups
 from selfregulation.utils.plot_utils import beautify_legend, format_num, format_variable_names, save_figure
 from selfregulation.utils.r_to_py_utils import get_attr
-from selfregulation.utils.utils import get_behav_data, get_retest_data
+from selfregulation.utils.utils import get_retest_data
 
 sns.set_context('notebook', font_scale=1.4)
 sns.set_palette("Set1", 8, .75)
@@ -63,9 +63,10 @@ def plot_BIC_SABIC(results, size=2.3, dpi=300, ext='png', plot_dir=None):
                         {'bbox_inches': 'tight', 'dpi': dpi})
             plt.close()
 
-def plot_communality(results, c, size=20, dpi=300, ext='png', plot_dir=None):
+def plot_communality(results, c, rotate='oblimin',
+                     size=20, dpi=300, ext='png', plot_dir=None):
     EFA = results.EFA
-    loading = EFA.get_loading(c)
+    loading = EFA.get_loading(c, rotate=rotate)
     communality = (loading**2).sum(1).sort_values()
     communality.index = [i.replace('.logTr','') for i in communality.index]
     # load retest data
@@ -143,7 +144,8 @@ def plot_communality(results, c, size=20, dpi=300, ext='png', plot_dir=None):
     
         
     
-def plot_nesting(results, thresh=.5, dpi=300, figsize=12, ext='png', plot_dir=None):
+def plot_nesting(results, thresh=.5, rotate='oblimin',
+                 dpi=300, figsize=12, ext='png', plot_dir=None):
     """ Plots nesting of factor solutions
     
     Args:
@@ -155,7 +157,8 @@ def plot_nesting(results, thresh=.5, dpi=300, figsize=12, ext='png', plot_dir=No
         plot_dir: the directory to save the figure. If none, do not save
     """
     EFA = results.EFA
-    explained_scores, sum_explained = EFA.get_nesting_matrix(thresh)
+    explained_scores, sum_explained = EFA.get_nesting_matrix(thresh, 
+                                                             rotate=rotate)
 
     # plot lower nesting
     fig, ax = plt.subplots(1, 1, figsize=(figsize, figsize))
@@ -174,12 +177,13 @@ def plot_nesting(results, thresh=.5, dpi=300, figsize=12, ext='png', plot_dir=No
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
         
-def plot_factor_correlation(results, c, size=4.6, dpi=300, ext='png', plot_dir=None):
+def plot_factor_correlation(results, c, rotate='oblimin',
+                            size=4.6, dpi=300, ext='png', plot_dir=None):
     EFA = results.EFA
-    loading = EFA.get_loading(c)
+    loading = EFA.get_loading(c, rotate=rotate)
     # get factor correlation matrix
     reorder_vec = EFA._get_factor_reorder(c)
-    phi = get_attr(EFA.results['factor_tree_Rout'][c],'Phi')
+    phi = get_attr(EFA.results['factor_tree_Rout_%s' % rotate][c],'Phi')
     phi = pd.DataFrame(phi, columns=loading.columns, index=loading.columns)
     phi = phi.iloc[reorder_vec, reorder_vec]
     with sns.plotting_context('notebook', font_scale=2):
@@ -338,7 +342,7 @@ def plot_bar_factor(loading, ax=None, bootstrap_err=None, grouping=None,
     if ax is None:
         return f
                 
-def plot_bar_factors(results, c, size=4.6, thresh=75,
+def plot_bar_factors(results, c, size=4.6, thresh=75, rotate='oblimin',
                      dpi=300, ext='png', plot_dir=None):
     """ Plots factor analytic results as bars
     
@@ -355,7 +359,7 @@ def plot_bar_factors(results, c, size=4.6, thresh=75,
     # set up plot variables
     
     EFA = results.EFA
-    loadings = EFA.reorder_factors(EFA.get_loading(c))           
+    loadings = EFA.reorder_factors(EFA.get_loading(c, rotate=rotate))           
     grouping = get_factor_groups(loadings)
     flattened_factor_order = []
     for sublist in [i[1] for i in grouping]:
@@ -416,7 +420,7 @@ def plot_bar_factors(results, c, size=4.6, thresh=75,
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
 
-def plot_heatmap_factors(results, c, size=4.6, thresh=75,
+def plot_heatmap_factors(results, c, size=4.6, thresh=75, rotate='oblimin',
                      dpi=300, ext='png', plot_dir=None):
     """ Plots factor analytic results as bars
     
@@ -433,7 +437,7 @@ def plot_heatmap_factors(results, c, size=4.6, thresh=75,
     
     
     EFA = results.EFA
-    loadings = EFA.reorder_factors(EFA.get_loading(c))           
+    loadings = EFA.reorder_factors(EFA.get_loading(c, rotate=rotate))           
     grouping = get_factor_groups(loadings)
     flattened_factor_order = []
     for sublist in [i[1] for i in grouping]:
@@ -499,7 +503,7 @@ def plot_heatmap_factors(results, c, size=4.6, thresh=75,
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
         
-def plot_polar_factors(results, c, color_by_group=True, 
+def plot_polar_factors(results, c, color_by_group=True, rotate='oblimin',
                        dpi=300, ext='png', plot_dir=None):
     """ Plots factor analytic results as polar plots
     
@@ -513,7 +517,7 @@ def plot_polar_factors(results, c, color_by_group=True,
         plot_dir: the directory to save the figure. If none, do not save
     """
     EFA = results.EFA
-    loadings = EFA.get_loading(c)
+    loadings = EFA.get_loading(c, rotate=rotate)
     groups = get_factor_groups(loadings)    
     # plot polar plot factor visualization for metric loadings
     filename =  'factor_polar_EFA%s.%s' % (c, ext)
@@ -528,7 +532,8 @@ def plot_polar_factors(results, c, color_by_group=True,
         plt.close()
 
     
-def plot_task_factors(results, c, task_sublists=None, normalize_loadings = False,
+def plot_task_factors(results, c, rotate='oblimin',
+                      task_sublists=None, normalize_loadings=False,
                       figsize=10,  dpi=300, ext='png', plot_dir=None):
     """ Plots task factors as polar plots
     
@@ -544,7 +549,7 @@ def plot_task_factors(results, c, task_sublists=None, normalize_loadings = False
     """
     EFA = results.EFA
     # plot task factor loading
-    loadings = EFA.get_loading(c)
+    loadings = EFA.get_loading(c, rotate=rotate)
     max_loading = abs(loadings).max().max()
     tasks = np.unique([i.split('.')[0] for i in loadings.index])
     
@@ -581,7 +586,8 @@ def plot_task_factors(results, c, task_sublists=None, normalize_loadings = False
                             {'bbox_inches': 'tight', 'dpi': dpi})
                 plt.close()
             
-def plot_entropies(results, dpi=300, figsize=(20,8), ext='png', plot_dir=None): 
+def plot_entropies(results, rotate='oblimin', 
+                   dpi=300, figsize=(20,8), ext='png', plot_dir=None): 
     """ Plots factor analytic results as bars
     
     Args:
@@ -619,7 +625,7 @@ def plot_entropies(results, dpi=300, figsize=(20,8), ext='png', plot_dir=None):
 # plot specific variable groups
 def plot_DDM(results, c, dpi=300, figsize=(20,8), ext='png', plot_dir=None): 
     EFA = results.EFA
-    loading = abs(EFA.get_loading(c))
+    loading = abs(EFA.get_loading(c, rotate=rotate))
     cats = []
     for i in loading.index:
         if 'drift' in i:
