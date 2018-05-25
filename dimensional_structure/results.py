@@ -54,6 +54,8 @@ class EFA_Analysis:
     def _get_factor_reorder(self, c, rotate='oblimin'):
         # reorder factors based on correlation matrix
         phi=get_attr(self.results['factor_tree_Rout_%s' % rotate][c],'Phi')
+        if phi is None:
+            return list(range(c))
         new_order = list(leaves_list(linkage(squareform(np.round(1-phi,3)))))
         return new_order[::-1] # reversing because it works better for task EFA
             
@@ -685,14 +687,14 @@ class Results(EFA_Analysis, HCA_Analysis):
         targets = [('demo_factors', demographic_factors)]
         if include_raw_demographics:
             targets.append(('demo_raw', self.demographics))
-        for name, target in targets:
-            for predictors in [('EFA%s' % c, factor_scores), ('raw', raw_data)]:
+        for target_name, target in targets:
+            for predictors in [('EFA%s_%s' % (c, rotate), factor_scores), ('raw', raw_data)]:
                 # predicting using best EFA
                 if verbose: print('**Predicting using %s**' % predictors[0])
                 run_prediction(predictors[1], 
                                target, 
                                self.get_output_dir(),
-                               outfile='%s_%s_prediction' % (predictors[0], name), 
+                               outfile='%s_%s_prediction' % (predictors[0], target_name), 
                                shuffle=shuffle,
                                classifier=classifier, 
                                verbose=verbose)
@@ -718,14 +720,14 @@ class Results(EFA_Analysis, HCA_Analysis):
         targets = [('demo_factors_change', factor_change)]
         if include_raw_demographics:
             targets.append(('demo_raw_change', raw_change))
-        for name, target in targets:
-            for predictors in [('EFA%s' % c, factor_scores), ('raw', raw_data)]:
+        for target_name, target in targets:
+            for predictors in [('EFA%s_%s' % (c, rotate), factor_scores), ('raw', raw_data)]:
                 # predicting using best EFA
                 if verbose: print('**Predicting using %s**' % predictors[0])
                 run_prediction(predictors[1], 
                                target, 
                                self.get_output_dir(),
-                               outfile='%s_%s_prediction' % (predictors[0], name), 
+                               outfile='%s_%s_prediction' % (predictors[0], target_name), 
                                shuffle=shuffle,
                                classifier=classifier, 
                                verbose=verbose)
@@ -749,9 +751,12 @@ class Results(EFA_Analysis, HCA_Analysis):
         return prediction_files
     
     def load_prediction_object(self, ID=None, shuffle=False, EFA=True, 
-                               change=False,  classifier='lasso'):
+                               change=False,  classifier='lasso', 
+                               rotate='oblimin'):
         prediction_files = self.get_prediction_files(EFA, shuffle, change)
         prediction_files = [f for f in prediction_files if classifier in f]
+        if EFA==True:
+            prediction_files = [f for f in prediction_files if rotate in f]
         # sort by time
         if ID is not None:
             filey = [i for i in prediction_files if ID in i][0]

@@ -278,12 +278,13 @@ def plot_prediction_comparison(results, size=4.6, change=False,
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
     
-def plot_prediction_relevance(results, EFA=True, classifier='lasso',
-                              change=False, size=4.6, dpi=300, 
-                              ext='png', plot_dir=None):
+def plot_prediction_relevance(results, EFA=True, classifier='lasso', 
+                              rotate='oblimin', change=False, size=4.6, 
+                              dpi=300, ext='png', plot_dir=None):
     predictions = results.load_prediction_object(EFA=EFA, 
                                                  change=change,
-                                                 classifier=classifier)['data']
+                                                 classifier=classifier,
+                                                 rotate=rotate)['data']
 
     targets = list(predictions.keys())
     predictors = predictions[targets[0]]['predvars']
@@ -306,11 +307,12 @@ def plot_prediction_relevance(results, EFA=True, classifier='lasso',
         plt.close()
 
 def plot_prediction_similarity(results, EFA=True, classifier='lasso', 
-                               change=False, size=4.6, dpi=300, ext='png', 
-                               plot_dir=None):
+                               rotate='oblimin', change=False, size=4.6, 
+                               dpi=300, ext='png',  plot_dir=None):
     predictions = results.load_prediction_object(EFA=EFA, 
                                                  change=change,
-                                                 classifier=classifier)['data']
+                                                 classifier=classifier,
+                                                 rotate=rotate)['data']
 
     targets = list(predictions.keys())
     predictors = predictions[targets[0]]['predvars']

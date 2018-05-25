@@ -437,7 +437,8 @@ def plot_heatmap_factors(results, c, size=4.6, thresh=75, rotate='oblimin',
     
     
     EFA = results.EFA
-    loadings = EFA.reorder_factors(EFA.get_loading(c, rotate=rotate))           
+    loading = EFA.get_loading(c, rotate=rotate)
+    loadings = EFA.reorder_factors(loading, rotate=rotate)           
     grouping = get_factor_groups(loadings)
     flattened_factor_order = []
     for sublist in [i[1] for i in grouping]:
