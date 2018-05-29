@@ -422,7 +422,7 @@ class HCA_Analysis():
         loading = EFA.get_loading(c, rotate=rotate)
         output = hierarchical_cluster(loading, method=method,
                                       pdist_kws={'metric': dist_metric})
-        self.results['EFA%s%s' % (c, label_append)] = output
+        self.results['EFA%s_%s%s' % (c, rotate, label_append)] = output
         
     def get_cluster_DVs(self, inp='data'):
         cluster = self.results['%s' % inp]

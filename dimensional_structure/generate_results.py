@@ -42,6 +42,7 @@ if args.plot_backend:
 from glob import glob
 import numpy as np
 from os import makedirs, path
+import random
 from shutil import copyfile, copytree, rmtree
 import time
 
@@ -102,9 +103,8 @@ subsets = [{'name': 'task',
               'regex': '.',
               'factor_names': [],
               'predict': False}]
-run_prediction=False
 results = None
-ID = None # ID will be created
+ID = str(random.getrandbits(16)) 
 # create/run results for each subset
 for subset in subsets:
     name = subset['name']

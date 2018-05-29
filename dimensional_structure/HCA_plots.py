@@ -780,17 +780,17 @@ def plot_HCA(results, plot_dir=None, size=10, dpi=300, verbose=False, ext='png')
     if verbose: print("Plotting dendrograms")
     plot_dendrogram(results, c, size=size, inp='data', var_labels=False,
                     titles=False,  plot_dir=plot_dir, ext=ext, dpi=dpi)
-    plot_dendrogram(results, c, inp='EFA%s' % c, var_labels=False,
+    plot_dendrogram(results, c, inp='EFA%s_oblimin' % c, var_labels=False,
                     titles=False, plot_dir=plot_dir, ext=ext, dpi=dpi)
     if verbose: print("Plotting dendrogram subbranches")
     plot_subbranches(results, c,  size=size/2, inp='data', 
                      plot_dir=plot_dir, ext=ext, dpi=dpi)
-    plot_subbranches(results, c,  size=size/2, inp='EFA%s' % c, 
+    plot_subbranches(results, c,  size=size/2, inp='EFA%s_oblimin' % c, 
                      plot_dir=plot_dir, ext=ext, dpi=dpi)
     if verbose: print("Plotting silhouette analysis")
     plot_silhouette(results, inp='data', size=size, 
                     plot_dir=plot_dir, ext=ext, dpi=dpi)
-    plot_silhouette(results, inp='EFA%s' % c, size=size,
+    plot_silhouette(results, inp='EFA%s_oblimin' % c, size=size,
                     plot_dir=plot_dir, ext=ext, dpi=dpi)
 #    if verbose: print("Plotting clustering similarity")
 #    plot_clustering_similarity(results, plot_dir=plot_dir, verbose=verbose, ext=ext)
