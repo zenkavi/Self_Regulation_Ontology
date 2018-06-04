@@ -12,7 +12,8 @@ from sklearn.manifold import MDS
 from sklearn.metrics import adjusted_mutual_info_score, adjusted_rand_score
 from sklearn.preprocessing import MinMaxScaler, scale
 
-from dimensional_structure.utils import abs_pdist, set_seed
+from dimensional_structure.utils import (abs_pdist, get_constant_height_labels, 
+                                         set_seed, silhouette_analysis)
 from dimensional_structure.plot_utils import (get_short_names, get_var_group,
                                               plot_loadings, plot_tree)
 from selfregulation.utils.plot_utils import (CurvedText, dendroheatmap, format_num,
@@ -20,48 +21,37 @@ from selfregulation.utils.plot_utils import (CurvedText, dendroheatmap, format_n
                                              get_dendrogram_color_fun,
                                              save_figure)
 
-# check if plotly exists
-import importlib
-plotly_spec = importlib.util.find_spec("plotly")
-plotly_exists = plotly_spec is not None
-if plotly_exists:
-    import plotly.plotly as py   
-    import plotly.offline as offline
-
 def plot_clusterings(results, plot_dir=None, inp='data', figsize=(50,50),
                      titles=None, show_clusters=True, verbose=False, ext='png'):    
     HCA = results.HCA
     # get all clustering solutions
-    clusterings = [(k ,v) for k,v in 
-                    HCA.results.items() if inp in k]
+    clustering = HCA.results[inp]
+    name = inp
     
     # plot dendrogram heatmaps
-    for name, clustering in clusterings:
-        if titles is None:
-            title = name.split('-')[1] + '_metric-' + HCA.dist_metric
-        else:
-            title=titles.pop(0)
-        filename = None
-        if plot_dir is not None:
-            filename = path.join(plot_dir, 'dendroheatmap_%s.%s' % (name, ext))
-        if show_clusters == True:
-            fig = dendroheatmap(clustering['linkage'], clustering['distance_df'], 
-                                clustering['labels'],
-                                figsize=figsize, title=title,
-                                filename = filename)
-        else:
-            fig = dendroheatmap(clustering['linkage'], clustering['distance_df'], 
-                                figsize=figsize, title=title,
-                                filename = filename)
+    if titles is None:
+        title = name + '_metric-' + HCA.dist_metric
+    else:
+        title=titles.pop(0)
+    filename = None
+    if plot_dir is not None:
+        filename = path.join(plot_dir, 'dendroheatmap_%s.%s' % (name, ext))
+    if show_clusters == True:
+        fig = dendroheatmap(clustering['linkage'], clustering['distance_df'], 
+                            clustering['labels'],
+                            figsize=figsize, title=title,
+                            filename = filename)
+    else:
+        fig = dendroheatmap(clustering['linkage'], clustering['distance_df'], 
+                            figsize=figsize, title=title,
+                            filename = filename)
             
 def plot_clustering_similarity(results, plot_dir=None, verbose=False, ext='png'):  
     HCA = results.HCA
     # get all clustering solutions
-    clusterings = [(k ,v) for k,v in 
-                    HCA.results.items() if 'clustering' in k]
+    clusterings = HCA.results.items()
     # plot cluster agreement across embedding spaces
-    names = [k.split('-')[-1] for k,v in 
-                    HCA.results.items() if 'clustering' in k]
+    names = [k for k,v in clusterings]
     cluster_similarity = np.zeros((len(clusterings), len(clusterings)))
     cluster_similarity = pd.DataFrame(cluster_similarity, 
                                      index=names,
@@ -244,8 +234,8 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
     else:
         return fig
     
-def plot_subbranches(results, c=None,  inp=None, cluster_range=None,
-                     absolute_loading=False,
+def plot_subbranches(results, c=None,  rotate='oblimin', inp=None, 
+                     cluster_range=None, absolute_loading=False,
                      size=2.3, dpi=300, ext='png', plot_dir=None):
     """ Plots HCA results as dendrogram with loadings underneath
     
@@ -255,214 +245,206 @@ def plot_subbranches(results, c=None,  inp=None, cluster_range=None,
         orientation: horizontal or vertical, which determines the direction
             the dendrogram leaves should be spread out on
         plot_dir: if set, where to save the plot
-        inp: by default, plots all clusterings in results. Inp selects
-            one. Clusterings are saved in the form "clustering_input-{inp}"
+        inp: which clustering solution to use
         titles: list of titles. Should correspond to number of clusters in
                 results object if "inp" is not set. Otherwise should be a list of length 1.
     """
     HCA = results.HCA
     EFA = results.EFA
-    loading = EFA.reorder_factors(EFA.get_loading(c))
+    loading = EFA.reorder_factors(EFA.get_loading(c, rotate=rotate))
     loading.index = format_variable_names(loading.index)
-    # get all clustering solutions
-    if inp is None:
-        inp = ''
-    clusterings = [(k ,v) for k,v in 
-                    HCA.results.items() if inp in k]
+    clustering = HCA.results[inp]
+    name = inp
     
-    for name, clustering in clusterings:
-        # extract cluster vars
-        link = clustering['linkage']
-        labels = clustering['clustered_df'].columns
-        labels = format_variable_names(labels)
-        ordered_loading = loading.loc[labels]
-        if absolute_loading:
-            ordered_loading = abs(ordered_loading)
-        # get cluster sizes
-        cluster_labels = HCA.get_cluster_labels(inp=name.split('-')[1])
-        cluster_sizes = [len(i) for i in cluster_labels]
-        link_function, colors = get_dendrogram_color_fun(link, clustering['reorder_vec'],
-                                                         clustering['labels'])
-        tree = dendrogram(link,  link_color_func=link_function, no_plot=True,
-                          no_labels=True)
+    # extract cluster vars
+    link = clustering['linkage']
+    labels = clustering['clustered_df'].columns
+    labels = format_variable_names(labels)
+    ordered_loading = loading.loc[labels]
+    if absolute_loading:
+        ordered_loading = abs(ordered_loading)
+    # get cluster sizes
+    cluster_labels = HCA.get_cluster_DVs(inp=name)
+    cluster_sizes = [len(i) for i in cluster_labels]
+    link_function, colors = get_dendrogram_color_fun(link, clustering['reorder_vec'],
+                                                     clustering['labels'])
+    tree = dendrogram(link,  link_color_func=link_function, no_plot=True,
+                      no_labels=True)
+    
+    if plot_dir is not None:
+        function_directory = 'subbranches_input-%s' % inp
+        makedirs(path.join(plot_dir, function_directory), exist_ok=True)
         
-        if plot_dir is not None:
-            function_directory = 'subbranches_input-%s' % inp
-            makedirs(path.join(plot_dir, function_directory), exist_ok=True)
-            
-        plot_loc = None
-        if cluster_range is None:
-            cluster_range = range(len(cluster_labels))
-        figs = []
-        for cluster_i in cluster_range:
-            if plot_dir:
-                filey = 'cluster_%s.%s' % (str(cluster_i).zfill(2), ext)
-                plot_loc = path.join(plot_dir, function_directory, filey)
-            fig = plot_subbranch(cluster_i, tree, ordered_loading, cluster_sizes,
-                                 size=size, plot_loc=plot_loc)
-            figs.append(fig)
-        return figs
+    plot_loc = None
+    if cluster_range is None:
+        cluster_range = range(len(cluster_labels))
+    figs = []
+    for cluster_i in cluster_range:
+        if plot_dir:
+            filey = 'cluster_%s.%s' % (str(cluster_i).zfill(2), ext)
+            plot_loc = path.join(plot_dir, function_directory, filey)
+        fig = plot_subbranch(cluster_i, tree, ordered_loading, cluster_sizes,
+                             size=size, plot_loc=plot_loc)
+        figs.append(fig)
+    return figs
                            
 
-def plot_dendrogram(results, c=None,  inp=None, titles=None, var_labels=True,
-                     break_lines=True, absolute_loading=False, 
-                     size=4.6,  dpi=300, ext='png', plot_dir=None):
+def plot_dendrogram(results, c=None,  rotate='oblimin', inp=None, titles=None, 
+                    labels=None, var_labels=True, break_lines=True, 
+                    absolute_loading=False,  size=4.6,  dpi=300, ext='png', 
+                    plot_dir=None):
     """ Plots HCA results as dendrogram with loadings underneath
     
     Args:
         results: results object
         c: number of components to use for loadings
         plot_dir: if set, where to save the plot
-        inp: by default, plots all clusterings in results. Inp selects
-            one. Clusterings are saved in the form "clustering_input-{inp}"
+        inp: which clustering solution to use
         titles: list of titles. Should correspond to number of clusters in
                 results object if "inp" is not set. Otherwise should be a list of length 1.
     """
     subset = results.ID.split('_')[0]
     HCA = results.HCA
     EFA = results.EFA
-    loading = EFA.reorder_factors(EFA.get_loading(c))
-    # get all clustering solutions
-    if inp is None:
-        inp = ''
-    clusterings = [(k ,v) for k,v in 
-                    HCA.results.items() if inp in k]
+    loading = EFA.reorder_factors(EFA.get_loading(c, rotate=rotate))
+    clustering = HCA.results[inp]
+    name = inp
 
-    for name, clustering in clusterings:
-        if titles is None:
-            title = subset.title() + " Sub-Metric Structure"
-        elif titles != False:
-            title=titles.pop(0)
-        # extract cluster vars
-        link = clustering['linkage']
-        labels = clustering['clustered_df'].columns
-        ordered_loading = loading.loc[labels]
-        if absolute_loading:
-            ordered_loading = abs(ordered_loading)
-        # get cluster sizes
-        cluster_labels = HCA.get_cluster_labels(inp=name.split('-')[1])
-        cluster_sizes = [len(i) for i in cluster_labels]
-        link_function, colors = get_dendrogram_color_fun(link, clustering['reorder_vec'],
-                                                         clustering['labels'])
-        
-        # set figure properties
-        figsize = (size, size*.6)
-        # set up axes' size 
-        heatmap_height = ordered_loading.shape[1]*.03
-        heat_size = [.2, heatmap_height]
-        dendro_size=[np.sum(heat_size), .3]
-        # set up plot axes
-        dendro_size = [0,dendro_size[0], .95, dendro_size[1]]
-        heatmap_size = [0,heat_size[0],.95,heat_size[1]]
-        cbar_size = [.97,heat_size[0],.01,heat_size[1]]
-        ordered_loading = ordered_loading.T
+    if titles is None:
+        title = subset.title() + " Sub-Metric Structure"
+    elif titles != False:
+        title=titles.pop(0)
+    # extract cluster vars
+    link = clustering['linkage']
+    DVs = clustering['clustered_df'].columns
+    ordered_loading = loading.loc[DVs]
+    if absolute_loading:
+        ordered_loading = abs(ordered_loading)
+    # get cluster sizes
+    if labels is None:
+        labels=clustering['labels']
+    cluster_sizes = [np.sum(labels==(i+1)) for i in range(max(labels))]
+    link_function, colors = get_dendrogram_color_fun(link, clustering['reorder_vec'],
+                                                     labels)
+    
+    # set figure properties
+    figsize = (size, size*.6)
+    # set up axes' size 
+    heatmap_height = ordered_loading.shape[1]*.03
+    heat_size = [.2, heatmap_height]
+    dendro_size=[np.sum(heat_size), .3]
+    # set up plot axes
+    dendro_size = [0,dendro_size[0], .95, dendro_size[1]]
+    heatmap_size = [0,heat_size[0],.95,heat_size[1]]
+    cbar_size = [.97,heat_size[0],.01,heat_size[1]]
+    ordered_loading = ordered_loading.T
 
-        with sns.axes_style('white'):
-            fig = plt.figure(figsize=figsize)
-            ax1 = fig.add_axes(dendro_size) 
-            # **********************************
-            # plot dendrogram
-            # **********************************
-            with plt.rc_context({'lines.linewidth': size*.125}):
-                dendrogram(link, ax=ax1, link_color_func=link_function,
-                           orientation='top')
-            # change axis properties
-            ax1.tick_params(axis='x', which='major', labelsize=14,
-                            labelbottom='off')
-            ax1.get_yaxis().set_visible(False)
-            ax1.spines['top'].set_visible(False)
-            ax1.spines['right'].set_visible(False)
-            ax1.spines['bottom'].set_visible(False)
-            ax1.spines['left'].set_visible(False)
-            # **********************************
-            # plot loadings as heatmap below
-             # **********************************
-            ax2 = fig.add_axes(heatmap_size)
-            cbar_ax = fig.add_axes(cbar_size)
-            max_val = np.max(abs(loading.values))
-            # if max_val is high, just make it 1
-            if max_val > .95:
-                max_val = 1
-            sns.heatmap(ordered_loading, ax=ax2, 
-                        cbar=True, cbar_ax=cbar_ax,
-                        yticklabels=True,
-                        xticklabels=True,
-                        vmax =  max_val, vmin = -max_val,
-                        cbar_kws={'orientation': 'vertical',
-                                  'ticks': [-max_val, 0, max_val]},
-                        cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
-            ax2.tick_params(axis='y', labelsize=size*heat_size[1]*25/c, pad=size/2)
-            ax2.tick_params(axis='x', pad=size/4, length=size/4, width=size/6)
-            # change tick colors
-            xlabels=ax2.get_xticklabels()
-            cum_clusters = np.cumsum(cluster_sizes)
-            var_colors = []
-            for i, l in enumerate(ax2.xaxis.get_ticklines()[::2]):
-                color_index = np.digitize(int(l.get_xdata()[0]), cum_clusters)
-                var_colors.append(colors[color_index])
-                l.set_visible(False)
-                xlabels[i].set_visible(False)
-                
-            # format cbar axis
-            cbar_ax.set_yticklabels([format_num(-max_val), 0, format_num(max_val)])
-            cbar_ax.tick_params(labelsize=size*heat_size[1]*25/c, length=0, pad=size/2)
-            cbar_ax.set_ylabel('Factor Loading', rotation=-90, 
-                           fontsize=size*heat_size[1]*25/c, labelpad=size/2)
-            # add lines to heatmap to distinguish clusters
+    with sns.axes_style('white'):
+        fig = plt.figure(figsize=figsize)
+        ax1 = fig.add_axes(dendro_size) 
+        # **********************************
+        # plot dendrogram
+        # **********************************
+        with plt.rc_context({'lines.linewidth': size*.125}):
+            dendrogram(link, ax=ax1, link_color_func=link_function,
+                       orientation='top')
+        # change axis properties
+        ax1.tick_params(axis='x', which='major', labelsize=14,
+                        labelbottom='off')
+        ax1.get_yaxis().set_visible(False)
+        ax1.spines['top'].set_visible(False)
+        ax1.spines['right'].set_visible(False)
+        ax1.spines['bottom'].set_visible(False)
+        ax1.spines['left'].set_visible(False)
+        # **********************************
+        # plot loadings as heatmap below
+         # **********************************
+        ax2 = fig.add_axes(heatmap_size)
+        cbar_ax = fig.add_axes(cbar_size)
+        max_val = np.max(abs(loading.values))
+        # if max_val is high, just make it 1
+        if max_val > .95:
+            max_val = 1
+        sns.heatmap(ordered_loading, ax=ax2, 
+                    cbar=True, cbar_ax=cbar_ax,
+                    yticklabels=True,
+                    xticklabels=True,
+                    vmax =  max_val, vmin = -max_val,
+                    cbar_kws={'orientation': 'vertical',
+                              'ticks': [-max_val, 0, max_val]},
+                    cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
+        ax2.tick_params(axis='y', labelsize=size*heat_size[1]*25/c, pad=size/2)
+        ax2.tick_params(axis='x', pad=size/4, length=size/4, width=size/6)
+        # change tick colors
+        xlabels=ax2.get_xticklabels()
+        cum_clusters = np.cumsum(cluster_sizes)
+        var_colors = []
+        for i, l in enumerate(ax2.xaxis.get_ticklines()[::2]):
+            color_index = np.digitize(int(l.get_xdata()[0]), cum_clusters)
+            var_colors.append(colors[color_index])
+            l.set_visible(False)
+            xlabels[i].set_visible(False)
+            
+        # format cbar axis
+        cbar_ax.set_yticklabels([format_num(-max_val), 0, format_num(max_val)])
+        cbar_ax.tick_params(labelsize=size*heat_size[1]*25/c, length=0, pad=size/2)
+        cbar_ax.set_ylabel('Factor Loading', rotation=-90, 
+                       fontsize=size*heat_size[1]*25/c, labelpad=size/2)
+        # add lines to heatmap to distinguish clusters
+        if break_lines == True:
+            xlim = ax2.get_xlim(); 
+            ylim = ax2.get_ylim()
+            step = xlim[1]/len(labels)
+            cluster_breaks = [i*step for i in np.cumsum(cluster_sizes)]
+            ax2.vlines(cluster_breaks[:-1], ylim[0], ylim[1], linestyles='dashed',
+                       linewidth=size*.1, colors=[.5,.5,.5])
+        # **********************************
+        # plot variable identity
+        # **********************************
+        if var_labels:
+            ax3 = fig.add_axes([0,heat_size[0]*.2, .95, heat_size[0]*.7])
+            #f, ax3 = plt.subplots(1,1)
+            groups = [get_var_group(c) for c in ordered_loading.columns]
+            group_indices = np.array([g[0] for g in groups])
+            ax3.scatter(np.arange(len(groups))+.4, np.max(group_indices)-group_indices, 
+                     c=var_colors, s=size*.75)
+            ax3.set_xlim(0,len(groups))
+            for i in range(max(group_indices)+1):
+                ax3.hlines(i, 0, len(groups), colors=[.5,.5,.5], 
+                           linestyle=':', linewidth=size/20, 
+                           alpha=.5, zorder=-1)
             if break_lines == True:
-                xlim = ax2.get_xlim(); 
-                ylim = ax2.get_ylim()
+                xlim = ax3.get_xlim(); 
+                ylim = ax3.get_ylim()
                 step = xlim[1]/len(labels)
-                cluster_breaks = [i*step for i in np.cumsum(cluster_sizes)]
-                ax2.vlines(cluster_breaks[:-1], ylim[0], ylim[1], linestyles='dashed',
-                           linewidth=size*.1, colors=[.5,.5,.5])
-            # **********************************
-            # plot variable identity
-            # **********************************
-            if var_labels:
-                ax3 = fig.add_axes([0,heat_size[0]*.2, .95, heat_size[0]*.7])
-                #f, ax3 = plt.subplots(1,1)
-                groups = [get_var_group(c) for c in ordered_loading.columns]
-                group_indices = np.array([g[0] for g in groups])
-                ax3.scatter(np.arange(len(groups))+.4, np.max(group_indices)-group_indices, 
-                         c=var_colors, s=size*.75)
-                ax3.set_xlim(0,len(groups))
-                for i in range(max(group_indices)+1):
-                    ax3.hlines(i, 0, len(groups), colors=[.5,.5,.5], 
-                               linestyle=':', linewidth=size/20, 
-                               alpha=.5, zorder=-1)
-                if break_lines == True:
-                    xlim = ax3.get_xlim(); 
-                    ylim = ax3.get_ylim()
-                    step = xlim[1]/len(labels)
-                    cluster_breaks = np.cumsum(cluster_sizes)
-                    ax3.vlines(cluster_breaks[:-1], 0, max(group_indices), 
-                               linestyle=':', linewidth=size/20, colors=[.5,.5,.5])
-                # label groups
-                group_labels = sorted(set(groups))[::-1]
-                if group_labels[0][1] is None:
-                    group_labels[0] = (group_labels[0][0], 'Other')
-                ax3.set_yticks(range(max(group_indices)+1))
-                ax3.set_yticklabels([i[1] for i in group_labels],
-                                    fontsize=size/len(group_labels)*5)
-                ax3.tick_params('y', length=0)
-                ax3.get_xaxis().set_visible(False)
-                ax3.spines['top'].set_visible(False)
-                ax3.spines['right'].set_visible(False)
-                ax3.spines['bottom'].set_visible(False)
-                ax3.spines['left'].set_visible(False)
-            
-            # add title
-            if titles != False:
-                ax1.set_title(title, fontsize=size*2, y=1.05)
-                
-            
-        if plot_dir is not None:
-            save_figure(fig, path.join(plot_dir, 
-                                             'dendrogram_%s.%s' % (name, ext)),
-                        {'bbox_inches': 'tight', 'dpi': dpi})
-            plt.close()
+                cluster_breaks = np.cumsum(cluster_sizes)
+                ax3.vlines(cluster_breaks[:-1], 0, max(group_indices), 
+                           linestyle=':', linewidth=size/20, colors=[.5,.5,.5])
+            # label groups
+            group_labels = sorted(set(groups))[::-1]
+            if group_labels[0][1] is None:
+                group_labels[0] = (group_labels[0][0], 'Other')
+            ax3.set_yticks(range(max(group_indices)+1))
+            ax3.set_yticklabels([i[1] for i in group_labels],
+                                fontsize=size/len(group_labels)*5)
+            ax3.tick_params('y', length=0)
+            ax3.get_xaxis().set_visible(False)
+            ax3.spines['top'].set_visible(False)
+            ax3.spines['right'].set_visible(False)
+            ax3.spines['bottom'].set_visible(False)
+            ax3.spines['left'].set_visible(False)
         
+        # add title
+        if titles != False:
+            ax1.set_title(title, fontsize=size*2, y=1.05)
+            
+        
+    if plot_dir is not None:
+        save_figure(fig, path.join(plot_dir, 
+                                         'dendrogram_%s.%s' % (name, ext)),
+                    {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
+    
 def plot_graphs(HCA_graphs, plot_dir=None, ext='png'):
     if plot_dir is not None:
         makedirs(path.join(plot_dir, 'graphs'))
@@ -478,7 +460,7 @@ def plot_graphs(HCA_graphs, plot_dir=None, ext='png'):
     
     
 @set_seed(seed=15)
-def MDS_visualization(results, c, plot_dir=None, 
+def MDS_visualization(results, c, rotate='oblimin', plot_dir=None, 
                       dist_metric='abs_correlation', ext='png', **plot_kws):
     """ visualize EFA loadings and compares to raw space """
     def scale_plot(input_data, data_colors=None, cluster_colors=None,
@@ -522,7 +504,7 @@ def MDS_visualization(results, c, plot_dir=None,
     
     cluster_loadings = HCA.get_cluster_loading(EFA, 'data', c)
     cluster_loadings_mat = np.vstack([i[1] for i in cluster_loadings])
-    EFA_loading = abs(EFA.get_loading(c))
+    EFA_loading = abs(EFA.get_loading(c, rotate=rotate))
     EFA_loading_mat = EFA_loading.values
     EFA_space = np.vstack([cluster_loadings_mat, EFA_loading_mat])
     
@@ -652,8 +634,65 @@ def plot_cluster_factors(results, c, inp='data', ext='png', plot_dir=None):
                     {'bbox_inches': 'tight'})
         plt.close()
 
-
+def plot_silhouette(results, inp='data', labels=None, size=4.6,  dpi=300, 
+                    ext='png', plot_dir=None):
+    HCA = results.HCA
+    clustering = HCA.results[inp]
+    name = inp
+    sample_scores, avg_score = silhouette_analysis(clustering, labels)
+    if labels is None:
+        labels = clustering['labels']
+    n_clusters = len(np.unique(labels))
+    colors = sns.hls_palette(n_clusters)
+    fig, (ax, ax2) =  plt.subplots(1, 2, figsize=(size, size*.375))
+    y_lower = 5
+    for i in range(1,n_clusters+1):
+        # Aggregate the silhouette scores for samples belonging to
+        # cluster i, and sort them
+        ith_cluster_silhouette_values = sample_scores[labels == i]
+        ith_cluster_silhouette_values.sort()
+        size_cluster_i = ith_cluster_silhouette_values.shape[0]
+        # update y range and plot
+        y_upper = y_lower + size_cluster_i
+        ax.fill_betweenx(np.arange(y_lower, y_upper),
+                          0, ith_cluster_silhouette_values,
+                          alpha=0.7, color=colors[i-1])
+        # Label the silhouette plots with their cluster numbers at the middle
+        ax.text(-0.05, y_lower + 0.25 * size_cluster_i, str(i), fontsize=size/1.6)
+        # Compute the new y_lower for next plot
+        y_lower = y_upper + 5  # 10 for the 0 samples
+    ax.axvline(x=avg_score, color="red", linestyle="--", linewidth=size*.2)
+    ax.set_xlabel('Silhouette Score', fontsize=size, labelpad=10)
+    ax.set_ylabel('Cluster Separated DVs', fontsize=size)
+    ax.set_yticklabels([]); ax.set_yticks([])
+    ax.tick_params(axis='x', labelsize=size*.8)
+    ax.set_title('Dynamic Tree Cut', fontsize=size*1.2)
+    # plot silhouettes for constant thresholds
+    _, scores = get_constant_height_labels(clustering)
+    ax2.plot(*zip(*scores), 'o', color='b', markersize=size*.5)
+    # plot the dynamic tree cut point
+    ax2.plot(n_clusters, avg_score, 'o', color ='r', markersize=size*.75)
+    ax2.text(n_clusters+1, avg_score*1.07, 'Dynamic Tree Cut Score', 
+            color='r', fontsize=size*.8)
+    ax2.set_xlabel('Number of Clusters', fontsize=size, labelpad=10)
+    ax2.set_ylabel('Average Silhouette Score', fontsize=size)
+    ax2.set_title('Single Cut Height', fontsize=size*1.2)
+    ax2.tick_params(labelsize=size*.8)
+    plt.subplots_adjust(wspace=.3)
+    if plot_dir is not None:
+        save_figure(fig, path.join(plot_dir, 
+                                         'silhouette_analysis_%s.%s' % (name, ext)),
+                    {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
+    
 # Plotly dependent Sankey plots
+# check if plotly exists
+import importlib
+plotly_spec = importlib.util.find_spec("plotly")
+plotly_exists = plotly_spec is not None
+if plotly_exists:
+    import plotly.plotly as py   
+    import plotly.offline as offline
 
 def get_relationship(source_cluster, target_clusters):
     links = {}
@@ -667,10 +706,10 @@ def plot_cluster_sankey(results):
     if plotly_exists:
         HCA = results.HCA
         inputs = [i.split('-')[-1] for i in HCA.results.keys() if 'EFA' in i][::-1]
-        HCA.get_cluster_labels(inputs[0])
+        HCA.get_cluster_DVs(inputs[0])
         sources, targets, values = [], [], []
-        source_clusters = HCA.get_cluster_labels(inputs[0])
-        target_clusters = HCA.get_cluster_labels(inputs[1])
+        source_clusters = HCA.get_cluster_DVs(inputs[0])
+        target_clusters = HCA.get_cluster_DVs(inputs[1])
         max_index = len(source_clusters)
         for i, cluster in enumerate(source_clusters):
             links = get_relationship(cluster, target_clusters)
@@ -691,7 +730,7 @@ def plot_cluster_sankey(results):
         sankey_df = sankey_df.assign(Color=colors)
         
         
-        HCA.get_cluster_labels('EFA5')
+        HCA.get_cluster_DVs('EFA5')
         data_trace = dict(
             type='sankey',
             domain = dict(
@@ -741,13 +780,18 @@ def plot_HCA(results, plot_dir=None, size=10, dpi=300, verbose=False, ext='png')
     if verbose: print("Plotting dendrograms")
     plot_dendrogram(results, c, size=size, inp='data', var_labels=False,
                     titles=False,  plot_dir=plot_dir, ext=ext, dpi=dpi)
-    plot_dendrogram(results, c, inp='EFA%s' % c, var_labels=False,
+    plot_dendrogram(results, c, inp='EFA%s_oblimin' % c, var_labels=False,
                     titles=False, plot_dir=plot_dir, ext=ext, dpi=dpi)
     if verbose: print("Plotting dendrogram subbranches")
     plot_subbranches(results, c,  size=size/2, inp='data', 
                      plot_dir=plot_dir, ext=ext, dpi=dpi)
-    plot_subbranches(results, c,  size=size/2, inp='EFA%s' % c, 
+    plot_subbranches(results, c,  size=size/2, inp='EFA%s_oblimin' % c, 
                      plot_dir=plot_dir, ext=ext, dpi=dpi)
+    if verbose: print("Plotting silhouette analysis")
+    plot_silhouette(results, inp='data', size=size, 
+                    plot_dir=plot_dir, ext=ext, dpi=dpi)
+    plot_silhouette(results, inp='EFA%s_oblimin' % c, size=size,
+                    plot_dir=plot_dir, ext=ext, dpi=dpi)
 #    if verbose: print("Plotting clustering similarity")
 #    plot_clustering_similarity(results, plot_dir=plot_dir, verbose=verbose, ext=ext)
 #    if verbose: print("Plotting cluster polar plots")

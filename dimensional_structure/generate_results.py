@@ -42,11 +42,12 @@ if args.plot_backend:
 from glob import glob
 import numpy as np
 from os import makedirs, path
+import random
 from shutil import copyfile, copytree, rmtree
 import time
 
 from dimensional_structure.results import Results
-from dimensional_structure.cross_results_plots import plot_corr_heatmap, plot_corr_hist, plot_BIC
+from dimensional_structure.cross_results_plots import plot_corr_heatmap, plot_BIC
 from dimensional_structure.DA_plots import plot_DA
 from dimensional_structure.EFA_plots import plot_EFA
 from dimensional_structure.HCA_plots import plot_HCA
@@ -102,9 +103,8 @@ subsets = [{'name': 'task',
               'regex': '.',
               'factor_names': [],
               'predict': False}]
-
 results = None
-ID = None # ID will be created
+ID = str(random.getrandbits(16)) 
 # create/run results for each subset
 for subset in subsets:
     name = subset['name']
@@ -219,31 +219,32 @@ for subset in subsets:
         plot_HCA(results, HCA_plot_dir, size=size, dpi=dpi, ext=ext)
         
         # Plot prediction
-        target_order = results.DA.reorder_factors(results.DA.get_loading()).columns
-        change_target_order = [i + ' Change' for i in target_order]
-        for classifier in classifiers:
-            for EFA in [True, False]:
-                print("Plotting Prediction, classifier: %s, EFA: %s" % (classifier, EFA))
-                plot_prediction(results, target_order=target_order, EFA=EFA, 
-                                classifier=classifier, plot_dir=prediction_plot_dir,
-                                dpi=dpi,
-                                ext=ext,
-                                size=size)
-                print("Plotting Change Prediction, classifier: %s, EFA: %s" % (classifier, EFA))
-                try:
-                    plot_prediction(results, target_order=change_target_order, 
-                                    EFA=EFA, change=True,
+        if results.load_prediction_object() is not None:
+            target_order = results.DA.reorder_factors(results.DA.get_loading()).columns
+            change_target_order = [i + ' Change' for i in target_order]
+            for classifier in classifiers:
+                for EFA in [True, False]:
+                    print("Plotting Prediction, classifier: %s, EFA: %s" % (classifier, EFA))
+                    plot_prediction(results, target_order=target_order, EFA=EFA, 
                                     classifier=classifier, plot_dir=prediction_plot_dir,
                                     dpi=dpi,
                                     ext=ext,
                                     size=size)
-                except AssertionError:
-                    print('No shuffled data was found for %s change predictions, EFA: %s' % (name, EFA))
-                    
-        plot_prediction_comparison(results, change=False, size=size,
-                                   dpi=dpi, plot_dir=prediction_plot_dir)
-        plot_prediction_comparison(results, change=True, size=size,
-                                   dpi=dpi, plot_dir=prediction_plot_dir)
+                    print("Plotting Change Prediction, classifier: %s, EFA: %s" % (classifier, EFA))
+                    try:
+                        plot_prediction(results, target_order=change_target_order, 
+                                        EFA=EFA, change=True,
+                                        classifier=classifier, plot_dir=prediction_plot_dir,
+                                        dpi=dpi,
+                                        ext=ext,
+                                        size=size)
+                    except AssertionError:
+                        print('No shuffled data was found for %s change predictions, EFA: %s' % (name, EFA))
+                        
+            plot_prediction_comparison(results, change=False, size=size,
+                                       dpi=dpi, plot_dir=prediction_plot_dir)
+            plot_prediction_comparison(results, change=True, size=size,
+                                       dpi=dpi, plot_dir=prediction_plot_dir)
         
         # copy latest results and prediction to higher directory
         generic_dir = '_'.join(plot_dir.split('_')[0:-1])
@@ -256,8 +257,7 @@ if group_plot == True:
         print('*'*79)
         print('*'*79)
         print("Group Plots")
-    results = load_results(datafile)
-    plot_file = path.dirname(results['task'].get_plot_dir())
-    #plot_corr_hist(results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
-    plot_corr_heatmap(results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
-    plot_BIC(results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+    all_results = load_results(datafile)
+    plot_file = path.dirname(all_results['task'].get_plot_dir())
+    plot_corr_heatmap(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+    plot_BIC(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)

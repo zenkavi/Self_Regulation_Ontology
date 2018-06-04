@@ -146,6 +146,20 @@ def get_behav_data(dataset=None, file=None, filter_regex=None,
         data = filter_behav_data(data, filter_regex=filter_regex)
     return data.sort_index()
 
+def get_retest_data(dataset):
+    retest_data = get_behav_data(dataset, file='bootstrap_merged.csv.gz')
+    if retest_data is None:
+        return
+    retest_data = retest_data[~retest_data.index.isnull()]
+    retest_data = retest_data.loc[:, ['dv','icc', 'spearman', 'pearson']]
+    for column in retest_data.columns[1:]:
+        retest_data[column] = pandas.to_numeric(retest_data[column])
+    retest_data = retest_data.groupby('dv').mean()    
+    retest_data.rename(index={'dot_pattern_expectancy.BX.BY_hddm_drift': 'dot_pattern_expectancy.BX-BY_hddm_drift',
+                        'dot_pattern_expectancy.AY.BY_hddm_drift': 'dot_pattern_expectancy.AY-BY_hddm_drift'},
+                        inplace=True)
+    return retest_data
+    
 def get_info(item,infile=None):
     """
     get info from settings file

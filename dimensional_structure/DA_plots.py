@@ -34,7 +34,7 @@ def plot_factor_correlation(results, c, size=4.6, dpi=300, ext='png', plot_dir=N
     loading = DA.get_loading(c)
     # get factor correlation matrix
     reorder_vec = DA._get_factor_reorder(c)
-    phi = get_attr(DA.results['factor_tree_Rout'][c],'Phi')
+    phi = get_attr(DA.results['factor_tree_Rout_oblimin'][c],'Phi')
     phi = pd.DataFrame(phi, columns=loading.columns, index=loading.columns)
     phi = phi.iloc[reorder_vec, reorder_vec]
     with sns.plotting_context('notebook', font_scale=2):

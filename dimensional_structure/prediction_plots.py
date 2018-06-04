@@ -5,6 +5,7 @@ from os import path
 import pandas as pd
 import pickle
 import seaborn as sns
+from sklearn.preprocessing import MinMaxScaler
 from dimensional_structure.plot_utils import get_short_names, plot_loadings
 from selfregulation.utils.plot_utils import beautify_legend, CurvedText, save_figure
 
@@ -70,11 +71,12 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
             ax.set_yticklabels(labels)
 
 def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
-                    change=False, normalize=False, size=4.6,  
+                    rotate='oblimin', change=False, normalize=False, size=4.6,  
                     dpi=300, ext='png', plot_dir=None):
     predictions = results.load_prediction_object(EFA=EFA, 
                                                  change=change,
-                                                 classifier=classifier)
+                                                 classifier=classifier,
+                                                 rotate=rotate)
     sns.set_style('white')
     if predictions is None:
         print('No prediction object found!')
@@ -84,6 +86,7 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
     shuffled_predictions = results.load_prediction_object(EFA=EFA, 
                                                           classifier=classifier, 
                                                           change=change,
+                                                          rotate=rotate,
                                                           shuffle=True)
     assert shuffled_predictions is not None
     shuffled_predictions = shuffled_predictions['data']
@@ -277,5 +280,61 @@ def plot_prediction_comparison(results, size=4.6, change=False,
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
     
+def plot_prediction_relevance(results, EFA=True, classifier='lasso', 
+                              rotate='oblimin', change=False, size=4.6, 
+                              dpi=300, ext='png', plot_dir=None):
+    predictions = results.load_prediction_object(EFA=EFA, 
+                                                 change=change,
+                                                 classifier=classifier,
+                                                 rotate=rotate)['data']
 
+    targets = list(predictions.keys())
+    predictors = predictions[targets[0]]['predvars']
+    importances = abs(np.vstack([predictions[k]['importances'] for k in targets]))
+    # scale to 0-1 
+    scaler = MinMaxScaler()
+    scaled_importances = scaler.fit_transform(importances.T).T
+    # make proportion
+    scaled_importances = scaled_importances/np.expand_dims(scaled_importances.sum(1),1)
+    # convert to dataframe
+    scaled_df = pd.DataFrame(scaled_importances, index=targets, columns=predictors)
+    melted = scaled_df.melt(var_name='Factor', value_name='Importance')
+    plt.figure(figsize=(8,12))
+    f=sns.boxplot(y='Factor', x='Importance',  data=melted,
+                  width=.5)
+    if plot_dir is not None:
+        filename = 'prediction_relevance'
+        save_figure(f, path.join(plot_dir, filename), 
+                    {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
 
+def plot_prediction_similarity(results, EFA=True, classifier='lasso', 
+                               rotate='oblimin', change=False, size=4.6, 
+                               dpi=300, ext='png',  plot_dir=None):
+    predictions = results.load_prediction_object(EFA=EFA, 
+                                                 change=change,
+                                                 classifier=classifier,
+                                                 rotate=rotate)['data']
+
+    targets = list(predictions.keys())
+    predictors = predictions[targets[0]]['predvars']
+    importances = np.vstack([predictions[k]['importances'] for k in targets])
+    # convert to dataframe
+    df = pd.DataFrame(importances, index=targets, columns=predictors)
+    melted = df.melt(var_name='Factor', value_name='Importance')
+    plt.figure(figsize=(8,12))
+    f=sns.clustermap(df.T.corr(),
+                     cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
+    if plot_dir is not None:
+        filename = 'prediction_relevance'
+        save_figure(f, path.join(plot_dir, filename), 
+                    {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
+
+    
+    
+    
+    
+    
+    
+    
