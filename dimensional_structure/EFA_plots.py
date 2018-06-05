@@ -63,11 +63,16 @@ def plot_BIC_SABIC(results, size=2.3, dpi=300, ext='png', plot_dir=None):
                         {'bbox_inches': 'tight', 'dpi': dpi})
             plt.close()
 
-def plot_communality(results, c, rotate='oblimin',
+def plot_communality(results, c, rotate='oblimin', retest_threshold=.2,
                      size=20, dpi=300, ext='png', plot_dir=None):
     EFA = results.EFA
     loading = EFA.get_loading(c, rotate=rotate)
-    communality = (loading**2).sum(1).sort_values()
+    # get communality from psych out
+    fa = EFA.results['factor_tree_Rout_%s' % rotate][c]
+    communality = get_attr(fa, 'communalities')
+    communality = pd.Series(communality, index=loading.index)
+    # alternative calculation
+    #communality = (loading**2).sum(1).sort_values()
     communality.index = [i.replace('.logTr','') for i in communality.index]
     # load retest data
     retest_data = get_retest_data(dataset=results.dataset.replace('Complete','Retest'))
@@ -84,9 +89,12 @@ def plot_communality(results, c, rotate='oblimin',
         # noise ceiling
         noise_ceiling = retest_data.pearson
         # remove very low reliabilities
-        noise_ceiling[noise_ceiling<.2]= np.nan
+        if retest_threshold:
+            noise_ceiling[noise_ceiling<retest_threshold]= np.nan
         # adjust
         adjusted_communality = communality/noise_ceiling
+        print_var = format_num(np.mean(communality))
+        print_adj = format_num(np.mean(adjusted_communality))
         # correlation
         correlation = pd.concat([communality, noise_ceiling], axis=1).corr().iloc[0,1]
         noise_ceiling.replace(np.nan, 0, inplace=True)
@@ -132,9 +140,13 @@ def plot_communality(results, c, rotate='oblimin',
             #ax.spines['left'].set_visible(False)
             ax.spines['top'].set_visible(False)
             # add correlation
-            correlation = "{0:0.2f}".format(np.mean(correlation))
-            ax.text(1, 1.25, 'Correlation Between Communality \nand Test-Retest: %s' % correlation,
+            correlation = format_num(np.mean(correlation))
+            ax.text(1.1, 1.25, 'Correlation Between Communality \nand Test-Retest: %s' % correlation,
                     size=size*2)
+            ax.text(1.1, 1, 'Variance Explained: %s\nAdjusted Variance Explained: %s' % (print_var,
+                                                                                       print_adj),
+                    size=size*2)
+
         if plot_dir:
             filename = 'communality_dist-EFA%s.%s' % (c, ext)
             save_figure(f, path.join(plot_dir, filename), 
@@ -682,7 +694,7 @@ def plot_EFA(results, plot_dir=None, verbose=False, size=4.6, dpi=300, ext='png'
     if verbose: print("Plotting factor bars")
     plot_bar_factors(results, c, size=size, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting factor heatmap")
-    plot_heatmap_factors(results, c=c, size=size, plot_dir=plot_dir, dpi=dpi,  ext=ext)
+    plot_heatmap_factors(results, c=c, thresh=0, size=size, plot_dir=plot_dir, dpi=dpi, ext=ext)
 #    if verbose: print("Plotting task factors")
 #    plot_task_factors(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)
 #    plot_task_factors(results, c, normalize_loadings=True, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)

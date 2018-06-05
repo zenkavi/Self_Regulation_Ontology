@@ -363,7 +363,7 @@ class HDBScan_Analysis():
     def cluster_EFA(self, EFA, c, rotate='oblimin'):
         loading = EFA.get_loading(c, rotate=rotate)
         output = hdbscan_cluster(loading)
-        self.results['EFA%s' % c] = output
+        self.results['EFA%s_%s' % (c, rotate)] = output
         
     def get_cluster_DVs(self, inp='data'):
         cluster = self.results['%s' % inp]
@@ -680,7 +680,7 @@ class Results(EFA_Analysis, HCA_Analysis):
         demographic_factors = self.DA.reorder_factors(self.DA.get_scores())
         c = factor_scores.shape[1]
         # get raw data reorganized by clustering
-        clustering=self.HCA.results['EFA%s' % c]
+        clustering=self.HCA.results['EFA%s_%s' % (c, rotate)]
         labels = clustering['clustered_df'].columns
         raw_data = self.data[labels]
         
@@ -709,7 +709,7 @@ class Results(EFA_Analysis, HCA_Analysis):
         factor_scores = self.EFA.get_scores(rotate=rotate)
         c = factor_scores.shape[1]
         # get raw data reorganized by clustering
-        clustering=self.HCA.results['EFA%s' % c]
+        clustering=self.HCA.results['EFA%s_%s' % (c, rotate)]
         labels = clustering['clustered_df'].columns
         raw_data = self.data[labels]
         

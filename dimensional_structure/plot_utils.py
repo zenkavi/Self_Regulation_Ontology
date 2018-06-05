@@ -12,17 +12,26 @@ from selfregulation.utils.plot_utils import CurvedText, beautify_legend
 def get_short_names():
     shortened_factors = {
         'Sensation Seeking': 'SS',
-        'Mindfulness': 'Mind',
-        'Emotional Control': 'Em-Con.',
-        'Impulsivity': 'Imp',
-        'Goal-Directedness': 'Goal',
-        'Reward Sensitivity': 'Rew.',
+        'Mindfulness': 'MND',
+        'Emotional Control': 'EMC',
+        'Impulsivity': 'IMP',
+        'Goal-Directedness': 'GD',
+        'Reward Sensitivity': 'RS',
         'Risk Perception': 'RP',
-        'Eating Control': 'Eat',
-        'Ethical Risk-Taking': 'Eth-RT',
-        'Social Risk-Taking': 'Soc-RT',
-        'Financial Risk-Taking': 'Fin-RT',
-        'Agreeableness': 'Agr'
+        'Eating Control': 'EC',
+        'Ethical Risk-Taking': 'ERT',
+        'Social Risk-Taking': 'SRT',
+        'Financial Risk-Taking': 'FRT',
+        'Agreeableness': 'AGR',
+        'Unsafe Drinking': 'UD',
+        'Binge Drinking': 'BD',
+        'Problem Drinking': 'PD',
+        'Income / Life Milestones': 'ILM',
+        'Drug Use': 'DU',
+        'Daily Smoking': 'DS',
+        'Lifetime Smoking': 'LS',
+        'Mental Health': 'MH',
+        'Obesity': 'OBS'
         }
     return shortened_factors
 

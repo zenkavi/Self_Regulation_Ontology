@@ -154,4 +154,4 @@ def plot_DA(results, plot_dir=None, verbose=False, size=10, dpi=300, ext='png',
     if verbose: print("Plotting factor correlations")
     plot_factor_correlation(results, c, size=size, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting factor bars")
-    plot_heatmap_factors(results, c, size=size, plot_dir=plot_dir, dpi=dpi,  ext=ext)
+    plot_heatmap_factors(results, c, thresh=0, size=size, plot_dir=plot_dir, dpi=dpi,  ext=ext)

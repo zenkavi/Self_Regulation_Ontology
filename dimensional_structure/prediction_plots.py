@@ -1,3 +1,4 @@
+import math
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
@@ -70,7 +71,7 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
             labels = [replace_dict.get(i, i) for i in labels]
             ax.set_yticklabels(labels)
 
-def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
+def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
                     rotate='oblimin', change=False, normalize=False, size=4.6,  
                     dpi=300, ext='png', plot_dir=None):
     predictions = results.load_prediction_object(EFA=EFA, 
@@ -119,6 +120,7 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
     shuffled_r2s = [(i, k) if k==k else (i,0) for i, k in shuffled_r2s]
     
     # plot
+    shuffled_grey = [.3,.3,.3]
     # plot variables
     figsize = (size, size*.75)
     fig = plt.figure(figsize=figsize)
@@ -133,10 +135,10 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
     # plot shuffled values above
     if not normalize:
         ax1.bar(ind, [i[1] for i in shuffled_r2s], width, 
-                 color='none', edgecolor=[.4,.4,.4], 
+                 color='none', edgecolor=shuffled_grey, 
                 linewidth=size/10, linestyle='--', label='95% Shuffled Prediction')
         ax1.bar(ind+width, [i[1] for i in insample_shuffled_r2s], width, 
-                color='none', edgecolor=[.4,.4,.4], 
+                color='none', edgecolor=shuffled_grey, 
                 linewidth=size/10, linestyle='--')
     
     ax1.set_xticks(np.arange(0,len(r2s))+width/2)
@@ -152,7 +154,7 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='lasso',
         ax1.set_ylabel('R2', fontsize=size, labelpad=10)
     # add a legend
     leg = ax1.legend(fontsize=size, loc='upper left')
-    beautify_legend(leg, colors[:2]+[[0,0,0]])
+    beautify_legend(leg, colors[1:3]+[shuffled_grey])
     # change y extents
     ylim = ax1.get_ylim()
     r2_max = max(max(r2s, key=lambda x: x[1])[1],
@@ -280,9 +282,10 @@ def plot_prediction_comparison(results, size=4.6, change=False,
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
     
-def plot_prediction_relevance(results, EFA=True, classifier='lasso', 
+def plot_prediction_relevance(results, EFA=True, classifier='ridge', 
                               rotate='oblimin', change=False, size=4.6, 
                               dpi=300, ext='png', plot_dir=None):
+    """ Plots the relevant relevance of each factor for predicting all outcomes """
     predictions = results.load_prediction_object(EFA=EFA, 
                                                  change=change,
                                                  classifier=classifier,
@@ -308,9 +311,10 @@ def plot_prediction_relevance(results, EFA=True, classifier='lasso',
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
 
-def plot_prediction_similarity(results, EFA=True, classifier='lasso', 
-                               rotate='oblimin', change=False, size=4.6, 
-                               dpi=300, ext='png',  plot_dir=None):
+def plot_outcome_ontological_similarity(results, EFA=True, classifier='ridge', 
+                                        rotate='oblimin', change=False, size=4.6, 
+                                        dpi=300, ext='png',  plot_dir=None):
+    """ plots similarity of ontological fingerprints between outcomes """
     predictions = results.load_prediction_object(EFA=EFA, 
                                                  change=change,
                                                  classifier=classifier,
@@ -321,10 +325,11 @@ def plot_prediction_similarity(results, EFA=True, classifier='lasso',
     importances = np.vstack([predictions[k]['importances'] for k in targets])
     # convert to dataframe
     df = pd.DataFrame(importances, index=targets, columns=predictors)
-    melted = df.melt(var_name='Factor', value_name='Importance')
     plt.figure(figsize=(8,12))
     f=sns.clustermap(df.T.corr(),
                      cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
+    ax = f.ax_heatmap
+    ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
     if plot_dir is not None:
         filename = 'prediction_relevance'
         save_figure(f, path.join(plot_dir, filename), 
@@ -334,7 +339,41 @@ def plot_prediction_similarity(results, EFA=True, classifier='lasso',
     
     
     
+def plot_factor_fingerprint(results, classifier='ridge', rotate='oblimin', 
+                            change=False, normalize=False, size=4.6,  
+                            dpi=300, ext='png', plot_dir=None):
+    predictions = results.load_prediction_object(EFA=True, 
+                                                 change=change,
+                                                 classifier=classifier,
+                                                 rotate=rotate)['data']
+    targets = list(predictions.keys())
+    factors = predictions[targets[0]]['predvars']
+    importances = np.vstack([predictions[k]['importances'] for k in targets])
+
+    ncols = 3
+    nrows = math.ceil(len(factors)/ncols)
+    figsize = (size, size*nrows/ncols)
+    f, axes = plt.subplots(nrows, ncols, figsize=figsize, 
+                           subplot_kw={'projection':'polar'})
+    plt.subplots_adjust(wspace=.5, hspace=.5)
+    axes = f.get_axes()
+    for i, factor in enumerate(factors):
+        label_importance = [targets, [importances[:,i]]]
+        visualize_importance(label_importance, axes[i], yticklabels=False,
+                             xticklabels=True,
+                             title=factor,
+                             label_size=size,
+                             label_scale=.23,
+                             color=colors[3])
     
+
+    if plot_dir is not None:
+        changestr = '_change' if change else ''
+        filename = 'EFA%s_%s_factor_fingerprint.%s' % (changestr, classifier, ext)
+
+        save_figure(f, path.join(plot_dir, filename), 
+                    {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
     
     
     

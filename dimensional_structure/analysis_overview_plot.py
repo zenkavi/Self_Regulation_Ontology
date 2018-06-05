@@ -416,13 +416,13 @@ back.text(.567, .24, 'Multidimensional Scaling', fontsize=basefont,
           horizontalalignment='center')
 
 # figure labels
-back.text(-.13, 1, 'a', fontsize=basefont*1.56255, fontweight='bold')
-back.text(.12, 1, 'b', fontsize=basefont*1.56255, fontweight='bold')
-back.text(.62, 1, 'c', fontsize=basefont*1.56255, fontweight='bold')
-back.text(.25, .49, 'd', fontsize=basefont*1.56255, fontweight='bold')
-back.text(.85, .49, 'e', fontsize=basefont*1.56255, fontweight='bold')
-back.text(.25, .24, 'f', fontsize=basefont*1.56255, fontweight='bold')
-back.text(.85, .24, 'g', fontsize=basefont*1.56255, fontweight='bold')
+back.text(-.13, 1, 'A', fontsize=basefont*1.56255, fontweight='bold')
+back.text(.12, 1, 'B', fontsize=basefont*1.56255, fontweight='bold')
+back.text(.62, 1, 'C', fontsize=basefont*1.56255, fontweight='bold')
+back.text(.25, .49, 'D', fontsize=basefont*1.56255, fontweight='bold')
+back.text(.85, .49, 'E', fontsize=basefont*1.56255, fontweight='bold')
+back.text(.25, .24, 'F', fontsize=basefont*1.56255, fontweight='bold')
+back.text(.85, .24, 'G', fontsize=basefont*1.56255, fontweight='bold')
 
 
 
