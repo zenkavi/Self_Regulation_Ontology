@@ -640,6 +640,10 @@ def plot_silhouette(results, inp='data', labels=None, size=4.6,  dpi=300,
     clustering = HCA.results[inp]
     name = inp
     sample_scores, avg_score = silhouette_analysis(clustering, labels)
+    # raw clustering for comparison
+    raw_clustering = HCA.results['data']
+    _, raw_avg_score = silhouette_analysis(raw_clustering, labels)
+    
     if labels is None:
         labels = clustering['labels']
     n_clusters = len(np.unique(labels))
@@ -661,23 +665,23 @@ def plot_silhouette(results, inp='data', labels=None, size=4.6,  dpi=300,
         ax.text(-0.05, y_lower + 0.25 * size_cluster_i, str(i), fontsize=size/1.6)
         # Compute the new y_lower for next plot
         y_lower = y_upper + 5  # 10 for the 0 samples
-    ax.axvline(x=avg_score, color="red", linestyle="--", linewidth=size*.2)
-    ax.set_xlabel('Silhouette Score', fontsize=size, labelpad=10)
+    ax.axvline(x=avg_score, color="red", linestyle="--", linewidth=size*.1)
+    ax.set_xlabel('Silhouette Score', fontsize=size, labelpad=5)
     ax.set_ylabel('Cluster Separated DVs', fontsize=size)
     ax.set_yticklabels([]); ax.set_yticks([])
     ax.tick_params(axis='x', labelsize=size*.8)
     ax.set_title('Dynamic Tree Cut', fontsize=size*1.2)
     # plot silhouettes for constant thresholds
     _, scores = get_constant_height_labels(clustering)
-    ax2.plot(*zip(*scores), 'o', color='b', markersize=size*.5)
+    ax2.plot(*zip(*scores), 'o', color='b', markersize=size*.5, label='Fixed Height Cut')
     # plot the dynamic tree cut point
-    ax2.plot(n_clusters, avg_score, 'o', color ='r', markersize=size*.75)
-    ax2.text(n_clusters+1, avg_score*1.07, 'Dynamic Tree Cut Score', 
-            color='r', fontsize=size*.8)
-    ax2.set_xlabel('Number of Clusters', fontsize=size, labelpad=10)
+    ax2.plot(n_clusters, avg_score, 'o', color ='r', markersize=size*.75, label='EFA Dynamic Cut')
+    ax2.plot(n_clusters, raw_avg_score, 'o', color ='k', markersize=size*.75, label='Raw Dynamic Cut')
+    ax2.set_xlabel('Number of Clusters', fontsize=size, labelpad=5)
     ax2.set_ylabel('Average Silhouette Score', fontsize=size)
     ax2.set_title('Single Cut Height', fontsize=size*1.2)
     ax2.tick_params(labelsize=size*.8)
+    ax2.legend(loc='center right', fontsize=size*.8)
     plt.subplots_adjust(wspace=.3)
     if plot_dir is not None:
         save_figure(fig, path.join(plot_dir, 
@@ -788,8 +792,6 @@ def plot_HCA(results, plot_dir=None, size=10, dpi=300, verbose=False, ext='png')
     plot_subbranches(results, c,  size=size/2, inp='EFA%s_oblimin' % c, 
                      plot_dir=plot_dir, ext=ext, dpi=dpi)
     if verbose: print("Plotting silhouette analysis")
-    plot_silhouette(results, inp='data', size=size, 
-                    plot_dir=plot_dir, ext=ext, dpi=dpi)
     plot_silhouette(results, inp='EFA%s_oblimin' % c, size=size,
                     plot_dir=plot_dir, ext=ext, dpi=dpi)
 #    if verbose: print("Plotting clustering similarity")

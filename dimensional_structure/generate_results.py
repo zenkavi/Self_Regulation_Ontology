@@ -8,7 +8,8 @@ parser.add_argument('-dataset', default=None)
 parser.add_argument('-no_analysis', action='store_false')
 parser.add_argument('-no_prediction', action='store_false')
 parser.add_argument('-no_plot', action='store_false')
-parser.add_argument('-no_group', action='store_false')
+parser.add_argument('-no_group_analysis', action='store_false')
+parser.add_argument('-no_group_plot', action='store_false')
 parser.add_argument('-bootstrap', action='store_true')
 parser.add_argument('-boot_iter', type=int, default=1000)
 parser.add_argument('-shuffle_repeats', type=int, default=1)
@@ -25,7 +26,8 @@ dataset = args.dataset
 run_analysis = args.no_analysis
 run_prediction = args.no_prediction
 run_plot = args.no_plot
-group_plot = args.no_group
+group_analysis = args.no_group_analysis
+group_plot = args.no_group_plot
 bootstrap = args.bootstrap
 boot_iter = args.boot_iter
 shuffle_repeats = args.shuffle_repeats
@@ -244,21 +246,29 @@ for subset in subsets:
                     except AssertionError:
                         print('No shuffled data was found for %s change predictions, EFA: %s' % (name, EFA))
                         
-            plot_prediction_comparison(results, change=False, size=size,
+            plot_prediction_comparison(results, change=False, size=size, ext=ext,
                                        dpi=dpi, plot_dir=prediction_plot_dir)
-            plot_prediction_comparison(results, change=True, size=size,
+            plot_prediction_comparison(results, change=True, size=size, ext=ext, 
                                        dpi=dpi, plot_dir=prediction_plot_dir)
-            plot_factor_fingerprint(results, change=False, size=size,
+            plot_factor_fingerprint(results, change=False, size=size, ext=ext,
                                     dpi=dpi, plot_dir=prediction_plot_dir)
-            plot_factor_fingerprint(results, change=True, size=size,
-                               dpi=dpi, plot_dir=prediction_plot_dir)
+            plot_factor_fingerprint(results, change=True, size=size, ext=ext,
+                                  dpi=dpi, plot_dir=prediction_plot_dir)
         
         # copy latest results and prediction to higher directory
         generic_dir = '_'.join(plot_dir.split('_')[0:-1])
         if path.exists(generic_dir):
             rmtree(generic_dir)
         copytree(plot_dir, generic_dir)
-        
+
+if group_analysis == True:
+    run_group_prediction([results['survey'], results['task']], 
+                         shuffle=False, classifier='lasso',
+                         include_raw_demographics=False, rotate='oblimin',
+                         verbose=False)
+
+    
+    
 if group_plot == True:
     if verbose:
         print('*'*79)
@@ -268,3 +278,40 @@ if group_plot == True:
     plot_file = path.dirname(all_results['task'].get_plot_dir())
     plot_corr_heatmap(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
     plot_BIC(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+
+# move plots to paper directory
+paper_dir = path.join(basedir, 'Results', 'Psych_Ontology_Paper')
+figure_lookup = {
+        'analysis_overview': 'Fig1: Analysis Overview',
+        'data_correlations': 'Fig2: Task-Survey Correlation',
+        'survey/HCA/dendrogram_EFA12_oblimin': 'Fig3: Survey Dendrogram',
+        'task/HCA/dendrogram_EFA5_oblimin': 'Fig4: Task Dendrogram',
+        'survey/prediction/EFA_ridge_prediction_output': 'Fig5: Survey prediction',
+        'task/prediction/EFA_ridge_prediction_output': 'Fig6: Task prediction',
+        'survey/EFA/factor_heatmap_EFA12': 'FigS2: Survey EFA',
+        'task/EFA/factor_heatmap_EFA5': 'FigS3: Task EFA',
+        'task/DA/factor_heatmap_DA9': 'FigS4: Outcome EFA',
+        'BIC_curves': 'FigS5: BIC curves',
+        'survey/EFA/factor_correlations_EFA12': 'FigS6: Survey 2nd-order',
+        'task/EFA/factor_correlations_EFA5': 'FigS7: Task 2nd-order',
+        'task/DA/factor_correlations_DA9': 'FigS8: Outcome 2nd-order',
+        # communality
+        'survey/HCA/dendrogram_data': 'FigS10: Survey Raw Dendrogram',
+        'task/HCA/dendrogram_data': 'FigS11: Task Raw Dendrogram',
+        'survey/HCA/silhouette_analysis': 'FigS12a: Survey Silhouette',
+        'task/HCA/silhouette_analysis': 'FigS12b: Task Silhouette',
+        # survey clusters
+        # task clusters
+        # combined EFA prediction
+        'survey/prediction/IDM_ridge_prediction_output': 'FigS16: Survey IDM prediction',
+        'task/prediction/IDM_ridge_prediction_output': 'FigS17: Task IDM prediction',
+        'survey/prediction/EFA_ridge_factor_fingerprint': 'FigS18: Survey Factor Fingerprints'
+        }
+    
+    
+for filey in figure_lookup.keys():
+    try:
+        copyfile(path.join(plot_file, filey+'.'+ext), 
+                 path.join(paper_dir, 'Plots', figure_lookup[filey]+'.'+ext))
+    except FileNotFoundError:
+        print('%s not found' % filey)

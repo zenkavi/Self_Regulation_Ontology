@@ -251,7 +251,7 @@ def plot_BIC(all_results, size=4.6, dpi=300, ext='png', plot_dir=None):
             ax1.tick_params(labelsize=height*2)
             ax1.set_title(name, fontsize=height*4)
     if plot_dir is not None:
-        save_figure(fig, path.join(plot_dir, 'BIC_SABIC_curves.%s' % ext),
+        save_figure(fig, path.join(plot_dir, 'BIC_curves.%s' % ext),
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
             
