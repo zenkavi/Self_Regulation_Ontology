@@ -72,7 +72,8 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
             ax.set_yticklabels(labels)
 
 def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
-                    rotate='oblimin', change=False, normalize=False, size=4.6,  
+                    rotate='oblimin', change=False, normalize=False, 
+                    metric='R2', size=4.6,  
                     dpi=300, ext='png', plot_dir=None):
     predictions = results.load_prediction_object(EFA=EFA, 
                                                  change=change,
@@ -95,20 +96,20 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
     if target_order is None:
         target_order = predictions.keys()
     # get prediction success
-    r2s = [[k,predictions[k]['scores_cv'][0]['R2']] for k in target_order]
-    insample_r2s = [[k, predictions[k]['scores_insample'][0]['R2']] for k in target_order]
+    r2s = [[k,predictions[k]['scores_cv'][0][metric]] for k in target_order]
+    insample_r2s = [[k, predictions[k]['scores_insample'][0][metric]] for k in target_order]
     # get shuffled values
     shuffled_r2s = []
     insample_shuffled_r2s = []
     for i, k in enumerate(target_order):
         # normalize r2s to significance
-        R2s = [i['R2'] for i in shuffled_predictions[k]['scores_cv']]
+        R2s = [i[metric] for i in shuffled_predictions[k]['scores_cv']]
         R2_95 = np.percentile(R2s, 95)
         shuffled_r2s.append((k,R2_95))
         if normalize:
             r2s[i] = (r2s[i][0], r2s[i][1]-R2_95)
         # and insample
-        R2s = [i['R2'] for i in shuffled_predictions[k]['scores_insample']]
+        R2s = [i[metric] for i in shuffled_predictions[k]['scores_insample']]
         R2_95 = np.percentile(R2s, 95)
         insample_shuffled_r2s.append((k,R2_95))
         if normalize:
@@ -151,7 +152,7 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
         ax1.hlines(0, xlow, xhigh, color='k', lw=size/5)
         ax1.set_xlim(xlow,xhigh)
     else:
-        ax1.set_ylabel('R2', fontsize=size, labelpad=10)
+        ax1.set_ylabel(metric, fontsize=size, labelpad=10)
     # add a legend
     leg = ax1.legend(fontsize=size, loc='upper left')
     beautify_legend(leg, colors[1:3]+[shuffled_grey])
