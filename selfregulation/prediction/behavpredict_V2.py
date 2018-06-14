@@ -90,6 +90,7 @@ class BehavPredict:
         self.predictor_set=None
         self.dropped_na_columns=None
         self.binary_cutoffs={}
+        self.clfs={}
         self.scores={}
         self.importances={}
         self.scores_insample={}
@@ -263,7 +264,7 @@ class BehavPredict:
                 importances.append(binary_clf.coef_)
         if self.verbose:
             print('overfit mean accuracy = %0.3f'%scores[0])
-        return scores,importances
+        return scores, importances, binary_clf
                 
     def run_regression(self,v,imputer):
         if self.classifier=='rf':
@@ -328,8 +329,8 @@ class BehavPredict:
                 
         if self.verbose:
             print('overfit scores:',scores)
-        return scores, importances
-    
+        return scores, importances, clf
+                    
     # linear models with cross validation
     def run_crossvalidation(self,v,outer_cv=None,
                             nlambda=100):
@@ -376,7 +377,6 @@ class BehavPredict:
             numpy.random.shuffle(Ydata)
         # loop over shuffle number. If no shuffle, just go through once
         scores = []
-        importances = []
         Xdata=Xdata.values
         for i in range(max(1,self.shuffle)):
             pred=numpy.zeros(Ydata.shape[0])
@@ -414,15 +414,9 @@ class BehavPredict:
                 self.lambda_optim=[clf.C_[0]]
                 if self.verbose:
                     print('optimal lambdas:',self.lambda_optim)
-            # determine feature importance by fitting on the whole dataset
-            clf.fit(Xdata, Ydata)
-            if hasattr(clf,'feature_importances_'):  # for random forest
-                importances.append(clf.feature_importances_)
-            elif hasattr(clf,'coef_'):  # for lasso
-                importances.append(clf.coef_)
         if self.verbose:
             print('mean accuracy = %0.3f'%scores[0])
-        return scores, importances
+        return scores
 
     def run_crossvalidation_regression(self,v,imputer,outer_cv=None,
                             nlambda=100):
@@ -464,7 +458,6 @@ class BehavPredict:
             
         # loop over shuffle number. If no shuffle, just go through once
         scores = []
-        importances = []
         Xdata=Xdata.values
         for i in range(max(1,self.shuffle)):
             pred=numpy.zeros(Ydata.shape[0])
@@ -502,12 +495,6 @@ class BehavPredict:
                if self.verbose:
                    print(v,'zero variance in predictions')
                scores.append({'R2': numpy.nan, 'MAE': numpy.nan})
-            # determine feature importance by fitting on the whole dataset
-            clf.fit(Xdata, Ydata)
-            if hasattr(clf,'feature_importances_'):  # for random forest
-                importances.append(clf.feature_importances_)
-            elif hasattr(clf,'coef_'):  # for lasso
-                importances.append(clf.coef_)
             if hasattr(clf,'lambda_optim'):
                 self.lambda_optim=clf.lambda_optim
                 if self.verbose:
@@ -518,7 +505,7 @@ class BehavPredict:
             
         if self.verbose:
             print('scores:',scores)
-        return scores,importances
+        return scores
     
     def write_data(self, vars):
         shuffle_flag='shuffle_' if self.shuffle else ''
@@ -554,6 +541,7 @@ class BehavPredict:
             info['data'][v]={}
             info['data'][v]['predvars']=list(self.behavdata.columns)
             try:
+                info['data'][v]['clf']=self.clfs[v]
                 info['data'][v]['scores_cv']=self.scores[v]
                 info['data'][v]['importances']=self.importances[v]
             except KeyError:
