@@ -45,17 +45,17 @@ task_variables = list(task_subset.index)
 
 
 size = args.size
-f = plt.figure(figsize=(12, 12))
+f = plt.figure(figsize=(size, size))
 basefont = size*1.1
-basemarker = size*18
+basemarker = size**2*1.2
 basewidth = size*.12
 
 
 participant_ax1 = f.add_axes([.25,.555,.28,.16]) 
 participant_ax2 = f.add_axes([.25,.75,.28,.2]) 
 
-loading_ax1 = f.add_axes([.625,.545,.25,.162]) 
-loading_ax2 = f.add_axes([.625,.745,.25,.189]) 
+loading_ax1 = f.add_axes([.625,.555,.25,.1625]) 
+loading_ax2 = f.add_axes([.625,.753,.25,.193]) 
 
 participant_distance = f.add_axes([.3,.29,.16,.16]) 
 loading_distance = f.add_axes([.675,.29,.16,.16]) 
@@ -100,8 +100,10 @@ for task_i in range(len(tasks)):
                   linewidth=basewidth)
         # plot values
         scatter_colors = [list(color)+[alpha] for alpha in np.linspace(1,0, len(plot_vals))]
-        ax.scatter(range(len(plot_vals)), plot_vals, color=scatter_colors,
-                   s=basemarker*.23)
+        with sns.axes_style("white"):
+            ax.scatter(range(len(plot_vals)), plot_vals, color=scatter_colors,
+                       s=basemarker*.23, edgecolors='none')
+            ax.grid(False)
     # make x ticks invisible
     ax.set_xticklabels('')
     ax.tick_params(axis='both', length=0)
@@ -156,8 +158,8 @@ for task_i in range(len(tasks)):
 # Distance Matrices
 # ****************************************************************************
 participant_distances = squareform(abs_pdist(data.T))
-participant_distances = results['task'].HCA.results['clustering_input-data']['clustered_df']
-loading_distances = results['task'].HCA.results['clustering_input-EFA5']['clustered_df']
+participant_distances = results['task'].HCA.results['data']['clustered_df']
+loading_distances = results['task'].HCA.results['EFA5_oblimin']['clustered_df']
 sns.heatmap(participant_distances, ax=participant_distance,
             cmap=ListedColormap(sns.color_palette('gray', n_colors=100)),
             xticklabels=False, yticklabels=False, square=True, cbar=False)
@@ -167,16 +169,12 @@ sns.heatmap(loading_distances, ax=loading_distance,
             cbar_kws={'ticks': [0, .99]}, cbar_ax=cbar_ax2)
 participant_distance.set_ylabel('DV', fontsize=basefont*.875)
 loading_distance.set_ylabel('DV', fontsize=basefont*.875)
-participant_distance.set_title('x,y = DV vector in R^522', fontsize=basefont*.6)
-loading_distance.set_title('x,y = DV vector in R^5', fontsize=basefont*.6)
+participant_distance.set_title('x,y = DV vector in R^522', fontsize=basefont*.875)
+loading_distance.set_title('x,y = DV vector in R^5', fontsize=basefont*.875)
 
 # plot location of top variables
 # update limits
-pad = 0
 lim = list(participant_distance.get_xlim())
-lim[0]-=pad; lim[1]+=pad
-participant_distance.set_xlim(lim); participant_distance.set_ylim(lim[::-1])
-loading_distance.set_xlim(lim); loading_distance.set_ylim(lim[::-1])
 for label in task_variables:
     if 'drift' in label:
         name = 'drift rate'
@@ -187,22 +185,34 @@ for label in task_variables:
     else:
         name = 'SSRT'
     line_color = get_var_color(label)
-    var_index = np.where(participant_distances.index==label)[0][0]+pad
+    var_index = np.where(participant_distances.index==label)[0][0]
     # plot pretty colors
-    participant_distance.plot([var_index, var_index], 
+    x_index = var_index
+    y_index = var_index
+    if participant_distance.get_ylim()[0]==0:
+        y_index = len(participant_distances)-y_index
+    participant_distance.plot([x_index, x_index], 
                               lim,
-                              color=line_color)
+                              color=line_color,
+                              linewidth=basewidth)
     participant_distance.plot(lim,
-                              [var_index, var_index],
-                              color=line_color)
+                              [y_index, y_index],
+                              color=line_color,
+                              linewidth=basewidth)
     
-    var_index = np.where(loading_distances.index==label)[0][0]+pad
-    loading_distance.plot([var_index, var_index], 
+    var_index = np.where(loading_distances.index==label)[0][0]
+    x_index = var_index
+    y_index = var_index
+    if participant_distance.get_ylim()[0]==0:
+        y_index = len(participant_distances)-y_index
+    loading_distance.plot([x_index, x_index], 
                           lim,
-                          color=line_color)
+                          color=line_color,
+                          linewidth=basewidth)
     loading_distance.plot(lim, 
-                          [var_index, var_index],
-                          color=line_color)
+                          [y_index, y_index],
+                          color=line_color,
+                          linewidth=basewidth)
 
 
 # format cbar
