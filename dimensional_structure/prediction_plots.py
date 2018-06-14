@@ -244,8 +244,38 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
 
+def plot_prediction_scatter(results, target_order=None, EFA=True, change=False,
+                            classifier='ridge', rotate='oblimin', 
+                            normalize=False, metric='R2', size=4.6,  
+                            dpi=300, ext='png', plot_dir=None):
+    predictions = results.load_prediction_object(EFA=EFA, 
+                                                 change=change,
+                                                 classifier=classifier,
+                                                 rotate=rotate)['data']
+    factor_scores = results.get_factors()
+    if change:
+        target_factors, _ = results.DA.get_change(results.dataset.replace('Complete', 'Retest'))
+    else:
+        target_factors = results.DA.get_scores()
     
-
+    n_cols = 2
+    n_rows = math.ceil(len(target_factors.columns)/n_cols)
+    for v in target_factors.columns:
+        fig=plt.subplots(n_rows, n_cols, figsize=(size, size*.62))
+        plt.title(v)
+        clf=predictions.clfs[v]
+        plt.scatter(clf.predict(factor_scores), target_factors[v])  
+        
+    if plot_dir is not None:
+        changestr = '_change' if change else ''
+        if EFA:
+            filename = 'EFA%s_%s_prediction_scatter.%s' % (changestr, classifier, ext)
+        else:
+            filename = 'IDM%s_%s_prediction_scatter.%s' % (changestr, classifier, ext)
+        save_figure(fig, path.join(plot_dir, filename), 
+                    {'bbox_inches': 'tight', 'dpi': dpi})
+        plt.close()
+        
 def plot_prediction_comparison(results, size=4.6, change=False,
                                dpi=300, plot_dir=None):
     R2s = {}
@@ -337,9 +367,6 @@ def plot_outcome_ontological_similarity(results, EFA=True, classifier='ridge',
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
 
-    
-    
-    
 def plot_factor_fingerprint(results, classifier='ridge', rotate='oblimin', 
                             change=False, normalize=False, size=4.6,  
                             dpi=300, ext='png', plot_dir=None):
