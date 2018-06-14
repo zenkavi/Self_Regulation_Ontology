@@ -8,7 +8,8 @@ import pickle
 import seaborn as sns
 from sklearn.preprocessing import MinMaxScaler
 from dimensional_structure.plot_utils import get_short_names, plot_loadings
-from selfregulation.utils.plot_utils import beautify_legend, CurvedText, save_figure
+
+from selfregulation.utils.plot_utils import beautify_legend, CurvedText, format_num, save_figure
 
 colors = sns.color_palette('Blues_d',3) + sns.color_palette('Reds_d',2)[:1]
 
@@ -237,9 +238,9 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
     if plot_dir is not None:
         changestr = '_change' if change else ''
         if EFA:
-            filename = 'EFA%s_%s_prediction_output.%s' % (changestr, classifier, ext)
+            filename = 'EFA%s_%s_prediction_bar.%s' % (changestr, classifier, ext)
         else:
-            filename = 'IDM%s_%s_prediction_output.%s' % (changestr, classifier, ext)
+            filename = 'IDM%s_%s_prediction_bar.%s' % (changestr, classifier, ext)
         save_figure(fig, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
@@ -252,20 +253,39 @@ def plot_prediction_scatter(results, target_order=None, EFA=True, change=False,
                                                  change=change,
                                                  classifier=classifier,
                                                  rotate=rotate)['data']
-    factor_scores = results.get_factors()
+    if EFA:
+        predictors = results.EFA.get_scores()
+    else:
+        predictors = results.data
     if change:
         target_factors, _ = results.DA.get_change(results.dataset.replace('Complete', 'Retest'))
+        predictors = predictors.loc[target_factors.index]
     else:
         target_factors = results.DA.get_scores()
     
+    sns.set_style('whitegrid')
     n_cols = 2
     n_rows = math.ceil(len(target_factors.columns)/n_cols)
-    for v in target_factors.columns:
-        fig=plt.subplots(n_rows, n_cols, figsize=(size, size*.62))
-        plt.title(v)
-        clf=predictions.clfs[v]
-        plt.scatter(clf.predict(factor_scores), target_factors[v])  
-        
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(size, size/n_cols*n_rows))
+    axes = fig.get_axes()
+    for i,v in enumerate(target_factors.columns):
+        MAE = format_num(predictions[v]['scores_cv'][0]['MAE'])
+        R2 = format_num(predictions[v]['scores_cv'][0]['R2'])
+        axes[i].set_title('%s: R2: %s, MAE: %s' % (v, R2, MAE), 
+            fontweight='bold', fontsize=size*1.5)
+        clf=predictions[v]['clf']
+        axes[i].scatter(target_factors[v], clf.predict(predictors), s=size*3)  
+        axes[i].tick_params(length=0, labelsize=0)
+        if i%2==0:
+            axes[i].set_ylabel('Predicted Factor Score', fontsize=size*1.5)
+    axes[i].set_xlabel('Target Factor Score', fontsize=size*1.5)
+    axes[i-1].set_xlabel('Target Factor Score', fontsize=size*1.5)
+    
+    empty_plots = n_cols*n_rows - len(target_factors.columns)
+    for ax in axes[-empty_plots:]:
+        ax.set_visible(False)
+    plt.subplots_adjust(hspace=.4, wspace=.3)
+    
     if plot_dir is not None:
         changestr = '_change' if change else ''
         if EFA:
@@ -277,7 +297,7 @@ def plot_prediction_scatter(results, target_order=None, EFA=True, change=False,
         plt.close()
         
 def plot_prediction_comparison(results, size=4.6, change=False,
-                               dpi=300, plot_dir=None):
+                               dpi=300, ext='png', plot_dir=None):
     R2s = {}
     for EFA in [False, True]:
         predictions = results.get_prediction_files(EFA=EFA, change=change, 
@@ -308,7 +328,7 @@ def plot_prediction_comparison(results, size=4.6, change=False,
     plt.title('Comparison of Prediction Methods', fontsize=size*2.5, y=1.05)
     
     if plot_dir is not None:
-        filename = 'prediction_comparison'
+        filename = 'prediction_comparison.%s' % ext
         save_figure(f, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()

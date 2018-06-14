@@ -50,10 +50,12 @@ import time
 
 from dimensional_structure.results import Results
 from dimensional_structure.cross_results_plots import plot_corr_heatmap, plot_BIC
+from dimensional_structure.cross_results_utils import run_group_prediction
 from dimensional_structure.DA_plots import plot_DA
 from dimensional_structure.EFA_plots import plot_EFA
 from dimensional_structure.HCA_plots import plot_HCA
 from dimensional_structure.prediction_plots import (plot_prediction, 
+                                                    plot_prediction_scatter,
                                                     plot_prediction_comparison,
                                                     plot_factor_fingerprint)
 
@@ -235,9 +237,20 @@ for subset in subsets:
                                     dpi=dpi,
                                     ext=ext,
                                     size=size)
+                    plot_prediction_scatter(results, target_order=target_order, EFA=EFA, 
+                                    classifier=classifier, plot_dir=prediction_plot_dir,
+                                    dpi=dpi,
+                                    ext=ext,
+                                    size=size)
                     print("Plotting Change Prediction, classifier: %s, EFA: %s" % (classifier, EFA))
                     try:
                         plot_prediction(results, target_order=change_target_order, 
+                                        EFA=EFA, change=True,
+                                        classifier=classifier, plot_dir=prediction_plot_dir,
+                                        dpi=dpi,
+                                        ext=ext,
+                                        size=size)
+                        plot_prediction_scatter(results, target_order=change_target_order, 
                                         EFA=EFA, change=True,
                                         classifier=classifier, plot_dir=prediction_plot_dir,
                                         dpi=dpi,
@@ -261,14 +274,17 @@ for subset in subsets:
             rmtree(generic_dir)
         copytree(plot_dir, generic_dir)
 
+# ****************************************************************************
+# group analysis (across subsets)
+# ****************************************************************************
+        
 if group_analysis == True:
-    run_group_prediction([results['survey'], results['task']], 
-                         shuffle=False, classifier='lasso',
+    all_results = load_results(datafile)
+    run_group_prediction(all_results, 
+                         shuffle=False, classifier='ridge',
                          include_raw_demographics=False, rotate='oblimin',
                          verbose=False)
 
-    
-    
 if group_plot == True:
     if verbose:
         print('*'*79)
@@ -279,15 +295,21 @@ if group_plot == True:
     plot_corr_heatmap(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
     plot_BIC(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
 
+# ****************************************************************************
 # move plots to paper directory
+# ****************************************************************************
+if all_results is not None:
+    plot_file = path.dirname(all_results['task'].get_plot_dir())
+else:
+    plot_file = results.get_plot_dir()
 paper_dir = path.join(basedir, 'Results', 'Psych_Ontology_Paper')
 figure_lookup = {
         'analysis_overview': 'Fig1: Analysis Overview',
         'data_correlations': 'Fig2: Task-Survey Correlation',
         'survey/HCA/dendrogram_EFA12_oblimin': 'Fig3: Survey Dendrogram',
         'task/HCA/dendrogram_EFA5_oblimin': 'Fig4: Task Dendrogram',
-        'survey/prediction/EFA_ridge_prediction_output': 'Fig5: Survey prediction',
-        'task/prediction/EFA_ridge_prediction_output': 'Fig6: Task prediction',
+        'survey/prediction/EFA_ridge_prediction_bar': 'Fig5: Survey prediction',
+        'task/prediction/EFA_ridge_prediction_bar': 'Fig6: Task prediction',
         'survey/EFA/factor_heatmap_EFA12': 'FigS2: Survey EFA',
         'task/EFA/factor_heatmap_EFA5': 'FigS3: Task EFA',
         'task/DA/factor_heatmap_DA9': 'FigS4: Outcome EFA',
