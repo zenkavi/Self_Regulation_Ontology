@@ -64,7 +64,7 @@ def plot_BIC_SABIC(results, size=2.3, dpi=300, ext='png', plot_dir=None):
             plt.close()
 
 def plot_communality(results, c, rotate='oblimin', retest_threshold=.2,
-                     size=20, dpi=300, ext='png', plot_dir=None):
+                     size=4.6, dpi=300, ext='png', plot_dir=None):
     EFA = results.EFA
     loading = EFA.get_loading(c, rotate=rotate)
     # get communality from psych out
@@ -93,8 +93,6 @@ def plot_communality(results, c, rotate='oblimin', retest_threshold=.2,
             noise_ceiling[noise_ceiling<retest_threshold]= np.nan
         # adjust
         adjusted_communality = communality/noise_ceiling
-        print_var = format_num(np.mean(communality))
-        print_adj = format_num(np.mean(adjusted_communality))
         # correlation
         correlation = pd.concat([communality, noise_ceiling], axis=1).corr().iloc[0,1]
         noise_ceiling.replace(np.nan, 0, inplace=True)
@@ -124,10 +122,15 @@ def plot_communality(results, c, rotate='oblimin', retest_threshold=.2,
         with sns.axes_style('white'):
             colors = sns.color_palette(n_colors=2, desat=.75)
             f, ax = plt.subplots(1,1,figsize=(size,size))
-            sns.kdeplot(communality, linewidth=3, 
+            sns.kdeplot(communality, linewidth=size/4, 
                         shade=True, label='Communality', color=colors[0])
-            sns.kdeplot(adjusted_communality, linewidth=3, 
+            sns.kdeplot(adjusted_communality, linewidth=size/4, 
                         shade=True, label='Adjusted Communality', color=colors[1])
+            ylim = ax.get_ylim()
+            ax.vlines(np.mean(communality), ylim[0], ylim[1],
+                      color=colors[0], linewidth=size/4, linestyle='--')
+            ax.vlines(np.mean(adjusted_communality), ylim[0], ylim[1],
+                      color=colors[1], linewidth=size/4, linestyle='--')
             leg=ax.legend(fontsize=size*2, loc='upper right')
             beautify_legend(leg, colors)
             plt.xlabel('Communality', fontsize=size*2)
@@ -143,9 +146,6 @@ def plot_communality(results, c, rotate='oblimin', retest_threshold=.2,
             correlation = format_num(np.mean(correlation))
             ax.text(1.1, 1.25, 'Correlation Between Communality \nand Test-Retest: %s' % correlation,
                     size=size*2)
-            ax.text(1.1, 1, 'Variance Explained: %s\nAdjusted Variance Explained: %s' % (print_var,
-                                                                                       print_adj),
-                    size=size*2)
 
         if plot_dir:
             filename = 'communality_dist-EFA%s.%s' % (c, ext)
@@ -156,7 +156,7 @@ def plot_communality(results, c, rotate='oblimin', retest_threshold=.2,
     
         
     
-def plot_nesting(results, thresh=.5, rotate='oblimin',
+def plot_nesting(results, thresh=.5, rotate='oblimin', title=True,
                  dpi=300, figsize=12, ext='png', plot_dir=None):
     """ Plots nesting of factor solutions
     
@@ -189,7 +189,7 @@ def plot_nesting(results, thresh=.5, rotate='oblimin',
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
         
-def plot_factor_correlation(results, c, rotate='oblimin',
+def plot_factor_correlation(results, c, rotate='oblimin', title=True,
                             size=4.6, dpi=300, ext='png', plot_dir=None):
     EFA = results.EFA
     loading = EFA.get_loading(c, rotate=rotate)
@@ -206,9 +206,11 @@ def plot_factor_correlation(results, c, rotate='oblimin',
                     cbar_ax=cbar_ax,
                     cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
         yticklabels = ax1.get_yticklabels()
-        ax1.set_yticklabels(yticklabels, rotation = 0, ha="right")
-        ax1.set_title('%s Factor Correlations' % results.ID.split('_')[0].title(),
-                  weight='bold', y=1.05, fontsize=size*3)
+        ax1.set_yticklabels(yticklabels, rotation=0, ha="right")
+        ax1.set_xticklabels(ax1.get_xticklabels(), rotation=90)
+        if title == True:
+            ax1.set_title('%s Factor Correlations' % results.ID.split('_')[0].title(),
+                      weight='bold', y=1.05, fontsize=size*3)
         ax1.tick_params(labelsize=size*3)
         # format cbar
         cbar_ax.set_yticklabels([-.5, -.25, 0, .25, .5])
@@ -488,8 +490,7 @@ def plot_heatmap_factors(results, c, size=4.6, thresh=75, rotate='oblimin',
                 linecolor='white', linewidth=.01,
                 cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
     ax.set_yticks(np.arange(.5,loadings.shape[0]+.5,1))
-    # check which direction the heatmap yticks are going
-    ax.set_yticklabels(loadings.index[::-1], fontsize=DV_fontsize)
+    ax.set_yticklabels(loadings.index[::-1], fontsize=DV_fontsize, rotation=0)
     ax.set_xticklabels(loadings.columns, 
                                 fontsize=size*.08*20,
                                 ha='left',
@@ -699,7 +700,7 @@ def plot_EFA(results, plot_dir=None, verbose=False, size=4.6, dpi=300, ext='png'
 #    plot_task_factors(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)
 #    plot_task_factors(results, c, normalize_loadings=True, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)
     if verbose: print("Plotting factor correlations")
-    plot_factor_correlation(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext)
+    plot_factor_correlation(results, c, title=False, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting DDM factors")
     if 'task' in results.ID:
         plot_DDM(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext)

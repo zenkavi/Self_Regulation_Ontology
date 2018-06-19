@@ -46,10 +46,14 @@ import numpy as np
 from os import makedirs, path
 import random
 from shutil import copyfile, copytree, rmtree
+import subprocess
 import time
 
 from dimensional_structure.results import Results
-from dimensional_structure.cross_results_plots import plot_corr_heatmap, plot_BIC
+from dimensional_structure.cross_results_plots import (plot_corr_heatmap, 
+                                                       plot_BIC,
+                                                       plot_cross_silhouette,
+                                                       plot_cross_communality)
 from dimensional_structure.cross_results_utils import run_group_prediction
 from dimensional_structure.DA_plots import plot_DA
 from dimensional_structure.EFA_plots import plot_EFA
@@ -294,7 +298,8 @@ if group_plot == True:
     plot_file = path.dirname(all_results['task'].get_plot_dir())
     plot_corr_heatmap(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
     plot_BIC(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
-
+    plot_cross_silhouette(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+    plot_cross_communality(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
 # ****************************************************************************
 # move plots to paper directory
 # ****************************************************************************
@@ -304,36 +309,45 @@ else:
     plot_file = results.get_plot_dir()
 paper_dir = path.join(basedir, 'Results', 'Psych_Ontology_Paper')
 figure_lookup = {
-        'analysis_overview': 'Fig1: Analysis Overview',
-        'data_correlations': 'Fig2: Task-Survey Correlation',
-        'survey/HCA/dendrogram_EFA12_oblimin': 'Fig3: Survey Dendrogram',
-        'task/HCA/dendrogram_EFA5_oblimin': 'Fig4: Task Dendrogram',
-        'survey/prediction/EFA_ridge_prediction_bar': 'Fig5: Survey prediction',
-        'task/prediction/EFA_ridge_prediction_bar': 'Fig6: Task prediction',
-        'survey/EFA/factor_heatmap_EFA12': 'FigS2: Survey EFA',
-        'task/EFA/factor_heatmap_EFA5': 'FigS3: Task EFA',
-        'task/DA/factor_heatmap_DA9': 'FigS4: Outcome EFA',
-        'BIC_curves': 'FigS5: BIC curves',
-        'survey/EFA/factor_correlations_EFA12': 'FigS6: Survey 2nd-order',
-        'task/EFA/factor_correlations_EFA5': 'FigS7: Task 2nd-order',
-        'task/DA/factor_correlations_DA9': 'FigS8: Outcome 2nd-order',
-        # communality
-        'survey/HCA/dendrogram_data': 'FigS10: Survey Raw Dendrogram',
-        'task/HCA/dendrogram_data': 'FigS11: Task Raw Dendrogram',
-        'survey/HCA/silhouette_analysis': 'FigS12a: Survey Silhouette',
-        'task/HCA/silhouette_analysis': 'FigS12b: Task Silhouette',
+        'analysis_overview': 'Fig01_Analysis_Overview',
+        'data_correlations': 'Fig02_Task-Survey_Correlation',
+        'survey/HCA/dendrogram_EFA12_oblimin': 'Fig03_Survey_Dendrogram',
+        'task/HCA/dendrogram_EFA5_oblimin': 'Fig04_Task_Dendrogram',
+        'survey/prediction/EFA_ridge_prediction_bar': 'Fig05_Survey_prediction',
+        'task/prediction/EFA_ridge_prediction_bar': 'Fig06_Task_prediction',
+        'survey/EFA/factor_heatmap_EFA12': 'FigS02_Survey_EFA',
+        'task/EFA/factor_heatmap_EFA5': 'FigS03_Task_EFA',
+        'task/DA/factor_heatmap_DA9': 'FigS04_Outcome_EFA',
+        'BIC_curves': 'FigS05_BIC_curves',
+        'survey/EFA/factor_correlations_EFA12': 'FigS06_Survey_2nd-order',
+        'task/EFA/factor_correlations_EFA5': 'FigS07_Task_2nd-order',
+        'task/DA/factor_correlations_DA9': 'FigS08_Outcome_2nd-order',
+        'communality_adjustment': 'FigS09_communality',
+        'survey/HCA/dendrogram_data': 'FigS10_Survey_Raw_Dendrogram',
+        'task/HCA/dendrogram_data': 'FigS11_Task_Raw_Dendrogram',
+        'silhouette_analysis': 'FigS12_Survey_Silhouette',
         # survey clusters
         # task clusters
         # combined EFA prediction
-        'survey/prediction/IDM_ridge_prediction_output': 'FigS16: Survey IDM prediction',
-        'task/prediction/IDM_ridge_prediction_output': 'FigS17: Task IDM prediction',
-        'survey/prediction/EFA_ridge_factor_fingerprint': 'FigS18: Survey Factor Fingerprints'
+        'survey/prediction/IDM_ridge_prediction_bar': 'FigS16_Survey_IDM_prediction',
+        'task/prediction/IDM_ridge_prediction_bar': 'FigS17_Task_IDM_prediction',
+        'survey/prediction/EFA_ridge_factor_fingerprint': 'FigS18_Survey_Factor_Fingerprints'
         }
     
-    
+
 for filey in figure_lookup.keys():
-    try:
-        copyfile(path.join(plot_file, filey+'.'+ext), 
-                 path.join(paper_dir, 'Plots', figure_lookup[filey]+'.'+ext))
-    except FileNotFoundError:
+    orig_file = path.join(plot_file, filey+'.'+ext)
+    new_file = path.join(paper_dir, 'Plots', figure_lookup[filey]+'.'+ext)
+    a=subprocess.Popen('cpdf -scale-to-fit "4.6in PH mul 4.6in div PW" %s -o %s' % (orig_file, new_file),
+                     shell=True, 
+                     stdout=subprocess.PIPE, 
+                     stderr=subprocess.PIPE)
+    out, err = a.communicate()
+    if 'cpdf: not found' in str(err):
+        try:
+            copyfile(orig_file, 
+                     new_file)
+        except FileNotFoundError:
+            print('%s not found' % filey)
+    elif 'No such file or directory' in str(err):
         print('%s not found' % filey)

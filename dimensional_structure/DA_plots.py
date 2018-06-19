@@ -29,7 +29,8 @@ def plot_demo_factor_dist(results, c, figsize=12, dpi=300, ext='png', plot_dir=N
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
         
-def plot_factor_correlation(results, c, size=4.6, dpi=300, ext='png', plot_dir=None):
+def plot_factor_correlation(results, c, title=True,
+                            size=4.6, dpi=300, ext='png', plot_dir=None):
     DA = results.DA
     loading = DA.get_loading(c)
     # get factor correlation matrix
@@ -45,9 +46,11 @@ def plot_factor_correlation(results, c, size=4.6, dpi=300, ext='png', plot_dir=N
                     cbar_ax=cbar_ax,
                     cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
         yticklabels = ax1.get_yticklabels()
-        ax1.set_yticklabels(yticklabels, rotation = 0, ha="right")
-        ax1.set_title('%s Factor Correlations' % results.ID.split('_')[0].title(),
-                  weight='bold', y=1.05, fontsize=size*3)
+        ax1.set_yticklabels(yticklabels, rotation=0, ha="right")
+        ax1.set_xticklabels(ax1.get_xticklabels(), rotation=90)
+        if title == True:
+            ax1.set_title('%s Factor Correlations' % results.ID.split('_')[0].title(),
+                      weight='bold', y=1.05, fontsize=size*3)
         ax1.tick_params(labelsize=size*3)
         # format cbar
         cbar_ax.set_yticklabels([-.5, -.25, 0, .25, .5])
@@ -116,7 +119,7 @@ def plot_heatmap_factors(results, c, size=4.6, thresh=75,
                 linecolor='white', linewidth=.01,
                 cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
     ax.set_yticks(np.arange(.5,loadings.shape[0]+.5,1))
-    ax.set_yticklabels(loadings.index, fontsize=DV_fontsize)
+    ax.set_yticklabels(loadings.index[::-1], fontsize=DV_fontsize, rotation=0)
     ax.set_xticklabels(loadings.columns, 
                                 fontsize=size*.08*20,
                                 ha='left',
@@ -133,11 +136,10 @@ def plot_heatmap_factors(results, c, size=4.6, thresh=75,
     
     # draw lines separating groups
     if grouping is not None:
-        factor_breaks = np.cumsum([len(i[1]) for i in grouping])[:-1]
+        factor_breaks = np.cumsum([len(i[1]) for i in grouping[::-1]])[:-1]
         for y_val in factor_breaks:
             ax.hlines(y_val, 0, loadings.shape[1], lw=size/5, 
                       color='grey', linestyle='dashed')
-                
     if plot_dir:
         filename = 'factor_heatmap_DA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
@@ -152,6 +154,7 @@ def plot_DA(results, plot_dir=None, verbose=False, size=10, dpi=300, ext='png',
     if verbose: print("Plotting Distributions")
     plot_demo_factor_dist(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting factor correlations")
-    plot_factor_correlation(results, c, size=size, plot_dir=plot_dir, dpi=dpi,  ext=ext)
+    plot_factor_correlation(results, c, title=False,
+                            size=size, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting factor bars")
     plot_heatmap_factors(results, c, thresh=0, size=size, plot_dir=plot_dir, dpi=dpi,  ext=ext)

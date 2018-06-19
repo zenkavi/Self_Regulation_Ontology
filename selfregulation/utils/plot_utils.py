@@ -27,9 +27,17 @@ def format_variable_names(variables):
         new_vars.append(var)
     return new_vars
 
-#***************************************************
-# ********* Plotting Functions **********************
-#**************************************************
+# basic plotting helper functions
+
+def place_letter(ax, letter, fontsize=14, yoffset=.02, xoffset=0):
+    xlim=ax.get_xlim()
+    ylim=ax.get_ylim()
+    
+    ax.text(xlim[0]-(xlim[1]-xlim[0])*xoffset, 
+            ylim[1]+(ylim[1]-ylim[0])*yoffset, 
+            letter, 
+            fontsize=fontsize, fontweight='bold')
+    
 def beautify_legend(legend, colors=None, fontsize=None):
     if colors is None:
         colors = [i.get_color() for i in legend.legendHandles]
@@ -41,7 +49,11 @@ def beautify_legend(legend, colors=None, fontsize=None):
         item.set_visible(False)
     if fontsize:
         plt.setp(legend.get_texts(), fontsize=fontsize)
-        
+    
+#***************************************************
+# ********* Plotting Functions **********************
+#**************************************************
+
 def DDM_plot(v,t,a, sigma = .1, n = 10, plot_n = 15, plot_avg=False, file = None):
     """ Make a plot of trajectories using ddm parameters (in seconds)
     

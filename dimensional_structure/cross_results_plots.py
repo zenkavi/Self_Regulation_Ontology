@@ -2,7 +2,7 @@
 
 # Script to generate all_results or plots across all_results objects
 from itertools import combinations, product
-from matplotlib.patches import Rectangle
+import math
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 import numpy as np
@@ -11,9 +11,13 @@ import pandas as pd
 import seaborn as sns
 from sklearn.linear_model import LinearRegression, RidgeCV
 from sklearn.model_selection import cross_val_score
-from selfregulation.utils.plot_utils import beautify_legend, save_figure
-from selfregulation.utils.result_utils import load_results
-from selfregulation.utils.utils import get_recent_dataset
+from dimensional_structure.HCA_plots import plot_silhouette
+from selfregulation.utils.plot_utils import (beautify_legend, 
+                                             format_variable_names, 
+                                             place_letter, save_figure)
+from selfregulation.utils.r_to_py_utils import get_attr
+from selfregulation.utils.utils import get_retest_data
+
 
 def extract_tril(mat, k=0):
     return mat[np.tril_indices_from(mat, k=k)]
@@ -132,8 +136,8 @@ def plot_corr_heatmap(all_results, EFA=False, size=4.6,
                             axis=1)
 
     f = plt.figure(figsize=(size,size))
-    ax = f.add_axes([.05,.05,.9,.9])
-    cbar_ax = f.add_axes([.96,.15,.04,.7])
+    ax = f.add_axes([.05,.05,.8,.8])
+    cbar_ax = f.add_axes([.86,.1,.04,.7])
     corr = abs(all_data.corr())
     sns.heatmap(corr, square=True, ax=ax, cbar_ax=cbar_ax,
                 xticklabels=False, yticklabels=False,
@@ -152,24 +156,24 @@ def plot_corr_heatmap(all_results, EFA=False, size=4.6,
     # format cbar
     cbar_ax.tick_params(axis='y', length=0)
     cbar_ax.set_yticklabels([0, 1])
-    cbar_ax.tick_params(labelsize=size*2)
+    cbar_ax.tick_params(labelsize=size*2, pad=size/2)
     cbar_ax.set_ylabel('Pearson Correlation', rotation=-90, labelpad=size*2, fontsize=size*2)
     # add bars to indicate category
-    left_ax = f.add_axes([0,.05,.04,.9])
-    bottom_ax = f.add_axes([.05,0,.9,.04])
+    left_ax = f.add_axes([.01,.05,.04,.8])
+    bottom_ax = f.add_axes([.05,0.01,.8,.04])
     left_ax.axis('off'); bottom_ax.axis('off')
     perc_task = len(task_order)/all_data.shape[1]
     # add labels
-    left_ax.text(0, 1-perc_task/2, 'Task DVs', rotation=90, va='center', fontsize=size*2.5)
-    left_ax.text(0, (1-perc_task)/2, 'Survey DVs', rotation=90, va='center', fontsize=size*2.5)
+    left_ax.text(0, (1-perc_task/2), 'Task DVs', rotation=90, va='center', fontsize=size*2.5)
+    left_ax.text(0, ((1-perc_task)/2), 'Survey DVs', rotation=90, va='center', fontsize=size*2.5)
     bottom_ax.text(perc_task/2, 0, 'Task DVs', ha='center', fontsize=size*2.5)
-    bottom_ax.text(1-(1-perc_task)/2, 0, 'Survey DVs', ha='center', fontsize=size*2.5)
+    bottom_ax.text((1-(1-perc_task)/2), 0, 'Survey DVs', ha='center', fontsize=size*2.5)
     
     
     if plot_dir is not None:
         # make histogram plot
         save_figure(f, path.join(plot_dir, 'data_correlations.%s' % ext),
-                                {'bbox_inches': 'tight', 'dpi': dpi,
+                                {'dpi': dpi,
                                  'transparent': True})   
         plt.close()
 
@@ -243,17 +247,137 @@ def plot_BIC(all_results, size=4.6, dpi=300, ext='png', plot_dir=None):
                          markeredgecolor=colors[0], markeredgewidth=height/2, 
                          markersize=height*4)
             if i==0:
-                ax1.set_ylabel('Score', fontsize=height*3)
-                leg = ax1.legend(loc='center right',
-                                 fontsize=height*3, markerscale=0)
-                beautify_legend(leg, colors=colors)
+                if len(keys)>1:
+                    ax1.set_ylabel('Score', fontsize=height*3)
+                    leg = ax1.legend(loc='center right',
+                                     fontsize=height*3, markerscale=0)
+                    beautify_legend(leg, colors=colors)
+                else:
+                    ax1.set_ylabel(metric, fontsize=height*3)
             ax1.set_xlabel('# Factors', fontsize=height*3)
-            ax1.tick_params(labelsize=height*2)
+            ax1.tick_params(labelsize=height*2, pad=size/2)
             ax1.set_title(name, fontsize=height*4)
+            ax1.grid(linewidth=size/8)
     if plot_dir is not None:
         save_figure(fig, path.join(plot_dir, 'BIC_curves.%s' % ext),
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
             
+def plot_cross_silhouette(all_results, inp='data', size=4.6,  dpi=300, 
+                    ext='png', plot_dir=None):
+    fig, axes =  plt.subplots(len(all_results), 2, figsize=(size, size*.375*len(all_results)))
+    axes = fig.get_axes()
+    letters = [chr(i).upper() for i in range(ord('a'),ord('z')+1)]
+    
+    for i, (name, results) in enumerate(all_results.items()):
+        ax = axes.pop(0)
+        ax2 = axes.pop(0)
+        inp = 'EFA%s_oblimin' % results.EFA.results['num_factors']
+        plot_silhouette(results, inp=inp, axes=(ax,ax2), size=size)
+        ax.set_ylabel('%s cluster separated DVs' % name.title(), fontsize=size)
+        ax2.set_ylabel('%s average silhouette score' % name.title(), fontsize=size)
+        if len(axes) != 0:
+            ax.set_xlabel('')
+            ax2.set_xlabel('')
+        if i != 0:
+            ax.set_title('')
+            ax2.set_title('')
+        place_letter(ax, letters.pop(0), fontsize=size*9/4.6)
+        place_letter(ax2, letters.pop(0), fontsize=size*9/4.6)
 
+    plt.subplots_adjust(hspace=.2)
+    if plot_dir is not None:
+        save_figure(fig, path.join(plot_dir, 
+                                         'silhouette_analysis.%s' % ext),
+                    {'dpi': dpi})
+        plt.close()
+
+def plot_cross_communality(all_results, rotate='oblimin', retest_threshold=.2,
+                           size=4.6, dpi=300, ext='png', plot_dir=None):
+    
+    retest_data = None
+    num_cols = 2
+    num_rows = math.ceil(len(all_results.keys())/2)
+    f, axes = plt.subplots(num_rows, num_cols, figsize=(size, size/2*num_rows))
+    max_x = 0
+    for i, (name, results) in enumerate(all_results.items()):
+        if retest_data is None:
+            # load retest data
+            retest_data = get_retest_data(dataset=results.dataset.replace('Complete','Retest'))
+            if retest_data is None:
+                print('No retest data found for datafile: %s' % results.dataset)
+        c = results.EFA.results['num_factors']
+        EFA = results.EFA
+        loading = EFA.get_loading(c, rotate=rotate)
+        # get communality from psych out
+        fa = EFA.results['factor_tree_Rout_%s' % rotate][c]
+        communality = get_attr(fa, 'communalities')
+        communality = pd.Series(communality, index=loading.index)
+        # alternative calculation
+        #communality = (loading**2).sum(1).sort_values()
+        communality.index = [i.replace('.logTr','') for i in communality.index]
+        
+        # reorder data in line with communality
+        retest_subset= retest_data.loc[communality.index]
+        # reformat variable names
+        communality.index = format_variable_names(communality.index)
+        retest_subset.index = format_variable_names(retest_subset.index)
+        if len(retest_subset) > 0:
+            # noise ceiling
+            noise_ceiling = retest_subset.pearson
+            # remove very low reliabilities
+            if retest_threshold:
+                noise_ceiling[noise_ceiling<retest_threshold]= np.nan
+            # adjust
+            adjusted_communality = communality/noise_ceiling
+            
+        # plot communality histogram
+
+
+        if len(retest_subset) > 0:
+            ax = axes[i]
+            with sns.axes_style('white'):
+                ax.set_title(name.title(), fontweight='bold', fontsize=size*2)
+                colors = sns.color_palette(n_colors=2, desat=.75)
+                sns.kdeplot(communality, linewidth=size/4, ax=ax,
+                            shade=True, label='Communality', color=colors[0])
+                sns.kdeplot(adjusted_communality, linewidth=size/4, ax=ax, 
+                            shade=True, label='Adjusted Communality', color=colors[1])
+                ylim = ax.get_ylim()
+                ax.vlines(np.mean(communality), ylim[0], ylim[1],
+                          color=colors[0], linewidth=size/4, linestyle='--')
+                ax.vlines(np.mean(adjusted_communality), ylim[0], ylim[1],
+                          color=colors[1], linewidth=size/4, linestyle='--')
+                ax.set_yticks([])
+                ax.tick_params(labelsize=size*1.2)
+                ax.set_ylim(0, ax.get_ylim()[1])
+                ax.set_xlim(0, ax.get_xlim()[1])
+                ax.spines['right'].set_visible(False)
+                ax.spines['top'].set_visible(False)
+                if (i+1) == len(all_results):
+                    leg=ax.legend(fontsize=size*1.5, loc='upper right',
+                                  frameon=True, bbox_to_anchor=(1.2, 1.0), 
+                                  handlelength=0, handletextpad=0)
+                    beautify_legend(leg, colors)
+                elif i==0:
+                    ax.set_ylabel('Normalized Density', fontsize=size*2)
+                    ax.legend().set_visible(False)
+                else:
+                    ax.legend().set_visible(False)
+                if i>=len(all_results)-2:
+                    ax.set_xlabel('Communality', fontsize=size*2)
+                # update max_x
+                if ax.get_xlim()[1] > max_x:
+                    max_x = ax.get_xlim()[1]
+                ax.grid(False)
+        for ax in axes:
+            ax.set_xlim((0, max_x))
+                    
+        if plot_dir:
+            filename = 'communality_adjustment.%s' % ext
+            save_figure(f, path.join(plot_dir, filename), 
+                        {'bbox_inches': 'tight', 'dpi': dpi})
+            plt.close()
+        
+    
 

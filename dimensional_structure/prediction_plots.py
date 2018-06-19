@@ -17,16 +17,21 @@ colors = sns.color_palette('Blues_d',3) + sns.color_palette('Reds_d',2)[:1]
 shortened_factors = get_short_names()
 
 def visualize_importance(importance, ax, xticklabels=True, yticklabels=True, 
-                         label_size=10, pad=0, label_scale=0, title=None, 
+                         axes_linewidth=None, label_size=10,
+                         label_scale=0, title=None, 
                          ymax=None, color=colors[1]):
     importance_vars = importance[0]
     importance_vars = [shortened_factors.get(v,v) for v in importance_vars]
     if importance[1] is not None:
-        importance_vals = [abs(i)+pad for i in importance[1][0].T]
+        importance_vals = [abs(i) for i in importance[1][0].T]
         plot_loadings(ax, importance_vals, kind='line', offset=.5, 
                       colors=[color], plot_kws={'alpha': 1, 'linewidth': label_size/4})
     else:
         ax.set_yticks([])
+    ax.grid(linewidth=label_size/8)
+    if axes_linewidth:
+        plt.setp(list(ax.spines.values()), linewidth=axes_linewidth)
+
     # set up x ticks
     xtick_locs = np.arange(0.0, 2*np.pi, 2*np.pi/len(importance_vars))
     ax.set_xticks(xtick_locs)
@@ -57,7 +62,7 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
             ax2.axis('off')
         
     if title:
-        ax.set_title(title, fontsize=label_size*1.5, y=1.1)
+        ax.set_title(title, fontsize=label_size*1.5, y=1.06)
     # set up yticks
     if len(importance[1][0]) != 0:
         ax.set_ylim(bottom=0)
@@ -131,14 +136,14 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
     width=.25
     ax1 = fig.add_axes([0,0,1,.5]) 
     ax1.bar(ind, [i[1] for i in r2s], width, 
-            label='Cross-Validated Prediction', color=colors[1])
+            label='Cross-validated prediction', color=colors[1])
     ax1.bar(ind+width, [i[1] for i in insample_r2s], width, 
-            label='Insample Prediction', color=colors[2])
+            label='Insample prediction', color=colors[2])
     # plot shuffled values above
     if not normalize:
         ax1.bar(ind, [i[1] for i in shuffled_r2s], width, 
                  color='none', edgecolor=shuffled_grey, 
-                linewidth=size/10, linestyle='--', label='95% Shuffled Prediction')
+                linewidth=size/10, linestyle='--', label='95% shuffled prediction')
         ax1.bar(ind+width, [i[1] for i in insample_shuffled_r2s], width, 
                 color='none', edgecolor=shuffled_grey, 
                 linewidth=size/10, linestyle='--')
@@ -146,16 +151,17 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
     ax1.set_xticks(np.arange(0,len(r2s))+width/2)
     ax1.set_xticklabels([i[0] for i in r2s], rotation=15, fontsize=size*1.15)
     ax1.tick_params(axis='y', labelsize=size)
-    ax1.tick_params(length=size/4, width=size/10)
+    ax1.tick_params(length=size/4, width=size/10, pad=size/2)
     xlow, xhigh = ax1.get_xlim()
     if normalize:
         ax1.set_ylabel('Permutation Normalized R2', fontsize=size, labelpad=10)
         ax1.hlines(0, xlow, xhigh, color='k', lw=size/5)
         ax1.set_xlim(xlow,xhigh)
     else:
-        ax1.set_ylabel(metric, fontsize=size, labelpad=10)
+        ax1.set_ylabel(metric, fontsize=size, labelpad=size)
     # add a legend
-    leg = ax1.legend(fontsize=size, loc='upper left')
+    leg = ax1.legend(fontsize=size, loc='upper left', 
+                     frameon=True, handlelength=0, handletextpad=0)
     beautify_legend(leg, colors[1:3]+[shuffled_grey])
     # change y extents
     ylim = ax1.get_ylim()
@@ -175,7 +181,8 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
             ax1.set_yticks(np.append([0, .025, .05, .075], np.arange(.1, .4, .05)))
     # draw grid
     ax1.set_axisbelow(True)
-    plt.grid(axis='y', linestyle='dotted')
+    plt.grid(axis='y', linestyle='dotted', linewidth=size/6)
+    plt.setp(list(ax1.spines.values()), linewidth=size/10)
     # Plot Polar Plots for importances
     if EFA == True:
         # get importances
@@ -210,7 +217,8 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
             visualize_importance(importance, axes[-1],
                                  yticklabels=False, xticklabels=False,
                                  label_size=figsize[1]*1,
-                                 color=color)
+                                 color=color,
+                                 axes_linewidth=size/10)
         # plot top 2 predictions, labeled  
         if best_predictors[-1][0] < best_predictors[-2][0]:
             locs = [.25, .75]
@@ -224,7 +232,8 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
                              label_size=figsize[1]*1.2,
                              label_scale=.22,
                              title=best_predictors[-1][1][0],
-                             color=colors[3])
+                             color=colors[3],
+                             axes_linewidth=size/10)
         # 2nd top
         label_importance = importances[best_predictors[-2][0]]
         ratio = figsize[1]/figsize[0]
@@ -234,7 +243,8 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
                              label_size=figsize[1]*1.2,
                              label_scale=.23,
                              title=best_predictors[-2][1][0],
-                             color=colors[3])
+                             color=colors[3],
+                             axes_linewidth=size/10)
     if plot_dir is not None:
         changestr = '_change' if change else ''
         if EFA:
