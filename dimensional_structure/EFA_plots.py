@@ -618,8 +618,8 @@ def plot_entropies(results, rotate='oblimin',
     """
     EFA = results.EFA
     # plot entropies
-    entropies = EFA.results['entropies'].copy()
-    null_entropies = EFA.results['null_entropies'].copy()
+    entropies = EFA.results['entropies_%s' % rotate].copy()
+    null_entropies = EFA.results['null_entropies_%s' % rotate].copy()
     entropies.loc[:, 'group'] = 'real'
     null_entropies.loc[:, 'group'] = 'null'
     plot_entropies = pd.concat([entropies, null_entropies], 0)

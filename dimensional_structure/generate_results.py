@@ -141,8 +141,13 @@ for subset in subsets:
                           ID=ID,
                           residualize_vars=['Age', 'Sex'])
         results.run_demographic_analysis(verbose=verbose, bootstrap=bootstrap)
-        results.run_EFA_analysis(verbose=verbose, bootstrap=bootstrap)
-        results.run_clustering_analysis(verbose=verbose, run_graphs=False)
+        for rotate in ['oblimin', 'varimax']:
+            results.run_EFA_analysis(rotate=rotate, 
+                                     verbose=verbose, 
+                                     bootstrap=bootstrap)
+            results.run_clustering_analysis(rotate=rotate, 
+                                            verbose=verbose, 
+                                            run_graphs=False)
         ID = results.ID.split('_')[1]
         # name factors and clusters
         factor_names = subset.get('factor_names', None)
