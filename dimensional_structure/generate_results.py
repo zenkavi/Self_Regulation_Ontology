@@ -57,6 +57,7 @@ from dimensional_structure.cross_results_plots import (plot_corr_heatmap,
 from dimensional_structure.cross_results_utils import run_group_prediction
 from dimensional_structure.DA_plots import plot_DA
 from dimensional_structure.EFA_plots import plot_EFA
+from dimensional_structure.EFA_test_retest import plot_EFA_change, plot_EFA_retest
 from dimensional_structure.HCA_plots import plot_HCA
 from dimensional_structure.prediction_plots import (plot_prediction, 
                                                     plot_prediction_scatter,
@@ -229,7 +230,11 @@ for subset in subsets:
         if verbose: print("Plotting EFA")
         plot_EFA(results, EFA_plot_dir, verbose=verbose, size=size, dpi=dpi, 
                  ext=ext, plot_task_kws=plot_task_kws)
-            
+        
+        # Plot EFA retest
+        plot_EFA_retest(results, plot_dir=EFA_plot_dir, size=size, dpi=dpi, ext=ext)
+        plot_EFA_change(results, plot_dir=EFA_plot_dir, size=size, dpi=dpi, ext=ext)
+        
         # Plot HCA
         if verbose: print("Plotting HCA")
         plot_HCA(results, HCA_plot_dir, size=size, dpi=dpi, ext=ext)

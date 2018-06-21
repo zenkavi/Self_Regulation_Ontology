@@ -580,12 +580,20 @@ def save_task_data(data_loc, data):
         print('Saving %s...' % exp_id)
         extract_experiment(data,exp_id).to_csv(os.path.join(path, exp_id + '.csv.gz'), compression = 'gzip')
     
-def transform_remove_skew(data, threshold=1):
+def transform_remove_skew(data, threshold=1, ignored_vars=None,
+                          positive_skewed=None,
+                          negative_skewed=None):
     data = data.copy()
     skewed_variables = data.columns[abs(data.skew())>threshold]
+    if ignored_vars:
+        skewed_variables = [i for i in skewed_variables if i not in ignored_vars]
     skew_subset = data.loc[:,skewed_variables]
-    positive_subset = skew_subset.loc[:,skew_subset.skew()>0]
-    negative_subset = skew_subset.loc[:,skew_subset.skew()<0]
+    if positive_skewed is None:
+        positive_skewed = skew_subset.skew()>0
+    if negative_skewed is None:
+        negative_skewed = skew_subset.skew()<0
+    positive_subset = data.loc[:,positive_skewed]
+    negative_subset = data.loc[:,negative_skewed]
     # transform variables
     # log transform for positive skew
     positive_subset = np.log(positive_subset)
