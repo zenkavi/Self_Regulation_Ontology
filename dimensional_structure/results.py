@@ -83,6 +83,9 @@ class EFA_Analysis:
             # get factor correlation matrix
             scores = get_attr(self.results['factor_tree_Rout_%s' % rotate][c], 'scores')
             phi = pd.DataFrame(np.corrcoef(scores.T))
+            # check for correlations
+            if np.mean(np.tril(phi, -1)) < 10E-5:
+                return
             n_obs = self.data.shape[0]
             labels = list(self.results['factor_tree_%s' % rotate][c].columns)
             BIC_c, BICs = find_optimal_components(phi, 
