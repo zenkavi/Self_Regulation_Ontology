@@ -51,7 +51,7 @@ class EFA_Analysis:
         rejected = loading.index[~over_thresh]
         return loading.loc[over_thresh,:], rejected
     
-    def _get_factor_reorder(self, c, rotate='oblimin'):
+    def get_factor_reorder(self, c, rotate='oblimin'):
         # reorder factors based on correlation matrix
         phi=get_attr(self.results['factor_tree_Rout_%s' % rotate][c],'Phi')
         if phi is None:
@@ -307,7 +307,7 @@ class EFA_Analysis:
       
     def reorder_factors(self, mat, rotate='oblimin'):
         c = mat.shape[1]
-        reorder_vec = self._get_factor_reorder(c, rotate=rotate)
+        reorder_vec = self.get_factor_reorder(c, rotate=rotate)
         if type(mat) == pd.core.frame.DataFrame:
             mat = mat.iloc[:, reorder_vec]
         else:

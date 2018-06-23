@@ -34,7 +34,7 @@ def plot_factor_correlation(results, c, title=True,
     DA = results.DA
     loading = DA.get_loading(c)
     # get factor correlation matrix
-    reorder_vec = DA._get_factor_reorder(c)
+    reorder_vec = DA.get_factor_reorder(c)
     phi = get_attr(DA.results['factor_tree_Rout_oblimin'][c],'Phi')
     phi = pd.DataFrame(phi, columns=loading.columns, index=loading.columns)
     phi = phi.iloc[reorder_vec, reorder_vec]

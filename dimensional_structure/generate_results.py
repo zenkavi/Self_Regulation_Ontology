@@ -57,7 +57,7 @@ from dimensional_structure.cross_results_plots import (plot_corr_heatmap,
 from dimensional_structure.cross_results_utils import run_group_prediction
 from dimensional_structure.DA_plots import plot_DA
 from dimensional_structure.EFA_plots import plot_EFA
-from dimensional_structure.EFA_test_retest import plot_EFA_change, plot_EFA_retest
+from dimensional_structure.EFA_test_retest import plot_EFA_change, plot_EFA_retest, plot_cross_EFA_retest
 from dimensional_structure.HCA_plots import plot_HCA
 from dimensional_structure.prediction_plots import (plot_prediction, 
                                                     plot_prediction_scatter,
@@ -310,6 +310,8 @@ if group_plot == True:
     plot_BIC(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
     plot_cross_silhouette(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
     plot_cross_communality(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+    plot_cross_EFA_retest(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+    
 # ****************************************************************************
 # move plots to paper directory
 # ****************************************************************************
@@ -333,15 +335,16 @@ figure_lookup = {
         'task/EFA/factor_correlations_EFA5': 'FigS07_Task_2nd-order',
         'task/DA/factor_correlations_DA9': 'FigS08_Outcome_2nd-order',
         'communality_adjustment': 'FigS09_communality',
-        'survey/HCA/dendrogram_data': 'FigS10_Survey_Raw_Dendrogram',
-        'task/HCA/dendrogram_data': 'FigS11_Task_Raw_Dendrogram',
-        'silhouette_analysis': 'FigS12_Survey_Silhouette',
+        'EFA_test_retest': 'FigS10_EFA_retest',
+        'survey/HCA/dendrogram_data': 'FigS11_Survey_Raw_Dendrogram',
+        'task/HCA/dendrogram_data': 'FigS12_Task_Raw_Dendrogram',
+        'silhouette_analysis': 'FigS13_Survey_Silhouette',
         # survey clusters
         # task clusters
         # combined EFA prediction
-        'survey/prediction/IDM_ridge_prediction_bar': 'FigS16_Survey_IDM_prediction',
-        'task/prediction/IDM_ridge_prediction_bar': 'FigS17_Task_IDM_prediction',
-        'survey/prediction/EFA_ridge_factor_fingerprint': 'FigS18_Survey_Factor_Fingerprints'
+        'survey/prediction/IDM_ridge_prediction_bar': 'FigS17_Survey_IDM_prediction',
+        'task/prediction/IDM_ridge_prediction_bar': 'FigS18_Task_IDM_prediction',
+        'survey/prediction/EFA_ridge_factor_fingerprint': 'FigS19_Survey_Factor_Fingerprints'
         }
     
 

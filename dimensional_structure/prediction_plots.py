@@ -23,7 +23,7 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
     importance_vars = importance[0]
     importance_vars = [shortened_factors.get(v,v) for v in importance_vars]
     if importance[1] is not None:
-        importance_vals = [abs(i) for i in importance[1][0].T]
+        importance_vals = [abs(i) for i in importance[1]]
         plot_loadings(ax, importance_vals, kind='line', offset=.5, 
                       colors=[color], plot_kws={'alpha': 1, 'linewidth': label_size/4})
     else:
@@ -62,9 +62,9 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
             ax2.axis('off')
         
     if title:
-        ax.set_title(title, fontsize=label_size*1.5, y=1.06)
+        ax.set_title(title, fontsize=label_size*1.5, y=1.1)
     # set up yticks
-    if len(importance[1][0]) != 0:
+    if len(importance[1]) != 0:
         ax.set_ylim(bottom=0)
         if ymax:
             ax.set_ylim(top=ymax)
@@ -185,9 +185,12 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
     plt.setp(list(ax1.spines.values()), linewidth=size/10)
     # Plot Polar Plots for importances
     if EFA == True:
+        reorder_vec = results.EFA.get_factor_reorder(results.EFA.results['num_factors'])
+        reorder_fun = lambda x: [x[i] for i in reorder_vec]
         # get importances
         vals = [predictions[i] for i in target_order]
-        importances = [(i['predvars'], i['importances']) for i in vals]
+        importances = [(reorder_fun(i['predvars']), 
+                        reorder_fun(i['importances'][0])) for i in vals]
         # plot
         axes=[]
         N = len(importances)
@@ -400,11 +403,14 @@ def plot_outcome_ontological_similarity(results, EFA=True, classifier='ridge',
 def plot_factor_fingerprint(results, classifier='ridge', rotate='oblimin', 
                             change=False, normalize=False, size=4.6,  
                             dpi=300, ext='png', plot_dir=None):
+    reorder_vec = results.DA.get_factor_reorder(results.DA.results['num_factors'])
+    targets = results.DA.get_loading().columns
+    targets = [targets[i] for i in reorder_vec]
+        
     predictions = results.load_prediction_object(EFA=True, 
                                                  change=change,
                                                  classifier=classifier,
                                                  rotate=rotate)['data']
-    targets = list(predictions.keys())
     factors = predictions[targets[0]]['predvars']
     importances = np.vstack([predictions[k]['importances'] for k in targets])
 
@@ -416,7 +422,7 @@ def plot_factor_fingerprint(results, classifier='ridge', rotate='oblimin',
     plt.subplots_adjust(wspace=.5, hspace=.5)
     axes = f.get_axes()
     for i, factor in enumerate(factors):
-        label_importance = [targets, [importances[:,i]]]
+        label_importance = [targets, importances[:,i]]
         visualize_importance(label_importance, axes[i], yticklabels=False,
                              xticklabels=True,
                              title=factor,
@@ -424,7 +430,6 @@ def plot_factor_fingerprint(results, classifier='ridge', rotate='oblimin',
                              label_scale=.23,
                              color=colors[3])
     
-
     if plot_dir is not None:
         changestr = '_change' if change else ''
         filename = 'EFA%s_%s_factor_fingerprint.%s' % (changestr, classifier, ext)

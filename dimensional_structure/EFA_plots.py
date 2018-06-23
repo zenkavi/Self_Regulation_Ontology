@@ -194,7 +194,7 @@ def plot_factor_correlation(results, c, rotate='oblimin', title=True,
     EFA = results.EFA
     loading = EFA.get_loading(c, rotate=rotate)
     # get factor correlation matrix
-    reorder_vec = EFA._get_factor_reorder(c)
+    reorder_vec = EFA.get_factor_reorder(c)
     phi = get_attr(EFA.results['factor_tree_Rout_%s' % rotate][c],'Phi')
     phi = pd.DataFrame(phi, columns=loading.columns, index=loading.columns)
     phi = phi.iloc[reorder_vec, reorder_vec]
