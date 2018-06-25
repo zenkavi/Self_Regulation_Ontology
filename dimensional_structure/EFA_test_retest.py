@@ -233,7 +233,3 @@ def plot_cross_EFA_retest(all_results, size=4.6, dpi=300,
     
     
     
-    
-    
-    
-    

@@ -401,11 +401,13 @@ def plot_outcome_ontological_similarity(results, EFA=True, classifier='ridge',
         plt.close()
 
 def plot_factor_fingerprint(results, classifier='ridge', rotate='oblimin', 
-                            change=False, normalize=False, size=4.6,  
+                            change=False, size=4.6,  
                             dpi=300, ext='png', plot_dir=None):
     reorder_vec = results.DA.get_factor_reorder(results.DA.results['num_factors'])
     targets = results.DA.get_loading().columns
     targets = [targets[i] for i in reorder_vec]
+    if change:
+        targets = [t+' Change' for t in targets]
         
     predictions = results.load_prediction_object(EFA=True, 
                                                  change=change,
