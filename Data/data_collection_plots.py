@@ -97,8 +97,8 @@ def plot_retest_data(retest_data, size=4.6, save_dir=None):
         sns.boxplot(x='icc', y='Measure Category', ax=box_ax, data=retest_data,
                     palette={'Survey': colors[0], 'Task': colors[1]}, saturation=1,
                     width=.5, linewidth=size/4)
-    box_ax.text(0, 1.2, '%s Task measures' % Task_N, color=colors[1], fontsize=size*2)
-    box_ax.text(0, 1, '%s Survey measures' % Survey_N, color=colors[0], fontsize=size*2)
+    box_ax.text(0, 1, '%s Task measures' % Task_N, color=colors[1], fontsize=size*2)
+    box_ax.text(0, 1.2, '%s Survey measures' % Survey_N, color=colors[0], fontsize=size*2)
     box_ax.set_ylabel('Measure category', fontsize=size*2, labelpad=size)
     box_ax.set_xlabel('Intraclass correlation coefficient', fontsize=size*2, labelpad=size)
     box_ax.tick_params(labelsize=size*1.5, pad=size)
