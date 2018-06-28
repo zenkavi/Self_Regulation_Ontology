@@ -129,7 +129,8 @@ def plot_EFA_change(results, ax=None,
                  markeredgewidth=markeredge, markerfacecolor='w',
                  linewidth=linewidth, label=label[0])
         ax.plot(retest_pca[i,0], retest_pca[i,1], marker='o', 
-                 markersize=markersize, color=color, label=label[1])
+                 markersize=markersize, color=color, 
+                 linewidth=linewidth, label=label[1])
     ax.tick_params(labelsize=0, pad=size/2)
     ax.set_xlabel('PC 1', fontsize=size*2.5)
     ax.set_ylabel('PC 2', fontsize=size*2.5)
