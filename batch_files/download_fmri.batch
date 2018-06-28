@@ -38,6 +38,6 @@ data_loc=`sed '8q;d' singularity_config.txt`
 expfactory_loc=`sed '10q;d' singularity_config.txt`
 
 singularity exec -B ${data_loc}:/Data -B ${expfactory_loc}:/expfactory_token  ${singularity_loc} \
-    python /SRO/data_preparation/fmri_download_data.py --job all
+    python /SRO/data_preparation/fmri_followup_download_data.py --job all
 
 
