@@ -6,9 +6,9 @@ from glob import glob
 from os import makedirs, path
 import numpy as np
 import pandas as pd
-from process_alcohol_drug import process_alcohol_drug
-from process_demographics import process_demographics
-from process_health import process_health
+from data_preparation.process_alcohol_drug import process_alcohol_drug
+from data_preparation.process_demographics import process_demographics
+from data_preparation.process_health import process_health
 from selfregulation.utils.data_preparation_utils import convert_var_names, drop_failed_QC_vars, drop_vars, get_items
 from selfregulation.utils.data_preparation_utils import remove_correlated_task_variables, remove_outliers, save_task_data
 from selfregulation.utils.data_preparation_utils import transform_remove_skew

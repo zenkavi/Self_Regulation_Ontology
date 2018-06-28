@@ -62,7 +62,8 @@ if job in ['extras', 'all']:
     # ********* Add extras to data **********************
     #**************************************************  
     #anonymize data
-    convert_fmri_ids(data)
+    id_file = path.join('samples', 'fmri_followup_expfactory_id_conversion.json')
+    convert_fmri_ids(data, id_file=id_file)
     
     # record subject completion statistics
     (data.groupby('worker_id').count().finishtime).to_json(path.join(data_dir, 'admin', 'fmri_followup_worker_counts.json'))
