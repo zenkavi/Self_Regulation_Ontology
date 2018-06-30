@@ -77,6 +77,7 @@ Yifan Hu Layout
 Force Atlas Layout
 ...just play with it until it looks right. I started with
 Yifan Hu to get it in a relatively nice layout, then used force atlas
+-Edge weights filter at .05
 """
 
 task_within = squareform(g.graph_to_dataframe().iloc[:len(task_order), :len(task_order)])

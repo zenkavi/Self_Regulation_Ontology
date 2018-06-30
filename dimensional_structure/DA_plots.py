@@ -38,12 +38,12 @@ def plot_factor_correlation(results, c, title=True,
     phi = get_attr(DA.results['factor_tree_Rout_oblimin'][c],'Phi')
     phi = pd.DataFrame(phi, columns=loading.columns, index=loading.columns)
     phi = phi.iloc[reorder_vec, reorder_vec]
-    with sns.plotting_context('notebook', font_scale=2):
+    with sns.plotting_context('notebook', font_scale=2) and sns.axes_style('white'):
         f = plt.figure(figsize=(size*5/4, size))
         ax1 = f.add_axes([0,0,.9,.9])
         cbar_ax = f.add_axes([.91, .05, .03, .8])
-        sns.heatmap(phi, ax=ax1, square=True, vmax=.5, vmin=-.5,
-                    cbar_ax=cbar_ax,
+        sns.heatmap(phi, ax=ax1, square=True, 
+                    cbar_ax=cbar_ax, mask=np.eye(c),
                     cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
         yticklabels = ax1.get_yticklabels()
         ax1.set_yticklabels(yticklabels, rotation=0, ha="right")
@@ -53,7 +53,6 @@ def plot_factor_correlation(results, c, title=True,
                       weight='bold', y=1.05, fontsize=size*3)
         ax1.tick_params(labelsize=size*3)
         # format cbar
-        cbar_ax.set_yticklabels([-.5, -.25, 0, .25, .5])
         cbar_ax.tick_params(axis='y', length=0)
         cbar_ax.tick_params(labelsize=size*2)
         cbar_ax.set_ylabel('Pearson Correlation', rotation=-90, labelpad=size*4, fontsize=size*3)

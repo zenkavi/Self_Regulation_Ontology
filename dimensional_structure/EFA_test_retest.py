@@ -178,33 +178,33 @@ def plot_cross_EFA_retest(all_results, size=4.6, dpi=300,
         fig, axes = plt.subplots(num_rows, num_cols, 
                                  figsize=(size, size/2*num_rows))
     axes = fig.get_axes()
+    cbar_ax = fig.add_axes([.2, .06, .2, .02])
     # get fontsize for factor labels
-    c = [r.EFA.results['num_factors'] for  r in all_results.values()]
-    num_labels = max(c)*2
     for i, (name,results) in enumerate(all_results.items()):
         ax2 = axes[i*2]; ax = axes[i*2+num_rows//2]
         combined = plot_EFA_change(results, ax=ax, size=size/2)
         if i!=0:
             ax.get_legend().set_visible(False)
-        # plot corr
-        corr = combined.corr()
-        max_val = abs(corr).max().max()
-        
-        cbar_ax = fig.add_axes([.2, .06, .2, .02])
-        sns.heatmap(corr, square=True, ax=ax2, cbar_ax=cbar_ax, 
-                    xticklabels=False,
-                    cbar_kws={'orientation': 'horizontal',
-                              'ticks': [-max_val, 0, max_val]}); 
+        # plot corr between test and retest
+        num_labels = combined.shape[1]//2
+        corr = combined.corr().iloc[:num_labels, num_labels:]
+        # add cbar
+        if i == len(all_results)-1:
+            sns.heatmap(corr, square=True, ax=ax2, cbar_ax=cbar_ax, 
+                        xticklabels=False, vmin=-1, vmax=1,
+                        cbar_kws={'orientation': 'horizontal',
+                                  'ticks': [-1, 0, 1]}); 
+            
+            cbar_ax.set_xlabel('Pearson Correlation', fontsize=size*2)
+            cbar_ax.tick_params(labelsize=size*1)
+        else:
+            sns.heatmap(corr, square=True, ax=ax2, vmin=-1, vmax=1,
+                        xticklabels=False, cbar=False)
+            
         ax2.set_yticklabels(ax2.get_yticklabels(), rotation=0)
-        ax2.tick_params(labelsize=size/num_labels/num_rows*40, pad=size/2)
-        cbar_ax.set_xlabel('Pearson Correlation', fontsize=size*1.5)
-        cbar_ax.tick_params(labelsize=size*1)
-
-        # set divider lines
-        n = corr.shape[1]
-        ax2.axvline(n//2, 0, n, color='k', linewidth=size/6)
-        ax2.axhline(n//2, 0, n, color='k', linewidth=size/6)
-        
+        ax2.tick_params(labelsize=size/num_labels/num_rows*15, pad=size/2)
+        ax2.set_xlabel('Retest (T2)', fontsize=size*1.5)
+        ax2.set_ylabel('Test (T1)', fontsize=size*1.5)
         # add text for measurement category
         xlim = ax.get_xlim()
         ylim = ax.get_ylim()
