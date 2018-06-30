@@ -73,7 +73,7 @@ def calc_survey_task_relationship(all_results, EFA=False, alpha=.01):
             return results.HCA.results['data']
         else:
             c = results.EFA.results['num_factors']
-            return results.HCA.results['EFA%s' % c]
+            return results.HCA.results['EFA%s_oblimin' % c]
     survey_order = get_EFA_HCA(all_results['survey'], EFA)['reorder_vec']
     task_order = get_EFA_HCA(all_results['task'], EFA)['reorder_vec']
     

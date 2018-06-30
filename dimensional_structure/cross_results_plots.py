@@ -120,7 +120,7 @@ def plot_corr_heatmap(all_results, EFA=False, size=4.6,
             return results.HCA.results['data']
         else:
             c = results.EFA.results['num_factors']
-            return results.HCA.results['EFA%s' % c]
+            return results.HCA.results['EFA%s_oblimin' % c]
     
 
     survey_order = get_EFA_HCA(all_results['survey'], EFA)['reorder_vec']
@@ -270,8 +270,8 @@ def plot_cross_silhouette(all_results, inp='data', size=4.6,  dpi=300,
     letters = [chr(i).upper() for i in range(ord('a'),ord('z')+1)]
     
     for i, (name, results) in enumerate(all_results.items()):
-        ax = axes.pop(0)
-        ax2 = axes.pop(0)
+        ax = axes[i*2]
+        ax2 = axes[i*2+1]
         inp = 'EFA%s_oblimin' % results.EFA.results['num_factors']
         plot_silhouette(results, inp=inp, axes=(ax,ax2), size=size)
         ax.set_ylabel('%s cluster separated DVs' % name.title(), fontsize=size)
@@ -286,6 +286,11 @@ def plot_cross_silhouette(all_results, inp='data', size=4.6,  dpi=300,
         place_letter(ax2, letters.pop(0), fontsize=size*9/4.6)
 
     plt.subplots_adjust(hspace=.2)
+    max_x = max([ax.get_xlim()[1] for ax in axes[::2]])
+    min_x = min([ax.get_xlim()[0] for ax in axes[::2]])
+    for ax in axes[::2]:
+        ax.set_xlim([min_x, max_x])
+    
     if plot_dir is not None:
         save_figure(fig, path.join(plot_dir, 
                                          'silhouette_analysis.%s' % ext),
@@ -298,8 +303,9 @@ def plot_cross_communality(all_results, rotate='oblimin', retest_threshold=.2,
     retest_data = None
     num_cols = 2
     num_rows = math.ceil(len(all_results.keys())/2)
-    f, axes = plt.subplots(num_rows, num_cols, figsize=(size, size/2*num_rows))
-    max_x = 0
+    with sns.axes_style('white'):
+        f, axes = plt.subplots(num_rows, num_cols, figsize=(size, size/2*num_rows))
+    max_y = 0
     for i, (name, results) in enumerate(all_results.items()):
         if retest_data is None:
             # load retest data
@@ -332,46 +338,47 @@ def plot_cross_communality(all_results, rotate='oblimin', retest_threshold=.2,
             adjusted_communality = communality/noise_ceiling
             
         # plot communality histogram
-
-
         if len(retest_subset) > 0:
             ax = axes[i]
-            with sns.axes_style('white'):
-                ax.set_title(name.title(), fontweight='bold', fontsize=size*2)
-                colors = sns.color_palette(n_colors=2, desat=.75)
-                sns.kdeplot(communality, linewidth=size/4, ax=ax,
-                            shade=True, label='Communality', color=colors[0])
-                sns.kdeplot(adjusted_communality, linewidth=size/4, ax=ax, 
-                            shade=True, label='Adjusted Communality', color=colors[1])
-                ylim = ax.get_ylim()
-                ax.vlines(np.mean(communality), ylim[0], ylim[1],
-                          color=colors[0], linewidth=size/4, linestyle='--')
-                ax.vlines(np.mean(adjusted_communality), ylim[0], ylim[1],
-                          color=colors[1], linewidth=size/4, linestyle='--')
-                ax.set_yticks([])
-                ax.tick_params(labelsize=size*1.2)
-                ax.set_ylim(0, ax.get_ylim()[1])
-                ax.set_xlim(0, ax.get_xlim()[1])
-                ax.spines['right'].set_visible(False)
-                ax.spines['top'].set_visible(False)
-                if (i+1) == len(all_results):
-                    leg=ax.legend(fontsize=size*1.5, loc='upper right',
-                                  frameon=True, bbox_to_anchor=(1.2, 1.0), 
-                                  handlelength=0, handletextpad=0)
-                    beautify_legend(leg, colors)
-                elif i==0:
-                    ax.set_ylabel('Normalized Density', fontsize=size*2)
-                    ax.legend().set_visible(False)
-                else:
-                    ax.legend().set_visible(False)
-                if i>=len(all_results)-2:
-                    ax.set_xlabel('Communality', fontsize=size*2)
-                # update max_x
-                if ax.get_xlim()[1] > max_x:
-                    max_x = ax.get_xlim()[1]
-                ax.grid(False)
+            ax.set_title(name.title(), fontweight='bold', fontsize=size*2)
+            colors = sns.color_palette(n_colors=2, desat=.75)
+            sns.kdeplot(communality, linewidth=size/4, ax=ax, vertical=True,
+                        shade=True, label='Communality', color=colors[0])
+            sns.kdeplot(adjusted_communality, linewidth=size/4, ax=ax, vertical=True,
+                        shade=True, label='Adjusted Communality', color=colors[1])
+            xlim = ax.get_xlim()
+            ax.hlines(np.mean(communality), xlim[0], xlim[1],
+                      color=colors[0], linewidth=size/4, linestyle='--')
+            ax.hlines(np.mean(adjusted_communality), xlim[0], xlim[1],
+                      color=colors[1], linewidth=size/4, linestyle='--')
+            ax.set_xticks([])
+            ax.tick_params(labelsize=size*1.2)
+            ax.set_ylim(0, ax.get_ylim()[1])
+            ax.set_xlim(0, ax.get_xlim()[1])
+            ax.spines['right'].set_visible(False)
+            ax.spines['top'].set_visible(False)
+            if (i+1) == len(all_results):
+                ax.set_xlabel('Normalized Density', fontsize=size*2)
+                leg=ax.legend(fontsize=size*1.5, loc='upper right',
+                              frameon=True, bbox_to_anchor=(1.2, 1.0), 
+                              handlelength=0, handletextpad=0)
+                beautify_legend(leg, colors)
+            elif i>=len(all_results)-2:
+                ax.set_xlabel('Normalized Density', fontsize=size*2)
+                ax.legend().set_visible(False)
+            else:
+                ax.legend().set_visible(False)
+            if i%2==0:
+                ax.set_ylabel('Communality', fontsize=size*2)
+            else:
+                ax.tick_params(labelsize=0, pad=0)
+            # update max_x
+            if ax.get_ylim()[1] > max_y:
+                max_y = ax.get_ylim()[1]
+            ax.grid(False)
         for ax in axes:
-            ax.set_xlim((0, max_x))
+            ax.set_ylim((0, max_y))
+        plt.subplots_adjust(wspace=0)
                     
         if plot_dir:
             filename = 'communality_adjustment.%s' % ext

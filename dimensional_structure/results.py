@@ -18,7 +18,7 @@ from dimensional_structure.utils import (
         get_loadings, get_scores_from_subset, get_top_factors, 
         hdbscan_cluster, hierarchical_cluster, residualize_baseline
         )
-from selfregulation.utils.graph_utils import  (get_adj, Graph_Analysis)
+from dimensional_structure.graph_utils import  (get_adj, Graph_Analysis)
 from selfregulation.utils.utils import get_behav_data, get_demographics, get_info
 from selfregulation.utils.r_to_py_utils import get_attr, get_Rpsych, psychFA
 

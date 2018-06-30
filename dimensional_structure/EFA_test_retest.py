@@ -99,7 +99,7 @@ def plot_EFA_retest(results, size=4.6, dpi=300, ext='png', plot_dir=None):
             
 
 
-def plot_EFA_change(results, ax=None, 
+def plot_EFA_change(results, ax=None, color_on=False,
                     size=4.6, dpi=300, ext='png', plot_dir=None):
     combined, cross_diag = calc_EFA_retest(results, verbose=False)
     n = combined.shape[1]//2
@@ -109,6 +109,7 @@ def plot_EFA_change(results, ax=None,
     orig_pca= pca.fit_transform(orig)    
     retest_pca= pca.transform(retest)
     
+    color=[.2,.2,.2]
     # get color range
     mins = np.min(orig_pca)
     ranges = np.max(orig_pca)-mins
@@ -122,8 +123,10 @@ def plot_EFA_change(results, ax=None,
         label = [None, None]
         if i==0:
             label=['Original Scores', 'Retest Scores']
-        color = list((orig_pca[i,:]-mins)/ranges)
-        color = [color[0]] + [0] + [color[1]]
+        if color_on:
+            color = list((orig_pca[i,:]-mins)/ranges)
+            color = [color[0]] + [0] + [color[1]]
+        
         ax.plot(*zip(orig_pca[i,:], retest_pca[i,:]), marker='o',
                  markersize=markersize, color=color,
                  markeredgewidth=markeredge, markerfacecolor='w',
