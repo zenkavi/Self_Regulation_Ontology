@@ -1,8 +1,14 @@
-from os import path
+from itertools import permutations
 import numpy as np
+from os import path
 import pandas as pd
+import pickle
 from scipy.spatial.distance import squareform
 from scipy.stats import pearsonr
+from sklearn.linear_model import RidgeCV
+from sklearn.model_selection import cross_val_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
 from dimensional_structure.prediction_utils import run_prediction
 
 def run_group_prediction(all_results, shuffle=False, classifier='lasso',
@@ -41,10 +47,37 @@ def run_group_prediction(all_results, shuffle=False, classifier='lasso',
                         save=save)
         out[target_name] = prediction
     return out
-        
 
-
-
+def run_cross_prediction(all_results, verbose=False, save=True):
+    # within
+    within_predictions = {}
+    for name, predicting_set in all_results.items():
+        within_predictions[name] = {}
+        all_predictors = predicting_set.data
+        for target, vals in all_predictors.iteritems():
+            predictors = all_predictors.drop(target, axis=1)
+            pipe = Pipeline(steps=[('scale', StandardScaler()),
+                                   ('clf', RidgeCV())])
+            score = np.mean(cross_val_score(pipe, predictors, vals, cv=10))
+            within_predictions[name][target] = score
+    # across
+    across_predictions = {}
+    for pname, tname in permutations(all_results.keys(),2):
+        across_predictions['%s_to_%s' % (pname, tname)] = {}
+        predictors = all_results[pname].data
+        targets = all_results[tname].data
+        for target, vals in targets.iteritems():
+            pipe = Pipeline(steps=[('scale', StandardScaler()),
+                                   ('clf', RidgeCV())])
+            score = np.mean(cross_val_score(pipe, predictors, vals, cv=10))
+            across_predictions['%s_to_%s' % (pname, tname)] [target] = score
+    if save:
+        save_loc = path.join(path.dirname(all_results['task'].get_output_dir()), 
+                         'cross_prediction.pkl')
+        pickle.dump({'within': within_predictions,
+                     'across': across_predictions},
+                    open(save_loc, 'wb'))
+    
 def calculate_pvalues(df):
     df = df.dropna()._get_numeric_data()
     dfcols = pd.DataFrame(columns=df.columns)
@@ -65,7 +98,6 @@ def FDR_correction(pval_df, alpha=.01):
     return pd.DataFrame(squareform(significant_values), 
                         columns=pval_df.columns[:],
                         index=pval_df.index[:])
-    
     
 def calc_survey_task_relationship(all_results, EFA=False, alpha=.01):
     def get_EFA_HCA(results, EFA):

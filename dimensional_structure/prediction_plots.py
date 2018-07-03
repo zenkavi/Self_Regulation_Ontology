@@ -81,6 +81,7 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
                     rotate='oblimin', change=False, normalize=False, 
                     metric='R2', size=4.6,  
                     dpi=300, ext='png', plot_dir=None):
+    basefont = max(size, 5)
     predictions = results.load_prediction_object(EFA=EFA, 
                                                  change=change,
                                                  classifier=classifier,
@@ -149,18 +150,21 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
                 linewidth=size/10, linestyle='--')
     
     ax1.set_xticks(np.arange(0,len(r2s))+width/2)
-    ax1.set_xticklabels([i[0] for i in r2s], rotation=15, fontsize=size*1.15)
+    ax1.set_xticklabels([i[0] for i in r2s], rotation=15, fontsize=basefont*1.15)
     ax1.tick_params(axis='y', labelsize=size)
     ax1.tick_params(length=size/4, width=size/10, pad=size/2)
     xlow, xhigh = ax1.get_xlim()
     if normalize:
-        ax1.set_ylabel('Permutation Normalized R2', fontsize=size, labelpad=10)
+        ax1.set_ylabel('Permutation Normalized R2', fontsize=basefont, labelpad=10)
         ax1.hlines(0, xlow, xhigh, color='k', lw=size/5)
         ax1.set_xlim(xlow,xhigh)
     else:
-        ax1.set_ylabel(metric, fontsize=size, labelpad=size)
+        if metric == 'R2':
+            ax1.set_ylabel(r'$R^2$', fontsize=basefont*1.5, labelpad=size*1.5)
+        else:
+            ax1.set_ylabel(metric, fontsize=basefont*1.5, labelpad=size*1.5)
     # add a legend
-    leg = ax1.legend(fontsize=size, loc='upper left', 
+    leg = ax1.legend(fontsize=basefont*1.2, loc='upper left', 
                      frameon=True, handlelength=0, handletextpad=0)
     beautify_legend(leg, colors[1:3]+[shuffled_grey])
     # change y extents
@@ -232,7 +236,7 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
         axes.append(fig.add_axes([locs[0]-.2*ratio,.56,.3*ratio,.3], projection='polar'))
         visualize_importance(label_importance, axes[-1], yticklabels=False,
                              xticklabels=True,
-                             label_size=figsize[1]*1.2,
+                             label_size=max(figsize[1]*1.2, 5),
                              label_scale=.22,
                              title=best_predictors[-1][1][0],
                              color=colors[3],
@@ -243,7 +247,7 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
         axes.append(fig.add_axes([locs[1]-.2*ratio,.56,.3*ratio,.3], projection='polar'))
         visualize_importance(label_importance, axes[-1], yticklabels=False,
                              xticklabels=True,
-                             label_size=figsize[1]*1.2,
+                             label_size=max(figsize[1]*1.2, 5),
                              label_scale=.23,
                              title=best_predictors[-2][1][0],
                              color=colors[3],

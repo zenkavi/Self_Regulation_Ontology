@@ -8,7 +8,10 @@ from matplotlib.colors import ListedColormap
 import numpy as np
 from os import path
 import pandas as pd
+import pickle
 import seaborn as sns
+from scipy.spatial.distance import squareform
+from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression, RidgeCV
 from sklearn.model_selection import cross_val_score
 from dimensional_structure.HCA_plots import plot_silhouette
@@ -168,8 +171,6 @@ def plot_corr_heatmap(all_results, EFA=False, size=4.6,
     left_ax.text(0, ((1-perc_task)/2), 'Survey DVs', rotation=90, va='center', fontsize=size*2.5)
     bottom_ax.text(perc_task/2, 0, 'Task DVs', ha='center', fontsize=size*2.5)
     bottom_ax.text((1-(1-perc_task)/2), 0, 'Survey DVs', ha='center', fontsize=size*2.5)
-    
-    
     if plot_dir is not None:
         # make histogram plot
         save_figure(f, path.join(plot_dir, 'data_correlations.%s' % ext),
@@ -177,8 +178,87 @@ def plot_corr_heatmap(all_results, EFA=False, size=4.6,
                                  'transparent': True})   
         plt.close()
 
+def plot_glasso_edge_strength(all_results, graph_loc,  size=4.6, 
+                             dpi=300, ext='png', plot_dir=None):
+    task_length = all_results['task'].data.shape[1]
+    g = pickle.load(open(graph_loc, 'rb'))
+    # subset graph
+    task_within = squareform(g.graph_to_dataframe().iloc[:task_length, :task_length])
+    survey_within = squareform(g.graph_to_dataframe().iloc[task_length:, task_length:])
+    across = g.graph_to_dataframe().iloc[:task_length, task_length:].values.flatten()
+    
 
-from sklearn.decomposition import PCA
+    titles = ['Within Tasks', 'Within Surveys', 'Between Tasks And Surveys']
+    colors = [sns.color_palette('Blues_d',3)[0],
+              sns.color_palette('Reds_d',3)[0],
+              [0,0,0]]
+    
+    with sns.axes_style('whitegrid'):
+        f, axes = plt.subplots(3,1, figsize=(size,size*1.5))
+
+    for i, corr in enumerate([task_within, survey_within, across]):
+        sns.stripplot(corr, jitter=.2, alpha=.5, orient='h', ax=axes[i],
+                      color=colors[i], s=size/2)
+        
+    max_x = max([ax.get_xlim()[1] for ax in axes])*1.1
+    for i, ax in enumerate(axes):
+        ax.set_xlim([0, max_x])
+        ax.text(max_x*.1, -.35, titles[i], color=colors[i], ha='left',
+                fontsize=size*2)
+        if i!=(len(axes)-1):
+            ax.tick_params(labelsize=0, pad=0)
+        else:
+            ax.tick_params(labelsize=size*1.5)
+    axes[-1].set_xlabel('Edge Weight', fontsize=size*2)
+    plt.subplots_adjust(hspace=0)
+    if plot_dir is not None:
+        # make histogram plot
+        save_figure(f, path.join(plot_dir, 'glasso_edge_strength.%s' % ext),
+                                {'dpi': dpi,
+                                 'transparent': True})   
+        plt.close()
+
+
+def plot_cross_within_prediction(prediction_loc, size=4.6, 
+                                 dpi=300, ext='png', plot_dir=None):
+    predictions = pickle.load(open(prediction_loc, 'rb'))
+
+    titles = ['Within Tasks', 'Within Surveys', 'Survey-By-Tasks', 'Task-By-Surveys']
+    colors = [sns.color_palette('Blues_d',3)[0],
+              sns.color_palette('Reds_d',3)[0],
+              [.4,.4,.4],
+              [.4,.4,.4]]
+    
+    with sns.axes_style('whitegrid'):
+        f, axes = plt.subplots(4,1, figsize=(size,size*1.5))
+
+    for i, vals in enumerate([predictions['within']['task'],
+                              predictions['within']['survey'],
+                              predictions['across']['task_to_survey'],
+                              predictions['across']['survey_to_task']]):
+        sns.violinplot(list(vals.values()), orient='h', color=colors[i],
+                    ax=axes[i], width=.5)
+        #sns.stripplot(list(vals.values()), jitter=.2, alpha=.5, orient='h',
+                     # ax=axes[i], color=colors[i], s=size)
+        
+    min_x = min([ax.get_xlim()[0] for ax in axes])
+    for i, ax in enumerate(axes):
+        ax.set_xlim([min_x, 1])
+        ax.text(min_x+(1-min_x)*.1, -.35, titles[i], color=colors[i], ha='left',
+                fontsize=size*2)
+        if i!=(len(axes)-1):
+            ax.tick_params(labelsize=0, pad=0)
+        else:
+            ax.tick_params(labelsize=size*1.5)
+    axes[-1].set_xlabel(r'$R^2$', fontsize=size*2)
+    plt.subplots_adjust(hspace=0)
+    if plot_dir is not None:
+        # make histogram plot
+        save_figure(f, path.join(plot_dir, 'glasso_edge_strength.%s' % ext),
+                                {'dpi': dpi,
+                                 'transparent': True})   
+        plt.close()
+        
 def plot_EFA_relationships(all_results):
     EFA_all_results = {k:v.EFA for k,v in all_results.items()}
     scores = {k:v.get_scores() for k,v in EFA_all_results.items()}
@@ -265,7 +345,9 @@ def plot_BIC(all_results, size=4.6, dpi=300, ext='png', plot_dir=None):
             
 def plot_cross_silhouette(all_results, inp='data', size=4.6,  dpi=300, 
                     ext='png', plot_dir=None):
-    fig, axes =  plt.subplots(len(all_results), 2, figsize=(size, size*.375*len(all_results)))
+    with sns.axes_style('white'):
+        fig, axes =  plt.subplots(len(all_results), 2, 
+                                  figsize=(size, size*.375*len(all_results)))
     axes = fig.get_axes()
     letters = [chr(i).upper() for i in range(ord('a'),ord('z')+1)]
     
@@ -282,15 +364,18 @@ def plot_cross_silhouette(all_results, inp='data', size=4.6,  dpi=300,
         if i != 0:
             ax.set_title('')
             ax2.set_title('')
-        place_letter(ax, letters.pop(0), fontsize=size*9/4.6)
-        place_letter(ax2, letters.pop(0), fontsize=size*9/4.6)
-
+        [i.set_linewidth(size*.01) for i in ax.spines.values()]
+        [i.set_linewidth(size*.01) for i in ax2.spines.values()]
     plt.subplots_adjust(hspace=.2)
     max_x = max([ax.get_xlim()[1] for ax in axes[::2]])
     min_x = min([ax.get_xlim()[0] for ax in axes[::2]])
-    for ax in axes[::2]:
+    for i in range(len(all_results)):
+        ax = axes[i*2]
+        ax2 = axes[i*2+1]
         ax.set_xlim([min_x, max_x])
-    
+        place_letter(ax, letters.pop(0), fontsize=size*9/4.6)
+        place_letter(ax2, letters.pop(0), fontsize=size*9/4.6)
+        
     if plot_dir is not None:
         save_figure(fig, path.join(plot_dir, 
                                          'silhouette_analysis.%s' % ext),

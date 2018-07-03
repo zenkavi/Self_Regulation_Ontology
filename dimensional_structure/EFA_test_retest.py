@@ -65,8 +65,11 @@ def calc_EFA_retest(results, verbose=True):
     return combined, cross_diag
 
 
-def plot_EFA_retest(results, size=4.6, dpi=300, ext='png', plot_dir=None):
-    combined, cross_diag = calc_EFA_retest(results, verbose=False)
+def plot_EFA_retest(results=None, combined=None, size=4.6, dpi=300, 
+                    ext='png', plot_dir=None):
+    if combined is None:
+        assert results is not None
+        combined, cross_diag = calc_EFA_retest(results, verbose=False)
     corr = combined.corr()
     max_val = abs(corr).max().max()
     
@@ -99,9 +102,11 @@ def plot_EFA_retest(results, size=4.6, dpi=300, ext='png', plot_dir=None):
             
 
 
-def plot_EFA_change(results, ax=None, color_on=False,
+def plot_EFA_change(results=None, combined=None, ax=None, color_on=False,
                     size=4.6, dpi=300, ext='png', plot_dir=None):
-    combined, cross_diag = calc_EFA_retest(results, verbose=False)
+    if combined is None:
+        assert results is not None
+        combined, cross_diag = calc_EFA_retest(results, verbose=False)
     n = combined.shape[1]//2
     orig = combined.iloc[:,:n]
     retest = combined.iloc[:,n:]
@@ -109,7 +114,7 @@ def plot_EFA_change(results, ax=None, color_on=False,
     orig_pca= pca.fit_transform(orig)    
     retest_pca= pca.transform(retest)
     
-    color=[.2,.2,.2]
+    color=[.2,.2,.2, .9]
     # get color range
     mins = np.min(orig_pca)
     ranges = np.max(orig_pca)-mins
@@ -122,7 +127,7 @@ def plot_EFA_change(results, ax=None, color_on=False,
     for i in range(len(orig_pca)):
         label = [None, None]
         if i==0:
-            label=['Original Scores', 'Retest Scores']
+            label=['T1 Scores', 'T2 Scores']
         if color_on:
             color = list((orig_pca[i,:]-mins)/ranges)
             color = [color[0]] + [0] + [color[1]]
@@ -183,7 +188,7 @@ def plot_cross_EFA_retest(all_results, size=4.6, dpi=300,
     for i, (name,results) in enumerate(all_results.items()):
         ax2 = axes[i*2]; ax = axes[i*2+num_rows//2]
         combined = plot_EFA_change(results, ax=ax, size=size/2)
-        if i!=0:
+        if i!=0 and ax.get_legend():
             ax.get_legend().set_visible(False)
         # plot corr between test and retest
         num_labels = combined.shape[1]//2
@@ -195,16 +200,17 @@ def plot_cross_EFA_retest(all_results, size=4.6, dpi=300,
                         cbar_kws={'orientation': 'horizontal',
                                   'ticks': [-1, 0, 1]}); 
             
-            cbar_ax.set_xlabel('Pearson Correlation', fontsize=size*2)
-            cbar_ax.tick_params(labelsize=size*1)
+            cbar_ax.set_xlabel('Pearson Correlation', fontsize=size*1.5)
+            cbar_ax.tick_params(labelsize=size, pad=size/2)
         else:
             sns.heatmap(corr, square=True, ax=ax2, vmin=-1, vmax=1,
                         xticklabels=False, cbar=False)
             
         ax2.set_yticklabels(ax2.get_yticklabels(), rotation=0)
-        ax2.tick_params(labelsize=size/num_labels/num_rows*15, pad=size/2)
-        ax2.set_xlabel('Retest (T2)', fontsize=size*1.5)
-        ax2.set_ylabel('Test (T1)', fontsize=size*1.5)
+        ax2.tick_params(labelsize=min(size/num_labels/num_rows*20, size*1.6), 
+                        pad=size/2)
+        ax2.set_xlabel('Retest (T2)', fontsize=size*2)
+        ax2.set_ylabel('Test (T1)', fontsize=size*2)
         # add text for measurement category
         xlim = ax.get_xlim()
         ylim = ax.get_ylim()
@@ -216,8 +222,9 @@ def plot_cross_EFA_retest(all_results, size=4.6, dpi=300,
                 fontweight='bold')
         place_letter(ax2, letters.pop(0), fontsize=size*9/4.6)
         place_letter(ax, letters.pop(0), fontsize=size*9/4.6)
+        [i.set_linewidth(size*.01) for i in ax.spines.values()]
+        [i.set_linewidth(size*.01) for i in ax2.spines.values()]
         
-            
     if plot_dir is not None:
         save_figure(fig, path.join(plot_dir, 'EFA_test_retest.%s' % ext),
                     {'bbox_inches': 'tight', 'dpi': dpi})

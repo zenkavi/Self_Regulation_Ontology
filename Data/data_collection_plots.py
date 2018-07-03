@@ -89,7 +89,7 @@ Survey_N = np.sum(retest_data.loc[:, 'Measure Category']=='Survey')
 Task_N = len(retest_data)-Survey_N
 
 def plot_retest_data(retest_data, size=4.6, save_dir=None):
-    colors = sns.color_palette('Blues_d',3) 
+    colors = [sns.color_palette('Reds_d',3)[0], sns.color_palette('Blues_d',3)[0]]
     f = plt.figure(figsize=(size,size*.75))
     # plot boxes
     with sns.axes_style('white'):

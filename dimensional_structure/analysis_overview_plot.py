@@ -18,7 +18,7 @@ from selfregulation.utils.utils import get_info, get_recent_dataset
 parser = argparse.ArgumentParser()
 parser.add_argument('-dataset', default=None)
 parser.add_argument('-dpi', type=int, default=300)
-parser.add_argument('-size', type=int, default=4.6)
+parser.add_argument('-size', type=float, default=4.6)
 parser.add_argument('-ext', default='pdf')
 args = parser.parse_args()
 
@@ -46,30 +46,30 @@ task_variables = list(task_subset.index)
 
 size = args.size
 f = plt.figure(figsize=(size, size))
-basefont = size*1.1
+basefont = size*1.3
 basemarker = size**2*1.2
 basewidth = size*.12
 
-
-participant_ax1 = f.add_axes([.25,.555,.28,.16]) 
-participant_ax2 = f.add_axes([.25,.75,.28,.2]) 
-
-loading_ax1 = f.add_axes([.625,.555,.25,.1625]) 
-loading_ax2 = f.add_axes([.625,.753,.25,.193]) 
-
-participant_distance = f.add_axes([.3,.29,.16,.16]) 
-loading_distance = f.add_axes([.675,.29,.16,.16]) 
-#participant_distance.axis('off'); loading_distance.axis('off')
-participant_mds = f.add_axes([.25,-.02,.25,.25]) 
-loading_mds = f.add_axes([.625,-.02,.25,.25]) 
-# color bars for heatmaps
-cbar_ax = f.add_axes([.92,.595,.03,.3]) 
-cbar_ax2 = f.add_axes([.86,.31,.02,.12]) 
-# set background
-back = f.add_axes([0,0,1,1])
-back.axis('off')
-back.patch.set_alpha(0)
-back.set_xlim([0,1]); back.set_ylim([0,1])
+with sns.axes_style("white"):
+    participant_ax1 = f.add_axes([.25,.555,.28,.16]) 
+    participant_ax2 = f.add_axes([.25,.75,.28,.2]) 
+    
+    loading_ax1 = f.add_axes([.625,.555,.25,.1625]) 
+    loading_ax2 = f.add_axes([.625,.753,.25,.193]) 
+    
+    participant_distance = f.add_axes([.3,.29,.16,.16]) 
+    loading_distance = f.add_axes([.675,.29,.16,.16]) 
+    #participant_distance.axis('off'); loading_distance.axis('off')
+    participant_mds = f.add_axes([.25,-.02,.25,.25]) 
+    loading_mds = f.add_axes([.625,-.02,.25,.25]) 
+    # color bars for heatmaps
+    cbar_ax = f.add_axes([.92,.595,.03,.3]) 
+    cbar_ax2 = f.add_axes([.86,.31,.02,.12]) 
+    # set background
+    back = f.add_axes([0,0,1,1])
+    back.axis('off')
+    back.patch.set_alpha(0)
+    back.set_xlim([0,1]); back.set_ylim([0,1])
 
 tasks = sorted(np.unique([i.split('.')[0] for i in task_subset.index]))
 participant_axes = [participant_ax1, participant_ax2]
@@ -100,10 +100,9 @@ for task_i in range(len(tasks)):
                   linewidth=basewidth)
         # plot values
         scatter_colors = [list(color)+[alpha] for alpha in np.linspace(1,0, len(plot_vals))]
-        with sns.axes_style("white"):
-            ax.scatter(range(len(plot_vals)), plot_vals, color=scatter_colors,
-                       s=basemarker*.23, edgecolors='none')
-            ax.grid(False)
+        ax.scatter(range(len(plot_vals)), plot_vals, color=scatter_colors,
+                   s=basemarker*.23, edgecolors='none')
+        ax.grid(False)
     # make x ticks invisible
     ax.set_xticklabels('')
     ax.tick_params(axis='both', length=0)
@@ -167,10 +166,10 @@ sns.heatmap(loading_distances, ax=loading_distance,
             xticklabels=False, yticklabels=False, square=True, 
             cmap=ListedColormap(sns.color_palette('gray', n_colors=100)),
             cbar_kws={'ticks': [0, .99]}, cbar_ax=cbar_ax2)
-participant_distance.set_ylabel('DV', fontsize=basefont*.875)
-loading_distance.set_ylabel('DV', fontsize=basefont*.875)
-participant_distance.set_title('x,y = DV vector in R^522', fontsize=basefont*.875)
-loading_distance.set_title('x,y = DV vector in R^5', fontsize=basefont*.875)
+participant_distance.set_ylabel('DV', fontsize=basefont)
+loading_distance.set_ylabel('DV', fontsize=basefont)
+participant_distance.set_title(r'$\vec{DV}\in \mathrm{\mathbb{R}}^{522}$', fontsize=basefont)
+loading_distance.set_title(r'$\vec{DV}\in \mathrm{\mathbb{R}}^{5}$', fontsize=basefont)
 
 # plot location of top variables
 # update limits
@@ -357,7 +356,7 @@ back.text(-.03,.77, 'Shift Task', fontsize=basefont, rotation=0, alpha=alpha,
 cbar_ax.tick_params('y', which='major', pad=basefont*.5)
 cbar_ax.set_ylabel('Factor Loading', rotation=-90, fontsize=basefont, labelpad=basefont)
 cbar_ax2.tick_params('y', which='major', pad=basefont*.5)
-cbar_ax2.set_ylabel('Distance', rotation=-90, fontsize=basefont*.875, labelpad=basefont)
+cbar_ax2.set_ylabel('Distance', rotation=-90, fontsize=basefont, labelpad=basefont)
 back.text(.375, .535, 'Participants (n=522)', fontsize=basefont, horizontalalignment='center')
 
 # loading ticks
@@ -365,11 +364,11 @@ loading_ax2.tick_params('x', length=basewidth*2, which='major', pad=basefont*.5)
 loading_ax2.xaxis.set_ticks_position('top')
 loading_ax2.set_xticks(np.arange(.5,5.5,1))
 loading_ax2.set_xticklabels(['Factor %s' % i for i in range(1,nfactors+1)],
-                            rotation=45, ha='left', fontsize=basefont*.9)
+                            rotation=45, ha='left', fontsize=basefont)
 # participant box
 back.add_patch(Rectangle((.3385,.55), width=.0115, height=.4, 
                          facecolor="none", edgecolor='grey', linewidth=basewidth*.75))
-back.text(.3385, .96, 'One Participant', fontsize=basefont*.75, 
+back.text(.3385, .96, 'One Participant', fontsize=basefont, 
           horizontalalignment='center', color='grey')
 
 
@@ -411,13 +410,13 @@ back.arrow(.53, .725, .05, 0, width=basewidth/200, facecolor='k')
 back.text(.55, .735, 'EFA', fontsize=basefont, 
           horizontalalignment='center')
 # from data to heatmap
-back.arrow(.375, .515, 0, -.01, width=basewidth/250, edgecolor='k', facecolor='white')
-back.arrow(.75, .515, 0, -.01, width=basewidth/250, facecolor='k')
+back.arrow(.375, .514, 0, -.01, width=basewidth/250, edgecolor='k', facecolor='white')
+back.arrow(.75, .514, 0, -.01, width=basewidth/250, facecolor='k')
 back.text(.567, .48, 'Pairwise Distance', fontsize=basefont, 
           horizontalalignment='center')
 back.text(.567, .46, 'Between DVs', fontsize=basefont, 
           horizontalalignment='center')
-back.text(.567, .435, '1-abs(correlation(x,y))', fontsize=basefont, 
+back.text(.567, .435, r'$1-\vert r_{DV_1,DV_2} \vert$', fontsize=basefont, 
           horizontalalignment='center')
 # from heatmap to MDS
 back.arrow(.375, .27, 0, -.01, width=basewidth/250, edgecolor='k', facecolor='white')

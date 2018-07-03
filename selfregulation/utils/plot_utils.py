@@ -309,7 +309,7 @@ class CurvedText(mtext.Text):
         for c in text:
             if c == ' ':
                 ##make this an invisible 'a':
-                t = mtext.Text(0,0,'a')
+                t = mtext.Text(0,0,'a', **kwargs)
                 t.set_alpha(0.0)
             else:
                 t = mtext.Text(0,0,c, **kwargs)

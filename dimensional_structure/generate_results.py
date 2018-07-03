@@ -51,6 +51,8 @@ import time
 
 from dimensional_structure.results import Results
 from dimensional_structure.cross_results_plots import (plot_corr_heatmap, 
+                                                       plot_glasso_edge_strength,
+                                                       plot_cross_within_prediction,
                                                        plot_BIC,
                                                        plot_cross_silhouette,
                                                        plot_cross_communality)
@@ -116,6 +118,7 @@ subsets = [{'name': 'task',
               'factor_names': [],
               'predict': False}]
 results = None
+all_results = None
 ID = str(random.getrandbits(16)) 
 # create/run results for each subset
 for subset in subsets:
@@ -232,8 +235,8 @@ for subset in subsets:
                  ext=ext, plot_task_kws=plot_task_kws)
         
         # Plot EFA retest
-        plot_EFA_retest(results, plot_dir=EFA_plot_dir, size=size, dpi=dpi, ext=ext)
-        plot_EFA_change(results, plot_dir=EFA_plot_dir, size=size, dpi=dpi, ext=ext)
+        combined=plot_EFA_retest(results, plot_dir=EFA_plot_dir, size=size, dpi=dpi, ext=ext)
+        plot_EFA_change(combined=combined, plot_dir=EFA_plot_dir, size=size, dpi=dpi, ext=ext)
         
         # Plot HCA
         if verbose: print("Plotting HCA")
@@ -305,12 +308,24 @@ if group_plot == True:
         print('*'*79)
         print("Group Plots")
     all_results = load_results(datafile)
+    output_loc = path.dirname(all_results['task'].get_output_dir())
     plot_file = path.dirname(all_results['task'].get_plot_dir())
     plot_corr_heatmap(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+    
+    plot_glasso_edge_strength(all_results,
+                              path.join(output_loc,'graph_results', 'weighted_graph.pkl'), 
+                              size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+    plot_cross_within_prediction(path.join(output_loc, 'cross_prediction.pkl'), 
+                                 size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+    
+    
     plot_BIC(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
     plot_cross_silhouette(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
     plot_cross_communality(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
     plot_cross_EFA_retest(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+    a=subprocess.Popen('python analysis_overview_plot.py -dataset %s -dpi %s -ext %s -size %s' \
+                           % (datafile, dpi, ext, 4.6),
+                           shell=True)
     
 # ****************************************************************************
 # move plots to paper directory
@@ -328,21 +343,20 @@ if run_plot or group_plot:
             'task/HCA/dendrogram_EFA5_oblimin': 'Fig04_Task_Dendrogram',
             'survey/prediction/EFA_ridge_prediction_bar': 'Fig05_Survey_prediction',
             'task/prediction/EFA_ridge_prediction_bar': 'Fig06_Task_prediction',
-            'survey/EFA/factor_heatmap_EFA12': 'FigS02_Survey_EFA',
-            'task/EFA/factor_heatmap_EFA5': 'FigS03_Task_EFA',
-            'task/DA/factor_heatmap_DA9': 'FigS04_Outcome_EFA',
-            'BIC_curves': 'FigS05_BIC_curves',
-            'survey/EFA/factor_correlations_EFA12': 'FigS06_Survey_2nd-order',
-            'task/EFA/factor_correlations_EFA5': 'FigS07_Task_2nd-order',
-            'task/DA/factor_correlations_DA9': 'FigS08_Outcome_2nd-order',
-            'communality_adjustment': 'FigS09_communality',
-            'EFA_test_retest': 'FigS10_EFA_retest',
-            'survey/HCA/dendrogram_data': 'FigS11_Survey_Raw_Dendrogram',
-            'task/HCA/dendrogram_data': 'FigS12_Task_Raw_Dendrogram',
-            'silhouette_analysis': 'FigS13_Survey_Silhouette',
+            'survey/EFA/factor_heatmap_EFA12': 'FigS03_Survey_EFA',
+            'task/EFA/factor_heatmap_EFA5': 'FigS04_Task_EFA',
+            'task/DA/factor_heatmap_DA9': 'FigS05_Outcome_EFA',
+            'BIC_curves': 'FigS06_BIC_curves',
+            'survey/EFA/factor_correlations_EFA12': 'FigS07_Survey_2nd-order',
+            'task/EFA/factor_correlations_EFA5': 'FigS08_Task_2nd-order',
+            'task/DA/factor_correlations_DA9': 'FigS09_Outcome_2nd-order',
+            'communality_adjustment': 'FigS10_communality',
+            'EFA_test_retest': 'FigS11_EFA_retest',
+            'survey/HCA/dendrogram_data': 'FigS12_Survey_Raw_Dendrogram',
+            'task/HCA/dendrogram_data': 'FigS13_Task_Raw_Dendrogram',
+            'silhouette_analysis': 'FigS14_Survey_Silhouette',
             # survey clusters
             # task clusters
-            # combined EFA prediction
             'survey/prediction/IDM_ridge_prediction_bar': 'FigS17_Survey_IDM_prediction',
             'task/prediction/IDM_ridge_prediction_bar': 'FigS18_Task_IDM_prediction',
             'survey/prediction/EFA_ridge_factor_fingerprint': 'FigS19_Survey_Factor_Fingerprints'
