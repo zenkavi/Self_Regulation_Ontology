@@ -230,6 +230,7 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
             locs = [.68, .32]
         label_importance = importances[best_predictors[-1][0]]
         # write abbreviation key
+        pad = 0
         text = [(l, shortened_factors.get(l, None)) for l in label_importance[0]] # for abbeviations text
         if len([True for t in text if t[1] is not None]) > 0:
             pad = .05
