@@ -680,7 +680,7 @@ def plot_silhouette(results, inp='data', labels=None, axes=None,
     ax.tick_params(axis='x', labelsize=size*.8, pad=size/2)
     ax.set_title('Dynamic tree cut', fontsize=size*1.2)
     # plot silhouettes for constant thresholds
-    _, scores = get_constant_height_labels(clustering)
+    _, scores, _ = get_constant_height_labels(clustering)
     ax2.plot(*zip(*scores), 'o', color='b', 
              markeredgecolor='white', markeredgewidth=size*.1, markersize=size*.5, 
              label='Fixed Height Cut')

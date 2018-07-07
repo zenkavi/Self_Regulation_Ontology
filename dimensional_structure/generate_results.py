@@ -56,7 +56,6 @@ from dimensional_structure.cross_results_plots import (plot_corr_heatmap,
                                                        plot_BIC,
                                                        plot_cross_silhouette,
                                                        plot_cross_communality)
-from dimensional_structure.cross_results_utils import run_group_prediction
 from dimensional_structure.DA_plots import plot_DA
 from dimensional_structure.EFA_plots import plot_EFA
 from dimensional_structure.EFA_test_retest import plot_EFA_change, plot_EFA_retest, plot_cross_EFA_retest
@@ -65,7 +64,7 @@ from dimensional_structure.prediction_plots import (plot_prediction,
                                                     plot_prediction_scatter,
                                                     plot_prediction_comparison,
                                                     plot_factor_fingerprint)
-
+from dimensional_structure.prediction_utils import run_group_prediction
 from selfregulation.utils.result_utils import load_results
 from selfregulation.utils.utils import get_info, get_recent_dataset
 
@@ -311,14 +310,11 @@ if group_plot == True:
     output_loc = path.dirname(all_results['task'].get_output_dir())
     plot_file = path.dirname(all_results['task'].get_plot_dir())
     plot_corr_heatmap(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
-    
     plot_glasso_edge_strength(all_results,
                               path.join(output_loc,'graph_results', 'weighted_graph.pkl'), 
                               size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
     plot_cross_within_prediction(path.join(output_loc, 'cross_prediction.pkl'), 
                                  size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
-    
-    
     plot_BIC(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
     plot_cross_silhouette(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
     plot_cross_communality(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
@@ -338,11 +334,11 @@ if run_plot or group_plot:
     paper_dir = path.join(basedir, 'Results', 'Psych_Ontology_Paper')
     figure_lookup = {
             'analysis_overview': 'Fig01_Analysis_Overview',
-            'data_correlations': 'Fig02_Task-Survey_Correlation',
             'survey/HCA/dendrogram_EFA12_oblimin': 'Fig03_Survey_Dendrogram',
             'task/HCA/dendrogram_EFA5_oblimin': 'Fig04_Task_Dendrogram',
             'survey/prediction/EFA_ridge_prediction_bar': 'Fig05_Survey_prediction',
             'task/prediction/EFA_ridge_prediction_bar': 'Fig06_Task_prediction',
+            'data_correlations': 'Fig02c_Task-Survey_Correlation',
             'survey/EFA/factor_heatmap_EFA12': 'FigS03_Survey_EFA',
             'task/EFA/factor_heatmap_EFA5': 'FigS04_Task_EFA',
             'task/DA/factor_heatmap_DA9': 'FigS05_Outcome_EFA',
@@ -357,8 +353,8 @@ if run_plot or group_plot:
             'silhouette_analysis': 'FigS14_Survey_Silhouette',
             # survey clusters
             # task clusters
-            'survey/prediction/IDM_ridge_prediction_bar': 'FigS17_Survey_IDM_prediction',
-            'task/prediction/IDM_ridge_prediction_bar': 'FigS18_Task_IDM_prediction',
+            'survey/prediction/IDM_lasso_prediction_bar': 'FigS17_Survey_IDM_prediction',
+            'task/prediction/IDM_lasso_prediction_bar': 'FigS18_Task_IDM_prediction',
             'survey/prediction/EFA_ridge_factor_fingerprint': 'FigS19_Survey_Factor_Fingerprints'
             }
         

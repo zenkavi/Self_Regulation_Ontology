@@ -73,7 +73,7 @@ def plot_communality(results, c, rotate='oblimin', retest_threshold=.2,
     communality = pd.Series(communality, index=loading.index)
     # alternative calculation
     #communality = (loading**2).sum(1).sort_values()
-    communality.index = [i.replace('.logTr','') for i in communality.index]
+    communality.index = [i.replace('.logTr','').replace('.ReflogTr','') for i in communality.index]
     # load retest data
     retest_data = get_retest_data(dataset=results.dataset.replace('Complete','Retest'))
     if retest_data is None:
@@ -95,8 +95,10 @@ def plot_communality(results, c, rotate='oblimin', retest_threshold=.2,
         adjusted_communality = communality/noise_ceiling
         # correlation
         correlation = pd.concat([communality, noise_ceiling], axis=1).corr().iloc[0,1]
-        noise_ceiling.replace(np.nan, 0, inplace=True)
-        adjusted_communality.replace(np.nan, 0, inplace=True)
+        kept_vars = np.logical_not(noise_ceiling.isnull())
+        noise_ceiling = noise_ceiling[kept_vars]
+        communality = communality[kept_vars]
+        adjusted_communality = adjusted_communality[kept_vars]
         
     # plot communality bars woo!
     if len(retest_data)>0:

@@ -254,7 +254,7 @@ def plot_cross_within_prediction(prediction_loc, size=4.6,
     plt.subplots_adjust(hspace=0)
     if plot_dir is not None:
         # make histogram plot
-        save_figure(f, path.join(plot_dir, 'glasso_edge_strength.%s' % ext),
+        save_figure(f, path.join(plot_dir, 'cross_prediction.%s' % ext),
                                 {'dpi': dpi,
                                  'transparent': True})   
         plt.close()
@@ -306,7 +306,8 @@ def plot_BIC(all_results, size=4.6, dpi=300, ext='png', plot_dir=None):
               sns.color_palette('Greens_d',3)[0:3],
               sns.color_palette('Oranges_d',3)[0:3]]
     height= size*.75/len(all_results)
-    fig, axes = plt.subplots(1, len(all_results), figsize=(size, height))
+    with sns.axes_style('white'):
+        fig, axes = plt.subplots(1, len(all_results), figsize=(size, height))
     for i, results in enumerate(all_results.values()):
         ax1 = axes[i]
         name = results.ID.split('_')[0].title()
@@ -343,7 +344,7 @@ def plot_BIC(all_results, size=4.6, dpi=300, ext='png', plot_dir=None):
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
             
-def plot_cross_silhouette(all_results, inp='data', size=4.6,  dpi=300, 
+def plot_cross_silhouette(all_results, size=4.6,  dpi=300, 
                     ext='png', plot_dir=None):
     with sns.axes_style('white'):
         fig, axes =  plt.subplots(len(all_results), 2, 
@@ -356,11 +357,14 @@ def plot_cross_silhouette(all_results, inp='data', size=4.6,  dpi=300,
         ax2 = axes[i*2+1]
         inp = 'EFA%s_oblimin' % results.EFA.results['num_factors']
         plot_silhouette(results, inp=inp, axes=(ax,ax2), size=size)
-        ax.set_ylabel('%s cluster separated DVs' % name.title(), fontsize=size)
-        ax2.set_ylabel('%s average silhouette score' % name.title(), fontsize=size)
-        if len(axes) != 0:
+        ax.set_ylabel('%s cluster separated DVs' % name.title(), fontsize=size*1.2)
+        ax2.set_ylabel('%s average silhouette score' % name.title(), fontsize=size*1.2)
+        if i == 0:
             ax.set_xlabel('')
             ax2.set_xlabel('')
+        else:
+            ax.set_xlabel('Silhouette score', fontsize=size*1.2)
+            ax2.set_xlabel('Number of clusters', fontsize=size*1.2)
         if i != 0:
             ax.set_title('')
             ax2.set_title('')

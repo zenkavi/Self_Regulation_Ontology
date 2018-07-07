@@ -217,10 +217,7 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
             if pd.isnull(plot_heights[i]):
                 continue
             axes.append(fig.add_axes([plot_x[i], plot_heights[i], 1/N,1/N], projection='polar'))
-            if i in [best_predictors[-1][0], best_predictors[-2][0]]:
-                color = colors[3]
-            else:
-                color = colors[1]
+            color = colors[1]
             visualize_importance(importance, axes[-1],
                                  yticklabels=False, xticklabels=False,
                                  label_size=figsize[1]*1,
@@ -228,9 +225,9 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
                                  axes_linewidth=size/10)
         # plot top 2 predictions, labeled  
         if best_predictors[-1][0] < best_predictors[-2][0]:
-            locs = [.25, .75]
+            locs = [.32, .68]
         else:
-            locs = [.75, .25]
+            locs = [.68, .32]
         label_importance = importances[best_predictors[-1][0]]
         ratio = figsize[1]/figsize[0]
         axes.append(fig.add_axes([locs[0]-.2*ratio,.56,.3*ratio,.3], projection='polar'))
@@ -239,7 +236,7 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
                              label_size=max(figsize[1]*1.2, 5),
                              label_scale=.22,
                              title=best_predictors[-1][1][0],
-                             color=colors[3],
+                             color=colors[1],
                              axes_linewidth=size/10)
         # 2nd top
         label_importance = importances[best_predictors[-2][0]]
@@ -250,8 +247,19 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
                              label_size=max(figsize[1]*1.2, 5),
                              label_scale=.23,
                              title=best_predictors[-2][1][0],
-                             color=colors[3],
+                             color=colors[1],
                              axes_linewidth=size/10)
+        # write abbreviation key
+        text = [(l, shortened_factors.get(l, None)) for l in label_importance[0]]
+        if len([True for t in text if t[1] is not None]) > 0:
+            text_ax = fig.add_axes([.82,.56,.1,.3]) 
+            text_ax.tick_params(labelsize=0)
+            for spine in ['top','right','bottom','left']:
+                text_ax.spines[spine].set_visible(False)
+            for i, (val, abr) in enumerate(text):
+                text_ax.text(0, i/len(text), abr+':', fontsize=size)
+                text_ax.text(.4, i/len(text), val, fontsize=size)
+            
     if plot_dir is not None:
         changestr = '_change' if change else ''
         if EFA:

@@ -1,9 +1,11 @@
 # ****************************************************************************
 # Helper functions for prediction
 # ****************************************************************************
+import glob
 import numpy as np
 import os
 import pandas as pd
+import pickle
 from selfregulation.prediction.behavpredict_V2 import BehavPredict
 
 def run_prediction(predictors, demographics, output_base='', 
@@ -44,3 +46,82 @@ def run_prediction(predictors, demographics, output_base='',
     if save == True:
         bp.write_data(vars_to_test)
     return bp
+
+def print_prediction_performance(results):
+    for classifier in ['ridge', 'lasso', 'rf', 'svm']:
+        print(classifier)
+        out = results.load_prediction_object(classifier=classifier)['data']
+        keys = ['Binge Drinking', 'Problem Drinking', 'Unsafe Drinking',
+                'Drug Use', 'Lifetime Smoking', 'Daily Smoking', 
+                'Mental Health', 'Obesity', 'Income / Life Milestones']
+        for key in keys:
+            val = out[key]
+            print(key)
+            s = ('R2 =\n  %.2f (%.2f)\nMAE =\n  %.2f (%.2f)\n\n' % 
+                  (val['scores_cv'][0]['R2'],
+                   val['scores_insample'][0]['R2'],
+                   val['scores_cv'][0]['MAE'],
+                   val['scores_insample'][0]['MAE']))
+            print(s.replace('0.', '.'))
+        print('*'*40)
+
+def run_group_prediction(all_results, shuffle=False, classifier='lasso',
+                       include_raw_demographics=False, rotate='oblimin',
+                       verbose=False, save=True):
+    if verbose:
+        print('*'*79)
+        print('Running Prediction, shuffle: %s, classifier: %s' % (shuffle, classifier))
+        print('*'*79)
+    
+    names = [r.ID.split('_')[0] for r in all_results.values()]
+    name = '_'.join(names)
+    factor_scores = pd.concat([r.EFA.get_scores(rotate=rotate) 
+                                for r in all_results.values()], axis=1)
+    tmp_results = list(all_results.values())[0]
+    output_dir = os.path.dirname(tmp_results.get_output_dir())
+    demographics = tmp_results.DA
+    demographic_factors = demographics.reorder_factors(demographics.get_scores())
+
+    
+    targets = [('demo_factors', demographic_factors)]
+    if include_raw_demographics:
+        targets.append(('demo_raw', tmp_results.demographics))
+    out = {}
+    for target_name, target in targets:
+        predictors = ('EFA_%s_%s' % (name, rotate), factor_scores)
+        # predicting using best EFA
+        if verbose: print('**Predicting using %s**' % predictors[0])
+        prediction = run_prediction(predictors[1], 
+                        target, 
+                        output_dir,
+                        outfile='%s_%s_prediction' % (predictors[0], target_name), 
+                        shuffle=shuffle,
+                        classifier=classifier, 
+                        verbose=verbose, 
+                        save=save)
+        out[target_name] = prediction
+    return out
+    
+    
+def print_group_prediction(prediction_loc):
+    for classifier in ['ridge', 'lasso', 'rf', 'svm']:
+        files = glob.glob(os.path.join(prediction_loc, '*%s*' % classifier))
+        files.sort(key=os.path.getmtime)
+        out = pickle.load(open(files[-1], 'rb'))['data']
+        print(classifier)
+        keys = ['Binge Drinking', 'Problem Drinking', 'Unsafe Drinking',
+                'Drug Use', 'Lifetime Smoking', 'Daily Smoking', 
+                'Mental Health', 'Obesity', 'Income / Life Milestones']
+        for key in keys:
+            val = out[key]
+            print(key)
+            s = ('R2 =\n  %.2f (%.2f)\nMAE =\n  %.2f (%.2f)\n\n' % 
+                  (val['scores_cv'][0]['R2'],
+                   val['scores_insample'][0]['R2'],
+                   val['scores_cv'][0]['MAE'],
+                   val['scores_insample'][0]['MAE']))
+            print(s.replace('0.', '.'))
+        print('*'*40)
+    
+    
+    

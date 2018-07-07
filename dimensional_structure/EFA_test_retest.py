@@ -128,10 +128,11 @@ def plot_EFA_change(results=None, combined=None, ax=None, color_on=False,
         label = [None, None]
         if i==0:
             label=['T1 Scores', 'T2 Scores']
-        if color_on:
+        if color_on == True:
             color = list((orig_pca[i,:]-mins)/ranges)
             color = [color[0]] + [0] + [color[1]]
-        
+        elif color_on != False:
+            color = color_on
         ax.plot(*zip(orig_pca[i,:], retest_pca[i,:]), marker='o',
                  markersize=markersize, color=color,
                  markeredgewidth=markeredge, markerfacecolor='w',
@@ -175,6 +176,8 @@ def plot_cross_EFA_change(all_results, size=4.6, dpi=300,
     
 def plot_cross_EFA_retest(all_results, size=4.6, dpi=300, 
                           ext='png', plot_dir=None):
+    colors = {'survey': sns.color_palette('Reds_d',3)[0], 
+              'task': sns.color_palette('Blues_d',3)[0]}
     letters = [chr(i).upper() for i in range(ord('a'),ord('z')+1)]
     keys = list(all_results.keys())
     num_cols = 2
@@ -183,13 +186,14 @@ def plot_cross_EFA_retest(all_results, size=4.6, dpi=300,
         fig, axes = plt.subplots(num_rows, num_cols, 
                                  figsize=(size, size/2*num_rows))
     axes = fig.get_axes()
-    cbar_ax = fig.add_axes([.2, .06, .2, .02])
+    cbar_ax = fig.add_axes([.2, .03, .2, .02])
     # get fontsize for factor labels
     for i, (name,results) in enumerate(all_results.items()):
+        color = list(colors.get(name, [.2,.2,.2])) + [.8]
         ax2 = axes[i*2]; ax = axes[i*2+num_rows//2]
-        combined = plot_EFA_change(results, ax=ax, size=size/2)
-        if i!=0 and ax.get_legend():
-            ax.get_legend().set_visible(False)
+        combined = plot_EFA_change(results, color_on=color, ax=ax, size=size/2)
+        ax.set_xlabel('PC 1', fontsize=size*1.8)
+        ax.set_ylabel('PC 2', fontsize=size*1.8)
         # plot corr between test and retest
         num_labels = combined.shape[1]//2
         corr = combined.corr().iloc[:num_labels, num_labels:]
@@ -209,8 +213,8 @@ def plot_cross_EFA_retest(all_results, size=4.6, dpi=300,
         ax2.set_yticklabels(ax2.get_yticklabels(), rotation=0)
         ax2.tick_params(labelsize=min(size/num_labels/num_rows*20, size*1.6), 
                         pad=size/2)
-        ax2.set_xlabel('Retest (T2)', fontsize=size*2)
-        ax2.set_ylabel('Test (T1)', fontsize=size*2)
+        ax2.set_xlabel('Retest (T2)', fontsize=size*1.8)
+        ax2.set_ylabel('Test (T1)', fontsize=size*1.8)
         # add text for measurement category
         xlim = ax.get_xlim()
         ylim = ax.get_ylim()
