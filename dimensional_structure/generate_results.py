@@ -53,6 +53,7 @@ from dimensional_structure.results import Results
 from dimensional_structure.cross_results_plots import (plot_corr_heatmap, 
                                                        plot_glasso_edge_strength,
                                                        plot_cross_within_prediction,
+                                                       plot_cross_relationship,
                                                        plot_BIC,
                                                        plot_cross_silhouette,
                                                        plot_cross_communality)
@@ -309,12 +310,16 @@ if group_plot == True:
     all_results = load_results(datafile)
     output_loc = path.dirname(all_results['task'].get_output_dir())
     plot_file = path.dirname(all_results['task'].get_plot_dir())
-    plot_corr_heatmap(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+    graph_loc = path.join(output_loc,'graph_results', 'weighted_graph.pkl')
+    prediction_loc = path.join(output_loc, 'cross_prediction.pkl')
+    plot_corr_heatmap(all_results, size=size*1/2, ext=ext, dpi=dpi, plot_dir=plot_file)
     plot_glasso_edge_strength(all_results,
-                              path.join(output_loc,'graph_results', 'weighted_graph.pkl'), 
-                              size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
-    plot_cross_within_prediction(path.join(output_loc, 'cross_prediction.pkl'), 
-                                 size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+                              graph_loc, 
+                              size=size*1/4, ext=ext, dpi=dpi, plot_dir=plot_file)
+    plot_cross_within_prediction(prediction_loc, 
+                                 size=size*1/4, ext=ext, dpi=dpi, plot_dir=plot_file)
+    plot_cross_relationship(all_results, graph_loc, prediction_loc,
+                            size=4.6, ext='pdf', plot_dir=plot_file)
     plot_BIC(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
     plot_cross_silhouette(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
     plot_cross_communality(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
@@ -327,18 +332,20 @@ if group_plot == True:
 # move plots to paper directory
 # ****************************************************************************
 if run_plot or group_plot:
+    paper_dir = path.join(basedir, 'Results', 'Psych_Ontology_Paper')
     if all_results is not None:
         plot_file = path.dirname(all_results['task'].get_plot_dir())
+        
     else:
         plot_file = results.get_plot_dir()
-    paper_dir = path.join(basedir, 'Results', 'Psych_Ontology_Paper')
+    
     figure_lookup = {
             'analysis_overview': 'Fig01_Analysis_Overview',
             'survey/HCA/dendrogram_EFA12_oblimin': 'Fig03_Survey_Dendrogram',
             'task/HCA/dendrogram_EFA5_oblimin': 'Fig04_Task_Dendrogram',
             'survey/prediction/EFA_ridge_prediction_bar': 'Fig05_Survey_prediction',
             'task/prediction/EFA_ridge_prediction_bar': 'Fig06_Task_prediction',
-            'data_correlations': 'Fig02c_Task-Survey_Correlation',
+            'cross_relationship': 'FigS02_cross_relationship',
             'survey/EFA/factor_heatmap_EFA12': 'FigS03_Survey_EFA',
             'task/EFA/factor_heatmap_EFA5': 'FigS04_Task_EFA',
             'task/DA/factor_heatmap_DA9': 'FigS05_Outcome_EFA',
@@ -360,18 +367,22 @@ if run_plot or group_plot:
         
     
     for filey in figure_lookup.keys():
+        figure_num = figure_lookup[filey].split('_')[0]
         orig_file = path.join(plot_file, filey+'.'+ext)
         new_file = path.join(paper_dir, 'Plots', figure_lookup[filey]+'.'+ext)
-        a=subprocess.Popen('cpdf -scale-to-fit "4.6in PH mul 4.6in div PW" %s -o %s' % (orig_file, new_file),
-                         shell=True, 
-                         stdout=subprocess.PIPE, 
-                         stderr=subprocess.PIPE)
-        out, err = a.communicate()
-        if 'cpdf: not found' in str(err):
-            try:
-                copyfile(orig_file, 
-                         new_file)
-            except FileNotFoundError:
+        if figure_num[-1] in 'abcdefg':
+            copyfile(orig_file,  new_file)
+        else:
+            a=subprocess.Popen('cpdf -scale-to-fit "4.6in PH mul 4.6in div PW" %s -o %s' % (orig_file, new_file),
+                             shell=True, 
+                             stdout=subprocess.PIPE, 
+                             stderr=subprocess.PIPE)
+            out, err = a.communicate()
+            if 'cpdf: not found' in str(err):
+                try:
+                    copyfile(orig_file, 
+                             new_file)
+                except FileNotFoundError:
+                    print('%s not found' % filey)
+            elif 'No such file or directory' in str(err):
                 print('%s not found' % filey)
-        elif 'No such file or directory' in str(err):
-            print('%s not found' % filey)

@@ -6,7 +6,7 @@ import math
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 import numpy as np
-from os import path
+from os import path, remove
 import pandas as pd
 import pickle
 import seaborn as sns
@@ -14,6 +14,8 @@ from scipy.spatial.distance import squareform
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression, RidgeCV
 from sklearn.model_selection import cross_val_score
+import svgutils.transform as sg
+import subprocess
 from dimensional_structure.HCA_plots import plot_silhouette
 from selfregulation.utils.plot_utils import (beautify_legend, 
                                              format_variable_names, 
@@ -114,6 +116,7 @@ def plot_corr_hist(all_results, reps=100, size=4.6,
         # make histogram plot
         save_figure(f, path.join(plot_dir, 'within-across_correlations.%s' % ext),
                                 {'bbox_inches': 'tight', 'dpi': dpi})
+    
         
     
 def plot_corr_heatmap(all_results, EFA=False, size=4.6, 
@@ -177,6 +180,8 @@ def plot_corr_heatmap(all_results, EFA=False, size=4.6,
                                 {'dpi': dpi,
                                  'transparent': True})   
         plt.close()
+    else:
+        return f
 
 def plot_glasso_edge_strength(all_results, graph_loc,  size=4.6, 
                              dpi=300, ext='png', plot_dir=None):
@@ -202,14 +207,17 @@ def plot_glasso_edge_strength(all_results, graph_loc,  size=4.6,
         
     max_x = max([ax.get_xlim()[1] for ax in axes])*1.1
     for i, ax in enumerate(axes):
+        [i.set_linewidth(size*.3) for i in ax.spines.values()]
+        ax.grid(linewidth=size*.15)
         ax.set_xlim([0, max_x])
         ax.text(max_x*.1, -.35, titles[i], color=colors[i], ha='left',
-                fontsize=size*2)
+                fontsize=size*3)
+        ax.set_xticks(np.arange(0, round(max_x*10)/10,.1))
         if i!=(len(axes)-1):
-            ax.tick_params(labelsize=0, pad=0)
+            ax.set_xticklabels([])
         else:
-            ax.tick_params(labelsize=size*1.5)
-    axes[-1].set_xlabel('Edge Weight', fontsize=size*2)
+            ax.tick_params(labelsize=size*2, pad=size)
+    axes[-1].set_xlabel('Edge Weight', fontsize=size*3)
     plt.subplots_adjust(hspace=0)
     if plot_dir is not None:
         # make histogram plot
@@ -217,6 +225,8 @@ def plot_glasso_edge_strength(all_results, graph_loc,  size=4.6,
                                 {'dpi': dpi,
                                  'transparent': True})   
         plt.close()
+    else:
+        return f
 
 
 def plot_cross_within_prediction(prediction_loc, size=4.6, 
@@ -237,20 +247,21 @@ def plot_cross_within_prediction(prediction_loc, size=4.6,
                               predictions['across']['task_to_survey'],
                               predictions['across']['survey_to_task']]):
         sns.violinplot(list(vals.values()), orient='h', color=colors[i],
-                    ax=axes[i], width=.5)
-        #sns.stripplot(list(vals.values()), jitter=.2, alpha=.5, orient='h',
-                     # ax=axes[i], color=colors[i], s=size)
+                    ax=axes[i], width=.5, linewidth=size*.3)
         
     min_x = min([ax.get_xlim()[0] for ax in axes])
     for i, ax in enumerate(axes):
+        [i.set_linewidth(size*.3) for i in ax.spines.values()]
+        ax.grid(linewidth=size*.15)
         ax.set_xlim([min_x, 1])
         ax.text(min_x+(1-min_x)*.1, -.35, titles[i], color=colors[i], ha='left',
-                fontsize=size*2)
+                fontsize=size*3)
+        ax.set_xticks(np.arange(round(min_x*10)/10,1,.2))
         if i!=(len(axes)-1):
-            ax.tick_params(labelsize=0, pad=0)
+            ax.set_xticklabels([])
         else:
-            ax.tick_params(labelsize=size*1.5)
-    axes[-1].set_xlabel(r'$R^2$', fontsize=size*2)
+            ax.tick_params(labelsize=size*2, pad=size)
+    axes[-1].set_xlabel(r'$R^2$', fontsize=size*3)
     plt.subplots_adjust(hspace=0)
     if plot_dir is not None:
         # make histogram plot
@@ -258,7 +269,62 @@ def plot_cross_within_prediction(prediction_loc, size=4.6,
                                 {'dpi': dpi,
                                  'transparent': True})   
         plt.close()
-        
+    else:
+        return f
+
+
+from reportlab.graphics import renderPDF, renderPM
+from svglib.svglib import svg2rlg
+ 
+ 
+def svg_demo(image_path, output_path, ext='pdf'):
+    drawing = svg2rlg(image_path)
+    if ext=='pdf':
+        renderPDF.drawToFile(drawing, output_path)
+    else:
+        renderPM.drawToFile(drawing, output_path, 'PNG')
+    
+def plot_cross_relationship(all_results, graph_loc, prediction_loc, size=4.6,
+                            dpi=300, ext='pdf', plot_dir=None):
+    assert ext in ['pdf', 'svg'], 'Must use svg or pdf'
+    tmp_dir = '/tmp/'
+    plot_corr_heatmap(all_results, size=size/3, plot_dir=tmp_dir, ext='svg')
+    plot_glasso_edge_strength(all_results, graph_loc, size/4, plot_dir=tmp_dir, ext='svg')
+    plot_cross_within_prediction(prediction_loc, size/4, plot_dir=tmp_dir, ext='svg')
+
+    fig1 = sg.fromfile('/tmp/data_correlations.svg')
+    fig2 = sg.fromfile('/tmp/glasso_edge_strength.svg')
+    fig3 = sg.fromfile('/tmp/cross_prediction.svg')
+    width = float(fig1.get_size()[0][:-2]) 
+    height = float(fig2.get_size()[1][:-2]) 
+    fig = sg.SVGFigure(width*2.5, height)
+    fig.root.set("viewbox", "0 0 %s %s" % (width*2, height))
+    plot1 = fig1.getroot()
+    plot2 = fig2.getroot()
+    plot3 = fig3.getroot()
+    # move plots
+    plot2.moveto(width, 0)
+    plot3.moveto(width*1.8, 0)
+    fig.append([plot1, plot2, plot3])
+    # add text
+    txt1 = sg.TextElement(0, height*.1, "A", size=size*1.5, weight="bold")
+    txt2 = sg.TextElement(width*1.05, height*.1, "B", size=size*1.5, weight="bold")
+    txt3 = sg.TextElement(width*1.85, height*.1, "C", size=size*1.5, weight="bold")
+    fig.append([txt1, txt2, txt3])
+    # save
+    svg_file = path.join(plot_dir, 'cross_relationship.svg')
+    fig.save(svg_file)
+    if ext=='pdf':
+        pdf_file = path.join(plot_dir, 'cross_relationship.pdf')
+        a=subprocess.Popen('inkscape %s --export-pdf=%s' % (svg_file, pdf_file),
+                            shell=True, 
+                            stdout=subprocess.PIPE, 
+                            stderr=subprocess.PIPE)
+    # remove temp files
+    remove('/tmp/data_correlations.svg')
+    remove('/tmp/glasso_edge_strength.svg')
+    remove('/tmp/cross_prediction.svg')
+    
 def plot_EFA_relationships(all_results):
     EFA_all_results = {k:v.EFA for k,v in all_results.items()}
     scores = {k:v.get_scores() for k,v in EFA_all_results.items()}
