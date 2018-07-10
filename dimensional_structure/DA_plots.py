@@ -120,9 +120,9 @@ def plot_heatmap_factors(results, c, size=4.6, thresh=75,
     ax.set_yticks(np.arange(.5,loadings.shape[0]+.5,1))
     ax.set_yticklabels(loadings.index[::-1], fontsize=DV_fontsize, rotation=0)
     ax.set_xticklabels(loadings.columns, 
-                                fontsize=size*.08*20,
-                                ha='left',
-                                rotation=-30)
+                       fontsize=min(size*2, DV_fontsize*1.5),
+                       ha='center',
+                       rotation=90)
     # format cbar
     cbar_ax.set_yticklabels([format_num(-max_val, 2), 
                              format_num(-max_val/2, 2),

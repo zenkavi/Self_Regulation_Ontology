@@ -226,8 +226,8 @@ def plot_cross_EFA_retest(all_results, size=4.6, dpi=300,
                 fontweight='bold')
         place_letter(ax2, letters.pop(0), fontsize=size*9/4.6)
         place_letter(ax, letters.pop(0), fontsize=size*9/4.6)
-        [i.set_linewidth(size*.01) for i in ax.spines.values()]
-        [i.set_linewidth(size*.01) for i in ax2.spines.values()]
+        [i.set_linewidth(size*.1) for i in ax.spines.values()]
+        [i.set_linewidth(size*.1) for i in ax2.spines.values()]
         
     if plot_dir is not None:
         save_figure(fig, path.join(plot_dir, 'EFA_test_retest.%s' % ext),

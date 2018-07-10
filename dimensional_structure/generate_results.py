@@ -296,6 +296,9 @@ for subset in subsets:
 # ****************************************************************************
         
 if group_analysis == True:
+    if verbose:
+            print('*'*79)
+            print('Running group analysis')
     all_results = load_results(datafile)
     run_group_prediction(all_results, 
                          shuffle=False, classifier='ridge',
@@ -332,6 +335,9 @@ if group_plot == True:
 # move plots to paper directory
 # ****************************************************************************
 if run_plot or group_plot:
+    if verbose:
+            print('*'*79)
+            print('Moving plots to paper directory')
     paper_dir = path.join(basedir, 'Results', 'Psych_Ontology_Paper')
     if all_results is not None:
         plot_file = path.dirname(all_results['task'].get_plot_dir())
@@ -345,21 +351,22 @@ if run_plot or group_plot:
             'task/HCA/dendrogram_EFA5_oblimin': 'Fig04_Task_Dendrogram',
             'survey/prediction/EFA_ridge_prediction_bar': 'Fig05_Survey_prediction',
             'task/prediction/EFA_ridge_prediction_bar': 'Fig06_Task_prediction',
+            
             'cross_relationship': 'FigS02_cross_relationship',
-            'survey/EFA/factor_heatmap_EFA12': 'FigS03_Survey_EFA',
-            'task/EFA/factor_heatmap_EFA5': 'FigS04_Task_EFA',
-            'task/DA/factor_heatmap_DA9': 'FigS05_Outcome_EFA',
-            'BIC_curves': 'FigS06_BIC_curves',
-            'survey/EFA/factor_correlations_EFA12': 'FigS07_Survey_2nd-order',
-            'task/EFA/factor_correlations_EFA5': 'FigS08_Task_2nd-order',
-            'task/DA/factor_correlations_DA9': 'FigS09_Outcome_2nd-order',
-            'communality_adjustment': 'FigS10_communality',
-            'EFA_test_retest': 'FigS11_EFA_retest',
-            'survey/HCA/dendrogram_data': 'FigS12_Survey_Raw_Dendrogram',
-            'task/HCA/dendrogram_data': 'FigS13_Task_Raw_Dendrogram',
-            'silhouette_analysis': 'FigS14_Survey_Silhouette',
+            'BIC_curves': 'FigS03_BIC_curves',
+            'survey/EFA/factor_correlations_EFA12': 'FigS04_Survey_2nd-order',
+            'task/EFA/factor_correlations_EFA5': 'FigS05_Task_2nd-order',
+            'communality_adjustment': 'FigS06_communality',
+            'EFA_test_retest': 'FigS07_EFA_retest',
+            'survey/EFA/factor_heatmap_EFA12': 'FigS08_Survey_EFA',
+            'task/EFA/factor_heatmap_EFA5': 'FigS09_Task_EFA',
+            'survey/HCA/dendrogram_data': 'FigS10_Survey_Raw_Dendrogram',
+            'task/HCA/dendrogram_data': 'FigS11_Task_Raw_Dendrogram',
+            'silhouette_analysis': 'FigS12_Survey_Silhouette',
             # survey clusters
             # task clusters
+            'task/DA/factor_heatmap_DA9': 'FigS15_Outcome_EFA',
+            'task/DA/factor_correlations_DA9': 'FigS16_Outcome_2nd-order',
             'survey/prediction/IDM_lasso_prediction_bar': 'FigS17_Survey_IDM_prediction',
             'task/prediction/IDM_lasso_prediction_bar': 'FigS18_Task_IDM_prediction',
             'survey/prediction/EFA_ridge_factor_fingerprint': 'FigS19_Survey_Factor_Fingerprints'

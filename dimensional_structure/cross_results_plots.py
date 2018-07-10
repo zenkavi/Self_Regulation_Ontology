@@ -252,11 +252,12 @@ def plot_cross_within_prediction(prediction_loc, size=4.6,
     min_x = min([ax.get_xlim()[0] for ax in axes])
     for i, ax in enumerate(axes):
         [i.set_linewidth(size*.3) for i in ax.spines.values()]
-        ax.grid(linewidth=size*.15)
+        ax.grid(linewidth=size*.15, which='both')
         ax.set_xlim([min_x, 1])
         ax.text(min_x+(1-min_x)*.1, -.35, titles[i], color=colors[i], ha='left',
                 fontsize=size*3)
-        ax.set_xticks(np.arange(round(min_x*10)/10,1,.2))
+        xticks = np.arange(math.floor(min_x*10)/10,1,.2)
+        ax.set_xticks(xticks)
         if i!=(len(axes)-1):
             ax.set_xticklabels([])
         else:
@@ -271,19 +272,7 @@ def plot_cross_within_prediction(prediction_loc, size=4.6,
         plt.close()
     else:
         return f
-
-
-from reportlab.graphics import renderPDF, renderPM
-from svglib.svglib import svg2rlg
  
- 
-def svg_demo(image_path, output_path, ext='pdf'):
-    drawing = svg2rlg(image_path)
-    if ext=='pdf':
-        renderPDF.drawToFile(drawing, output_path)
-    else:
-        renderPM.drawToFile(drawing, output_path, 'PNG')
-    
 def plot_cross_relationship(all_results, graph_loc, prediction_loc, size=4.6,
                             dpi=300, ext='pdf', plot_dir=None):
     assert ext in ['pdf', 'svg'], 'Must use svg or pdf'
@@ -293,8 +282,8 @@ def plot_cross_relationship(all_results, graph_loc, prediction_loc, size=4.6,
     plot_cross_within_prediction(prediction_loc, size/4, plot_dir=tmp_dir, ext='svg')
 
     fig1 = sg.fromfile('/tmp/data_correlations.svg')
-    fig2 = sg.fromfile('/tmp/glasso_edge_strength.svg')
-    fig3 = sg.fromfile('/tmp/cross_prediction.svg')
+    fig2 = sg.fromfile('/tmp/cross_prediction.svg')
+    fig3 = sg.fromfile('/tmp/glasso_edge_strength.svg')
     width = float(fig1.get_size()[0][:-2]) 
     height = float(fig2.get_size()[1][:-2]) 
     fig = sg.SVGFigure(width*2.5, height)
@@ -405,6 +394,7 @@ def plot_BIC(all_results, size=4.6, dpi=300, ext='png', plot_dir=None):
             ax1.tick_params(labelsize=height*2, pad=size/2)
             ax1.set_title(name, fontsize=height*4)
             ax1.grid(linewidth=size/8)
+            [i.set_linewidth(size*.1) for i in ax1.spines.values()]
     if plot_dir is not None:
         save_figure(fig, path.join(plot_dir, 'BIC_curves.%s' % ext),
                     {'bbox_inches': 'tight', 'dpi': dpi})
@@ -434,8 +424,8 @@ def plot_cross_silhouette(all_results, size=4.6,  dpi=300,
         if i != 0:
             ax.set_title('')
             ax2.set_title('')
-        [i.set_linewidth(size*.01) for i in ax.spines.values()]
-        [i.set_linewidth(size*.01) for i in ax2.spines.values()]
+        [i.set_linewidth(size*.1) for i in ax.spines.values()]
+        [i.set_linewidth(size*.1) for i in ax2.spines.values()]
     plt.subplots_adjust(hspace=.2)
     max_x = max([ax.get_xlim()[1] for ax in axes[::2]])
     min_x = min([ax.get_xlim()[0] for ax in axes[::2]])
@@ -531,6 +521,7 @@ def plot_cross_communality(all_results, rotate='oblimin', retest_threshold=.2,
             if ax.get_ylim()[1] > max_y:
                 max_y = ax.get_ylim()[1]
             ax.grid(False)
+            [i.set_linewidth(size*.1) for i in ax.spines.values()]
         for ax in axes:
             ax.set_ylim((0, max_y))
         plt.subplots_adjust(wspace=0)

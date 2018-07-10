@@ -47,10 +47,11 @@ def run_prediction(predictors, demographics, output_base='',
         bp.write_data(vars_to_test)
     return bp
 
-def print_prediction_performance(results):
+def print_prediction_performance(results, EFA=True):
     for classifier in ['ridge', 'lasso', 'rf', 'svm']:
         print(classifier)
-        out = results.load_prediction_object(classifier=classifier)['data']
+        out = results.load_prediction_object(classifier=classifier,
+                                             EFA=EFA)['data']
         keys = ['Binge Drinking', 'Problem Drinking', 'Unsafe Drinking',
                 'Drug Use', 'Lifetime Smoking', 'Daily Smoking', 
                 'Mental Health', 'Obesity', 'Income / Life Milestones']
