@@ -6,13 +6,14 @@ import pickle
 from scipy.spatial.distance import squareform
 from scipy.stats import pearsonr
 from sklearn.linear_model import RidgeCV
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, KFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from dimensional_structure.prediction_utils import run_prediction
 
 def run_cross_prediction(all_results, verbose=False, save=True):
     # within
+    CV = KFold(10, shuffle=True)
     within_predictions = {}
     for name, predicting_set in all_results.items():
         within_predictions[name] = {}
@@ -20,8 +21,8 @@ def run_cross_prediction(all_results, verbose=False, save=True):
         for target, vals in all_predictors.iteritems():
             predictors = all_predictors.drop(target, axis=1)
             pipe = Pipeline(steps=[('scale', StandardScaler()),
-                                   ('clf', RidgeCV())])
-            score = np.mean(cross_val_score(pipe, predictors, vals, cv=10))
+                                   ('clf', RidgeCV(alphas=(0.1, 1.0, 10.0, 100.0)))])
+            score = np.mean(cross_val_score(pipe, predictors, vals, cv=CV))
             within_predictions[name][target] = score
     # across
     across_predictions = {}
@@ -31,8 +32,8 @@ def run_cross_prediction(all_results, verbose=False, save=True):
         targets = all_results[tname].data
         for target, vals in targets.iteritems():
             pipe = Pipeline(steps=[('scale', StandardScaler()),
-                                   ('clf', RidgeCV())])
-            score = np.mean(cross_val_score(pipe, predictors, vals, cv=10))
+                                   ('clf', RidgeCV(alphas=(0.1, 1.0, 10.0, 100.0)))])
+            score = np.mean(cross_val_score(pipe, predictors, vals, cv=CV))
             across_predictions['%s_to_%s' % (pname, tname)] [target] = score
     if save:
         save_loc = path.join(path.dirname(all_results['task'].get_output_dir()), 
