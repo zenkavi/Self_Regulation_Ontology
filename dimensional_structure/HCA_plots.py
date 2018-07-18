@@ -165,6 +165,9 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
     tick_label_size = min(size*40/xn, size*14/yn)
     heatmap_ax.tick_params(labelsize=tick_label_size, length=size/2, 
                            width=size/5, pad=size/2)
+    heatmap_ax.set_yticklabels(heatmap_ax.get_yticklabels(), rotation=0)
+    heatmap_ax.set_xticklabels(heatmap_ax.get_xticklabels(), rotation=90)
+
     avg_factors = abs(subset_loading).mean(1)
     # format cbar axis
     cbar_ax.set_yticklabels([format_num(-max_val), 0, format_num(max_val)])
