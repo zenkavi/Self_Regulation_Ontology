@@ -145,6 +145,7 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
     else:
         loading_start = cumsizes[cluster_i-1]
     subset_loading = loading.T.iloc[:,loading_start:cumsizes[cluster_i]]
+    #subset_loading.columns = [col.replace(': ',':\n', 1) for col in subset_loading.columns]
     plot_tree(tree, range(start, end), dendro_ax, linewidth=size/2)
     dendro_ax.set_xticklabels('')
     
@@ -161,11 +162,12 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
                 vmax=max_val,
                 cmap=colormap,)
     yn, xn = subset_loading.shape
-    tick_label_size = size*25/max(yn, 8)
+    tick_label_size = size*19/max(yn, 8)
     heatmap_ax.tick_params(labelsize=tick_label_size, length=size*.5, 
                            width=size/5, pad=size)
     heatmap_ax.set_yticklabels(heatmap_ax.get_yticklabels(), rotation=0)
-    heatmap_ax.set_xticklabels(heatmap_ax.get_xticklabels(), rotation=90)
+    heatmap_ax.set_xticks([i+.5 for i in range(subset_loading.shape[1])])
+    heatmap_ax.set_xticklabels(subset_loading.columns, rotation=90, ha='center')
 
     avg_factors = abs(subset_loading).mean(1)
     # format cbar axis
@@ -207,7 +209,7 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
             text=var, #'this this is a very, very long text',
             va = 'bottom',
             axes = polar_labels,
-            fontsize=size*12/len(labels)*(12/max([len(l) for l in labels]))**.4##calls ax.add_artist in __init__
+            fontsize=size*11/len(labels)*(12/max([len(l) for l in labels]))**.5##calls ax.add_artist in __init__
         )
         polar_labels.set_xlim([-1,1]); polar_labels.set_ylim([-1,1])
         polar_labels.axis('off') 
