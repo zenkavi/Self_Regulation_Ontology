@@ -109,7 +109,7 @@ def plot_clustering_similarity(results, plot_dir=None, verbose=False, ext='png')
         
     
 def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
-                   avg_bar=True, size=2.3, dpi=300, plot_loc=None):
+                   size=2.3, dpi=300, plot_loc=None):
     sns.set_style('white')
     colormap = sns.diverging_palette(220,15,n=100,as_cmap=True)
     # get variables in subbranch based on coloring
@@ -126,17 +126,14 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
                 start = i
             curr_color = color
     # plotting
-    dendro_size = [0,.294,.7,.2]
-    heatmap_size = [0,.05,.7,.25]
+    dendro_size = [0,.744,.8,.12]
+    heatmap_size = [0,.5,.8,.25]
     fig = plt.figure(figsize=(size,size*2))
     dendro_ax = fig.add_axes(dendro_size) 
     heatmap_ax = fig.add_axes(heatmap_size)
-    if not avg_bar: 
-        cbar_size = [.72, .05, .05, .25]
-    else:
-        cbar_size = [.92, .05, .05, .25]
-        factor_avg_size = [.71,.05,.2,.25]
-        factor_avg_ax = fig.add_axes(factor_avg_size)
+    cbar_size = [1.02, .5, .05, .25]
+    factor_avg_size = [.81,.5,.2,.25]
+    factor_avg_ax = fig.add_axes(factor_avg_size)
     cbar_ax = fig.add_axes(cbar_size)
     # get subset of loading
     cumsizes = np.cumsum(cluster_sizes)
@@ -151,7 +148,7 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
     
     max_val = np.max(loading.values)
     # if max_val is high, just make it 1
-    if max_val > .95:
+    if max_val > .9:
         max_val = 1
     sns.heatmap(subset_loading, ax=heatmap_ax, 
                 cbar=True,
@@ -162,70 +159,42 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
                 vmax=max_val,
                 cmap=colormap,)
     yn, xn = subset_loading.shape
-    tick_label_size = size*19/max(yn, 8)
+    tick_label_size = size*30/max(yn, 8)
     heatmap_ax.tick_params(labelsize=tick_label_size, length=size*.5, 
                            width=size/5, pad=size)
     heatmap_ax.set_yticklabels(heatmap_ax.get_yticklabels(), rotation=0)
-    heatmap_ax.set_xticks([i+.5 for i in range(subset_loading.shape[1])])
-    heatmap_ax.set_xticklabels(subset_loading.columns, rotation=90, ha='center')
+    heatmap_ax.set_xticks([i+.5 for i in range(0,subset_loading.shape[1])])
+    heatmap_ax.set_xticklabels([str(i) for i in range(1,subset_loading.shape[1]+1)], 
+                                size=size*3, rotation=0, ha='center')
 
     avg_factors = abs(subset_loading).mean(1)
     # format cbar axis
     cbar_ax.set_yticklabels([format_num(-max_val), 0, format_num(max_val)])
     cbar_ax.tick_params(axis='y', length=0)
-    cbar_ax.tick_params(labelsize=size*2)
-    cbar_ax.set_ylabel('Factor Loading', rotation=-90, fontsize=size*2)
-    # Plot polar plot
-    ratio = 1/2
-    polar_size = [.15,.55, .4,.4*ratio]
-    polar_ax = fig.add_axes(polar_size, projection='polar') 
-    plot_loadings(polar_ax, list(avg_factors), kind='line', offset=.5, 
-                  colors=[tree['color_list'][start]],
-                  plot_kws={'alpha': .8, 'linewidth': size/2})
-    polar_ax.grid(linewidth=size/8)
-    # tick properties of polar plot
-    xtick_locs = np.arange(0.0, 2*np.pi, 2*np.pi/len(subset_loading))
-    polar_ax.set_xticks(xtick_locs)
-    polar_ax.set_xticks(xtick_locs+np.pi/len(subset_loading), minor=True)
-    # labels for polar plot
-    scale = 1.3
-    polar_size = polar_ax.get_position().expanded(scale, scale)
-    polar_labels=fig.add_axes(polar_size,zorder=2)
-    short_names = get_short_names()
-    labels = [short_names.get(v, v) for v in subset_loading.index]
-    if type(labels[0]) != str:
-            labels = ['Fac %s' % str(i) for i in labels]
-    for i, var in enumerate(labels):
-        arc_start = (i+.1)*2*np.pi/len(labels)
-        arc_end = (i+.9)*2*np.pi/len(labels)
-        curve = [
-            .8*np.cos(np.linspace(arc_start,arc_end,100)),
-            .8*np.sin(np.linspace(arc_start,arc_end,100))
-        ]  
-        plt.plot(*curve, alpha=0)
-        curvetext = CurvedText(
-            x = curve[0][::-1],
-            y = curve[1][::-1],
-            text=var, #'this this is a very, very long text',
-            va = 'bottom',
-            axes = polar_labels,
-            fontsize=size*11/len(labels)*(12/max([len(l) for l in labels]))**.5##calls ax.add_artist in __init__
-        )
-        polar_labels.set_xlim([-1,1]); polar_labels.set_ylim([-1,1])
-        polar_labels.axis('off') 
-    if avg_bar == True:
-        avg_factors[::-1].plot(kind='barh', ax = factor_avg_ax, width=.7,
-                         color= tree['color_list'][start])
-        factor_avg_ax.set_xlim(0, max_val)
-        #factor_avg_ax.set_xticks([max(avg_factors)])
-        #factor_avg_ax.set_xticklabels([format_num(max(avg_factors))])
-        factor_avg_ax.set_xticklabels('')
-        factor_avg_ax.set_yticklabels('')
-        factor_avg_ax.tick_params(length=0)
-        factor_avg_ax.spines['top'].set_visible(False)
-        factor_avg_ax.spines['bottom'].set_visible(False)
-        factor_avg_ax.spines['left'].set_visible(False)
-        factor_avg_ax.spines['right'].set_visible(False)
+    cbar_ax.tick_params(labelsize=size*3)
+    cbar_ax.set_ylabel('Factor Loading', rotation=-90, fontsize=size*3)
+    # add axis labels as text above
+    N = subset_loading.shape[1]
+    text_ax = fig.add_axes([-.22,.43-.02*N,.4,.02*N]) 
+    text_ax.tick_params(labelsize=0)
+    for spine in ['top','right','bottom','left']:
+        text_ax.spines[spine].set_visible(False)
+    for i, label in enumerate(subset_loading.columns):
+        text_ax.text(0, 1-i/N, str(i+1)+':', fontsize=size*3, ha='right')
+        text_ax.text(.1, 1-i/N, label, fontsize=size*3)
+    # average factor bar                
+    avg_factors[::-1].plot(kind='barh', ax = factor_avg_ax, width=.7,
+                     color= tree['color_list'][start])
+    factor_avg_ax.set_xlim(0, max_val)
+    #factor_avg_ax.set_xticks([max(avg_factors)])
+    #factor_avg_ax.set_xticklabels([format_num(max(avg_factors))])
+    factor_avg_ax.set_xticklabels('')
+    factor_avg_ax.set_yticklabels('')
+    factor_avg_ax.tick_params(length=0)
+    factor_avg_ax.spines['top'].set_visible(False)
+    factor_avg_ax.spines['bottom'].set_visible(False)
+    factor_avg_ax.spines['left'].set_visible(False)
+    factor_avg_ax.spines['right'].set_visible(False)
         
     # title and axes styling of dendrogram
     if title:
@@ -297,7 +266,7 @@ def plot_subbranches(results, c=None,  rotate='oblimin', inp=None,
                            
 
 def plot_dendrogram(results, c=None,  rotate='oblimin', inp=None, titles=None, 
-                    labels=None, var_labels=True, break_lines=True, 
+                    labels=None, var_labels=False, break_lines=True, 
                     absolute_loading=False,  size=4.6,  dpi=300, ext='png', 
                     plot_dir=None):
     """ Plots HCA results as dendrogram with loadings underneath
@@ -337,13 +306,13 @@ def plot_dendrogram(results, c=None,  rotate='oblimin', inp=None, titles=None,
     # set figure properties
     figsize = (size, size*.6)
     # set up axes' size 
-    heatmap_height = ordered_loading.shape[1]*.03
-    heat_size = [.2, heatmap_height]
+    heatmap_height = ordered_loading.shape[1]*.035
+    heat_size = [.1, heatmap_height]
     dendro_size=[np.sum(heat_size), .3]
     # set up plot axes
     dendro_size = [.12,dendro_size[0], .82, dendro_size[1]]
     heatmap_size = [.12,heat_size[0],.82,heat_size[1]]
-    cbar_size = [.945,heat_size[0],.01,heat_size[1]]
+    cbar_size = [.945,heat_size[0],.02,heat_size[1]]
     ordered_loading = ordered_loading.T
 
     with sns.axes_style('white'):
@@ -370,7 +339,7 @@ def plot_dendrogram(results, c=None,  rotate='oblimin', inp=None, titles=None,
         cbar_ax = fig.add_axes(cbar_size)
         max_val = np.max(abs(loading.values))
         # if max_val is high, just make it 1
-        if max_val > .95:
+        if max_val > .9:
             max_val = 1
         sns.heatmap(ordered_loading, ax=ax2, 
                     cbar=True, cbar_ax=cbar_ax,
@@ -381,7 +350,7 @@ def plot_dendrogram(results, c=None,  rotate='oblimin', inp=None, titles=None,
                               'ticks': [-max_val, 0, max_val]},
                     cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
         ax2.set_yticklabels(ax2.get_yticklabels(), rotation=0)
-        ax2.tick_params(axis='y', labelsize=size*heat_size[1]*25/c, pad=size/2)
+        ax2.tick_params(axis='y', labelsize=size*heat_size[1]*40/c, pad=size/2)
         ax2.tick_params(axis='x', pad=size/4, length=size/4, width=size/6)
         # change tick colors
         xlabels=ax2.get_xticklabels()
@@ -395,9 +364,9 @@ def plot_dendrogram(results, c=None,  rotate='oblimin', inp=None, titles=None,
             
         # format cbar axis
         cbar_ax.set_yticklabels([format_num(-max_val), 0, format_num(max_val)])
-        cbar_ax.tick_params(labelsize=size*heat_size[1]*25/c, length=0, pad=size/2)
+        cbar_ax.tick_params(labelsize=size*heat_size[1]*40/c, length=0, pad=size/2)
         cbar_ax.set_ylabel('Factor Loading', rotation=-90, 
-                       fontsize=size*heat_size[1]*25/c, labelpad=size/2)
+                       fontsize=size*heat_size[1]*40/c, labelpad=size*2)
         # add lines to heatmap to distinguish clusters
         if break_lines == True:
             xlim = ax2.get_xlim(); 

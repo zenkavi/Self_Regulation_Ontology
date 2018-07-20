@@ -170,10 +170,10 @@ def plot_corr_heatmap(all_results, EFA=False, size=4.6,
     left_ax.axis('off'); bottom_ax.axis('off')
     perc_task = len(task_order)/all_data.shape[1]
     # add labels
-    left_ax.text(0, (1-perc_task/2), 'Task DVs', rotation=90, va='center', fontsize=size*2.5)
-    left_ax.text(0, ((1-perc_task)/2), 'Survey DVs', rotation=90, va='center', fontsize=size*2.5)
-    bottom_ax.text(perc_task/2, 0, 'Task DVs', ha='center', fontsize=size*2.5)
-    bottom_ax.text((1-(1-perc_task)/2), 0, 'Survey DVs', ha='center', fontsize=size*2.5)
+    left_ax.text(0, (1-perc_task/2), 'Task DVs', rotation=90, va='center', fontsize=size*3)
+    left_ax.text(0, ((1-perc_task)/2), 'Survey DVs', rotation=90, va='center', fontsize=size*3)
+    bottom_ax.text(perc_task/2, 0, 'Task DVs', ha='center', fontsize=size*3)
+    bottom_ax.text((1-(1-perc_task)/2), 0, 'Survey DVs', ha='center', fontsize=size*3)
     if plot_dir is not None:
         # make histogram plot
         save_figure(f, path.join(plot_dir, 'data_correlations.%s' % ext),
@@ -210,14 +210,14 @@ def plot_glasso_edge_strength(all_results, graph_loc,  size=4.6,
         [i.set_linewidth(size*.3) for i in ax.spines.values()]
         ax.grid(linewidth=size*.15)
         ax.set_xlim([0, max_x])
-        ax.text(max_x*.1, -.35, titles[i], color=colors[i], ha='left',
-                fontsize=size*3)
+        ax.text(max_x*.02, -.35, titles[i], color=colors[i], ha='left',
+                fontsize=size*4)
         ax.set_xticks(np.arange(0, round(max_x*10)/10,.1))
         if i!=(len(axes)-1):
             ax.set_xticklabels([])
         else:
-            ax.tick_params(labelsize=size*2, pad=size)
-    axes[-1].set_xlabel('Edge Weight', fontsize=size*3)
+            ax.tick_params(labelsize=size*3, pad=size)
+    axes[-1].set_xlabel('Edge Weight', fontsize=size*5)
     plt.subplots_adjust(hspace=0)
     if plot_dir is not None:
         # make histogram plot
@@ -254,15 +254,15 @@ def plot_cross_within_prediction(prediction_loc, size=4.6,
         [i.set_linewidth(size*.3) for i in ax.spines.values()]
         ax.grid(linewidth=size*.15, which='both')
         ax.set_xlim([min_x, 1])
-        ax.text(min_x+(1-min_x)*.1, -.35, titles[i], color=colors[i], ha='left',
-                fontsize=size*3)
+        ax.text(min_x+(1-min_x)*.02, -.35, titles[i], color=colors[i], ha='left',
+                fontsize=size*4)
         xticks = np.arange(math.floor(min_x*10)/10,1,.2)
         ax.set_xticks(xticks)
         if i!=(len(axes)-1):
             ax.set_xticklabels([])
         else:
-            ax.tick_params(labelsize=size*2, pad=size)
-    axes[-1].set_xlabel(r'$R^2$', fontsize=size*3)
+            ax.tick_params(labelsize=size*3, pad=size)
+    axes[-1].set_xlabel(r'$R^2$', fontsize=size*5)
     plt.subplots_adjust(hspace=0)
     if plot_dir is not None:
         # make histogram plot
@@ -389,10 +389,10 @@ def plot_BIC(all_results, size=4.6, dpi=300, ext='png', plot_dir=None):
                                      fontsize=height*3, markerscale=0)
                     beautify_legend(leg, colors=colors)
                 else:
-                    ax1.set_ylabel(metric, fontsize=height*3)
-            ax1.set_xlabel('# Factors', fontsize=height*3)
-            ax1.tick_params(labelsize=height*2, pad=size/2)
-            ax1.set_title(name, fontsize=height*4)
+                    ax1.set_ylabel(metric, fontsize=height*5)
+            ax1.set_xlabel('# Factors', fontsize=height*5)
+            ax1.tick_params(labelsize=height*4, pad=size/2)
+            ax1.set_title(name, fontsize=height*5)
             ax1.grid(linewidth=size/8)
             [i.set_linewidth(size*.1) for i in ax1.spines.values()]
     if plot_dir is not None:
@@ -505,7 +505,7 @@ def plot_cross_communality(all_results, rotate='oblimin', retest_threshold=.2,
             if (i+1) == len(all_results):
                 ax.set_xlabel('Normalized Density', fontsize=size*2)
                 leg=ax.legend(fontsize=size*1.5, loc='upper right',
-                              frameon=True, bbox_to_anchor=(1.2, 1.0), 
+                              bbox_to_anchor=(1.2, 1.0), 
                               handlelength=0, handletextpad=0)
                 beautify_legend(leg, colors)
             elif i>=len(all_results)-2:

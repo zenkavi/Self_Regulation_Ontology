@@ -11,7 +11,11 @@ import seaborn as sns
 
 # basic helper functions
 def format_num(num, digits=2):
-    return ("{0:0." + str(digits) + "f}").format(num)
+    # if float
+    if num%1 != 0:
+        return ("{0:0." + str(digits) + "f}").format(num)
+    else:
+        return ("{0:0." + str(0) + "f}").format(num)
     
 def format_variable_names(variables):
     """ formats a list of variable names """
