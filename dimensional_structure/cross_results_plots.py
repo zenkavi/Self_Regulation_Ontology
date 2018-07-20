@@ -391,7 +391,7 @@ def plot_BIC(all_results, size=4.6, dpi=300, ext='png', plot_dir=None):
                 else:
                     ax1.set_ylabel(metric, fontsize=height*5)
             ax1.set_xlabel('# Factors', fontsize=height*5)
-            ax1.tick_params(labelsize=height*4, pad=size/2)
+            ax1.tick_params(labelsize=height*3, pad=size/2)
             ax1.set_title(name, fontsize=height*5)
             ax1.grid(linewidth=size/8)
             [i.set_linewidth(size*.1) for i in ax1.spines.values()]
