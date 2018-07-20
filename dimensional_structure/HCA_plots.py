@@ -125,16 +125,7 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
                 curr_index += 1
                 start = i
             curr_color = color
-    # plotting
-    dendro_size = [0,.744,.8,.12]
-    heatmap_size = [0,.5,.8,.25]
-    fig = plt.figure(figsize=(size,size*2))
-    dendro_ax = fig.add_axes(dendro_size) 
-    heatmap_ax = fig.add_axes(heatmap_size)
-    cbar_size = [1.02, .5, .05, .25]
-    factor_avg_size = [.81,.5,.2,.25]
-    factor_avg_ax = fig.add_axes(factor_avg_size)
-    cbar_ax = fig.add_axes(cbar_size)
+    
     # get subset of loading
     cumsizes = np.cumsum(cluster_sizes)
     if cluster_i==0:
@@ -142,6 +133,19 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
     else:
         loading_start = cumsizes[cluster_i-1]
     subset_loading = loading.T.iloc[:,loading_start:cumsizes[cluster_i]]
+    
+    # plotting
+    N = subset_loading.shape[1]
+    length = N*.05
+    dendro_size = [0,.746,length,.12]
+    heatmap_size = [0,.5,length,.25]
+    fig = plt.figure(figsize=(size,size*2))
+    dendro_ax = fig.add_axes(dendro_size) 
+    heatmap_ax = fig.add_axes(heatmap_size)
+    cbar_size = [length+.22, .5, .05, .25]
+    factor_avg_size = [length+.01,.5,.2,.25]
+    factor_avg_ax = fig.add_axes(factor_avg_size)
+    cbar_ax = fig.add_axes(cbar_size)
     #subset_loading.columns = [col.replace(': ',':\n', 1) for col in subset_loading.columns]
     plot_tree(tree, range(start, end), dendro_ax, linewidth=size/2)
     dendro_ax.set_xticklabels('')
@@ -165,22 +169,22 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
     heatmap_ax.set_yticklabels(heatmap_ax.get_yticklabels(), rotation=0)
     heatmap_ax.set_xticks([i+.5 for i in range(0,subset_loading.shape[1])])
     heatmap_ax.set_xticklabels([str(i) for i in range(1,subset_loading.shape[1]+1)], 
-                                size=size*3, rotation=0, ha='center')
+                                size=size*2, rotation=0, ha='center')
 
     avg_factors = abs(subset_loading).mean(1)
     # format cbar axis
     cbar_ax.set_yticklabels([format_num(-max_val), 0, format_num(max_val)])
     cbar_ax.tick_params(axis='y', length=0)
     cbar_ax.tick_params(labelsize=size*3)
-    cbar_ax.set_ylabel('Factor Loading', rotation=-90, fontsize=size*3)
+    cbar_ax.set_ylabel('Factor Loading', rotation=-90, fontsize=size*3,
+                       labelpad=size*2)
     # add axis labels as text above
-    N = subset_loading.shape[1]
-    text_ax = fig.add_axes([-.22,.43-.02*N,.4,.02*N]) 
+    text_ax = fig.add_axes([-.22,.44-.02*N,.4,.02*N]) 
     text_ax.tick_params(labelsize=0)
     for spine in ['top','right','bottom','left']:
         text_ax.spines[spine].set_visible(False)
     for i, label in enumerate(subset_loading.columns):
-        text_ax.text(0, 1-i/N, str(i+1)+':', fontsize=size*3, ha='right')
+        text_ax.text(0, 1-i/N, str(i+1)+'.', fontsize=size*3, ha='right')
         text_ax.text(.1, 1-i/N, label, fontsize=size*3)
     # average factor bar                
     avg_factors[::-1].plot(kind='barh', ax = factor_avg_ax, width=.7,
@@ -310,9 +314,9 @@ def plot_dendrogram(results, c=None,  rotate='oblimin', inp=None, titles=None,
     heat_size = [.1, heatmap_height]
     dendro_size=[np.sum(heat_size), .3]
     # set up plot axes
-    dendro_size = [.12,dendro_size[0], .82, dendro_size[1]]
-    heatmap_size = [.12,heat_size[0],.82,heat_size[1]]
-    cbar_size = [.945,heat_size[0],.02,heat_size[1]]
+    dendro_size = [.15,dendro_size[0], .78, dendro_size[1]]
+    heatmap_size = [.15,heat_size[0],.78,heat_size[1]]
+    cbar_size = [.935,heat_size[0],.015,heat_size[1]]
     ordered_loading = ordered_loading.T
 
     with sns.axes_style('white'):
@@ -418,8 +422,8 @@ def plot_dendrogram(results, c=None,  rotate='oblimin', inp=None, titles=None,
         
     if plot_dir is not None:
         save_figure(fig, path.join(plot_dir, 
-                                         'dendrogram_%s.%s' % (name, ext)),
-                    {'dpi': dpi})
+                                  'dendrogram_%s.%s' % (name, ext)),
+                    {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
     
 def plot_graphs(HCA_graphs, plot_dir=None, ext='png'):

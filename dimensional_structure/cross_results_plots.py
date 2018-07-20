@@ -254,7 +254,7 @@ def plot_cross_within_prediction(prediction_loc, size=4.6,
         [i.set_linewidth(size*.3) for i in ax.spines.values()]
         ax.grid(linewidth=size*.15, which='both')
         ax.set_xlim([min_x, 1])
-        ax.text(min_x+(1-min_x)*.02, -.35, titles[i], color=colors[i], ha='left',
+        ax.text(min_x+(1-min_x)*.02, -.34, titles[i], color=colors[i], ha='left',
                 fontsize=size*4)
         xticks = np.arange(math.floor(min_x*10)/10,1,.2)
         ax.set_xticks(xticks)

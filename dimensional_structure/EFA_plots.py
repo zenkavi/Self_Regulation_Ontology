@@ -496,7 +496,7 @@ def plot_heatmap_factors(results, c, size=4.6, thresh=75, rotate='oblimin',
                        fontsize=min(size*3, DV_fontsize*1.5),
                        ha='center',
                        rotation=90)
-    ax.tick_params(length=size*.5)
+    ax.tick_params(length=size*.5, width=size/10)
     # format cbar
     cbar_ax.set_yticklabels([format_num(-max_val, 2), 
                              format_num(-max_val/2, 2),
