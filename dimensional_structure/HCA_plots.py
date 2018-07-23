@@ -180,12 +180,13 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
                        labelpad=size*2)
     # add axis labels as text above
     text_ax = fig.add_axes([-.22,.44-.02*N,.4,.02*N]) 
-    text_ax.tick_params(labelsize=0)
     for spine in ['top','right','bottom','left']:
         text_ax.spines[spine].set_visible(False)
     for i, label in enumerate(subset_loading.columns):
         text_ax.text(0, 1-i/N, str(i+1)+'.', fontsize=size*3, ha='right')
         text_ax.text(.1, 1-i/N, label, fontsize=size*3)
+    text_ax.tick_params(which='both', labelbottom=False, labelleft=False,
+                        bottom=False, left=False)
     # average factor bar                
     avg_factors[::-1].plot(kind='barh', ax = factor_avg_ax, width=.7,
                      color= tree['color_list'][start])

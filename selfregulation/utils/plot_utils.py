@@ -26,6 +26,8 @@ def format_variable_names(variables):
         var = var.replace('hddm_', 'DDM-')
         var = var.replace('_cost', '-cost')
         var = var.replace('_sensitivity', '-sensitivity')
+        var = var.replace('two_stage', 'two_step')
+        var = var.replace('threebytwo', 'cue/task switch')
         var = var.replace('.', ': ')
         var = ' '.join(var.split('_'))
         new_vars.append(var)
