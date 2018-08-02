@@ -6,7 +6,7 @@ import numpy as np
 import os
 import pandas as pd
 import pickle
-from selfregulation.prediction.behavpredict_V2 import BehavPredict
+from selfregulation.prediction.behavpredict import BehavPredict
 
 def run_prediction(predictors, demographics, output_base='', 
                    outfile='prediction', save=True,

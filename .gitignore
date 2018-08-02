@@ -39,3 +39,4 @@ singularity_images/*img
 temp
 build
 dist*
+glove.6B.50d.txt

@@ -2,8 +2,6 @@
 This code performs predictive anlaysis on the UH2 data
 as specified in the pre-registration at https://osf.io/7t677/
 
-V2 simplifies the class to make a prediction "module", rather than a self-contained
-prediction analysis
 """
 import datetime
 from marshmallow import Schema, fields
