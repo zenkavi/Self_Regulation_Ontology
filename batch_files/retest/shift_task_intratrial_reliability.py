@@ -67,7 +67,7 @@ def calc_shift_DV(df, dvs = {}):
     try:
         perseverative_responses = df[df.apply(lambda row: row.last_rewarded_feature in str(row.choice_stim), axis=1)]
     except:
-        perseverative_responses = pandas.DataFrame()
+        perseverative_responses = pandas.DataFrame(columns=['correct'])
     dvs['perseverative_responses'] = {'value': len(perseverative_responses)}
     #perseverative_errors: length of perseverative_responses df that is subsetted by incorrect responses
     dvs['perseverative_errors'] = {'value': len(perseverative_responses.query("correct == 0"))}
