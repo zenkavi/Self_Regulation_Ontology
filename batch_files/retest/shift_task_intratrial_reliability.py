@@ -77,11 +77,14 @@ def calc_shift_DV(df, dvs = {}):
 
 #wrapper function to calculate dvs for each break
 def calc_breaks(df):
+    df = df.query('exp_stage != "practice"')
     num_trials = df.shape[0]
     breaks = numpy.arange(10, num_trials, 10)
     out_df = pandas.DataFrame()
+    print(df.worker_id.unique())
     for b in breaks:
         tmp_df = df.iloc[:b]
+        print(max(tmp_df.trial_num))
         tmp_dvs = pandas.DataFrame.from_dict(calc_shift_DV(tmp_df))
         out_df = out_df.append(tmp_dvs, ignore_index = True)
     return(out_df)
