@@ -64,7 +64,10 @@ def calc_shift_DV(df, dvs = {}):
         df.last_rewarded_feature.iloc[i] = last_rewarded_feature
 
     #perseverative_responses: length of df where the choice_stim includes the last_rewarded_feature
-    perseverative_responses = df[df.apply(lambda row: row.last_rewarded_feature in str(row.choice_stim), axis=1)]
+    try:
+        perseverative_responses = df[df.apply(lambda row: row.last_rewarded_feature in str(row.choice_stim), axis=1)]
+    except:
+        perseverative_responses = pandas.DataFrame()
     dvs['perseverative_responses'] = {'value': len(perseverative_responses)}
     #perseverative_errors: length of perseverative_responses df that is subsetted by incorrect responses
     dvs['perseverative_errors'] = {'value': len(perseverative_responses.query("correct == 0"))}
