@@ -17,8 +17,8 @@ def calc_shift_DV(df, dvs = {}):
     df = df.query('rt != -1').reset_index(drop = True)
 
     # Calculate basic statistics - accuracy, RT and error RT
-    dvs['acc'] = {'value':  df.correct.mean(), 'valence': 'Pos'}
-    dvs['avg_rt'] = {'value':  df.rt.median(), 'valence': 'Neg'}
+    dvs['acc'] = {'value':  df.correct.mean()}
+    dvs['avg_rt'] = {'value':  df.rt.median()}
 
     try:
         rs = smf.glm('correct ~ trials_since_switch+trial_num', data = df, family = sm.families.Binomial()).fit()
@@ -28,8 +28,8 @@ def calc_shift_DV(df, dvs = {}):
         learning_rate = 'NA'
         learning_to_learn = 'NA'
 
-    dvs['learning_to_learn'] = {'value': learning_to_learn, 'valence':'Pos'}
-    dvs['learning_rate'] = {'value':  learning_rate  , 'valence': 'Pos'}
+    dvs['learning_to_learn'] = {'value': learning_to_learn}
+    dvs['learning_rate'] = {'value':  learning_rate}
 
     #conceptual_responses: The CLR score is the total number of consecutive correct responses in a sequence of 3 or more.
     CLR_score = 0
@@ -51,8 +51,8 @@ def calc_shift_DV(df, dvs = {}):
         if CLR_thresh_sum>=3:
             CLR_score+=1
 
-    dvs['conceptual_responses'] = {'value': CLR_score, 'valence':'Pos'}
-    dvs['fail_to_maintain_set'] = {'value': FTMS_score, 'valence':'Pos'}
+    dvs['conceptual_responses'] = {'value': CLR_score}
+    dvs['fail_to_maintain_set'] = {'value': FTMS_score}
 
 
     #add last_rewarded_feature column by switching the variable to the feature in the row right before a switch and assigning to the column until there is another switch
@@ -65,13 +65,13 @@ def calc_shift_DV(df, dvs = {}):
 
     #perseverative_responses: length of df where the choice_stim includes the last_rewarded_feature
     perseverative_responses = df[df.apply(lambda row: row.last_rewarded_feature in str(row.choice_stim), axis=1)]
-    dvs['perseverative_responses'] = {'value': len(perseverative_responses),'valence':'Neg'}
+    dvs['perseverative_responses'] = {'value': len(perseverative_responses)}
     #perseverative_errors: length of perseverative_responses df that is subsetted by incorrect responses
-    dvs['perseverative_errors'] = {'value': len(perseverative_responses.query("correct == 0")),'valence':'Neg'}
+    dvs['perseverative_errors'] = {'value': len(perseverative_responses.query("correct == 0"))}
     #total_errors
-    dvs['total_errors'] = {'value': len(df.query("correct==0")), 'valence':'Neg'}
+    dvs['total_errors'] = {'value': len(df.query("correct==0"))}
     #nonperseverative_errors
-    dvs['nonperseverative_errors'] = {'value': len(df.query("correct==0")) - dvs['perseverative_errors']['value'], 'valence': 'Neg'}
+    dvs['nonperseverative_errors'] = {'value': len(df.query("correct==0")) - dvs['perseverative_errors']['value']}
 
     return dvs
 
@@ -99,4 +99,7 @@ retest_subs_test_data_post = retest_subs_test_data_post.reset_index()
 
 #groupby subjects and apply the function that would calculate the dv's for each break
 out = data.groupby('worker_id').apply(calc_breaks)
-out.reset_index(level=['worker_id', None])
+out = out.reset_index(level=['worker_id', None])
+
+#write out output
+out.to_csv(retest_data_path+ 'Local/'+t+'_shift_dvs.csv')
