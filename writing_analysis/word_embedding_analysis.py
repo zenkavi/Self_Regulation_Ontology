@@ -4,6 +4,8 @@ from sklearn.linear_model import RidgeCV
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
+from sklearn import svm
+
 from selfregulation.utils.result_utils import load_results
 from selfregulation.utils.utils import get_behav_data, get_demographics, get_recent_dataset
 from writing_analysis.utils import loadGloveModel, tokenize
@@ -38,8 +40,10 @@ model = loadGloveModel('glove.6B.50d.txt')
 embeddings = data.apply(lambda x: embed_writing(x, model))
 
 # do the prediction!
+m = RidgeCV(alphas=(0.1, 1.0, 10.0, 100.0))
+m = svm.SVR()
 pipe = Pipeline([('scale', StandardScaler()),
-                 ('model', RidgeCV(alphas=(0.1, 1.0, 10.0, 100.0)))])
+                 ('model', m)])
 X = np.vstack(embeddings.values)
 # predict demographics
 for name, Y in reduced_demo.iteritems():

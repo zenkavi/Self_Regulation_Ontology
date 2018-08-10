@@ -1,6 +1,7 @@
 import nltk
 import numpy as np
 import re
+from sklearn.feature_extraction.text import TfidfVectorizer
 import string
 
 nltk.download('punkt')
@@ -148,6 +149,14 @@ def loadGloveModel(gloveFile):
 def remove_punctuation(text):
     translator = str.maketrans('', '', string.punctuation)
     return text.translate(translator)
+
+def tf_idf(docs, tokenize):
+    tfidf = TfidfVectorizer(tokenizer=tokenize, min_df=3,
+                        max_df=0.90, max_features=30000,
+                        use_idf=True, sublinear_tf=True,
+                        norm='l2');
+    tfidf.fit(docs);
+    return tfidf;
 
 # strips text down
 cachedStopWords = nltk.corpus.stopwords.words("english")
