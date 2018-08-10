@@ -292,7 +292,7 @@ def plot_dendrogram(results, c=None,  rotate='oblimin', inp=None, titles=None,
     name = inp
 
     if titles is None:
-        title = subset.title() + " Sub-Metric Structure"
+        title = subset.title() + " Dependent Variable Structure"
     elif titles != False:
         title=titles.pop(0)
     # extract cluster vars

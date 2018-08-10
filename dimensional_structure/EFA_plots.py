@@ -192,8 +192,11 @@ def plot_nesting(results, thresh=.5, rotate='oblimin', title=True,
         plt.close()
         
 def plot_factor_correlation(results, c, rotate='oblimin', title=True,
-                            size=4.6, dpi=300, ext='png', plot_dir=None):
-    EFA = results.EFA
+                            DA=False, size=4.6, dpi=300, ext='png', plot_dir=None):
+    if DA:
+        EFA = results.DA
+    else:
+        EFA = results.EFA
     loading = EFA.get_loading(c, rotate=rotate)
     # get factor correlation matrix
     reorder_vec = EFA.get_factor_reorder(c)
@@ -204,8 +207,8 @@ def plot_factor_correlation(results, c, rotate='oblimin', title=True,
         f = plt.figure(figsize=(size*5/4, size))
         ax1 = f.add_axes([0,0,.9,.9])
         cbar_ax = f.add_axes([.91, .05, .03, .8])
-        sns.heatmap(phi, ax=ax1, square=True, 
-                    cbar_ax=cbar_ax, mask=np.eye(c),
+        sns.heatmap(phi, ax=ax1, square=True, vmax=1, vmin=-1,
+                    cbar_ax=cbar_ax, 
                     cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
         yticklabels = ax1.get_yticklabels()
         ax1.set_yticklabels(yticklabels, rotation=0, ha="right")
@@ -436,7 +439,7 @@ def plot_bar_factors(results, c, size=4.6, thresh=75, rotate='oblimin',
         plt.close()
 
 def plot_heatmap_factors(results, c, size=4.6, thresh=75, rotate='oblimin',
-                     dpi=300, ext='png', plot_dir=None):
+                     DA=False, dpi=300, ext='png', plot_dir=None):
     """ Plots factor analytic results as bars
     
     Args:
@@ -449,9 +452,10 @@ def plot_heatmap_factors(results, c, size=4.6, thresh=75, rotate='oblimin',
         ext: the extension for the saved figure
         plot_dir: the directory to save the figure. If none, do not save
     """
-    
-    
-    EFA = results.EFA
+    if DA:
+        EFA = results.DA
+    else:
+        EFA = results.EFA
     loading = EFA.get_loading(c, rotate=rotate)
     loadings = EFA.reorder_factors(loading, rotate=rotate)           
     grouping = get_factor_groups(loadings)
@@ -491,7 +495,7 @@ def plot_heatmap_factors(results, c, size=4.6, thresh=75, rotate='oblimin',
                 linecolor='white', linewidth=.01,
                 cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
     ax.set_yticks(np.arange(.5,loadings.shape[0]+.5,1))
-    ax.set_yticklabels(loadings.index[::-1], fontsize=DV_fontsize, rotation=0)
+    ax.set_yticklabels(loadings.index, fontsize=DV_fontsize, rotation=0)
     ax.set_xticklabels(loadings.columns, 
                        fontsize=min(size*3, DV_fontsize*1.5),
                        ha='center',
@@ -509,7 +513,7 @@ def plot_heatmap_factors(results, c, size=4.6, thresh=75, rotate='oblimin',
     
     # draw lines separating groups
     if grouping is not None:
-        factor_breaks = np.cumsum([len(i[1]) for i in grouping[::-1]])[:-1]
+        factor_breaks = np.cumsum([len(i[1]) for i in grouping])[:-1]
         for y_val in factor_breaks:
             ax.hlines(y_val, 0, loadings.shape[1], lw=size/5, 
                       color='grey', linestyle='dashed')

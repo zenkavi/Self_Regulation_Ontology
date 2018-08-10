@@ -338,20 +338,19 @@ if run_plot or group_plot:
     if verbose:
             print('*'*79)
             print('Moving plots to paper directory')
-    paper_dir = path.join(basedir, 'Results', 'Psych_Ontology_Paper')
     if all_results is not None:
         plot_file = path.dirname(all_results['task'].get_plot_dir())
         
     else:
         plot_file = results.get_plot_dir()
     
-    figure_lookup = {
+    exhaustive_lookup = {
             'analysis_overview': 'Fig01_Analysis_Overview',
             'survey/HCA/dendrogram_EFA12_oblimin': 'Fig03_Survey_Dendrogram',
             'task/HCA/dendrogram_EFA5_oblimin': 'Fig04_Task_Dendrogram',
             'survey/prediction/EFA_ridge_prediction_bar': 'Fig05_Survey_prediction',
             'task/prediction/EFA_ridge_prediction_bar': 'Fig06_Task_prediction',
-            
+            # test-retest
             'cross_relationship': 'FigS02_cross_relationship',
             'BIC_curves': 'FigS03_BIC_curves',
             'survey/EFA/factor_correlations_EFA12': 'FigS04_Survey_2nd-order',
@@ -371,8 +370,26 @@ if run_plot or group_plot:
             'task/prediction/IDM_lasso_prediction_bar': 'FigS18_Task_IDM_prediction',
             'survey/prediction/EFA_ridge_factor_fingerprint': 'FigS19_Survey_Factor_Fingerprints'
             }
-        
     
+    shortened_lookup = {
+            'analysis_overview': 'Fig01_Analysis_Overview',
+            'survey/HCA/dendrogram_EFA12_oblimin': 'Fig03_Survey_Dendrogram',
+            'task/HCA/dendrogram_EFA5_oblimin': 'Fig04_Task_Dendrogram',
+            'survey/prediction/EFA_ridge_prediction_bar': 'Fig05_Survey_prediction',
+            'task/prediction/EFA_ridge_prediction_bar': 'Fig06_Task_prediction',
+            # test-retest
+            'cross_relationship': 'FigS02_cross_relationship',
+            'BIC_curves': 'FigS03_BIC_curves',
+            'communality_adjustment': 'FigS04_communality',
+            'EFA_test_retest': 'FigS05_EFA_retest',
+            'silhouette_analysis': 'FigS06_Survey_Silhouette',
+            'survey/prediction/IDM_lasso_prediction_bar': 'FigS07_Survey_IDM_prediction',
+            'task/prediction/IDM_lasso_prediction_bar': 'FigS08_Task_IDM_prediction',
+            'survey/prediction/EFA_ridge_factor_fingerprint': 'FigS09_Survey_Factor_Fingerprints'
+            }
+    
+    paper_dir = path.join(basedir, 'Results', 'Psych_Ontology_Paper')
+    figure_lookup = shortened_lookup
     for filey in figure_lookup.keys():
         figure_num = figure_lookup[filey].split('_')[0]
         orig_file = path.join(plot_file, filey+'.'+ext)
