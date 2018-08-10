@@ -10,7 +10,8 @@ from scipy.cluster.hierarchy import leaves_list, linkage, cut_tree
 from scipy.spatial.distance import pdist, squareform
 from sklearn.decomposition import FactorAnalysis
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import r2_score, silhouette_samples, silhouette_score
+from sklearn.metrics import (adjusted_mutual_info_score, adjusted_rand_score,
+                             r2_score, silhouette_samples, silhouette_score)
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, scale
@@ -252,7 +253,9 @@ def get_constant_height_labels(clustering, n_clusters=None):
                                          labels, metric='precomputed')
         scores.append((n_clusters, score))
     labels = reorder_labels(labels.flatten(), clustering['linkage'])
-    return labels, scores
+    # comparison
+    MI = adjusted_mutual_info_score(labels, clustering['labels'])
+    return labels, scores, MI
     
 # ****************************************************************************
 # helper functions for dealing with factor analytic results

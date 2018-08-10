@@ -79,8 +79,8 @@ def convert_date(data):
     new_date = data.loc[:,'finishtime'].map(lambda date: datetime.strptime(date[:-8],'%Y-%m-%dT%H:%M:%S'))
     data.loc[:,'finishtime'] = new_date
         
-def convert_fmri_ids(data):
-    conversion_lookup = json.load(open('samples/fmri_followup_expfactory_id_conversion.json','r'))
+def convert_fmri_ids(data, id_file):
+    conversion_lookup = json.load(open(id_file,'r'))
     data.worker_id.replace(conversion_lookup, inplace = True)
 
 def convert_item_names(to_convert):
@@ -579,13 +579,17 @@ def save_task_data(data_loc, data):
     for exp_id in np.sort(data.experiment_exp_id.unique()):
         print('Saving %s...' % exp_id)
         extract_experiment(data,exp_id).to_csv(os.path.join(path, exp_id + '.csv.gz'), compression = 'gzip')
-    
-def transform_remove_skew(data, threshold=1):
+
+def transform_remove_skew(data, threshold=1, 
+                          positive_skewed=None,
+                          negative_skewed=None):
     data = data.copy()
-    skewed_variables = data.columns[abs(data.skew())>threshold]
-    skew_subset = data.loc[:,skewed_variables]
-    positive_subset = skew_subset.loc[:,skew_subset.skew()>0]
-    negative_subset = skew_subset.loc[:,skew_subset.skew()<0]
+    if positive_skewed is None:
+        positive_skewed = data.skew()>threshold
+    if negative_skewed is None:
+        negative_skewed = data.skew()<-threshold
+    positive_subset = data.loc[:,positive_skewed]
+    negative_subset = data.loc[:,negative_skewed]
     # transform variables
     # log transform for positive skew
     positive_subset = np.log(positive_subset)

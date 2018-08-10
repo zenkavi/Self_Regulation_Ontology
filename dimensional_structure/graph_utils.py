@@ -217,7 +217,8 @@ class Graph_Analysis(object):
         self.print_options = {}
         self.plot_options = {}
         
-    def setup(self, adj, community_alg=None, 
+    def setup(self, adj, weighted=True,
+              community_alg=None, 
               ref_community=None):
         """
         Creates and displays graphs of a data matrix.
@@ -247,7 +248,7 @@ class Graph_Analysis(object):
         graph_mat = self.adj.values
         
         # check if binary
-        if set(np.unique(graph_mat))==set([0,1]):
+        if weighted==False:
             graph_mat = np.ceil(graph_mat)
             G = igraph.Graph.Adjacency(graph_mat.tolist(), mode = 'undirected')
         else:
@@ -470,7 +471,10 @@ class Graph_Analysis(object):
         self.G = G
         self.graph_mat = self._graph_to_matrix(G)
         self.node_order = reorder_index
-        
+    
+    def save_graph(self, filename, f='graphml'):
+        self.G.save(open(filename,'wb'), format=f)
+
     def set_visual_style(self, layout ='kk',  labels='auto', plot_adj=True,
                          size=6000):
         """

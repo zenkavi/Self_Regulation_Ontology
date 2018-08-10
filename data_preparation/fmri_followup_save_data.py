@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 import datetime
 from expanalysis.experiments.processing import  extract_experiment
 from glob import glob
@@ -15,34 +16,38 @@ from selfregulation.utils.utils import get_info
 from selfregulation.utils.r_to_py_utils import missForest
 from selfregulation.utils.reference_utils import gen_reference_item_text
 
+data_labels = ['fmri_followup']
+
 #******************************
 #*** Save Data *********
 #******************************
 date = datetime.date.today().strftime("%m-%d-%Y")
 
+output_dir=path.join(get_info('base_directory'),'Data')
 #load Data
-try:
-    data_dir=get_info('data_directory')
-except Exception:
-    data_dir=path.join(get_info('base_directory'),'Data')
-local_dir = path.join(data_dir,'Local')
+data_dir=get_info('data_directory')
+
+
 # read preprocessed data
-data_labels = ['fmri_followup']
 datasets = []
 for label in data_labels:
-    directory = path.join(data_dir,label.title() + '_' + date)
+    try:
+        data = pd.read_pickle(path.join(data_dir,label + '_data_post.pkl')).reset_index(drop = True)
+    except FileNotFoundError:
+        print("Couldn't find %s" % label + '_data_post.pkl')
+        continue
+    directory = path.join(output_dir,label.split('mturk_')[1].title() + '_' + date)
     if not path.exists(directory):
         makedirs(directory)
-    data = pd.read_json(path.join(local_dir,label + '_data_post.json')).reset_index(drop = True)
     try:
-        DVs = pd.read_json(path.join(local_dir,label + '_DV.json'))
-        DVs_valence = pd.read_json(path.join(local_dir,label + '_DV_valence.json'))
+        DVs = pd.read_json(path.join(data_dir,label + '_DV.json'))
+        DVs_valence = pd.read_json(path.join(data_dir,label + '_DV_valence.json'))
     except ValueError:
         print("Couldn't find %s DV datasets" % label)
         DVs = []
         DVs_valence = []
     datasets.append((data,directory, DVs, DVs_valence))
-
+    
 # calculate DVs
 for data,directory, DV_df, valence_df in datasets:
     readme_lines = []
@@ -69,7 +74,9 @@ for data,directory, DV_df, valence_df in datasets:
     print('Saving items...')
     subjectsxitems = items_df.pivot('worker','item_ID','coded_response')
     # ensure there are the correct number of items
-    assert subjectsxitems.shape[1] == 594, "Wrong number of items found"
+    if subjectsxitems.shape[1] != 593:
+        print('Wrong number of items found for label: %s' % label)
+        continue
     # save items
     items_df.to_csv(path.join(directory, 'items.csv.gz'), compression = 'gzip')
     subjectsxitems.to_csv(path.join(directory, 'subject_x_items.csv'))
@@ -78,7 +85,7 @@ for data,directory, DV_df, valence_df in datasets:
         "Found column names longer than 8 characters in short version"
     # save Individual Measures
     save_task_data(directory, data)
-    if 'Discovery' in directory:
+    if 'Complete' in directory:
         # save demographic targets reference
         np.savetxt(path.join(reference_dir,'demographic_health_reference.csv'), target_data.columns, fmt = '%s', delimiter=",")
         gen_reference_item_text(items_df)
@@ -114,7 +121,7 @@ for data,directory, DV_df, valence_df in datasets:
         readme_lines += ["variables_exhaustive.csv: all variables calculated for each measure\n\n"]
           
         # drop other columns of no interest
-        subset = drop_vars(DV_df, saved_vars = ['simple_reaction_time.avg_rt', 'shift_task.acc'])
+        subset = drop_vars(DV_df, saved_vars = ['adaptive_n_back.hddm_drift_load', 'simple_reaction_time.avg_rt', 'shift_task.acc'])
         # make subset without EZ variables
         noDDM_subset = drop_vars(DV_df, saved_vars = ["\.acc$", "\.avg_rt$"])
         noDDM_subset = drop_vars(noDDM_subset, drop_vars = ['EZ', 'hddm'])

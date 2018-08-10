@@ -11,7 +11,11 @@ import seaborn as sns
 
 # basic helper functions
 def format_num(num, digits=2):
-    return ("{0:0." + str(digits) + "f}").format(num)
+    # if float
+    if num%1 != 0:
+        return ("{0:0." + str(digits) + "f}").format(num)
+    else:
+        return ("{0:0." + str(0) + "f}").format(num)
     
 def format_variable_names(variables):
     """ formats a list of variable names """
@@ -22,14 +26,24 @@ def format_variable_names(variables):
         var = var.replace('hddm_', 'DDM-')
         var = var.replace('_cost', '-cost')
         var = var.replace('_sensitivity', '-sensitivity')
+        var = var.replace('two_stage', 'two_step')
+        var = var.replace('threebytwo', 'cue/task switch')
         var = var.replace('.', ': ')
         var = ' '.join(var.split('_'))
         new_vars.append(var)
     return new_vars
 
-#***************************************************
-# ********* Plotting Functions **********************
-#**************************************************
+# basic plotting helper functions
+
+def place_letter(ax, letter, fontsize=14, yoffset=.02, xoffset=0):
+    xlim=ax.get_xlim()
+    ylim=ax.get_ylim()
+    
+    ax.text(xlim[0]-(xlim[1]-xlim[0])*xoffset, 
+            ylim[1]+(ylim[1]-ylim[0])*yoffset, 
+            letter, 
+            fontsize=fontsize, fontweight='bold')
+    
 def beautify_legend(legend, colors=None, fontsize=None):
     if colors is None:
         colors = [i.get_color() for i in legend.legendHandles]
@@ -41,7 +55,11 @@ def beautify_legend(legend, colors=None, fontsize=None):
         item.set_visible(False)
     if fontsize:
         plt.setp(legend.get_texts(), fontsize=fontsize)
-        
+    
+#***************************************************
+# ********* Plotting Functions **********************
+#**************************************************
+
 def DDM_plot(v,t,a, sigma = .1, n = 10, plot_n = 15, plot_avg=False, file = None):
     """ Make a plot of trajectories using ddm parameters (in seconds)
     
@@ -297,7 +315,7 @@ class CurvedText(mtext.Text):
         for c in text:
             if c == ' ':
                 ##make this an invisible 'a':
-                t = mtext.Text(0,0,'a')
+                t = mtext.Text(0,0,'a', **kwargs)
                 t.set_alpha(0.0)
             else:
                 t = mtext.Text(0,0,c, **kwargs)

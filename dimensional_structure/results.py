@@ -18,7 +18,7 @@ from dimensional_structure.utils import (
         get_loadings, get_scores_from_subset, get_top_factors, 
         hdbscan_cluster, hierarchical_cluster, residualize_baseline
         )
-from selfregulation.utils.graph_utils import  (get_adj, Graph_Analysis)
+from dimensional_structure.graph_utils import  (get_adj, Graph_Analysis)
 from selfregulation.utils.utils import get_behav_data, get_demographics, get_info
 from selfregulation.utils.r_to_py_utils import get_attr, get_Rpsych, psychFA
 
@@ -51,7 +51,7 @@ class EFA_Analysis:
         rejected = loading.index[~over_thresh]
         return loading.loc[over_thresh,:], rejected
     
-    def _get_factor_reorder(self, c, rotate='oblimin'):
+    def get_factor_reorder(self, c, rotate='oblimin'):
         # reorder factors based on correlation matrix
         phi=get_attr(self.results['factor_tree_Rout_%s' % rotate][c],'Phi')
         if phi is None:
@@ -83,6 +83,9 @@ class EFA_Analysis:
             # get factor correlation matrix
             scores = get_attr(self.results['factor_tree_Rout_%s' % rotate][c], 'scores')
             phi = pd.DataFrame(np.corrcoef(scores.T))
+            # check for correlations
+            if np.mean(np.tril(phi, -1)) < 10E-5:
+                return
             n_obs = self.data.shape[0]
             labels = list(self.results['factor_tree_%s' % rotate][c].columns)
             BIC_c, BICs = find_optimal_components(phi, 
@@ -243,8 +246,8 @@ class EFA_Analysis:
             if c > 1:
                 entropies[c] = self.get_loading_entropy(c, rotate=rotate)
                 null_entropies[c] = self.get_null_loading_entropy(c, rotate=rotate)
-        self.results['entropies'] = pd.DataFrame(entropies)
-        self.results['null_entropies'] = pd.DataFrame(null_entropies)
+        self.results['entropies_%s' % rotate] = pd.DataFrame(entropies)
+        self.results['null_entropies_%s' % rotate] = pd.DataFrame(null_entropies)
         
     def get_metric_cs(self):
         metric_cs = {k:v for k,v in self.results.items() if 'c_metric-' in k}
@@ -304,38 +307,41 @@ class EFA_Analysis:
       
     def reorder_factors(self, mat, rotate='oblimin'):
         c = mat.shape[1]
-        reorder_vec = self._get_factor_reorder(c, rotate=rotate)
+        reorder_vec = self.get_factor_reorder(c, rotate=rotate)
         if type(mat) == pd.core.frame.DataFrame:
             mat = mat.iloc[:, reorder_vec]
         else:
             mat = mat[reorder_vec][:, reorder_vec]
         return mat
     
-    def run(self, loading_thresh=None, bootstrap=False, verbose=False):
-        # check adequacy
-        adequate, adequacy_stats = self.adequacy_test(verbose)
-        assert adequate, "Data is not adequate for EFA!"
-        self.results['EFA_adequacy'] = {'adequate': adequate, 
+    def run(self, loading_thresh=None, rotate='oblimin', 
+            bootstrap=False, verbose=False):
+        if 'EFA_adequacy' not in self.results:
+            # check adequacy
+            adequate, adequacy_stats = self.adequacy_test(verbose)
+            assert adequate, "Data is not adequate for EFA!"
+            self.results['EFA_adequacy'] = {'adequate': adequate, 
                                             'adequacy_stats': adequacy_stats}
         
         # get optimal dimensionality
-        if 'c_metric-parallel' not in self.results.keys():
+        if 'c_metric-BIC' not in self.results.keys():
             if verbose: print('Determining Optimal Dimensionality')
             self.get_dimensionality(verbose=verbose)
             
         # create factor tree
         if verbose: print('Creating Factor Tree')
-        self.get_loading(c=self.results['num_factors'], bootstrap=bootstrap)
+        self.get_loading(c=self.results['num_factors'], rotate=rotate,
+                         bootstrap=bootstrap)
         # optional threshold
         if loading_thresh is not None:
-            for c, loading in self.results['factor_tree_oblimin'].items():
+            for c, loading in self.results['factor_tree_%s' % rotate].items():
                 thresh_loading = self._thresh_loading(loading, loading_thresh)
-                self.results['factor_tree_oblimin'][c], rejected = thresh_loading
+                self.results['factor_tree_%s' % rotate][c], rejected = thresh_loading
         # get higher level factor solution
         if verbose: print('Determining Higher Order Factors')
-        self.compute_higher_order_factors()
+        self.compute_higher_order_factors(rotate=rotate)
         # get entropies
-        self.get_factor_entropies()
+        self.get_factor_entropies(rotate=rotate)
     
     def verify_factor_solution(self):
         fa, output = psychFA(self.data, 10)
@@ -363,7 +369,7 @@ class HDBScan_Analysis():
     def cluster_EFA(self, EFA, c, rotate='oblimin'):
         loading = EFA.get_loading(c, rotate=rotate)
         output = hdbscan_cluster(loading)
-        self.results['EFA%s' % c] = output
+        self.results['EFA%s_%s' % (c, rotate)] = output
         
     def get_cluster_DVs(self, inp='data'):
         cluster = self.results['%s' % inp]
@@ -487,13 +493,14 @@ class HCA_Analysis():
         assert len(names) == num_clusters
         self.results['%s' % inp]['cluster_names'] = names
         
-    def run(self, data, EFA, cluster_EFA=False,
+    def run(self, data, EFA, cluster_EFA=False, rotate='oblimin',
             run_graphs=False, verbose=False):
         if verbose: print("Clustering data")
         self.cluster_data(data)
         if cluster_EFA:
             if verbose: print("Clustering EFA")
-            self.cluster_EFA(EFA, EFA.results['num_factors'])
+            self.cluster_EFA(EFA, EFA.results['num_factors'],
+                             rotate=rotate)
         if run_graphs == True:
             # run graph analysis on raw data
             graphs = self.build_graphs('data', data)
@@ -634,15 +641,16 @@ class Results(EFA_Analysis, HCA_Analysis):
             print('*'*79)
         self.DA.run(bootstrap=bootstrap, verbose=verbose)
         
-    def run_EFA_analysis(self, bootstrap=False, verbose=False):
+    def run_EFA_analysis(self, rotate='oblimin', bootstrap=False, verbose=False):
         if verbose:
             print('*'*79)
-            print('Running EFA')
+            print('Running EFA, rotate: %s' % rotate)
             print('*'*79)
-        self.EFA.run(self.loading_thresh, bootstrap=bootstrap, verbose=verbose)
+        self.EFA.run(self.loading_thresh, rotate=rotate, 
+                     bootstrap=bootstrap, verbose=verbose)
 
     def run_clustering_analysis(self, cluster_EFA=True, run_graphs=True,
-                                dist_metric=None, verbose=False):
+                                rotate='oblimin',  dist_metric=None, verbose=False):
         """ Run HCA Analysis
         
         Args:
@@ -657,13 +665,13 @@ class Results(EFA_Analysis, HCA_Analysis):
             print('*'*79)
         if dist_metric is None: 
             self.HCA.run(self.data, self.EFA, cluster_EFA=cluster_EFA,
-                         run_graphs=run_graphs, verbose=verbose)
+                         rotate=rotate, run_graphs=run_graphs, verbose=verbose)
             self.hdbscan.run(self.data, self.EFA, cluster_EFA=cluster_EFA,
                              verbose=verbose)
         else:
             HCA = HCA_Analysis(dist_metric=dist_metric)
             HCA.run(self.data, self.EFA, cluster_EFA=cluster_EFA,
-                    run_graphs=run_graphs, verbose=verbose)
+                    rotate=rotate, run_graphs=run_graphs, verbose=verbose)
             hdbscan = HDBScan_Analysis(dist_metric=dist_metric)
             hdbscan.run(self.data, self.EFA, cluster_EFA=cluster_EFA,
                         verbose=verbose)
@@ -680,7 +688,7 @@ class Results(EFA_Analysis, HCA_Analysis):
         demographic_factors = self.DA.reorder_factors(self.DA.get_scores())
         c = factor_scores.shape[1]
         # get raw data reorganized by clustering
-        clustering=self.HCA.results['EFA%s' % c]
+        clustering=self.HCA.results['EFA%s_%s' % (c, rotate)]
         labels = clustering['clustered_df'].columns
         raw_data = self.data[labels]
         
@@ -709,7 +717,7 @@ class Results(EFA_Analysis, HCA_Analysis):
         factor_scores = self.EFA.get_scores(rotate=rotate)
         c = factor_scores.shape[1]
         # get raw data reorganized by clustering
-        clustering=self.HCA.results['EFA%s' % c]
+        clustering=self.HCA.results['EFA%s_%s' % (c, rotate)]
         labels = clustering['clustered_df'].columns
         raw_data = self.data[labels]
         

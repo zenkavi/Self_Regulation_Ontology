@@ -63,12 +63,17 @@ def plot_BIC_SABIC(results, size=2.3, dpi=300, ext='png', plot_dir=None):
                         {'bbox_inches': 'tight', 'dpi': dpi})
             plt.close()
 
-def plot_communality(results, c, rotate='oblimin',
-                     size=20, dpi=300, ext='png', plot_dir=None):
+def plot_communality(results, c, rotate='oblimin', retest_threshold=.2,
+                     size=4.6, dpi=300, ext='png', plot_dir=None):
     EFA = results.EFA
     loading = EFA.get_loading(c, rotate=rotate)
-    communality = (loading**2).sum(1).sort_values()
-    communality.index = [i.replace('.logTr','') for i in communality.index]
+    # get communality from psych out
+    fa = EFA.results['factor_tree_Rout_%s' % rotate][c]
+    communality = get_attr(fa, 'communalities')
+    communality = pd.Series(communality, index=loading.index)
+    # alternative calculation
+    #communality = (loading**2).sum(1).sort_values()
+    communality.index = [i.replace('.logTr','').replace('.ReflogTr','') for i in communality.index]
     # load retest data
     retest_data = get_retest_data(dataset=results.dataset.replace('Complete','Retest'))
     if retest_data is None:
@@ -84,13 +89,16 @@ def plot_communality(results, c, rotate='oblimin',
         # noise ceiling
         noise_ceiling = retest_data.pearson
         # remove very low reliabilities
-        noise_ceiling[noise_ceiling<.2]= np.nan
+        if retest_threshold:
+            noise_ceiling[noise_ceiling<retest_threshold]= np.nan
         # adjust
         adjusted_communality = communality/noise_ceiling
         # correlation
         correlation = pd.concat([communality, noise_ceiling], axis=1).corr().iloc[0,1]
-        noise_ceiling.replace(np.nan, 0, inplace=True)
-        adjusted_communality.replace(np.nan, 0, inplace=True)
+        kept_vars = np.logical_not(noise_ceiling.isnull())
+        noise_ceiling = noise_ceiling[kept_vars]
+        communality = communality[kept_vars]
+        adjusted_communality = adjusted_communality[kept_vars]
         
     # plot communality bars woo!
     if len(retest_data)>0:
@@ -116,10 +124,15 @@ def plot_communality(results, c, rotate='oblimin',
         with sns.axes_style('white'):
             colors = sns.color_palette(n_colors=2, desat=.75)
             f, ax = plt.subplots(1,1,figsize=(size,size))
-            sns.kdeplot(communality, linewidth=3, 
+            sns.kdeplot(communality, linewidth=size/4, 
                         shade=True, label='Communality', color=colors[0])
-            sns.kdeplot(adjusted_communality, linewidth=3, 
+            sns.kdeplot(adjusted_communality, linewidth=size/4, 
                         shade=True, label='Adjusted Communality', color=colors[1])
+            ylim = ax.get_ylim()
+            ax.vlines(np.mean(communality), ylim[0], ylim[1],
+                      color=colors[0], linewidth=size/4, linestyle='--')
+            ax.vlines(np.mean(adjusted_communality), ylim[0], ylim[1],
+                      color=colors[1], linewidth=size/4, linestyle='--')
             leg=ax.legend(fontsize=size*2, loc='upper right')
             beautify_legend(leg, colors)
             plt.xlabel('Communality', fontsize=size*2)
@@ -132,9 +145,10 @@ def plot_communality(results, c, rotate='oblimin',
             #ax.spines['left'].set_visible(False)
             ax.spines['top'].set_visible(False)
             # add correlation
-            correlation = "{0:0.2f}".format(np.mean(correlation))
-            ax.text(1, 1.25, 'Correlation Between Communality \nand Test-Retest: %s' % correlation,
+            correlation = format_num(np.mean(correlation))
+            ax.text(1.1, 1.25, 'Correlation Between Communality \nand Test-Retest: %s' % correlation,
                     size=size*2)
+
         if plot_dir:
             filename = 'communality_dist-EFA%s.%s' % (c, ext)
             save_figure(f, path.join(plot_dir, filename), 
@@ -144,7 +158,7 @@ def plot_communality(results, c, rotate='oblimin',
     
         
     
-def plot_nesting(results, thresh=.5, rotate='oblimin',
+def plot_nesting(results, thresh=.5, rotate='oblimin', title=True,
                  dpi=300, figsize=12, ext='png', plot_dir=None):
     """ Plots nesting of factor solutions
     
@@ -177,29 +191,33 @@ def plot_nesting(results, thresh=.5, rotate='oblimin',
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
         
-def plot_factor_correlation(results, c, rotate='oblimin',
-                            size=4.6, dpi=300, ext='png', plot_dir=None):
-    EFA = results.EFA
+def plot_factor_correlation(results, c, rotate='oblimin', title=True,
+                            DA=False, size=4.6, dpi=300, ext='png', plot_dir=None):
+    if DA:
+        EFA = results.DA
+    else:
+        EFA = results.EFA
     loading = EFA.get_loading(c, rotate=rotate)
     # get factor correlation matrix
-    reorder_vec = EFA._get_factor_reorder(c)
+    reorder_vec = EFA.get_factor_reorder(c)
     phi = get_attr(EFA.results['factor_tree_Rout_%s' % rotate][c],'Phi')
     phi = pd.DataFrame(phi, columns=loading.columns, index=loading.columns)
     phi = phi.iloc[reorder_vec, reorder_vec]
-    with sns.plotting_context('notebook', font_scale=2):
+    with sns.plotting_context('notebook', font_scale=2) and sns.axes_style('white'):
         f = plt.figure(figsize=(size*5/4, size))
         ax1 = f.add_axes([0,0,.9,.9])
         cbar_ax = f.add_axes([.91, .05, .03, .8])
-        sns.heatmap(phi, ax=ax1, square=True, vmax=.5, vmin=-.5,
-                    cbar_ax=cbar_ax,
+        sns.heatmap(phi, ax=ax1, square=True, vmax=1, vmin=-1,
+                    cbar_ax=cbar_ax, 
                     cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
         yticklabels = ax1.get_yticklabels()
-        ax1.set_yticklabels(yticklabels, rotation = 0, ha="right")
-        ax1.set_title('%s Factor Correlations' % results.ID.split('_')[0].title(),
-                  weight='bold', y=1.05, fontsize=size*3)
+        ax1.set_yticklabels(yticklabels, rotation=0, ha="right")
+        ax1.set_xticklabels(ax1.get_xticklabels(), rotation=90)
+        if title == True:
+            ax1.set_title('%s Factor Correlations' % results.ID.split('_')[0].title(),
+                      weight='bold', y=1.05, fontsize=size*3)
         ax1.tick_params(labelsize=size*3)
         # format cbar
-        cbar_ax.set_yticklabels([-.5, -.25, 0, .25, .5])
         cbar_ax.tick_params(axis='y', length=0)
         cbar_ax.tick_params(labelsize=size*2)
         cbar_ax.set_ylabel('Pearson Correlation', rotation=-90, labelpad=size*4, fontsize=size*3)
@@ -421,7 +439,7 @@ def plot_bar_factors(results, c, size=4.6, thresh=75, rotate='oblimin',
         plt.close()
 
 def plot_heatmap_factors(results, c, size=4.6, thresh=75, rotate='oblimin',
-                     dpi=300, ext='png', plot_dir=None):
+                     DA=False, dpi=300, ext='png', plot_dir=None):
     """ Plots factor analytic results as bars
     
     Args:
@@ -434,9 +452,10 @@ def plot_heatmap_factors(results, c, size=4.6, thresh=75, rotate='oblimin',
         ext: the extension for the saved figure
         plot_dir: the directory to save the figure. If none, do not save
     """
-    
-    
-    EFA = results.EFA
+    if DA:
+        EFA = results.DA
+    else:
+        EFA = results.EFA
     loading = EFA.get_loading(c, rotate=rotate)
     loadings = EFA.reorder_factors(loading, rotate=rotate)           
     grouping = get_factor_groups(loadings)
@@ -476,12 +495,12 @@ def plot_heatmap_factors(results, c, size=4.6, thresh=75, rotate='oblimin',
                 linecolor='white', linewidth=.01,
                 cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
     ax.set_yticks(np.arange(.5,loadings.shape[0]+.5,1))
-    # check which direction the heatmap yticks are going
-    ax.set_yticklabels(loadings.index[::-1], fontsize=DV_fontsize)
+    ax.set_yticklabels(loadings.index, fontsize=DV_fontsize, rotation=0)
     ax.set_xticklabels(loadings.columns, 
-                                fontsize=size*.08*20,
-                                ha='left',
-                                rotation=-30)
+                       fontsize=min(size*3, DV_fontsize*1.5),
+                       ha='center',
+                       rotation=90)
+    ax.tick_params(length=size*.5, width=size/10)
     # format cbar
     cbar_ax.set_yticklabels([format_num(-max_val, 2), 
                              format_num(-max_val/2, 2),
@@ -494,7 +513,7 @@ def plot_heatmap_factors(results, c, size=4.6, thresh=75, rotate='oblimin',
     
     # draw lines separating groups
     if grouping is not None:
-        factor_breaks = np.cumsum([len(i[1]) for i in grouping[::-1]])[:-1]
+        factor_breaks = np.cumsum([len(i[1]) for i in grouping])[:-1]
         for y_val in factor_breaks:
             ax.hlines(y_val, 0, loadings.shape[1], lw=size/5, 
                       color='grey', linestyle='dashed')
@@ -605,8 +624,8 @@ def plot_entropies(results, rotate='oblimin',
     """
     EFA = results.EFA
     # plot entropies
-    entropies = EFA.results['entropies'].copy()
-    null_entropies = EFA.results['null_entropies'].copy()
+    entropies = EFA.results['entropies_%s' % rotate].copy()
+    null_entropies = EFA.results['null_entropies_%s' % rotate].copy()
     entropies.loc[:, 'group'] = 'real'
     null_entropies.loc[:, 'group'] = 'null'
     plot_entropies = pd.concat([entropies, null_entropies], 0)
@@ -682,12 +701,12 @@ def plot_EFA(results, plot_dir=None, verbose=False, size=4.6, dpi=300, ext='png'
     if verbose: print("Plotting factor bars")
     plot_bar_factors(results, c, size=size, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting factor heatmap")
-    plot_heatmap_factors(results, c=c, size=size, plot_dir=plot_dir, dpi=dpi,  ext=ext)
+    plot_heatmap_factors(results, c=c, thresh=0, size=size, plot_dir=plot_dir, dpi=dpi, ext=ext)
 #    if verbose: print("Plotting task factors")
 #    plot_task_factors(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)
 #    plot_task_factors(results, c, normalize_loadings=True, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)
     if verbose: print("Plotting factor correlations")
-    plot_factor_correlation(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext)
+    plot_factor_correlation(results, c, title=False, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting DDM factors")
     if 'task' in results.ID:
         plot_DDM(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext)

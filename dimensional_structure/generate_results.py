@@ -8,7 +8,8 @@ parser.add_argument('-dataset', default=None)
 parser.add_argument('-no_analysis', action='store_false')
 parser.add_argument('-no_prediction', action='store_false')
 parser.add_argument('-no_plot', action='store_false')
-parser.add_argument('-no_group', action='store_false')
+parser.add_argument('-no_group_analysis', action='store_false')
+parser.add_argument('-no_group_plot', action='store_false')
 parser.add_argument('-bootstrap', action='store_true')
 parser.add_argument('-boot_iter', type=int, default=1000)
 parser.add_argument('-shuffle_repeats', type=int, default=1)
@@ -25,7 +26,8 @@ dataset = args.dataset
 run_analysis = args.no_analysis
 run_prediction = args.no_prediction
 run_plot = args.no_plot
-group_plot = args.no_group
+group_analysis = args.no_group_analysis
+group_plot = args.no_group_plot
 bootstrap = args.bootstrap
 boot_iter = args.boot_iter
 shuffle_repeats = args.shuffle_repeats
@@ -44,14 +46,26 @@ import numpy as np
 from os import makedirs, path
 import random
 from shutil import copyfile, copytree, rmtree
+import subprocess
 import time
 
 from dimensional_structure.results import Results
-from dimensional_structure.cross_results_plots import plot_corr_heatmap, plot_BIC
+from dimensional_structure.cross_results_plots import (plot_corr_heatmap, 
+                                                       plot_glasso_edge_strength,
+                                                       plot_cross_within_prediction,
+                                                       plot_cross_relationship,
+                                                       plot_BIC,
+                                                       plot_cross_silhouette,
+                                                       plot_cross_communality)
 from dimensional_structure.DA_plots import plot_DA
 from dimensional_structure.EFA_plots import plot_EFA
+from dimensional_structure.EFA_test_retest import plot_EFA_change, plot_EFA_retest, plot_cross_EFA_retest
 from dimensional_structure.HCA_plots import plot_HCA
-from dimensional_structure.prediction_plots import plot_prediction, plot_prediction_comparison
+from dimensional_structure.prediction_plots import (plot_prediction, 
+                                                    plot_prediction_scatter,
+                                                    plot_prediction_comparison,
+                                                    plot_factor_fingerprint)
+from dimensional_structure.prediction_utils import run_group_prediction
 from selfregulation.utils.result_utils import load_results
 from selfregulation.utils.utils import get_info, get_recent_dataset
 
@@ -104,6 +118,7 @@ subsets = [{'name': 'task',
               'factor_names': [],
               'predict': False}]
 results = None
+all_results = None
 ID = str(random.getrandbits(16)) 
 # create/run results for each subset
 for subset in subsets:
@@ -130,8 +145,13 @@ for subset in subsets:
                           ID=ID,
                           residualize_vars=['Age', 'Sex'])
         results.run_demographic_analysis(verbose=verbose, bootstrap=bootstrap)
-        results.run_EFA_analysis(verbose=verbose, bootstrap=bootstrap)
-        results.run_clustering_analysis(verbose=verbose, run_graphs=False)
+        for rotate in ['oblimin', 'varimax']:
+            results.run_EFA_analysis(rotate=rotate, 
+                                     verbose=verbose, 
+                                     bootstrap=bootstrap)
+            results.run_clustering_analysis(rotate=rotate, 
+                                            verbose=verbose, 
+                                            run_graphs=False)
         ID = results.ID.split('_')[1]
         # name factors and clusters
         factor_names = subset.get('factor_names', None)
@@ -213,7 +233,11 @@ for subset in subsets:
         if verbose: print("Plotting EFA")
         plot_EFA(results, EFA_plot_dir, verbose=verbose, size=size, dpi=dpi, 
                  ext=ext, plot_task_kws=plot_task_kws)
-            
+        
+        # Plot EFA retest
+        combined=plot_EFA_retest(results, plot_dir=EFA_plot_dir, size=size, dpi=dpi, ext=ext)
+        plot_EFA_change(combined=combined, plot_dir=EFA_plot_dir, size=size, dpi=dpi, ext=ext)
+        
         # Plot HCA
         if verbose: print("Plotting HCA")
         plot_HCA(results, HCA_plot_dir, size=size, dpi=dpi, ext=ext)
@@ -230,6 +254,11 @@ for subset in subsets:
                                     dpi=dpi,
                                     ext=ext,
                                     size=size)
+                    plot_prediction_scatter(results, target_order=target_order, EFA=EFA, 
+                                    classifier=classifier, plot_dir=prediction_plot_dir,
+                                    dpi=dpi,
+                                    ext=ext,
+                                    size=size)
                     print("Plotting Change Prediction, classifier: %s, EFA: %s" % (classifier, EFA))
                     try:
                         plot_prediction(results, target_order=change_target_order, 
@@ -238,26 +267,146 @@ for subset in subsets:
                                         dpi=dpi,
                                         ext=ext,
                                         size=size)
+                        plot_prediction_scatter(results, target_order=change_target_order, 
+                                        EFA=EFA, change=True,
+                                        classifier=classifier, plot_dir=prediction_plot_dir,
+                                        dpi=dpi,
+                                        ext=ext,
+                                        size=size)
                     except AssertionError:
                         print('No shuffled data was found for %s change predictions, EFA: %s' % (name, EFA))
                         
-            plot_prediction_comparison(results, change=False, size=size,
+            plot_prediction_comparison(results, change=False, size=size, ext=ext,
                                        dpi=dpi, plot_dir=prediction_plot_dir)
-            plot_prediction_comparison(results, change=True, size=size,
+            plot_prediction_comparison(results, change=True, size=size, ext=ext, 
                                        dpi=dpi, plot_dir=prediction_plot_dir)
+            plot_factor_fingerprint(results, change=False, size=size, ext=ext,
+                                    dpi=dpi, plot_dir=prediction_plot_dir)
+            plot_factor_fingerprint(results, change=True, size=size, ext=ext,
+                                  dpi=dpi, plot_dir=prediction_plot_dir)
         
         # copy latest results and prediction to higher directory
         generic_dir = '_'.join(plot_dir.split('_')[0:-1])
         if path.exists(generic_dir):
             rmtree(generic_dir)
         copytree(plot_dir, generic_dir)
+
+# ****************************************************************************
+# group analysis (across subsets)
+# ****************************************************************************
         
+if group_analysis == True:
+    if verbose:
+            print('*'*79)
+            print('Running group analysis')
+    all_results = load_results(datafile)
+    run_group_prediction(all_results, 
+                         shuffle=False, classifier='ridge',
+                         include_raw_demographics=False, rotate='oblimin',
+                         verbose=False)
+
 if group_plot == True:
     if verbose:
         print('*'*79)
         print('*'*79)
         print("Group Plots")
     all_results = load_results(datafile)
+    output_loc = path.dirname(all_results['task'].get_output_dir())
     plot_file = path.dirname(all_results['task'].get_plot_dir())
-    plot_corr_heatmap(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+    graph_loc = path.join(output_loc,'graph_results', 'weighted_graph.pkl')
+    prediction_loc = path.join(output_loc, 'cross_prediction.pkl')
+    plot_corr_heatmap(all_results, size=size*1/2, ext=ext, dpi=dpi, plot_dir=plot_file)
+    plot_glasso_edge_strength(all_results,
+                              graph_loc, 
+                              size=size*1/4, ext=ext, dpi=dpi, plot_dir=plot_file)
+    plot_cross_within_prediction(prediction_loc, 
+                                 size=size*1/4, ext=ext, dpi=dpi, plot_dir=plot_file)
+    plot_cross_relationship(all_results, graph_loc, prediction_loc,
+                            size=4.6, ext='pdf', plot_dir=plot_file)
     plot_BIC(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+    plot_cross_silhouette(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+    plot_cross_communality(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+    plot_cross_EFA_retest(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+    a=subprocess.Popen('python analysis_overview_plot.py -dataset %s -dpi %s -ext %s -size %s' \
+                           % (datafile, dpi, ext, 4.6),
+                           shell=True)
+    
+# ****************************************************************************
+# move plots to paper directory
+# ****************************************************************************
+if run_plot or group_plot:
+    if verbose:
+            print('*'*79)
+            print('Moving plots to paper directory')
+    if all_results is not None:
+        plot_file = path.dirname(all_results['task'].get_plot_dir())
+        
+    else:
+        plot_file = results.get_plot_dir()
+    
+    exhaustive_lookup = {
+            'analysis_overview': 'Fig01_Analysis_Overview',
+            'survey/HCA/dendrogram_EFA12_oblimin': 'Fig03_Survey_Dendrogram',
+            'task/HCA/dendrogram_EFA5_oblimin': 'Fig04_Task_Dendrogram',
+            'survey/prediction/EFA_ridge_prediction_bar': 'Fig05_Survey_prediction',
+            'task/prediction/EFA_ridge_prediction_bar': 'Fig06_Task_prediction',
+            # test-retest
+            'cross_relationship': 'FigS02_cross_relationship',
+            'BIC_curves': 'FigS03_BIC_curves',
+            'survey/EFA/factor_correlations_EFA12': 'FigS04_Survey_2nd-order',
+            'task/EFA/factor_correlations_EFA5': 'FigS05_Task_2nd-order',
+            'communality_adjustment': 'FigS06_communality',
+            'EFA_test_retest': 'FigS07_EFA_retest',
+            'survey/EFA/factor_heatmap_EFA12': 'FigS08_Survey_EFA',
+            'task/EFA/factor_heatmap_EFA5': 'FigS09_Task_EFA',
+            'survey/HCA/dendrogram_data': 'FigS10_Survey_Raw_Dendrogram',
+            'task/HCA/dendrogram_data': 'FigS11_Task_Raw_Dendrogram',
+            'silhouette_analysis': 'FigS12_Survey_Silhouette',
+            # survey clusters
+            # task clusters
+            'task/DA/factor_heatmap_DA9': 'FigS15_Outcome_EFA',
+            'task/DA/factor_correlations_DA9': 'FigS16_Outcome_2nd-order',
+            'survey/prediction/IDM_lasso_prediction_bar': 'FigS17_Survey_IDM_prediction',
+            'task/prediction/IDM_lasso_prediction_bar': 'FigS18_Task_IDM_prediction',
+            'survey/prediction/EFA_ridge_factor_fingerprint': 'FigS19_Survey_Factor_Fingerprints'
+            }
+    
+    shortened_lookup = {
+            'analysis_overview': 'Fig01_Analysis_Overview',
+            'survey/HCA/dendrogram_EFA12_oblimin': 'Fig03_Survey_Dendrogram',
+            'task/HCA/dendrogram_EFA5_oblimin': 'Fig04_Task_Dendrogram',
+            'survey/prediction/EFA_ridge_prediction_bar': 'Fig05_Survey_prediction',
+            'task/prediction/EFA_ridge_prediction_bar': 'Fig06_Task_prediction',
+            # test-retest
+            'cross_relationship': 'FigS02_cross_relationship',
+            'BIC_curves': 'FigS03_BIC_curves',
+            'communality_adjustment': 'FigS04_communality',
+            'EFA_test_retest': 'FigS05_EFA_retest',
+            'silhouette_analysis': 'FigS06_Survey_Silhouette',
+            'survey/prediction/IDM_lasso_prediction_bar': 'FigS07_Survey_IDM_prediction',
+            'task/prediction/IDM_lasso_prediction_bar': 'FigS08_Task_IDM_prediction',
+            'survey/prediction/EFA_ridge_factor_fingerprint': 'FigS09_Survey_Factor_Fingerprints'
+            }
+    
+    paper_dir = path.join(basedir, 'Results', 'Psych_Ontology_Paper')
+    figure_lookup = shortened_lookup
+    for filey in figure_lookup.keys():
+        figure_num = figure_lookup[filey].split('_')[0]
+        orig_file = path.join(plot_file, filey+'.'+ext)
+        new_file = path.join(paper_dir, 'Plots', figure_lookup[filey]+'.'+ext)
+        if figure_num[-1] in 'abcdefg':
+            copyfile(orig_file,  new_file)
+        else:
+            a=subprocess.Popen('cpdf -scale-to-fit "4.6in PH mul 4.6in div PW" %s -o %s' % (orig_file, new_file),
+                             shell=True, 
+                             stdout=subprocess.PIPE, 
+                             stderr=subprocess.PIPE)
+            out, err = a.communicate()
+            if 'cpdf: not found' in str(err):
+                try:
+                    copyfile(orig_file, 
+                             new_file)
+                except FileNotFoundError:
+                    print('%s not found' % filey)
+            elif 'No such file or directory' in str(err):
+                print('%s not found' % filey)
