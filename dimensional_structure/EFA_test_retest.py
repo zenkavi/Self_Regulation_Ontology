@@ -81,7 +81,7 @@ def calc_EFA_retest_held_out(results, verbose=True):
     shared_ids = set(retest_data_raw.index) & set(data_raw.index)
     data_raw = data_raw.loc[shared_ids, :]
     retest_data_raw = retest_data_raw.loc[shared_ids, :]
-    raw_data = {'time1': data_raw, 'time2': retest_data_raw}
+    raw_data = {'T1': data_raw, 'T2': retest_data_raw}
     imputed_data = {}
     for name, data in raw_data.items():  
         tmp_data = data.loc[:, DVs]
@@ -101,14 +101,16 @@ def calc_EFA_retest_held_out(results, verbose=True):
     weights = get_attr(fa, 'weights')
     scores = {}
     for name, data in imputed_data.items():
+        suffix=''
+        if name=='T2': suffix='T2'
         tmp_scores = pd.DataFrame(data.dot(weights),
                                   index=shared_ids,
-                                  columns=[i+' '+name for i in orig_scores.columns])
+                                  columns=[i+' '+suffix for i in orig_scores.columns])
         scores[name] = tmp_scores
-    combined = pd.concat([scores['time1'], scores['time2']], axis=1)
+    combined = pd.concat([scores['T1'], scores['T2']], axis=1)
     cross_diag = [combined.corr().iloc[i,i+len(orig_scores.columns)] 
                     for i in range(len(orig_scores.columns))]
-    return combined, cross_diag
+    return combined, cross_diag, (fa, output)
     
 def plot_EFA_retest(combined, size=4.6, dpi=300, 
                     ext='png', plot_dir=None):
@@ -212,7 +214,7 @@ def plot_cross_EFA_change(all_results, size=4.6, dpi=300,
         plt.close()
     
 def plot_cross_EFA_retest(all_results, size=4.6, dpi=300, EFA_retest_fun=None,
-                          ext='png', plot_dir=None):
+                          annot_heatmap=False, ext='png', plot_dir=None):
     if EFA_retest_fun is None:
         EFA_retest_fun = calc_EFA_retest
     colors = {'survey': sns.color_palette('Reds_d',3)[0], 
@@ -228,7 +230,7 @@ def plot_cross_EFA_retest(all_results, size=4.6, dpi=300, EFA_retest_fun=None,
     cbar_ax = fig.add_axes([.2, .03, .2, .02])
     # get fontsize for factor labels
     for i, (name,results) in enumerate(all_results.items()):
-        combined, cross_results = EFA_retest_fun(results)
+        combined, *the_rest = EFA_retest_fun(results)
         color = list(colors.get(name, [.2,.2,.2])) + [.8]
         ax2 = axes[i*2]; ax = axes[i*2+num_rows//2]
         plot_EFA_change(combined=combined,  color_on=color, ax=ax, size=size/2)
@@ -237,19 +239,25 @@ def plot_cross_EFA_retest(all_results, size=4.6, dpi=300, EFA_retest_fun=None,
         # plot corr between test and retest
         num_labels = combined.shape[1]//2
         corr = combined.corr().iloc[:num_labels, num_labels:]
-        # add cbar
+        annot_fontsize = size/num_labels*7
+        annot=False
+        if annot_heatmap:
+            annot=True
         if i == len(all_results)-1:
             sns.heatmap(corr, square=True, ax=ax2, cbar_ax=cbar_ax, 
-                        xticklabels=False, vmin=-1, vmax=1,
+                        vmin=-1, vmax=1,
                         cbar_kws={'orientation': 'horizontal',
-                                  'ticks': [-1, 0, 1]}); 
+                                  'ticks': [-1, 0, 1]},
+                        annot=annot,
+                        annot_kws={'fontsize': annot_fontsize}); 
             
             cbar_ax.set_xlabel('Pearson Correlation', fontsize=size*1.5)
             cbar_ax.tick_params(labelsize=size, pad=size/2)
         else:
             sns.heatmap(corr, square=True, ax=ax2, vmin=-1, vmax=1,
-                        xticklabels=False, cbar=False)
-            
+                        cbar=False, annot=annot,
+                        annot_kws={'fontsize': annot_fontsize})
+        ax2.set_xticklabels('')
         ax2.set_yticklabels(ax2.get_yticklabels(), rotation=0)
         ax2.tick_params(labelsize=min(size/num_labels/num_rows*20, size*1.6), 
                         pad=size/2)
