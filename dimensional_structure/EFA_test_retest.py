@@ -14,6 +14,7 @@ import seaborn as sns
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import scale
 
+from dimensional_structure.results import Results
 from selfregulation.utils.data_preparation_utils import (remove_outliers, 
                                                          transform_remove_skew)
 from selfregulation.utils.plot_utils import format_num, place_letter, save_figure
@@ -64,12 +65,53 @@ def calc_EFA_retest(results, verbose=True):
             print('%s: %s' % (factor, format_num(num)))
     return combined, cross_diag
 
-
-def plot_EFA_retest(results=None, combined=None, size=4.6, dpi=300, 
+def calc_EFA_retest_held_out(results, verbose=True):
+    name = results.ID.split('_')[0].title()
+    orig_data = results.data
+    positive_skewed = [i.replace('.logTr', '') for i in orig_data.columns if ".logTr" in i]
+    negative_skewed = [i.replace('.ReflogTr', '') for i in orig_data.columns if ".ReflogTr" in i]
+    DVs = [i.replace('.logTr','').replace('.ReflogTr','') for i in orig_data.columns]
+    orig_scores = results.EFA.get_scores()
+    
+    # load and clean retest data exactly like original data
+    data_raw = get_behav_data(dataset=results.dataset,
+                              file='meaningful_variables.csv')
+    retest_data_raw = get_behav_data(dataset=results.dataset.replace('Complete','Retest'),
+                                     file='meaningful_variables.csv')
+    shared_ids = set(retest_data_raw.index) & set(data_raw.index)
+    data_raw = data_raw.loc[shared_ids, :]
+    retest_data_raw = retest_data_raw.loc[shared_ids, :]
+    raw_data = {'time1': data_raw, 'time2': retest_data_raw}
+    imputed_data = {}
+    for name, data in raw_data.items():  
+        tmp_data = data.loc[:, DVs]
+        tmp_data = remove_outliers(tmp_data)
+        tmp_data = transform_remove_skew(tmp_data,
+                                         positive_skewed=positive_skewed,
+                                         negative_skewed=negative_skewed)
+        tmp_data_imputed, error = missForest(tmp_data)  
+        scaled_tmp_data = scale(tmp_data_imputed)
+        imputed_data[name] = scaled_tmp_data
+    
+    from selfregulation.utils.r_to_py_utils import get_attr, psychFA
+    # get subjects not in the retest set
+    ind_data = orig_data.loc[set(orig_data.index)-shared_ids]
+    fa, output = psychFA(ind_data, results.EFA.results['num_factors'], 
+                         method='ml', rotate='oblimin')
+    weights = get_attr(fa, 'weights')
+    scores = {}
+    for name, data in imputed_data.items():
+        tmp_scores = pd.DataFrame(data.dot(weights),
+                                  index=shared_ids,
+                                  columns=[i+' '+name for i in orig_scores.columns])
+        scores[name] = tmp_scores
+    combined = pd.concat([scores['time1'], scores['time2']], axis=1)
+    cross_diag = [combined.corr().iloc[i,i+len(orig_scores.columns)] 
+                    for i in range(len(orig_scores.columns))]
+    return combined, cross_diag
+    
+def plot_EFA_retest(combined, size=4.6, dpi=300, 
                     ext='png', plot_dir=None):
-    if combined is None:
-        assert results is not None
-        combined, cross_diag = calc_EFA_retest(results, verbose=False)
     corr = combined.corr()
     max_val = abs(corr).max().max()
     
@@ -98,15 +140,11 @@ def plot_EFA_retest(results=None, combined=None, size=4.6, dpi=300,
             save_figure(fig, path.join(plot_dir, 'EFA_test_retest_heatmap.%s' % ext),
                         {'bbox_inches': 'tight', 'dpi': dpi})
             plt.close()
-    return combined
             
 
 
-def plot_EFA_change(results=None, combined=None, ax=None, color_on=False,
+def plot_EFA_change(combined, ax=None, color_on=False,
                     size=4.6, dpi=300, ext='png', plot_dir=None):
-    if combined is None:
-        assert results is not None
-        combined, cross_diag = calc_EFA_retest(results, verbose=False)
     n = combined.shape[1]//2
     orig = combined.iloc[:,:n]
     retest = combined.iloc[:,n:]
@@ -150,7 +188,6 @@ def plot_EFA_change(results=None, combined=None, ax=None, color_on=False,
             save_figure(fig, path.join(plot_dir, 'EFA_test_retest_sticks.%s' % ext),
                         {'bbox_inches': 'tight', 'dpi': dpi})
             plt.close()
-    return combined
     
 
 def plot_cross_EFA_change(all_results, size=4.6, dpi=300, 
@@ -174,8 +211,10 @@ def plot_cross_EFA_change(all_results, size=4.6, dpi=300,
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
     
-def plot_cross_EFA_retest(all_results, size=4.6, dpi=300, 
+def plot_cross_EFA_retest(all_results, size=4.6, dpi=300, EFA_retest_fun=None,
                           ext='png', plot_dir=None):
+    if EFA_retest_fun is None:
+        EFA_retest_fun = calc_EFA_retest
     colors = {'survey': sns.color_palette('Reds_d',3)[0], 
               'task': sns.color_palette('Blues_d',3)[0]}
     letters = [chr(i).upper() for i in range(ord('a'),ord('z')+1)]
@@ -189,9 +228,10 @@ def plot_cross_EFA_retest(all_results, size=4.6, dpi=300,
     cbar_ax = fig.add_axes([.2, .03, .2, .02])
     # get fontsize for factor labels
     for i, (name,results) in enumerate(all_results.items()):
+        combined, cross_results = EFA_retest_fun(results)
         color = list(colors.get(name, [.2,.2,.2])) + [.8]
         ax2 = axes[i*2]; ax = axes[i*2+num_rows//2]
-        combined = plot_EFA_change(results, color_on=color, ax=ax, size=size/2)
+        plot_EFA_change(combined=combined,  color_on=color, ax=ax, size=size/2)
         ax.set_xlabel('PC 1', fontsize=size*1.8)
         ax.set_ylabel('PC 2', fontsize=size*1.8)
         # plot corr between test and retest
