@@ -59,7 +59,10 @@ from dimensional_structure.cross_results_plots import (plot_corr_heatmap,
                                                        plot_cross_communality)
 from dimensional_structure.DA_plots import plot_DA
 from dimensional_structure.EFA_plots import plot_EFA
-from dimensional_structure.EFA_test_retest import plot_EFA_change, plot_EFA_retest, plot_cross_EFA_retest
+from dimensional_structure.EFA_test_retest import (calc_EFA_retest,
+                                                   plot_EFA_change, 
+                                                   plot_EFA_retest, 
+                                                   plot_cross_EFA_retest)
 from dimensional_structure.HCA_plots import plot_HCA
 from dimensional_structure.prediction_plots import (plot_prediction, 
                                                     plot_prediction_scatter,
@@ -235,7 +238,8 @@ for subset in subsets:
                  ext=ext, plot_task_kws=plot_task_kws)
         
         # Plot EFA retest
-        combined=plot_EFA_retest(results, plot_dir=EFA_plot_dir, size=size, dpi=dpi, ext=ext)
+        combined, *the_rest = calc_EFA_retest(results)
+        plot_EFA_retest(combined=combined, plot_dir=EFA_plot_dir, size=size, dpi=dpi, ext=ext)
         plot_EFA_change(combined=combined, plot_dir=EFA_plot_dir, size=size, dpi=dpi, ext=ext)
         
         # Plot HCA

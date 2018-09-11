@@ -14,15 +14,12 @@ import seaborn as sns
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import scale
 
-from dimensional_structure.results import Results
 from selfregulation.utils.data_preparation_utils import (remove_outliers, 
                                                          transform_remove_skew)
 from selfregulation.utils.plot_utils import format_num, place_letter, save_figure
 from selfregulation.utils.r_to_py_utils import get_attr, missForest
 from selfregulation.utils.utils import get_behav_data
-from selfregulation.utils.result_utils import load_results
 
-all_results = load_results('Complete_03-29-2018')
 def calc_EFA_retest(results, verbose=True):
     name = results.ID.split('_')[0].title()
     data = results.data
