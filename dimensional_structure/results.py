@@ -16,7 +16,7 @@ from dimensional_structure.prediction_utils import run_prediction
 from dimensional_structure.utils import (
         create_factor_tree, distcorr,  find_optimal_components, 
         get_loadings, get_scores_from_subset, get_top_factors, 
-        hdbscan_cluster, hierarchical_cluster, residualize_baseline
+        hierarchical_cluster, residualize_baseline
         )
 from dimensional_structure.graph_utils import  (get_adj, Graph_Analysis)
 from selfregulation.utils.utils import get_behav_data, get_demographics, get_info
@@ -562,7 +562,6 @@ class Results(EFA_Analysis, HCA_Analysis):
                                 self.data_no_impute, 
                                 boot_iter=self.boot_iter)
         self.HCA = HCA_Analysis(dist_metric=self.dist_metric)
-        self.hdbscan = HDBScan_Analysis(dist_metric=self.dist_metric)
         
         # load the results from the saved object
         if saved_obj_file:
@@ -620,16 +619,11 @@ class Results(EFA_Analysis, HCA_Analysis):
         if dist_metric is None: 
             self.HCA.run(self.data, self.EFA, cluster_EFA=cluster_EFA,
                          rotate=rotate, run_graphs=run_graphs, verbose=verbose)
-            self.hdbscan.run(self.data, self.EFA, cluster_EFA=cluster_EFA,
-                             verbose=verbose)
         else:
             HCA = HCA_Analysis(dist_metric=dist_metric)
             HCA.run(self.data, self.EFA, cluster_EFA=cluster_EFA,
                     rotate=rotate, run_graphs=run_graphs, verbose=verbose)
-            hdbscan = HDBScan_Analysis(dist_metric=dist_metric)
-            hdbscan.run(self.data, self.EFA, cluster_EFA=cluster_EFA,
-                        verbose=verbose)
-            return {'HCA': HCA, 'hdbscan': hdbscan}
+            return {'HCA': HCA}
     
     def run_prediction(self, shuffle=False, classifier='lasso',
                        include_raw_demographics=False, rotate='oblimin',
@@ -763,7 +757,6 @@ class Results(EFA_Analysis, HCA_Analysis):
         results['DA'] = self.DA.results
         results['EFA'] = self.EFA.results
         results['HCA'] = self.HCA.results
-        results['hdbscan'] = self.hdbscan.results
         
         save_obj['info'] = info
         save_obj['data'] = data
@@ -787,4 +780,3 @@ class Results(EFA_Analysis, HCA_Analysis):
         self.DA.results = results['DA']
         self.EFA.results = results['EFA']
         self.HCA.results = results['HCA']
-        self.hdbscan.results = results['hdbscan']
