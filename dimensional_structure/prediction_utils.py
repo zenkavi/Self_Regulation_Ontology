@@ -6,6 +6,9 @@ import numpy as np
 import os
 import pandas as pd
 import pickle
+from sklearn.linear_model import LinearRegression
+
+from selfregulation.utils.r_to_py_utils import psychFA
 from selfregulation.prediction.behavpredict import BehavPredict
 
 def run_prediction(predictors, demographics, output_base='', 
@@ -103,7 +106,6 @@ def run_group_prediction(all_results, shuffle=False, classifier='lasso',
         out[target_name] = prediction
     return out
     
-    
 def print_group_prediction(prediction_loc):
     for classifier in ['ridge', 'lasso', 'rf', 'svm']:
         files = glob.glob(os.path.join(prediction_loc, '*%s*' % classifier))
@@ -124,5 +126,71 @@ def print_group_prediction(prediction_loc):
             print(s.replace('0.', '.'))
         print('*'*40)
     
+# utils for deriving and evaluating ontological factors for out-of-model tasks
+def assess_var_reconstruction(results, var, pseudo_pop_size=60,
+                                   n_reps=100):
+    data = results.data
+    c = results.EFA.results['num_factors']
+    full_scores = results.EFA.get_scores(c)
+    loadings = results.EFA.get_loading(c)
+    # refit an EFA model without variable    
+    subset = data.drop(var, axis=1)
+    fa, out = psychFA(subset, c)
+    scores = pd.DataFrame(out['scores'], 
+                          columns=full_scores.columns,
+                          index=full_scores.index)
     
+    orig_estimate = loadings.loc[var]
+    rgr = LinearRegression(fit_intercept=False)
+    rgr.fit(scores, data.loc[:, var])
+    full_reconstruction = pd.Series(rgr.coef_, index=orig_estimate.index)
+    coefs = []
+    for rep in range(n_reps):
+        rgr = LinearRegression(fit_intercept=False)
+        random_subset = np.random.choice(scores.index,
+                                         pseudo_pop_size, 
+                                         replace=False)
+        X = scores.loc[random_subset]
+        y = data.loc[random_subset, var]
+        rgr.fit(X,y)
+        coefs.append(rgr.coef_)
+    coefs = pd.DataFrame(coefs, columns=orig_estimate.index)
+    # calculate average distance from coefficient estimat eacross runs
+    return orig_estimate, coefs, full_reconstruction
+    
+def assess_ontology_reconstruction(results, var, pseudo_pop_size=60,
+                                   n_reps=100):
+    data = results.data
+    c = results.EFA.results['num_factors']
+    full_loadings = results.EFA.get_loading(c)
+
+    
+    coefs = []
+    for rep in range(n_reps):
+        random_subset = np.random.choice(range(data.shape[0]),
+                                         pseudo_pop_size, 
+                                         replace=False)
+        
+        subset = data.drop(data.index[random_subset], axis=0)
+        fa, out = psychFA(subset, c)
+        loadings = pd.DataFrame(out['loadings'], 
+                                index=full_loadings.index,
+                                columns=full_loadings.columns)
+        
+        rgr = LinearRegression(fit_intercept=False)
+        X = out['scores'][random_subset,:]
+        y = data.loc[random_subset]
+        rgr.fit(X,y)
+        coefs.append(rgr.coef_)
+    return orig_estimate, coefs
+
+
+    
+
+
+
+
+        
+        
+        
     
