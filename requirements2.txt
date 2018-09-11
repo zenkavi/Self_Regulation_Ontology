@@ -1,5 +1,4 @@
 bctpy>=0.5.0
-hdbscan>=0.8.10
 # expanalysis
 #git+https://github.com/IanEisenberg/expfactory-analysis
 git+https://github.com/njchiang/tikhonov/

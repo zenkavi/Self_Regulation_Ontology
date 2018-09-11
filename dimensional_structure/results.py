@@ -350,52 +350,6 @@ class EFA_Analysis:
         redone_scores = scaled_data.dot(output['weights'])
         redone_score_diff = np.mean(scores-redone_scores)
         assert(redone_score_diff < 1e-5)
-        
-class HDBScan_Analysis():
-    """ Runs Hierarchical Clustering Analysis """
-    def __init__(self, dist_metric):
-        self.results = {}
-        self.dist_metric = dist_metric
-        self.metric_name = 'unknown'
-        if self.dist_metric == distcorr:
-            self.metric_name = 'distcorr'
-        else:
-            self.metric_name = self.dist_metric
-    
-    def cluster_data(self, data):
-        output = hierarchical_cluster(data.T)
-        self.results['data'] = output
-        
-    def cluster_EFA(self, EFA, c, rotate='oblimin'):
-        loading = EFA.get_loading(c, rotate=rotate)
-        output = hdbscan_cluster(loading)
-        self.results['EFA%s_%s' % (c, rotate)] = output
-        
-    def get_cluster_DVs(self, inp='data'):
-        cluster = self.results['%s' % inp]
-        dist = cluster['distance_df']
-        labels = cluster['labels']
-        probs = cluster['probs']
-        label_names = [[(dist.index[i], probs[i]) 
-                        for i,l in enumerate(labels) if l == ii]
-                        for ii in np.unique(labels)]
-        return label_names
-    
-    def get_cluster_loading(self, EFA, inp, c, rotate='oblimin'):
-        cluster_labels = self.get_cluster_DVs(inp)
-        cluster_loadings = []
-        for cluster in cluster_labels:
-            subset = abs(EFA.get_loading(c, rotate=rotate).loc[cluster,:])
-            cluster_vec = subset.mean(0)
-            cluster_loadings.append((cluster, cluster_vec))
-        return cluster_loadings
-    
-    def run(self, data, EFA, cluster_EFA=False, c=None, verbose=False):
-        if verbose: print("Clustering data")
-        self.cluster_data(data)
-        if cluster_EFA:
-            if verbose: print("Clustering EFA")
-            self.cluster_EFA(EFA, c)
             
 class HCA_Analysis():
     """ Runs Hierarchical Clustering Analysis """
