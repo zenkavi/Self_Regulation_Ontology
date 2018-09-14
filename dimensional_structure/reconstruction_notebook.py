@@ -63,13 +63,6 @@ if __name__ == '__main__':
 # In[ ]:
 
 
-n_reps = 40
-n_vars = 10
-
-
-# In[ ]:
-
-
 # additional setup
 np.random.seed(12412)
 results = load_results(dataset)['task']

@@ -126,7 +126,7 @@ def get_reconstruction_results(results, var_list, pop_sizes=None, fun=None, **kw
     if fun is None:
         fun = linear_ontology_reconstruction
     if pop_sizes is None:
-        pip_sizes = [100, 200]
+        pop_sizes = [100, 200]
     reconstruction_results = {}
 
     for pop_size in pop_sizes:     
