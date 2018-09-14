@@ -2,7 +2,6 @@ from collections import OrderedDict as odict
 from dynamicTreeCut import cutreeHybrid
 import fancyimpute
 import functools
-import hdbscan
 from itertools import combinations
 import numpy as np
 import pandas as pd
@@ -166,57 +165,6 @@ def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None,
             'reorder_vec': reorder_vec,
             'clustering': clustering,
             'labels': labels}
-
-def hdbscan_cluster(df, compute_dist=True,  pdist_kws=None, cluster_kws=None):
-    """
-    plot hierarchical clustering and heatmap
-    :df: a correlation matrix
-    parse_heatmap: int (optional). If defined, devides the columns of the 
-                    heatmap based on cutting the dendrogram
-    """
-    
-    # if compute_dist = False, assume df is a distance matrix. Otherwise
-    # compute distance on df rows
-    if compute_dist == True:
-        if pdist_kws is None:
-            pdist_kws= {'metric': 'correlation'}
-        if pdist_kws['metric'] == 'abscorrelation':
-            # convert to absolute correlations
-            dist_vec = abs_pdist(df)
-        elif pdist_kws['metric'] == 'sqcorrelation':
-            # convert to squared correlations
-            dist_vec = squareform(1-df.corr()**2)
-        else:
-            dist_vec = pdist(df, **pdist_kws)
-        dist_df = pd.DataFrame(squareform(dist_vec), 
-                               index=df.index, 
-                               columns=df.index)
-    else:
-        assert df.shape[0] == df.shape[1]
-        dist_df = df
-        dist_vec = squareform(df.values)
-    #clustering
-    if cluster_kws is None:
-        cluster_kws = {'min_cluster_size': 4,
-                       'min_samples': 4}
-    clusterer = hdbscan.HDBSCAN(metric='precomputed',
-                                cluster_selection_method='leaf',
-                                **cluster_kws)
-    clusterer.fit(dist_df)  
-    link = clusterer.single_linkage_tree_.to_pandas().iloc[:,1:]   
-    labels = clusterer.labels_
-    probs = clusterer.probabilities_
-    #dendrogram
-    reorder_vec = leaves_list(link)
-    clustered_df = dist_df.iloc[reorder_vec, reorder_vec]
-    
-    return {'clusterer': clusterer,
-            'distance_df': dist_df,
-            'clustered_df': clustered_df,
-            'labels': labels,
-            'probs': probs,
-            'linkage': link}
-
 
 def silhouette_analysis(clustering, labels=None):
     distance_df = clustering['distance_df']

@@ -16,7 +16,7 @@ from dimensional_structure.prediction_utils import run_prediction
 from dimensional_structure.utils import (
         create_factor_tree, distcorr,  find_optimal_components, 
         get_loadings, get_scores_from_subset, get_top_factors, 
-        hdbscan_cluster, hierarchical_cluster, residualize_baseline
+        hierarchical_cluster, residualize_baseline
         )
 from dimensional_structure.graph_utils import  (get_adj, Graph_Analysis)
 from selfregulation.utils.utils import get_behav_data, get_demographics, get_info
@@ -350,52 +350,6 @@ class EFA_Analysis:
         redone_scores = scaled_data.dot(output['weights'])
         redone_score_diff = np.mean(scores-redone_scores)
         assert(redone_score_diff < 1e-5)
-        
-class HDBScan_Analysis():
-    """ Runs Hierarchical Clustering Analysis """
-    def __init__(self, dist_metric):
-        self.results = {}
-        self.dist_metric = dist_metric
-        self.metric_name = 'unknown'
-        if self.dist_metric == distcorr:
-            self.metric_name = 'distcorr'
-        else:
-            self.metric_name = self.dist_metric
-    
-    def cluster_data(self, data):
-        output = hierarchical_cluster(data.T)
-        self.results['data'] = output
-        
-    def cluster_EFA(self, EFA, c, rotate='oblimin'):
-        loading = EFA.get_loading(c, rotate=rotate)
-        output = hdbscan_cluster(loading)
-        self.results['EFA%s_%s' % (c, rotate)] = output
-        
-    def get_cluster_DVs(self, inp='data'):
-        cluster = self.results['%s' % inp]
-        dist = cluster['distance_df']
-        labels = cluster['labels']
-        probs = cluster['probs']
-        label_names = [[(dist.index[i], probs[i]) 
-                        for i,l in enumerate(labels) if l == ii]
-                        for ii in np.unique(labels)]
-        return label_names
-    
-    def get_cluster_loading(self, EFA, inp, c, rotate='oblimin'):
-        cluster_labels = self.get_cluster_DVs(inp)
-        cluster_loadings = []
-        for cluster in cluster_labels:
-            subset = abs(EFA.get_loading(c, rotate=rotate).loc[cluster,:])
-            cluster_vec = subset.mean(0)
-            cluster_loadings.append((cluster, cluster_vec))
-        return cluster_loadings
-    
-    def run(self, data, EFA, cluster_EFA=False, c=None, verbose=False):
-        if verbose: print("Clustering data")
-        self.cluster_data(data)
-        if cluster_EFA:
-            if verbose: print("Clustering EFA")
-            self.cluster_EFA(EFA, c)
             
 class HCA_Analysis():
     """ Runs Hierarchical Clustering Analysis """
@@ -608,7 +562,6 @@ class Results(EFA_Analysis, HCA_Analysis):
                                 self.data_no_impute, 
                                 boot_iter=self.boot_iter)
         self.HCA = HCA_Analysis(dist_metric=self.dist_metric)
-        self.hdbscan = HDBScan_Analysis(dist_metric=self.dist_metric)
         
         # load the results from the saved object
         if saved_obj_file:
@@ -666,16 +619,11 @@ class Results(EFA_Analysis, HCA_Analysis):
         if dist_metric is None: 
             self.HCA.run(self.data, self.EFA, cluster_EFA=cluster_EFA,
                          rotate=rotate, run_graphs=run_graphs, verbose=verbose)
-            self.hdbscan.run(self.data, self.EFA, cluster_EFA=cluster_EFA,
-                             verbose=verbose)
         else:
             HCA = HCA_Analysis(dist_metric=dist_metric)
             HCA.run(self.data, self.EFA, cluster_EFA=cluster_EFA,
                     rotate=rotate, run_graphs=run_graphs, verbose=verbose)
-            hdbscan = HDBScan_Analysis(dist_metric=dist_metric)
-            hdbscan.run(self.data, self.EFA, cluster_EFA=cluster_EFA,
-                        verbose=verbose)
-            return {'HCA': HCA, 'hdbscan': hdbscan}
+            return {'HCA': HCA}
     
     def run_prediction(self, shuffle=False, classifier='lasso',
                        include_raw_demographics=False, rotate='oblimin',
@@ -809,7 +757,6 @@ class Results(EFA_Analysis, HCA_Analysis):
         results['DA'] = self.DA.results
         results['EFA'] = self.EFA.results
         results['HCA'] = self.HCA.results
-        results['hdbscan'] = self.hdbscan.results
         
         save_obj['info'] = info
         save_obj['data'] = data
@@ -833,4 +780,3 @@ class Results(EFA_Analysis, HCA_Analysis):
         self.DA.results = results['DA']
         self.EFA.results = results['EFA']
         self.HCA.results = results['HCA']
-        self.hdbscan.results = results['hdbscan']

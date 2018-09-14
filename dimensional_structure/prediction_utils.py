@@ -6,6 +6,7 @@ import numpy as np
 import os
 import pandas as pd
 import pickle
+from sklearn.linear_model import LinearRegression
 from selfregulation.prediction.behavpredict import BehavPredict
 
 def run_prediction(predictors, demographics, output_base='', 
@@ -103,7 +104,6 @@ def run_group_prediction(all_results, shuffle=False, classifier='lasso',
         out[target_name] = prediction
     return out
     
-    
 def print_group_prediction(prediction_loc):
     for classifier in ['ridge', 'lasso', 'rf', 'svm']:
         files = glob.glob(os.path.join(prediction_loc, '*%s*' % classifier))
@@ -123,6 +123,3 @@ def print_group_prediction(prediction_loc):
                    val['scores_insample'][0]['MAE']))
             print(s.replace('0.', '.'))
         print('*'*40)
-    
-    
-    
