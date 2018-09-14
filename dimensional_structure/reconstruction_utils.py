@@ -5,12 +5,15 @@ from selfregulation.utils.r_to_py_utils import psychFA
 
 # utils for deriving and evaluating ontological factors for out-of-model tasks
 def linear_ontology_reconstruction(results, var, pseudo_pop_size=60,
-                              n_reps=100, clf=None, robust=False):
+                              n_reps=100, clf=None, robust=False, verbose=True):
     def get_coefs(clf):
         try:
             return clf.coef_
         except AttributeError:
             return clf.estimator_.coef_
+    if verbose: 
+        print('Starting Linear reconstruction, var', var)
+        print('*'*79)
     data = results.data
     c = results.EFA.results['num_factors']
     full_scores = results.EFA.get_scores(c)
@@ -27,10 +30,14 @@ def linear_ontology_reconstruction(results, var, pseudo_pop_size=60,
         clf = LinearRegression(fit_intercept=False)
     if robust:
         clf = RANSACRegressor(base_estimator=clf)
+    if verbose: print('Starting full reconstruction')
     clf.fit(scores, data.loc[:, var])
     full_reconstruction = pd.Series(get_coefs(clf), index=orig_estimate.index)
     estimated_loadings = []
+    if verbose: print('Starting partial reconstruction, pop size:', pseudo_pop_size)
     for rep in range(n_reps):
+        if verbose and rep%100==0: 
+            print('Rep', rep)
         random_subset = np.random.choice(scores.index,
                                          pseudo_pop_size, 
                                          replace=False)
@@ -43,7 +50,7 @@ def linear_ontology_reconstruction(results, var, pseudo_pop_size=60,
     return orig_estimate, estimated_loadings, full_reconstruction
 
 def k_nearest_ontology_reconstruction(results, var, pseudo_pop_size=60,
-             n_reps=100, k_list=None):
+             n_reps=100, k_list=None, verbose=True):
     def get_k_blend(distances, ref_loadings, k, weighted=True):
         """ Take a set of distances and reference loadings and return a reconstructed loading
         Args:
@@ -61,7 +68,9 @@ def k_nearest_ontology_reconstruction(results, var, pseudo_pop_size=60,
             reconstruction = loadings.loc[closest.index].mean(0)
             reconstruction['weighted'] = False
         return reconstruction
-    
+    if verbose: 
+        print('Starting K Nearest reconstruction, var:', var)
+        print('*'*79)
     if k_list is None:
         k_list = [3]
     data = results.data
@@ -73,6 +82,7 @@ def k_nearest_ontology_reconstruction(results, var, pseudo_pop_size=60,
     fa, out = psychFA(subset, c)
     loadings = pd.DataFrame(out['loadings'], index=subset.columns, columns=orig_loadings.columns)
     # full reconstruction
+    if verbose: print('Starting full reconstruction')
     full_reconstruction = []
     distances = data.corr().loc[var].sort_values(ascending=False)
     for k in k_list:
@@ -82,8 +92,11 @@ def k_nearest_ontology_reconstruction(results, var, pseudo_pop_size=60,
             full_reconstruction.append(reconstruction)
     full_reconstruction = pd.concat(full_reconstruction, axis=1)
 
+    if verbose: print('Starting partial reconstruction, pop size:', pseudo_pop_size)
     estimated_loadings = []
     for rep in range(n_reps):
+        if verbose and rep%100==0: 
+            print('Rep', rep)
         random_subset = np.random.choice(data.index,
                                          pseudo_pop_size, 
                                          replace=False)
