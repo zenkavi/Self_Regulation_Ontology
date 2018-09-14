@@ -15,7 +15,6 @@
 #SBATCH --mail-user=zenkavi@stanford.edu
 #SBATCH --mail-type=FAIL
 # ------------------------------------------
-source /home/zenkavi/.bash_profile
 source activate SRO
 
 eval $( sed "${SLURM_ARRAY_TASK_ID}q;d" xad )

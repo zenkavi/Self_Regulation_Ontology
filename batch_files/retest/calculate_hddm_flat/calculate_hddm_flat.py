@@ -10,8 +10,7 @@ import pandas
 import pickle
 import sys
 
-from expanalysis.experiments.ddm_utils import not_regex, unique, parallel_sample,
-ANT_HDDM, directed_HDDM, DPX_HDDM, motor_SS_HDDM, recent_HDDM, shape_matching_HDDM, stim_SS_HDDM, SS_HDDM, threebytwo_HDDM, twobytwo_HDDM
+from expanalysis.experiments.ddm_utils import not_regex, unique, parallel_sample, ANT_HDDM, directed_HDDM, DPX_HDDM, motor_SS_HDDM, recent_HDDM, shape_matching_HDDM, stim_SS_HDDM, SS_HDDM, threebytwo_HDDM, twobytwo_HDDM
 
 task = sys.argv[1]
 sub_id = sys.argv[2]
@@ -19,27 +18,27 @@ input_dir = sys.argv[3]
 subset = sys.argv[4]
 output_dir = sys.argv[5]
 
-def fit_HDDM(df, 
-             response_col = 'correct', 
-             categorical_dict = {}, 
+def fit_HDDM(df,
+             response_col = 'correct',
+             categorical_dict = {},
              parametric_dict = {},
              formulas = None,
-             outfile = None, 
+             outfile = None,
              samples=95000,
              burn=15000,
-             thin=1, 
+             thin=1,
              parallel=False,
              num_cores=None):
     """ wrapper to run hddm analysis
-    
+
     Args:
         df: dataframe to perform hddm analyses on
         respones_col: the columnof correct/incorrect values
-        formulas_cols: (optional) single dictionary, orlist of dictionaries, 
+        formulas_cols: (optional) single dictionary, orlist of dictionaries,
             whose key is a hddm param
             The  values of each dictare column names to be used in a regression model
-            If none are passed, no regression will be performed. For instance, 
-            if categorical_dict = [{'v': ['condition1']}] then a regression will be 
+            If none are passed, no regression will be performed. For instance,
+            if categorical_dict = [{'v': ['condition1']}] then a regression will be
             run of the form: "v ~ C(condition1, Sum)"
         formulas: (optional) if given overrides automatic formulas
         outfile: if given, models will be saved to this location
@@ -51,11 +50,11 @@ def fit_HDDM(df,
         burn: burn in time for HDDM
         thin: thin parameter passed to HDDM
         parallel: whether to run HDDM in parallel. If run in parallel, the final
-            model will still have at least the original final number of samples: 
+            model will still have at least the original final number of samples:
                 (samples-burn)/thin
         num_cores: the number of cores to use for parallelization. If not set will
             use all cores
-    """  
+    """
     variable_conversion = {'a': ('thresh', 'Pos'), 'v': ('drift', 'Pos'), 't': ('non_decision', 'NA')}
     db = None
     extra_cols = []
@@ -75,7 +74,7 @@ def fit_HDDM(df,
         data.insert(0, col, df[col])
     # state cols dropped when using deviance coding
     dropped_vals = [sorted(data[col].unique())[-1] for col in categorical_cols]
-    # add subject ids 
+    # add subject ids
     data.insert(0,'subj_idx', df['worker_id'])
     # remove missed responses and extremely short response
     data = data.query('rt > .05')
@@ -111,14 +110,14 @@ def fit_HDDM(df,
                 if formula != '':
                     formulas.append(formula)
 
-                
+
         if parallel == True:
             hddm_fun = hddm.models.HDDMRegressor
             hddm_args = {'data': data,
                          'models': formulas,
                          'group_only_regressors': False}
 
-        m = hddm.models.HDDMRegressor(data, formulas, 
+        m = hddm.models.HDDMRegressor(data, formulas,
                                       group_only_regressors=False)
 
     if outfile:
@@ -144,8 +143,8 @@ def fit_HDDM(df,
         # run models
         results = Parallel(n_jobs=num_cores)(delayed(parallel_sample)(i, hddm_fun, hddm_args, parallel_samples, burn, thin) for i in dbs)
         print('Separate Models Run, Concatenating...')
-        m = kabuki.utils.concat_models(results)   
-        print('Finished Concatenating')      
+        m = kabuki.utils.concat_models(results)
+        print('Finished Concatenating')
     else:
         # find a good starting point which helps with the convergence.
         m.find_starting_values()
@@ -161,7 +160,7 @@ def fit_HDDM(df,
                 pickle.dump(m, open(output_dir + outfile + '.model', 'wb'))
         except Exception:
             print('Saving model failed')
-            
+
     # get average ddm params
     # regex match to find the correct rows
     dvs = {}
@@ -169,7 +168,7 @@ def fit_HDDM(df,
         #match = '^'+var+'(_subj|_Intercept_subj)'
         match = '^'+var+'($|_Intercept)'
         dvs[var] = m.nodes_db.filter(regex=match, axis=0)['mean']
-    
+
     # output of regression (no interactions)
     condition_dvs = {}
     for ddm_var in ['a','v','t']:
@@ -206,7 +205,7 @@ def fit_HDDM(df,
             var_dvs.update(col_dvs)
         if len(var_dvs)>0:
             condition_dvs[ddm_var] = var_dvs
-            
+
     # interaction
     interaction_dvs = {}
     all_levels = []
@@ -224,7 +223,7 @@ def fit_HDDM(df,
                 var_dvs['%s:%s' % (str(x), str(y))] = ddm_vals
         if len(var_dvs) > 0:
             interaction_dvs[ddm_var] = var_dvs
-    
+
     group_dvs = {}
     # create output ddm dict
     for i,subj in enumerate(subj_ids):
@@ -243,7 +242,7 @@ def fit_HDDM(df,
                     tmp = {'value': v[i], 'valence': var_valence}
                     hddm_vals.update({'hddm_'+var_name+'_'+k: tmp})
         group_dvs[subj].update(hddm_vals)
-            
+
     return group_dvs
 
 def get_HDDM_fun(task=None, kwargs=None):
@@ -253,32 +252,32 @@ def get_HDDM_fun(task=None, kwargs=None):
         #kwargs['outfile']=task
         kwargs['outfile']=task + '_' + subset + '_' + sub_id + '_flat'
     # remove unique kwargs
-    mode = kwargs.pop('mode', 'proactive')    
+    mode = kwargs.pop('mode', 'proactive')
     hddm_fun_dict = \
     {
-        'adaptive_n_back': lambda df: fit_HDDM(df.query('exp_stage == "adaptive"'), 
+        'adaptive_n_back': lambda df: fit_HDDM(df.query('exp_stage == "adaptive"'),
                                                parametric_dict = {'v': ['load'],
                                                                   'a': ['load']},
                                                **kwargs),
         'attention_network_task': lambda df: ANT_HDDM(df, **kwargs),
-        'choice_reaction_time': lambda df: fit_HDDM(df, 
+        'choice_reaction_time': lambda df: fit_HDDM(df,
                                                     **kwargs),
         'directed_forgetting': lambda df: directed_HDDM(df,  **kwargs),
-        'dot_pattern_expectancy': lambda df: DPX_HDDM(df, **kwargs),                                                       
-        'local_global_letter': lambda df: fit_HDDM(df, 
+        'dot_pattern_expectancy': lambda df: DPX_HDDM(df, **kwargs),
+        'local_global_letter': lambda df: fit_HDDM(df,
                                             categorical_dict = {'v': ['condition', 'conflict_condition', 'switch']},
                                             **kwargs),
         'motor_selective_stop_signal': lambda df: motor_SS_HDDM(df, mode=mode, **kwargs),
         'recent_probes': lambda df: recent_HDDM(df, **kwargs),
-        'shape_matching': lambda df: shape_matching_HDDM(df, **kwargs), 
-        'simon': lambda df: fit_HDDM(df, 
-                                     categorical_dict = {'v': ['condition']}, 
-                                     **kwargs), 
+        'shape_matching': lambda df: shape_matching_HDDM(df, **kwargs),
+        'simon': lambda df: fit_HDDM(df,
+                                     categorical_dict = {'v': ['condition']},
+                                     **kwargs),
         'stim_selective_stop_signal': lambda df: stim_SS_HDDM(df, **kwargs),
         'stop_signal': lambda df: SS_HDDM(df, **kwargs),
-        'stroop': lambda df: fit_HDDM(df, 
-                                      categorical_dict = {'v': ['condition']}, 
-                                      **kwargs), 
+        'stroop': lambda df: fit_HDDM(df,
+                                      categorical_dict = {'v': ['condition']},
+                                      **kwargs),
         'threebytwo': lambda df: threebytwo_HDDM(df, **kwargs),
         'twobytwo': lambda df: twobytwo_HDDM(df, **kwargs)
     }
@@ -297,9 +296,9 @@ sub_data = all_data.loc[all_data['worker_id'] == sub_id]
 func = get_HDDM_fun(task=task)
 sub_dvs = func(sub_data)
 
-#spread dictionary to df    
-sub_dvs = pandas.DataFrame.from_dict({(i,j): sub_dvs[i][j] 
-                           for i in sub_dvs.keys() 
+#spread dictionary to df
+sub_dvs = pandas.DataFrame.from_dict({(i,j): sub_dvs[i][j]
+                           for i in sub_dvs.keys()
                            for j in sub_dvs[i].keys()},
                        orient='index').drop(['valence'], axis=1).unstack()
 
