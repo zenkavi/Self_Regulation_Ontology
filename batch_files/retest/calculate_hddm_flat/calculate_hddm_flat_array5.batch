@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #SBATCH -J hddm_flat
-#SBATCH --array=1-600%10
+#SBATCH --array=1-600%20
 
 #SBATCH --time=4:00:00
 #SBATCH -n 1
