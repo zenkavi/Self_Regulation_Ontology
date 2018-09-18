@@ -49,8 +49,8 @@ def linear_ontology_reconstruction(results, var, pseudo_pop_size=60,
     # calculate average distance from coefficient estimat eacross runs
     return orig_estimate, estimated_loadings, full_reconstruction
 
-def k_nearest_ontology_reconstruction(results, var, pseudo_pop_size=60,
-             n_reps=100, k_list=None, verbose=True):
+def k_nearest_ontology_reconstruction(results, drop_regex, reconstruct_vars=None,
+                                      pseudo_pop_size=60, n_reps=100, k_list=None, verbose=True):
     def get_k_blend(distances, ref_loadings, k, weighted=True):
         """ Take a set of distances and reference loadings and return a reconstructed loading
         Args:
@@ -68,28 +68,35 @@ def k_nearest_ontology_reconstruction(results, var, pseudo_pop_size=60,
             reconstruction = loadings.loc[closest.index].mean(0)
             reconstruction['weighted'] = False
         return reconstruction
-    if verbose: 
-        print('Starting K Nearest reconstruction, var:', var)
-        print('*'*79)
     if k_list is None:
         k_list = [3]
     data = results.data
     c = results.EFA.results['num_factors']
     orig_loadings = results.EFA.get_loading(c)
-    orig_estimate = orig_loadings.loc[var]
     # refit an EFA model without variable    
-    subset = data.drop(var, axis=1)
+    drop_vars = list(data.filter(regex=drop_regex).columns)
+    subset = data.drop(drop_vars, axis=1)
     fa, out = psychFA(subset, c)
     loadings = pd.DataFrame(out['loadings'], index=subset.columns, columns=orig_loadings.columns)
+    if reconstruct_vars is None:
+        reconstruct_vars = drop_vars
+    if verbose: 
+        print('Starting K Nearest reconstruction, measures:', reconstruct_vars)
+        print('*'*79)
+    orig_estimates = orig_loadings.loc[reconstruct_vars].T
+    orig_estimates.loc['var',:] = reconstruct_vars
+
     # full reconstruction
     if verbose: print('Starting full reconstruction')
     full_reconstruction = []
-    distances = data.corr().loc[var].sort_values(ascending=False)
-    for k in k_list:
-        for weighted in [True, False]:
-            reconstruction = get_k_blend(distances, loadings, k, weighted)
-            reconstruction['k'] = k
-            full_reconstruction.append(reconstruction)
+    for var in drop_vars:
+        distances = data.corr().loc[var].sort_values(ascending=False).drop(drop_vars)
+        for k in k_list:
+            for weighted in [True, False]:
+                reconstruction = get_k_blend(distances, loadings, k, weighted)
+                reconstruction['k'] = k
+                reconstruction['var'] = var
+                full_reconstruction.append(reconstruction)
     full_reconstruction = pd.concat(full_reconstruction, axis=1)
 
     if verbose: print('Starting partial reconstruction, pop size:', pseudo_pop_size)
@@ -100,15 +107,17 @@ def k_nearest_ontology_reconstruction(results, var, pseudo_pop_size=60,
         random_subset = np.random.choice(data.index,
                                          pseudo_pop_size, 
                                          replace=False)
-        distances = data.loc[random_subset].corr().loc[var].sort_values(ascending=False)
-        for k in k_list:
-            for weighted in [True, False]:
-                reconstruction = get_k_blend(distances, loadings, k, weighted)
-                reconstruction['sample'] = rep
-                reconstruction['k'] = k
-                estimated_loadings.append(reconstruction)
+        for var in drop_vars:
+            distances = data.loc[random_subset].corr().loc[var].sort_values(ascending=False).drop(drop_vars)
+            for k in k_list:
+                for weighted in [True, False]:
+                    reconstruction = get_k_blend(distances, loadings, k, weighted)
+                    reconstruction['sample'] = rep
+                    reconstruction['k'] = k
+                    reconstruction['var'] = var
+                    estimated_loadings.append(reconstruction)
     estimated_loadings = pd.concat(estimated_loadings, axis=1)
-    return orig_estimate, estimated_loadings, full_reconstruction
+    return orig_estimates, estimated_loadings, full_reconstruction
 
 
 def organize_reconstruction(reconstruction_results):
@@ -119,33 +128,30 @@ def organize_reconstruction(reconstruction_results):
             c = len(v[0])
             combined = pd.concat([v[0], v[2], v[1]], axis=1, sort=False).T
             combined.reset_index(drop=True, inplace=True)
-            combined.insert(combined.shape[1], 
-                            'score-corr', 
-                            combined.T.corr().iloc[:,0])
-            combined.insert(combined.shape[1],
-                           'score-MSE',
-                           ((combined.iloc[:,:c]-combined.iloc[0,:c])**2).mean(1))
-            full_len = 1
+            labels = ['true']
+            if len(v[0].shape) == 2:
+                labels += ['true']*(v[0].shape[1]-1)
+            labels += ['full_reconstruct']
             if len(v[2].shape) == 2:
-                full_len = v[2].shape[1]
-            label = ['true'] + ['full_reconstruct']*full_len + ['partial_reconstruct']*v[1].shape[1]
-            combined.loc[:, 'label'] = label
-            combined.loc[:, 'var'] = k
+                labels += ['full_reconstruct']*(v[2].shape[1]-1)
+            labels += ['partial_reconstruct']*v[1].shape[1]
+            combined.loc[:, 'label'] = labels
             combined.loc[:, 'pop_size'] = pop_size
             reconstruction_df = pd.concat([reconstruction_df, combined])
     return reconstruction_df
 
-def get_reconstruction_results(results, var_list, pop_sizes=None, fun=None, **kwargs):
+def get_reconstruction_results(results, measure_list, pop_sizes=None, fun=None, **kwargs):
     if fun is None:
         fun = linear_ontology_reconstruction
     if pop_sizes is None:
         pop_sizes = [100, 200]
     reconstruction_results = {}
-
+    # convert list of measures to a regex lookup
     for pop_size in pop_sizes:     
-        var_out = {}
-        for var in var_list:
-            var_out[var] = fun(results, var, pseudo_pop_size=pop_size, **kwargs)
-        reconstruction_results[pop_size] = var_out
+        out = {}
+        for measure in measure_list:
+            out[measure] = fun(results, drop_regex=measure, reconstruct_vars=None,
+                               pseudo_pop_size=pop_size, **kwargs)
+        reconstruction_results[pop_size] = out
     return organize_reconstruction(reconstruction_results)
     
