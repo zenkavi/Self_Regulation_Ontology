@@ -83,8 +83,6 @@ def k_nearest_ontology_reconstruction(results, drop_regex, reconstruct_vars=None
     if verbose: 
         print('Starting K Nearest reconstruction, measures:', reconstruct_vars)
         print('*'*79)
-    orig_estimates = orig_loadings.loc[reconstruct_vars].T
-    orig_estimates.loc['var',:] = reconstruct_vars
 
     # full reconstruction
     if verbose: print('Starting full reconstruction')
@@ -117,41 +115,55 @@ def k_nearest_ontology_reconstruction(results, drop_regex, reconstruct_vars=None
                     reconstruction['var'] = var
                     estimated_loadings.append(reconstruction)
     estimated_loadings = pd.concat(estimated_loadings, axis=1)
-    return orig_estimates, estimated_loadings, full_reconstruction
+    return estimated_loadings, full_reconstruction
 
 
-def organize_reconstruction(reconstruction_results):
+def organize_reconstruction(reconstruction_results, scoring_funs=None):
     # organize the output from the simulations
-    reconstruction_df = pd.DataFrame()
+    reconstruction_df = reconstruction_results.pop('true')
+    reconstruction_df.loc[:,'label'] = 'true'
     for pop_size, out in reconstruction_results.items():
         for k, v in out.items():
             c = len(v[0])
-            combined = pd.concat([v[0], v[2], v[1]], axis=1, sort=False).T
+            combined = pd.concat([v[1], v[0]], axis=1, sort=False).T
             combined.reset_index(drop=True, inplace=True)
-            labels = ['true']
-            if len(v[0].shape) == 2:
-                labels += ['true']*(v[0].shape[1]-1)
-            labels += ['full_reconstruct']
-            if len(v[2].shape) == 2:
-                labels += ['full_reconstruct']*(v[2].shape[1]-1)
-            labels += ['partial_reconstruct']*v[1].shape[1]
+            labels = ['full_reconstruct']
+            if len(v[1].shape) == 2:
+                labels += ['full_reconstruct']*(v[1].shape[1]-1)
+            labels += ['partial_reconstruct']*v[0].shape[1]
             combined.loc[:, 'label'] = labels
             combined.loc[:, 'pop_size'] = pop_size
             reconstruction_df = pd.concat([reconstruction_df, combined])
+    reconstruction_df = reconstruction_df.infer_objects().reset_index()
+    if scoring_funs:
+        for fun in scoring_funs:
+            fun(reconstruction_df)
     return reconstruction_df
 
-def get_reconstruction_results(results, measure_list, pop_sizes=None, fun=None, **kwargs):
-    if fun is None:
-        fun = linear_ontology_reconstruction
-    if pop_sizes is None:
-        pop_sizes = [100, 200]
+def corr_scoring(organized_results):
+    for v, group in organized_results.groupby('var'):
+        corr_scores = np.corrcoef(x=group.iloc[:,:5].astype(float))[:,0]
+        organized_results.loc[group.index, 'corr_score'] = corr_scores
+        
+def get_reconstruction_results(results, measure_list, pop_sizes=(100,200), 
+                               recon_fun=linear_ontology_reconstruction, 
+                               scoring_funs=(corr_scoring,), 
+                               **kwargs):
+    loadings = results.EFA.get_loading(c=results.EFA.results['num_factors'])
+    reconstructed_DVs = set()
     reconstruction_results = {}
     # convert list of measures to a regex lookup
     for pop_size in pop_sizes:     
         out = {}
         for measure in measure_list:
-            out[measure] = fun(results, drop_regex=measure, reconstruct_vars=None,
-                               pseudo_pop_size=pop_size, **kwargs)
+            estimated, full = fun(results, drop_regex=measure, reconstruct_vars=None,
+                                  pseudo_pop_size=pop_size, **kwargs)
+            out[measure] = [estimated, full]
+            reconstructed_DVs = reconstructed_DVs | set(full.loc['var'])
         reconstruction_results[pop_size] = out
-    return organize_reconstruction(reconstruction_results)
+        
+    true = loadings.loc[reconstructed_DVs]
+    true = true.reset_index().rename(columns={'index': 'var'})
+    reconstruction_results['true'] = true
+    return organize_reconstruction(reconstruction_results, scoring_funs=scoring_funs)
     
