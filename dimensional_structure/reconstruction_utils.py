@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import RANSACRegressor
+from sklearn.linear_model import RANSACRegressor, Lasso, Ridge
 from selfregulation.utils.r_to_py_utils import psychFA
 
 # utils for deriving and evaluating ontological factors for out-of-model tasks
-def linear_ontology_reconstruction(results, var, pseudo_pop_size=60,
+def linear_reconstruction(results, var, pseudo_pop_size=60,
                               n_reps=100, clf=None, robust=False, verbose=True):
     def get_coefs(clf):
         try:
@@ -49,49 +49,54 @@ def linear_ontology_reconstruction(results, var, pseudo_pop_size=60,
     # calculate average distance from coefficient estimat eacross runs
     return orig_estimate, estimated_loadings, full_reconstruction
 
-def k_nearest_ontology_reconstruction(results, drop_regex, reconstruct_vars=None,
-                                      pseudo_pop_size=60, n_reps=100, k_list=None, verbose=True):
-    def get_k_blend(distances, ref_loadings, k, weighted=True):
-        """ Take a set of distances and reference loadings and return a reconstructed loading
-        Args:
-            distances: pandas Series of distances from the to-be-reconstructed variable in descending order
-            ref_loading: the lookup loading matrix to index with the closest variables taken from distances
-            k_list: list of k_values to use
+def get_ontology_blend(weights, ref_loadings, weighted=True):
+    """ Take a set of distances and reference loadings and return a reconstructed loading
+    Args:
+        distances: pandas Series of distances from the to-be-reconstructed variable in descending order
+        ref_loading: the lookup loading matrix to index with the closest variables taken from distances
+        k_list: list of k_values to use
 
-        """
-        closest = distances[1:k+1]
-        closest /= closest.sum() # normalize
-        if weighted:
-            reconstruction = loadings.loc[closest.index].multiply(closest,axis=0).sum(0)
-            reconstruction['weighted'] = True
-        else:
-            reconstruction = loadings.loc[closest.index].mean(0)
-            reconstruction['weighted'] = False
-        return reconstruction
+    """
+    weights /= weights.sum() # normalize
+    if weighted:
+        reconstruction = ref_loadings.loc[weights.index].multiply(weights,axis=0).sum(0)
+        reconstruction['reconstruction_weights'] = tuple(weights)
+    else:
+        reconstruction = ref_loadings.loc[weights.index].mean(0)
+        reconstruction['reconstruction_weights'] = tuple([1]*len(weights))
+    reconstruction['reconstruction_vars'] = tuple(weights.index)
+    return reconstruction
+    
+def k_nearest_reconstruction(results, drop_regex, reconstruct_vars=None, 
+                             pseudo_pop_size=60, n_reps=100, 
+                             k_list=None, rotate='oblimin', verbose=True):
+
     if k_list is None:
         k_list = [3]
     data = results.data
     c = results.EFA.results['num_factors']
-    orig_loadings = results.EFA.get_loading(c)
+    orig_loadings = results.EFA.get_loading(c, rotate=EFA_rotation)
     # refit an EFA model without variable    
     drop_vars = list(data.filter(regex=drop_regex).columns)
     subset = data.drop(drop_vars, axis=1)
-    fa, out = psychFA(subset, c)
+    fa, out = psychFA(subset, c, rotate=EFA_rotation)
     loadings = pd.DataFrame(out['loadings'], index=subset.columns, columns=orig_loadings.columns)
     if reconstruct_vars is None:
         reconstruct_vars = drop_vars
     if verbose: 
+        print('*'*79)
         print('Starting K Nearest reconstruction, measures:', reconstruct_vars)
         print('*'*79)
 
     # full reconstruction
     if verbose: print('Starting full reconstruction')
     full_reconstruction = []
+    corr = data.corr().drop(drop_vars, axis=1)
     for var in drop_vars:
-        distances = data.corr().loc[var].sort_values(ascending=False).drop(drop_vars)
+        distances = corr.loc[var].sort_values(ascending=False)
         for k in k_list:
             for weighted in [True, False]:
-                reconstruction = get_k_blend(distances, loadings, k, weighted)
+                reconstruction = get_ontology_blend(distances[:k], loadings, weighted)
                 reconstruction['k'] = k
                 reconstruction['var'] = var
                 full_reconstruction.append(reconstruction)
@@ -105,15 +110,68 @@ def k_nearest_ontology_reconstruction(results, drop_regex, reconstruct_vars=None
         random_subset = np.random.choice(data.index,
                                          pseudo_pop_size, 
                                          replace=False)
+        corr = data.loc[random_subset,:].corr().drop(drop_vars, axis=1)
         for var in drop_vars:
-            distances = data.loc[random_subset].corr().loc[var].sort_values(ascending=False).drop(drop_vars)
+            distances = corr.loc[var].sort_values(ascending=False)
             for k in k_list:
                 for weighted in [True, False]:
-                    reconstruction = get_k_blend(distances, loadings, k, weighted)
+                    reconstruction = get_ontology_blend(distances[:k], loadings, weighted)
+                    reconstruction['weighted'] = weighted
                     reconstruction['sample'] = rep
                     reconstruction['k'] = k
                     reconstruction['var'] = var
                     estimated_loadings.append(reconstruction)
+    estimated_loadings = pd.concat(estimated_loadings, axis=1)
+    return estimated_loadings, full_reconstruction
+
+def linear_weighted_reconstruction(results, clf, drop_regex, reconstruct_vars=None,
+                                   pseudo_pop_size=60, n_reps=100,
+                                   EFA_rotation='oblimin', verbose=True):
+    data = results.data
+    c = results.EFA.results['num_factors']
+    orig_loadings = results.EFA.get_loading(c, rotate=EFA_rotation)
+    # refit an EFA model without variable    
+    drop_vars = list(data.filter(regex=drop_regex).columns)
+    subset = data.drop(drop_vars, axis=1)
+    fa, out = psychFA(subset, c, rotate=EFA_rotation)
+    loadings = pd.DataFrame(out['loadings'], index=subset.columns, columns=orig_loadings.columns)
+    if reconstruct_vars is None:
+        reconstruct_vars = drop_vars
+    if verbose: 
+        print('*'*79)
+        print('Starting linear weighted reconstruction, measures:', reconstruct_vars)
+        print('*'*79)
+    # full reconstruction
+    if verbose: print('Starting full reconstruction')
+    full_reconstruction = []
+    for var in drop_vars:
+        # get weights
+        X = data.drop(drop_vars, axis=1)
+        clf.fit(X.values, data.loc[:,var])
+        weights = pd.Series(clf.coef_, index=X.columns)
+        weights = weights[weights!=0] # remove zero
+        reconstruction = get_ontology_blend(weights, loadings, True)
+        reconstruction['var'] = var
+        full_reconstruction.append(reconstruction)
+    full_reconstruction = pd.concat(full_reconstruction, axis=1)
+
+    if verbose: print('Starting partial reconstruction, pop size:', pseudo_pop_size)
+    estimated_loadings = []
+    for rep in range(n_reps):
+        if verbose and rep%100==0: 
+            print('Rep', rep)
+        random_subset = np.random.choice(data.index,
+                                         pseudo_pop_size, 
+                                         replace=False)
+        for var in drop_vars:
+            X = data.drop(drop_vars, axis=1).loc[random_subset]
+            clf.fit(X, data.loc[random_subset,var])
+            weights = pd.Series(clf.coef_, index=X.columns)
+            weights = weights[weights!=0] # remove zero
+            reconstruction = get_ontology_blend(weights, loadings, True)
+            reconstruction['sample'] = rep
+            reconstruction['var'] = var
+            estimated_loadings.append(reconstruction)
     estimated_loadings = pd.concat(estimated_loadings, axis=1)
     return estimated_loadings, full_reconstruction
 
@@ -133,8 +191,8 @@ def organize_reconstruction(reconstruction_results, scoring_funs=None):
             labels += ['partial_reconstruct']*v[0].shape[1]
             combined.loc[:, 'label'] = labels
             combined.loc[:, 'pop_size'] = pop_size
-            reconstruction_df = pd.concat([reconstruction_df, combined])
-    reconstruction_df = reconstruction_df.infer_objects().reset_index()
+            reconstruction_df = pd.concat([reconstruction_df, combined], sort=False)
+    reconstruction_df = reconstruction_df.infer_objects().reset_index(drop=True)
     if scoring_funs:
         for fun in scoring_funs:
             fun(reconstruction_df)
@@ -146,7 +204,7 @@ def corr_scoring(organized_results):
         organized_results.loc[group.index, 'corr_score'] = corr_scores
         
 def get_reconstruction_results(results, measure_list, pop_sizes=(100,200), 
-                               recon_fun=linear_ontology_reconstruction, 
+                               recon_fun=linear_reconstruction, 
                                scoring_funs=(corr_scoring,), 
                                **kwargs):
     loadings = results.EFA.get_loading(c=results.EFA.results['num_factors'])
@@ -156,14 +214,14 @@ def get_reconstruction_results(results, measure_list, pop_sizes=(100,200),
     for pop_size in pop_sizes:     
         out = {}
         for measure in measure_list:
-            estimated, full = fun(results, drop_regex=measure, reconstruct_vars=None,
-                                  pseudo_pop_size=pop_size, **kwargs)
+            estimated, full = recon_fun(results, drop_regex=measure, reconstruct_vars=None,
+                                        pseudo_pop_size=pop_size, **kwargs)
             out[measure] = [estimated, full]
             reconstructed_DVs = reconstructed_DVs | set(full.loc['var'])
         reconstruction_results[pop_size] = out
         
     true = loadings.loc[reconstructed_DVs]
-    true = true.reset_index().rename(columns={'index': 'var'})
+    true.loc[:,'var'] = true.index
     reconstruction_results['true'] = true
     return organize_reconstruction(reconstruction_results, scoring_funs=scoring_funs)
     
