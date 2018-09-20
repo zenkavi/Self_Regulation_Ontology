@@ -66,10 +66,17 @@ def get_ontology_blend(weights, ref_loadings, weighted=True):
         reconstruction['reconstruction_weights'] = tuple([1]*len(weights))
     reconstruction['reconstruction_vars'] = tuple(weights.index)
     return reconstruction
-    
+
+def reorder_FA(ref_FA, new_FA):
+    c = len(ref_FA.columns)
+    corr = pd.concat([ref_FA, new_FA], axis=1, sort=False).corr().iloc[c:, :c]
+    new_FA = new_FA.loc[:,corr.idxmax()]
+    new_FA.columns = ref_FA.columns
+    return new_FA
+
 def k_nearest_reconstruction(results, drop_regex, reconstruct_vars=None, 
                              pseudo_pop_size=60, n_reps=100, 
-                             k_list=None, rotate='oblimin', verbose=True):
+                             k_list=None, EFA_rotation='oblimin', verbose=True):
 
     if k_list is None:
         k_list = [3]
@@ -80,7 +87,8 @@ def k_nearest_reconstruction(results, drop_regex, reconstruct_vars=None,
     drop_vars = list(data.filter(regex=drop_regex).columns)
     subset = data.drop(drop_vars, axis=1)
     fa, out = psychFA(subset, c, rotate=EFA_rotation)
-    loadings = pd.DataFrame(out['loadings'], index=subset.columns, columns=orig_loadings.columns)
+    loadings = pd.DataFrame(out['loadings'], index=subset.columns)
+    loadings = reorder_FA(orig_loadings, loadings)
     if reconstruct_vars is None:
         reconstruct_vars = drop_vars
     if verbose: 
@@ -95,12 +103,14 @@ def k_nearest_reconstruction(results, drop_regex, reconstruct_vars=None,
     for var in drop_vars:
         distances = corr.loc[var].sort_values(ascending=False)
         for k in k_list:
+            if k>len(distances): k=len(distances)
             for weighted in [True, False]:
                 reconstruction = get_ontology_blend(distances[:k], loadings, weighted)
+                reconstruction['weighted'] = weighted
                 reconstruction['k'] = k
                 reconstruction['var'] = var
                 full_reconstruction.append(reconstruction)
-    full_reconstruction = pd.concat(full_reconstruction, axis=1)
+    full_reconstruction = pd.DataFrame(full_reconstruction)
 
     if verbose: print('Starting partial reconstruction, pop size:', pseudo_pop_size)
     estimated_loadings = []
@@ -114,6 +124,7 @@ def k_nearest_reconstruction(results, drop_regex, reconstruct_vars=None,
         for var in drop_vars:
             distances = corr.loc[var].sort_values(ascending=False)
             for k in k_list:
+                if k>len(distances): k=len(distances)
                 for weighted in [True, False]:
                     reconstruction = get_ontology_blend(distances[:k], loadings, weighted)
                     reconstruction['weighted'] = weighted
@@ -121,7 +132,7 @@ def k_nearest_reconstruction(results, drop_regex, reconstruct_vars=None,
                     reconstruction['k'] = k
                     reconstruction['var'] = var
                     estimated_loadings.append(reconstruction)
-    estimated_loadings = pd.concat(estimated_loadings, axis=1)
+    estimated_loadings = pd.DataFrame(estimated_loadings)
     return estimated_loadings, full_reconstruction
 
 def linear_weighted_reconstruction(results, clf, drop_regex, reconstruct_vars=None,
@@ -134,7 +145,8 @@ def linear_weighted_reconstruction(results, clf, drop_regex, reconstruct_vars=No
     drop_vars = list(data.filter(regex=drop_regex).columns)
     subset = data.drop(drop_vars, axis=1)
     fa, out = psychFA(subset, c, rotate=EFA_rotation)
-    loadings = pd.DataFrame(out['loadings'], index=subset.columns, columns=orig_loadings.columns)
+    loadings = pd.DataFrame(out['loadings'], index=subset.columns)
+    loadings = reorder_FA(orig_loadings, loadings)
     if reconstruct_vars is None:
         reconstruct_vars = drop_vars
     if verbose: 
@@ -153,7 +165,7 @@ def linear_weighted_reconstruction(results, clf, drop_regex, reconstruct_vars=No
         reconstruction = get_ontology_blend(weights, loadings, True)
         reconstruction['var'] = var
         full_reconstruction.append(reconstruction)
-    full_reconstruction = pd.concat(full_reconstruction, axis=1)
+    full_reconstruction = pd.DataFrame(full_reconstruction)
 
     if verbose: print('Starting partial reconstruction, pop size:', pseudo_pop_size)
     estimated_loadings = []
@@ -172,7 +184,7 @@ def linear_weighted_reconstruction(results, clf, drop_regex, reconstruct_vars=No
             reconstruction['sample'] = rep
             reconstruction['var'] = var
             estimated_loadings.append(reconstruction)
-    estimated_loadings = pd.concat(estimated_loadings, axis=1)
+    estimated_loadings = pd.DataFrame(estimated_loadings)
     return estimated_loadings, full_reconstruction
 
 
@@ -183,16 +195,22 @@ def organize_reconstruction(reconstruction_results, scoring_funs=None):
     for pop_size, out in reconstruction_results.items():
         for k, v in out.items():
             c = len(v[0])
-            combined = pd.concat([v[1], v[0]], axis=1, sort=False).T
+            combined = pd.concat([v[1], v[0]], sort=False)
             combined.reset_index(drop=True, inplace=True)
             labels = ['full_reconstruct']
             if len(v[1].shape) == 2:
-                labels += ['full_reconstruct']*(v[1].shape[1]-1)
-            labels += ['partial_reconstruct']*v[0].shape[1]
+                labels += ['full_reconstruct']*(v[1].shape[0]-1)
+            labels += ['partial_reconstruct']*v[0].shape[0]
             combined.loc[:, 'label'] = labels
             combined.loc[:, 'pop_size'] = pop_size
             reconstruction_df = pd.concat([reconstruction_df, combined], sort=False)
     reconstruction_df = reconstruction_df.infer_objects().reset_index(drop=True)
+    # drop redundant reconstructions
+    pop_sizes = reconstruction_df.pop_size.dropna().unique()[1:]
+    drop_indices = reconstruction_df[(reconstruction_df.label=="full_reconstruct") & 
+                                     (reconstruction_df.pop_size.isin(pop_sizes))].index
+    reconstruction_df.drop(drop_indices, inplace=True)
+    reconstruction_df.loc[(reconstruction_df.label=="full_reconstruct"), 'pop_size'] = np.nan
     if scoring_funs:
         for fun in scoring_funs:
             fun(reconstruction_df)
@@ -217,7 +235,7 @@ def get_reconstruction_results(results, measure_list, pop_sizes=(100,200),
             estimated, full = recon_fun(results, drop_regex=measure, reconstruct_vars=None,
                                         pseudo_pop_size=pop_size, **kwargs)
             out[measure] = [estimated, full]
-            reconstructed_DVs = reconstructed_DVs | set(full.loc['var'])
+            reconstructed_DVs = reconstructed_DVs | set(full['var'])
         reconstruction_results[pop_size] = out
         
     true = loadings.loc[reconstructed_DVs]
