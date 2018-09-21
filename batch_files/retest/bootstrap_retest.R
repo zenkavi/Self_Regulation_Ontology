@@ -107,7 +107,7 @@ get_var_breakdown <- function(dv_var, t1_df = retest_subs_test_data, t2_df = ret
   }
 
   df = df %>% select(-dv, -sub_id)
-  icc = ICC(df)
+  icc = ICC(df, lmer=FALSE)
   var_breakdown = data.frame(subs = icc$summary[[1]][1,'Mean Sq'],
                              ind = icc$summary[[1]][2,'Mean Sq'],
                              resid = icc$summary[[1]][3,'Mean Sq'])
