@@ -8,7 +8,7 @@ args = commandArgs(trailingOnly=TRUE)
 # test if there is at least one argument: if not, return an error
 if (length(args)<3) {
   stop("Arguments are missing. Usage: Rscript --vanilla bootstrap_retest.R t1_data t2_data out_dir n dv_name", call.=FALSE)
-} 
+}
 
 t1_data <- args[1]
 t2_data <- args[2]
@@ -93,7 +93,7 @@ get_icc <- function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_data, 
   }
 
   df = df %>% select(-dv, -sub_id)
-  icc = ICC(df)
+  icc = ICC(df, lmer=FALSE)
   icc_3k = icc$results['Average_fixed_raters', 'ICC']
   return(icc_3k)
 }
@@ -105,7 +105,7 @@ get_var_breakdown <- function(dv_var, t1_df = retest_subs_test_data, t2_df = ret
   else if(sample=='bootstrap'){
     df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var, format='wide', sample='bootstrap', sample_vec = sample_vec)
   }
-  
+
   df = df %>% select(-dv, -sub_id)
   icc = ICC(df)
   var_breakdown = data.frame(subs = icc$summary[[1]][1,'Mean Sq'],
@@ -255,4 +255,3 @@ output_df$seed <- cur_seed
 
 # save output
 write.csv(output_df, paste0(output_dir, dv_name, '_output.csv'))
-
