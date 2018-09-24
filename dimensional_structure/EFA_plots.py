@@ -63,9 +63,9 @@ def plot_BIC_SABIC(results, size=2.3, dpi=300, ext='png', plot_dir=None):
                         {'bbox_inches': 'tight', 'dpi': dpi})
             plt.close()
 
-def plot_communality(results, c, rotate='oblimin', retest_threshold=.2,
-                     size=4.6, dpi=300, ext='png', plot_dir=None):
-    EFA = results.EFA
+def get_communality(EFA, rotate='oblimin', c=None):
+    if c is None:
+        c = EFA.results['num_factors']
     loading = EFA.get_loading(c, rotate=rotate)
     # get communality from psych out
     fa = EFA.results['factor_tree_Rout_%s' % rotate][c]
@@ -74,6 +74,13 @@ def plot_communality(results, c, rotate='oblimin', retest_threshold=.2,
     # alternative calculation
     #communality = (loading**2).sum(1).sort_values()
     communality.index = [i.replace('.logTr','').replace('.ReflogTr','') for i in communality.index]
+    communality.name = "communality"
+    return communality
+
+def plot_communality(results, c, rotate='oblimin', retest_threshold=.2,
+                     size=4.6, dpi=300, ext='png', plot_dir=None):
+    EFA = results.EFA
+    communality = get_communality(EFA, rotate, c)
     # load retest data
     retest_data = get_retest_data(dataset=results.dataset.replace('Complete','Retest'))
     if retest_data is None:
