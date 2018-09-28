@@ -3,6 +3,7 @@ import pandas as pd
 from scipy.spatial.distance import pdist, squareform
 from sklearn.linear_model import LinearRegression, RANSACRegressor, Lasso, Ridge
 from sklearn.neighbors import KNeighborsRegressor
+from sklearn.preprocessing import scale
 from selfregulation.utils.r_to_py_utils import psychFA
 
 # utils for deriving and evaluating ontological factors for out-of-model tasks
@@ -95,7 +96,7 @@ def linear_reconstruction(results, drop_regex,
         print('*'*79)
         
     if verbose: print('Starting full reconstruction')
-    full_reconstruction = run_linear(scores, data.loc[:, drop_vars], clf)
+    full_reconstruction = run_linear(scores, scale(data.loc[:, drop_vars]), clf)
     full_reconstruction.reset_index(drop=True)
 
     if verbose: print('Starting partial reconstruction, pop size:', pseudo_pop_size)
@@ -104,15 +105,15 @@ def linear_reconstruction(results, drop_regex,
         if verbose and rep%100==0: 
             print('Rep', rep)
         random_subset = np.random.choice(data.index,pseudo_pop_size, replace=False)
-        out = run_linear(scores.loc[random_subset], data.loc[random_subset, drop_vars], clf)
+        out = run_linear(scores.loc[random_subset], scale(data.loc[random_subset, drop_vars]), clf)
         out['rep'] = rep+1
-        estimated_loadings = pd.concat([estimated_loadings, out], sort=True)
+        estimated_loadings = pd.concat([estimated_loadings, out], sort=False)
     estimated_loadings.reset_index(drop=True)
     return estimated_loadings, full_reconstruction
 
     
 def run_kNeighbors(distances, loadings, test_vars, 
-                   weightings=('uniform'), k_list=(3)):
+                   weightings=('uniform',), k_list=(3)):
     """
     Run Knearest neighbor using precomputed distances to create an ontological mapping
     
@@ -139,10 +140,10 @@ def run_kNeighbors(distances, loadings, test_vars,
             neighbors = clf.kneighbors(test_distances)
             out['distances'] = tuple(neighbors[0])
             out['neighbors'] = tuple(test_distances.columns[neighbors[1]])
-            to_return = pd.concat([to_return, out], sort=True)
+            to_return = pd.concat([to_return, out], sort=False)
     return to_return
     
-def k_nearest_reconstruction(results, drop_regex, 
+def k_nearest_reconstruction(results, drop_regex, available_vars=None,
                              pseudo_pop_size=60, n_reps=100, 
                              k_list=None, EFA_rotation='oblimin', verbose=True):
     if k_list is None:
@@ -157,6 +158,9 @@ def k_nearest_reconstruction(results, drop_regex,
     loadings = pd.DataFrame(out['loadings'], index=subset.columns)
     loadings = reorder_FA(orig_loadings, loadings)
     weightings = ['uniform', 'distance']
+    if available_vars is not None:
+        data = data.loc[:, set(available_vars) | set(drop_vars)]
+        loadings = loadings.loc[available_vars,:]
     if verbose:
         print('*'*79)
         print('Reconstructing', drop_vars)
@@ -166,7 +170,7 @@ def k_nearest_reconstruction(results, drop_regex,
                              index=data.columns, 
                              columns=data.columns).drop(drop_vars, axis=1)
 
-    full_reconstruction = run_kNeighbors(distances, loadings,drop_vars, weightings, k_list)
+    full_reconstruction = run_kNeighbors(distances, loadings, drop_vars, weightings, k_list)
     full_reconstruction.reset_index(drop=True)
 
     if verbose: print('Starting partial reconstruction, pop size:', pseudo_pop_size)
@@ -182,7 +186,7 @@ def k_nearest_reconstruction(results, drop_regex,
                                  columns=random_subset.columns).drop(drop_vars, axis=1)
         out = run_kNeighbors(distances, loadings, drop_vars, weightings, k_list)
         out['rep'] = rep+1
-        estimated_loadings = pd.concat([estimated_loadings, out], sort=True)
+        estimated_loadings = pd.concat([estimated_loadings, out], sort=False)
     estimated_loadings.reset_index(drop=True)
     return estimated_loadings, full_reconstruction
 
