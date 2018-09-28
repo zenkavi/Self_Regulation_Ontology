@@ -1,13 +1,13 @@
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import pdist, squareform
-from sklearn.neighbors import KNeighborsRegressor
 from sklearn.linear_model import LinearRegression, RANSACRegressor, Lasso, Ridge
+from sklearn.neighbors import KNeighborsRegressor
 from selfregulation.utils.r_to_py_utils import psychFA
 
 # utils for deriving and evaluating ontological factors for out-of-model tasks
 def linear_reconstruction(results, var, pseudo_pop_size=60,
-                              n_reps=100, clf=None, robust=False, verbose=True):
+                          n_reps=100, clf=None, robust=False, verbose=True):
     def get_coefs(clf):
         try:
             return clf.coef_
@@ -219,17 +219,19 @@ def organize_reconstruction(reconstruction_results, scoring_funs=None):
     return reconstruction_df
 
 def get_reconstruction_results(results, measure_list, pop_sizes=(100,200), 
+                               EFA_rotation='oblimin',
                                recon_fun=linear_reconstruction, 
                                scoring_funs=(corr_scoring,), 
                                **kwargs):
-    loadings = results.EFA.get_loading(c=results.EFA.results['num_factors'])
+    loadings = results.EFA.get_loading(rotate=EFA_rotation, c=results.EFA.results['num_factors'])
     out = {}
     # convert list of measures to a regex lookup
     for measure in measure_list:
         reconstruction_results = {}
         for pop_size in pop_sizes:  
             estimated, full = recon_fun(results, drop_regex=measure, 
-                                        pseudo_pop_size=pop_size, **kwargs)
+                                        pseudo_pop_size=pop_size, 
+                                        EFA_rotation=EFA_rotation, **kwargs)
 
             reconstruction_results[pop_size] = [estimated, full]
         true = loadings.loc[set(full['var'])]
