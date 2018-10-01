@@ -69,7 +69,7 @@ def run_linear(scores, test_vars, clf=LinearRegression(fit_intercept=False)):
         test_vars: variable to reconstruct
         clf: linear model that returns coefs
     """
-    clf.fit(scores, test_vars)
+    clf.fit(scores, scale(test_vars))
     out = clf.coef_
     if len(out.shape)==1:
         out = out.reshape(1,-1)
@@ -96,7 +96,7 @@ def linear_reconstruction(results, drop_regex,
         print('*'*79)
         
     if verbose: print('Starting full reconstruction')
-    full_reconstruction = run_linear(scores, scale(data.loc[:, drop_vars]), clf)
+    full_reconstruction = run_linear(scores, data.loc[:, drop_vars], clf)
     full_reconstruction.reset_index(drop=True)
 
     if verbose: print('Starting partial reconstruction, pop size:', pseudo_pop_size)
@@ -105,7 +105,7 @@ def linear_reconstruction(results, drop_regex,
         if verbose and rep%100==0: 
             print('Rep', rep)
         random_subset = np.random.choice(data.index,pseudo_pop_size, replace=False)
-        out = run_linear(scores.loc[random_subset], scale(data.loc[random_subset, drop_vars]), clf)
+        out = run_linear(scores.loc[random_subset], data.loc[random_subset, drop_vars], clf)
         out['rep'] = rep+1
         estimated_loadings = pd.concat([estimated_loadings, out], sort=False)
     estimated_loadings.reset_index(drop=True)
