@@ -15,6 +15,7 @@ def plot_factor_reconstructions(reconstructions, title=None, size=12,
     plot_df = reconstructions.query('label=="partial_reconstruct"') \
                 .groupby(['pop_size', 'var']).mean() \
                 .join(ground_truth)
+    pop_sizes = sorted(reconstructions.pop_size.dropna().unique())
     # plot
     sns.set_context('talk')
     sns.set_style('white')
@@ -56,7 +57,7 @@ def plot_reconstruction_hist(reconstructions, title=None, size=12,
     sns.set_context('talk')
     sns.set_style('white')
     reconstructions = reconstructions.query('label == "partial_reconstruct"')
-    pop_sizes = sorted(reconstructions.pop_size.unique())
+    pop_sizes = sorted(reconstructions.pop_size.dropna().unique())
     f, axes = plt.subplots(1,len(pop_sizes),figsize=(size,size/4))
     colors = sns.color_palette(n_colors = len(pop_sizes))
     for i, pop_size in enumerate(pop_sizes):
