@@ -20,6 +20,8 @@ parser.add_argument('-dataset', default=None)
 parser.add_argument('-dpi', type=int, default=300)
 parser.add_argument('-size', type=float, default=4.6)
 parser.add_argument('-ext', default='pdf')
+parser.add_argument('-plot_file', default=None)
+parser.add_argument('-cluster_color', action='store_true')
 args = parser.parse_args()
 
 dataset = args.dataset
@@ -30,7 +32,6 @@ if dataset == None:
     dataset = get_recent_dataset()
 dataset = path.join(basedir,'Data',dataset)
 datafile = dataset.split(path.sep)[-1]
-
 
 # load data
 results = load_results(datafile)
@@ -43,12 +44,23 @@ task_subset = pd.concat([
 task_subset_data = data.loc[:, task_subset.index]
 task_variables = list(task_subset.index)
 
-
+# plotting args
 size = args.size
+dpi = args.dpi
+ext = args.ext
+if args.plot_file is None:
+    plot_file = path.dirname(results['task'].get_plot_dir())
+else:
+    plot_file = args.plot_file
+
+
+# plot
 f = plt.figure(figsize=(size, size))
 basefont = size*1.3
 basemarker = size**2*1.2
 basewidth = size*.12
+# how to color MDS
+cluster_color = args.cluster_color
 
 with sns.axes_style("white"):
     participant_ax1 = f.add_axes([.25,.555,.28,.16]) 
@@ -221,26 +233,32 @@ cbar_ax2.tick_params(labelsize=basefont*.75)
 # ****************************************************************************
 # MDS Plots
 # ****************************************************************************
-
-mds_colors = np.array([[.5, .5, .5, .3]]*loading_distances.shape[0])
-interest_index = []
-misc_index = []
-for i, label in enumerate(loading_distances.index):
-    if '.hddm_drift' in label:
-        name = 'drift rate'
-    elif '.hddm_thresh' in label:
-        name = 'threshold'
-    elif '.hddm_non_decision' in label:
-        name = 'non-decision'
-    elif 'SSRT' in label:
-        name = 'SSRT'
-    else:
-        misc_index.append(i)
-        continue
-    interest_index.append(i)
-    mds_colors[i] = get_var_color(label) + [1]
-mds_index = misc_index + interest_index
-
+if not cluster_color: # color based on drift/thresh/non-decision
+    mds_colors = np.array([[.5, .5, .5, .3]]*loading_distances.shape[0])
+    interest_index = []
+    misc_index = []
+    for i, label in enumerate(loading_distances.index):
+        if '.hddm_drift' in label:
+            name = 'drift rate'
+        elif '.hddm_thresh' in label:
+            name = 'threshold'
+        elif '.hddm_non_decision' in label:
+            name = 'non-decision'
+        elif 'SSRT' in label:
+            name = 'SSRT'
+        else:
+            misc_index.append(i)
+            continue
+        interest_index.append(i)
+        mds_colors[i] = get_var_color(label) + [1]
+    mds_index = misc_index + interest_index
+else:
+    reorder = results['task'].HCA.results['EFA5_oblimin']['reorder_vec']
+    labels = results['task'].HCA.results['EFA5_oblimin']['labels'][reorder]
+    palette= sns.hls_palette(n_colors = max(labels))
+    mds_colors = np.array([palette[i-1] for i in labels])
+    mds_index = range(len(mds_colors))
+    
 # plot raw MDS
 np.random.seed(700)
 mds = MDS(dissimilarity='precomputed')
@@ -249,7 +267,8 @@ participant_mds.scatter(mds_out[mds_index,0], mds_out[mds_index,1],
             s=basemarker,
             marker='h',
             facecolors=mds_colors[mds_index],
-            edgecolors='white')
+            edgecolors='white',
+            linewidths=basewidth/2)
 participant_mds.set_xticklabels(''); participant_mds.set_yticklabels('')
 participant_mds.tick_params(axis='both', length=0)
 participant_mds.axis('off')
@@ -260,10 +279,12 @@ loading_mds.scatter(mds_out[mds_index,0], mds_out[mds_index,1],
             s=basemarker,
             marker='h',
             facecolors=mds_colors[mds_index],
-            edgecolors='white')
+            edgecolors='white',
+            linewidths=basewidth/2)
 loading_mds.set_xticklabels(''); loading_mds.set_yticklabels('')
 loading_mds.tick_params(axis='both', length=0)
 loading_mds.axis('off'); 
+
 
 """
 # get example points
@@ -401,17 +422,20 @@ back.arrow(.03,.62,.07,.011, width=basewidth/1000, color=arrowcolor)
 back.arrow(.03,.62,.1,-.04, width=basewidth/1000, color=arrowcolor)
 
 back.arrow(.05,.87,.08,.045, width=basewidth/1000, color=arrowcolor)
-back.arrow(.05,.87,.07,-.005, width=basewidth/1000, color=arrowcolor)
+back.arrow(.05,.87,.06,-.005, width=basewidth/1000, color=arrowcolor)
 back.arrow(.05,.87,.08,-.045, width=basewidth/1000, color=arrowcolor)
 back.arrow(.05,.87,.1,-.075, width=basewidth/1000, color=arrowcolor)
 
 # from participant to EFA
-back.arrow(.53, .725, .05, 0, width=basewidth/200, facecolor='k')
+back.arrow(.53, .725, .05, 0, width=basewidth/200, head_width=basewidth/50, 
+           facecolor='k')
 back.text(.55, .735, 'EFA', fontsize=basefont, 
           horizontalalignment='center')
 # from data to heatmap
-back.arrow(.375, .514, 0, -.01, width=basewidth/250, edgecolor='k', facecolor='white')
-back.arrow(.75, .514, 0, -.01, width=basewidth/250, facecolor='k')
+back.arrow(.375, .514, 0, -.01, width=basewidth/250, head_width=basewidth/125,
+           edgecolor='k', facecolor='white')
+back.arrow(.75, .514, 0, -.01, width=basewidth/250, head_width=basewidth/125,
+           facecolor='k')
 back.text(.567, .48, 'Pairwise Distance', fontsize=basefont, 
           horizontalalignment='center')
 back.text(.567, .46, 'Between DVs', fontsize=basefont, 
@@ -419,8 +443,10 @@ back.text(.567, .46, 'Between DVs', fontsize=basefont,
 back.text(.567, .435, r'$1-\vert r_{DV_1,DV_2} \vert$', fontsize=basefont, 
           horizontalalignment='center')
 # from heatmap to MDS
-back.arrow(.375, .27, 0, -.01, width=basewidth/250, edgecolor='k', facecolor='white')
-back.arrow(.75, .27, 0, -.01, width=basewidth/250, facecolor='k')
+back.arrow(.375, .27, 0, -.01, width=basewidth/250, 
+           head_width=basewidth/125, edgecolor='k', facecolor='white')
+back.arrow(.75, .27, 0, -.01, width=basewidth/250, 
+           head_width=basewidth/125, facecolor='k')
 back.text(.567, .24, 'Multidimensional Scaling', fontsize=basefont, 
           horizontalalignment='center')
 
@@ -433,20 +459,7 @@ back.text(.85, .49, 'E', fontsize=basefont*1.56255, fontweight='bold')
 back.text(.25, .24, 'F', fontsize=basefont*1.56255, fontweight='bold')
 back.text(.85, .24, 'G', fontsize=basefont*1.56255, fontweight='bold')
 
-
-
 # save
-dpi = args.dpi
-ext = args.ext
-plot_file = path.dirname(results['task'].get_plot_dir())
 f.savefig(path.join(plot_file, 'analysis_overview.%s' % ext), 
                 bbox_inches='tight', 
                 dpi=dpi)
-
-
-"""
-# example DDM plot
-np.random.seed(1000)
-ddm_plot, trajectories = DDM_plot(2, .2, 3, n=100, plot_n=7, 
-                                  file=path.join(plot_file, 'DDM.pdf'))
-"""
