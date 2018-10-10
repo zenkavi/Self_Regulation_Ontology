@@ -81,15 +81,19 @@ def linear_reconstruction(results, drop_regex,
                           pseudo_pop_size=60, n_reps=100, 
                           clf=LinearRegression(fit_intercept=False),
                           EFA_rotation='oblimin', verbose=True):
+    def run_EFA(data, c, rotation, orig_scores):
+        fa, out = psychFA(data, c, rotate=EFA_rotation)
+        scores = pd.DataFrame(out['scores'], index=data.index)
+        scores = reorder_FA(orig_scores, scores)
+        return loadings
+    
     data = results.data
     c = results.EFA.results['num_factors']
     orig_scores = results.EFA.get_scores(c, rotate=EFA_rotation)
     # refit an EFA model without variable    
     drop_vars = list(data.filter(regex=drop_regex).columns)
     subset = data.drop(drop_vars, axis=1)
-    fa, out = psychFA(subset, c, rotate=EFA_rotation)
-    scores = pd.DataFrame(out['scores'], index=subset.index)
-    scores = reorder_FA(orig_scores, scores)
+    scores = run_EFA(subset, c, EFA_rotation, orig_scores)
     if verbose:
         print('*'*79)
         print('Reconstructing', drop_vars)
@@ -105,6 +109,9 @@ def linear_reconstruction(results, drop_regex,
         if verbose and rep%100==0: 
             print('Rep', rep)
         random_subset = np.random.choice(data.index,pseudo_pop_size, replace=False)
+        if independent_EFA:
+            tmp_subset = subset.drop(random_subset.index)
+            scores = run_EFA(tmp_subset, c, EFA_rotation, orig_scores)
         out = run_linear(scores.loc[random_subset], data.loc[random_subset, drop_vars], clf)
         out['rep'] = rep+1
         estimated_loadings = pd.concat([estimated_loadings, out], sort=False)
@@ -145,7 +152,15 @@ def run_kNeighbors(distances, loadings, test_vars,
     
 def k_nearest_reconstruction(results, drop_regex, available_vars=None,
                              pseudo_pop_size=60, n_reps=100, 
-                             k_list=None, EFA_rotation='oblimin', verbose=True):
+                             k_list=None, EFA_rotation='oblimin', 
+                             independent_EFA=False,
+                             verbose=True):
+    def run_EFA(data, c, rotation, orig_loading):
+        fa, out = psychFA(data, c, rotate=EFA_rotation)
+        loadings = pd.DataFrame(out['loadings'], index=data.columns)
+        loadings = reorder_FA(orig_loadings, loadings)
+        return loadings
+    
     if k_list is None:
         k_list = [3]
     data = results.data
@@ -154,9 +169,7 @@ def k_nearest_reconstruction(results, drop_regex, available_vars=None,
     # refit an EFA model without variable    
     drop_vars = list(data.filter(regex=drop_regex).columns)
     subset = data.drop(drop_vars, axis=1)
-    fa, out = psychFA(subset, c, rotate=EFA_rotation)
-    loadings = pd.DataFrame(out['loadings'], index=subset.columns)
-    loadings = reorder_FA(orig_loadings, loadings)
+    loadings = run_EFA(subset, c, EFA_rotation, orig_loadings)
     weightings = ['uniform', 'distance']
     if available_vars is not None:
         data = data.loc[:, set(available_vars) | set(drop_vars)]
@@ -178,9 +191,10 @@ def k_nearest_reconstruction(results, drop_regex, available_vars=None,
     for rep in range(n_reps):
         if verbose and rep%100==0: 
             print('Rep', rep)
-        random_subset = data.loc[np.random.choice(data.index, 
-                                                  pseudo_pop_size, 
-                                                  replace=False)]
+        random_subset = data.sample(pseudo_pop_size)
+        if independent_EFA:
+            tmp_subset = subset.drop(random_subset.index)
+            loadings = run_EFA(tmp_subset, c, EFA_rotation, orig_loadings)
         distances = pd.DataFrame(squareform(pdist(random_subset.T, metric='correlation')), 
                                  index=random_subset.columns, 
                                  columns=random_subset.columns).drop(drop_vars, axis=1)
