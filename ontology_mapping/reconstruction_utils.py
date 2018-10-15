@@ -85,7 +85,7 @@ def linear_reconstruction(results, drop_regex,
         fa, out = psychFA(data, c, rotate=EFA_rotation)
         scores = pd.DataFrame(out['scores'], index=data.index)
         scores = reorder_FA(orig_scores, scores)
-        return loadings
+        return scores
     
     data = results.data
     c = results.EFA.results['num_factors']
