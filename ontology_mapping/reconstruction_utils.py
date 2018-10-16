@@ -1,58 +1,16 @@
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import pdist, squareform
-from sklearn.linear_model import LinearRegression, RANSACRegressor, Lasso, Ridge
+from sklearn.linear_model import LinearRegression
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.preprocessing import scale
+from sklearn.svm import LinearSVC
+from sklearn.preprocessing import LabelEncoder, scale
+from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score
+
 from selfregulation.utils.r_to_py_utils import psychFA
 
 # utils for deriving and evaluating ontological factors for out-of-model tasks
-def linear_reconstruction(results, var, pseudo_pop_size=60,
-                          n_reps=100, clf=None, robust=False, verbose=True):
-    def get_coefs(clf):
-        try:
-            return clf.coef_
-        except AttributeError:
-            return clf.estimator_.coef_
-    if verbose: 
-        print('Starting Linear reconstruction, var', var)
-        print('*'*79)
-    data = results.data
-    c = results.EFA.results['num_factors']
-    full_scores = results.EFA.get_scores(c)
-    loadings = results.EFA.get_loading(c)
-    # refit an EFA model without variable    
-    subset = data.drop(var, axis=1)
-    fa, out = psychFA(subset, c)
-    scores = pd.DataFrame(out['scores'], 
-                          columns=full_scores.columns,
-                          index=full_scores.index)
-    
-    orig_estimate = loadings.loc[var]
-    if clf is None:
-        clf = LinearRegression(fit_intercept=False)
-    if robust:
-        clf = RANSACRegressor(base_estimator=clf)
-    if verbose: print('Starting full reconstruction')
-    clf.fit(scores, data.loc[:, var])
-    full_reconstruction = pd.Series(get_coefs(clf), index=orig_estimate.index)
-    estimated_loadings = []
-    if verbose: print('Starting partial reconstruction, pop size:', pseudo_pop_size)
-    for rep in range(n_reps):
-        if verbose and rep%100==0: 
-            print('Rep', rep)
-        random_subset = np.random.choice(scores.index,
-                                         pseudo_pop_size, 
-                                         replace=False)
-        X = scores.loc[random_subset]
-        y = data.loc[random_subset, var]
-        clf.fit(X,y)
-        estimated_loadings.append(get_coefs(clf))
-    estimated_loadings = pd.DataFrame(estimated_loadings, columns=orig_estimate.index).T
-    # calculate average distance from coefficient estimat eacross runs
-    return orig_estimate, estimated_loadings, full_reconstruction
-
-
 def reorder_FA(ref_FA, new_FA):
     c = len(ref_FA.columns)
     corr = pd.concat([ref_FA, new_FA], axis=1, sort=False).corr().iloc[c:, :c]
@@ -80,7 +38,9 @@ def run_linear(scores, test_vars, clf=LinearRegression(fit_intercept=False)):
 def linear_reconstruction(results, drop_regex, 
                           pseudo_pop_size=60, n_reps=100, 
                           clf=LinearRegression(fit_intercept=False),
-                          EFA_rotation='oblimin', verbose=True):
+                          EFA_rotation='oblimin', 
+                          independent_EFA=False,
+                          verbose=True):
     def run_EFA(data, c, rotation, orig_scores):
         fa, out = psychFA(data, c, rotate=EFA_rotation)
         scores = pd.DataFrame(out['scores'], index=data.index)
@@ -214,7 +174,6 @@ def organize_reconstruction(reconstruction_results, scoring_funs=None):
     reconstruction_df = reconstruction_results.pop('true')
     reconstruction_df.loc[:,'label'] = 'true'
     for pop_size, (estimated, full) in reconstruction_results.items():
-        c = len(estimated)
         combined = pd.concat([full, estimated], sort=False)
         combined.reset_index(drop=True, inplace=True)
         labels = ['full_reconstruct']
@@ -259,3 +218,44 @@ def get_reconstruction_results(results, measure_list, pop_sizes=(100,200),
         out[measure.lstrip('^')] = organized  
     return out
     
+# other evaluations
+
+def CV_predict(reconstruction, labels, cv=10, clf=LinearSVC(), test_set=None):
+    """
+    Run cross-validated classification of reconstruction
+    Args:
+        reconstruction: a reconstruction created by get_reconstruction_results
+        cv: an int or sklearn CV object
+        clf: a sklearn multilabel classifier
+        test_set: separate test_set to be used after fitting the classifier on all of the data
+    
+    """
+    if type(cv) == int:
+        cv = StratifiedKFold(n_splits=cv)
+    c = k_reconstruction.columns.get_loc('var')
+    le = LabelEncoder()
+    embedding = reconstruction.iloc[:,:c].values
+    encoded_labels = le.fit_transform(labels)
+    scores = {'precision': [],
+              'recall': [],
+              'f1': [],
+              'confusion': []}
+    for train_ind, test_ind in cv.split(embedding, encoded_labels):
+        X = embedding[train_ind]
+        y = encoded_labels[train_ind]
+        clf.fit(X,y)
+        X_test = embedding[test_ind]
+        y_test = encoded_labels[test_ind]
+        predicted = clf.predict(X_test)
+        # scoring
+        scores['precision'].append(precision_score(y_test, predicted, average='macro'))
+        scores['recall'].append(recall_score(y_test, predicted, average='macro'))
+        scores['f1'].append(f1_score(y_test, predicted, average='macro'))
+        scores['confusion'].append(confusion_matrix(y_test, predicted))
+    for key, val in scores.items():
+        scores[key] = np.mean(val,0)
+    if test_set:
+        clf.fit(embedding, encoded_labels)
+        predicted = clf.predict(test_set[0])
+        scores['true_confusion'] = confusion_matrix(le.transform(test_set[1]), predicted)
+    return scores
