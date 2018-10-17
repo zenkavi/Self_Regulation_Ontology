@@ -9,4 +9,4 @@
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-user=zenkavi@stanford.edu
 source activate SRO
-python calculate_hddm_fitstat.py {MODEL_DIR} {TASK} {SUBSET} {OUT_DIR} {HDDM_TYPE} {PARALLEL} {SUB_ID_DIR}
+python calculate_hddm_fitstat.py {MODEL_DIR} {TASK} {SUBSET} {OUT_DIR} {HDDM_TYPE} {PARALLEL} {SUB_ID_DIR} {SAMPLES}

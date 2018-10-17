@@ -257,7 +257,7 @@ if hddm_type == 'flat':
     for model in models_list:
         m = pickle.load(open(model, 'rb'))
 ### Step 2: Get fitstat for read in model
-        fitstat = get_likelihood(m)
+        fitstat = get_fitstats(m)
 ### Step 3: Extract sub id from file name
         sub_id = re.search(model_dir+task+ subset+'(.+?)_flat.model', model).group(1)
 ### Step 4: Update flat fitstat dict with sub_id
@@ -287,13 +287,13 @@ if hddm_type == 'hierarchical':
         loaded_models = load_parallel_models(model_path)
         m_concat = concat_models(loaded_models[1])
 ### Step 2a: Get fitstat for all subjects from concatenated model
-        fitstats = get_likelihood(m_concat)
+        fitstats = get_fitstats(m_concat)
 ## Case 2b: without parallelization
     elif parallel == 'no':
 ### Step 1b: Read model in
         m = hddm.load(path.join(model_dir,task+'.model'))
 ### Step 2b: Get fitstats
-        fitstats = get_likelihood(m)
+        fitstats = get_fitstats(m)
 ### Step 3: Extract sub id from correct df that was used for hddm
     subid_fun = get_subids_fun(task)
     sub_df = pd.read_csv(path.join(sub_id_dir, task+'.csv.gz'), compression='gzip')
