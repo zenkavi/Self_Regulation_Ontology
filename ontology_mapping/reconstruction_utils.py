@@ -113,6 +113,7 @@ def run_kNeighbors(distances, loadings, test_vars,
 def k_nearest_reconstruction(results, drop_regex, available_vars=None,
                              pseudo_pop_size=60, n_reps=100, 
                              k_list=None, EFA_rotation='oblimin', 
+                             metric='correlation',
                              independent_EFA=False,
                              verbose=True):
     def run_EFA(data, c, rotation, orig_loading):
@@ -139,7 +140,7 @@ def k_nearest_reconstruction(results, drop_regex, available_vars=None,
         print('Reconstructing', drop_vars)
         print('*'*79)
     if verbose: print('Starting full reconstruction')
-    distances = pd.DataFrame(squareform(pdist(data.T, metric='correlation')), 
+    distances = pd.DataFrame(squareform(pdist(data.T, metric=metric)), 
                              index=data.columns, 
                              columns=data.columns).drop(drop_vars, axis=1)
 
@@ -155,7 +156,7 @@ def k_nearest_reconstruction(results, drop_regex, available_vars=None,
         if independent_EFA:
             tmp_subset = subset.drop(random_subset.index)
             loadings = run_EFA(tmp_subset, c, EFA_rotation, orig_loadings)
-        distances = pd.DataFrame(squareform(pdist(random_subset.T, metric='correlation')), 
+        distances = pd.DataFrame(squareform(pdist(random_subset.T, metric=metric)), 
                                  index=random_subset.columns, 
                                  columns=random_subset.columns).drop(drop_vars, axis=1)
         out = run_kNeighbors(distances, loadings, drop_vars, weightings, k_list)
@@ -232,7 +233,7 @@ def CV_predict(reconstruction, labels, cv=10, clf=LinearSVC(), test_set=None):
     """
     if type(cv) == int:
         cv = StratifiedKFold(n_splits=cv)
-    c = k_reconstruction.columns.get_loc('var')
+    c = reconstruction.columns.get_loc('var')
     le = LabelEncoder()
     embedding = reconstruction.iloc[:,:c].values
     encoded_labels = le.fit_transform(labels)
