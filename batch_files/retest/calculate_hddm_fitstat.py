@@ -58,6 +58,7 @@ def get_fitstats(m, samples, groupby=None, append_data = True):
     #This loop should output n*condition*sample regression (e.g. 2*2*100)
     #level 0 = 'node' referring to subject
     #level 1 = 'sample' referring to condition
+    #will this work with flat?
     ppc_regression_samples = {}
     #for (node, sample), sim_data in ppc_data_append.groupby(level=(0,1)):
     for (node, sample), sim_data in ppc_data_append.groupby(['node', 'sample']):    
@@ -92,17 +93,6 @@ def get_fitstats(m, samples, groupby=None, append_data = True):
     else:
         ppc_regression_samples['subj_id'] = 0
                        
-    #Summarize on subject*condition level [THIS PART MIGHT NOT BE NECESSARY]
-    #if 'condition' in ppc_regression_samples.columns:
-    #    means = ppc_regression_samples.groupby(['condition', 'subj_id']).mean().reset_index()
-     #   stds = ppc_regression_samples.groupby(['condition', 'subj_id']).std().reset_index()
-      #  ppc_regression_subj = means.merge(stds, on = ['condition', 'subj_id'], suffixes = ('_mean', '_std'))
-    #else:
-     #   means = ppc_regression_samples.groupby(['subj_id']).mean().reset_index()
-      #  stds = ppc_regression_samples.groupby(['subj_id']).mean().reset_index()
-       # ppc_regression_subj = means.merge(stds, on = ['subj_id'], suffixes = ('_mean', '_std'))    
-    
-#    return(ppc_data_append, ppc_regression_samples, ppc_regression_subj)
     return(ppc_regression_samples)
 
 ##############################################
@@ -113,12 +103,8 @@ def load_parallel_models(model_path):
     loadfile = sorted(glob(model_path))
     models = []
     for l in loadfile:
-        #m = hddm.load(l)
-        #m.load_db(l, db='pickle')
         m = pickle.load(open(l, 'rb'))
         models.append(m)
-    #m = load_concat_models(models)
-    #return m, models
     return models
 
 ##############################################
@@ -308,7 +294,6 @@ if hddm_type == 'hierarchical':
 ## Case 2b: without parallelization
     elif parallel == 'no':
 ### Step 1b: Read model in
-        #m = hddm.load(path.join(model_dir,task+'.model'))
         m = pickle.load(open(path.join(model_dir,task+'.model'), 'rb'))
 ### Step 2b: Get fitstats
         fitstats = get_fitstats(m)
@@ -317,11 +302,8 @@ if hddm_type == 'hierarchical':
     sub_df = pd.read_csv(path.join(sub_id_dir, task+'.csv.gz'), compression='gzip')
     subids = subid_fun(sub_df)
 ### Step 4: Change keys in fitstats dic
-    #fitstats = dict((subids[key], value) for (key, value) in fitstats.items())
     fitstats = fitstats.replace({'subj_id': subids})
-### Step 5: Convert list to df
-    #fitstats = pd.DataFrame.from_dict(fitstats, orient='index').rename(index=str, columns={0:"KL"})
-### Step 6: Output df with task, subset, model type (flat or hierarchical)
+### Step 5: Output df with task, subset, model type (flat or hierarchical)
     fitstats.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_fitstats.csv'))
 
 ##############################################
