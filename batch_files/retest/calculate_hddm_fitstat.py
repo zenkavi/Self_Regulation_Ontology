@@ -26,7 +26,7 @@ samples = int(float(sys.argv[8]))
 #Test for hierarchical, flat and refit
 
 #model_dir = '/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/'
-#task = 'threebytwo'
+#task = 'shape_matching'
 #subset = 'retest_'
 #output_dir = '/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/'
 #hddm_type = 'hierarchical'
@@ -54,47 +54,58 @@ def get_fitstats(m, samples = samples, groupby=None, append_data = True, output_
     if(all(v is not None for v in [output_dir, task, subset, hddm_type])):
         ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_data.csv'))
     
-    ppc_data_append['log_rt'] = np.log(ppc_data_append.rt)
-    ppc_data_append['log_rt_sampled'] = np.log(ppc_data_append.rt_sampled)
+    #Adding 3 to avoid negatives
+    ppc_data_append['log_rt'] = np.log(ppc_data_append.rt+3)
+    ppc_data_append['log_rt_sampled'] = np.log(ppc_data_append.rt_sampled+3)
     
     #This loop should output n*condition*sample regression (e.g. 2*2*100)
     #level 0 = 'node' referring to subject
     #level 1 = 'sample' referring to correct vs incorrect (?)
     #will this work with flat?
     ppc_regression_samples = {}
-    #for (node, sample), sim_data in ppc_data_append.groupby(level=(0,1)):
-   # for (node, sample), sim_data in ppc_data_append.groupby(['node', 'sample']):    
     for (node), sim_data in ppc_data_append.groupby(['node']):        
         sub_out = {}
         model = sm.ols(formula='rt ~ rt_sampled', data=sim_data)
-        log_model = sm.ols(formula='log_rt ~ log_rt_sampled', data=sim_data)
         fitted = model.fit()
-        log_fitted = log_model.fit()
         sub_out['int_val'] = fitted.params[0]
         sub_out['int_pval'] = fitted.pvalues[0]
         sub_out['slope_val'] = fitted.params[1]
         sub_out['slope_pval'] = fitted.pvalues[1]
         sub_out['rsq'] = fitted.rsquared
         sub_out['rsq_adj'] = fitted.rsquared_adj
-        sub_out['log_int_val'] = log_fitted.params[0]
-        sub_out['log_int_pval'] = log_fitted.pvalues[0]
-        sub_out['log_slope_val'] = log_fitted.params[1]
-        sub_out['log_slope_pval'] = log_fitted.pvalues[1]
-        sub_out['log_rsq'] = log_fitted.rsquared
-        sub_out['log_rsq_adj'] = log_fitted.rsquared_adj
+        
+        try:
+            log_model = sm.ols(formula='log_rt ~ log_rt_sampled', data=sim_data)
+            log_fitted = log_model.fit()
+            sub_out['log_int_val'] = log_fitted.params[0]
+            sub_out['log_int_pval'] = log_fitted.pvalues[0]
+            sub_out['log_slope_val'] = log_fitted.params[1]
+            sub_out['log_slope_pval'] = log_fitted.pvalues[1]
+            sub_out['log_rsq'] = log_fitted.rsquared
+            sub_out['log_rsq_adj'] = log_fitted.rsquared_adj
+        except:
+            sub_out['log_int_val'] = np.nan
+            sub_out['log_int_pval'] = np.nan
+            sub_out['log_slope_val'] = np.nan
+            sub_out['log_slope_pval'] = np.nan
+            sub_out['log_rsq'] = np.nan
+            sub_out['log_rsq_adj'] = np.nan
+        
         ppc_regression_samples.update({node: sub_out})
-
+    
     #Convert sample*subject length dict to dataframe
     ppc_regression_samples = pd.DataFrame.from_dict(ppc_regression_samples, orient="index")
     
     ppc_regression_samples.reset_index(inplace=True)
-
-#Add subj_id column
-    if ppc_regression_samples['index'].str.contains("."):
+    
+    if ppc_regression_samples['index'].str.contains(".")[0]:
         ppc_regression_samples['subj_id'] = [s[s.find(".")+1:s.find(")")] for s in ppc_regression_samples['index']]
     else:
         ppc_regression_samples['subj_id'] = 0
-                       
+    
+    if(all(v is not None for v in [output_dir, task, subset, hddm_type])):
+        ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_regression_samples.csv'))
+    
     return ppc_regression_samples
 
 ##############################################
