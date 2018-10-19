@@ -25,15 +25,14 @@ samples = int(float(sys.argv[8]))
 #Test for all tasks
 #Test for hierarchical, flat and refit
 
-#model_dir = '/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/'
+#model_dir = '/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/subject_fits/'
 #task = 'shape_matching'
 #subset = 'retest_'
 #output_dir = '/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/'
-#hddm_type = 'hierarchical'
-#parallel = 'yes'
+#hddm_type = 'flat'
+#parallel = 'no'
 #sub_id_dir = '/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_03-29-2018/Individual_Measures/'
 #samples = 2
-
 
 ##############################################
 ############ HELPER FUNCTIONS ################
@@ -51,7 +50,7 @@ def get_fitstats(m, samples = samples, groupby=None, append_data = True, output_
     
     ppc_data_append.reset_index(inplace=True) 
     
-    if(all(v is not None for v in [output_dir, task, subset, hddm_type])):
+    if(all(v is not None for v in [output_dir, task, hddm_type]) and subset != 'flat'):
         ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_data.csv'))
     
     #Adding 3 to avoid negatives
@@ -98,12 +97,12 @@ def get_fitstats(m, samples = samples, groupby=None, append_data = True, output_
     
     ppc_regression_samples.reset_index(inplace=True)
     
-    if ppc_regression_samples['index'].str.contains(".")[0]:
+    if ppc_regression_samples['index'].str.contains("\\.")[0]:
         ppc_regression_samples['subj_id'] = [s[s.find(".")+1:s.find(")")] for s in ppc_regression_samples['index']]
     else:
         ppc_regression_samples['subj_id'] = 0
     
-    if(all(v is not None for v in [output_dir, task, subset, hddm_type])):
+    if(all(v is not None for v in [output_dir, task, hddm_type]) and subset != 'flat'):
         ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_regression_samples.csv'))
     
     return ppc_regression_samples
@@ -272,52 +271,65 @@ def get_subids_fun(task=None):
 
 # Case 1: fitstat for all subjects of flat models (no hierarchy)
 if hddm_type == 'flat':
-## Strategy: looping through all model files for task, subset
-    task = task+'_'
-    model_path = path.join(model_dir, task+ subset+ '*_flat.model')
+
+    ## Strategy: looping through all model files for task, subset
+    model_path = path.join(model_dir, task+'_'+ subset+ '*_flat.model')
     models_list = sorted(glob(model_path))
-    fitstats = {}
-### Step 1: Read model in for a given subject
+    fitstats = pd.DataFrame()
+
+    ### Step 1: Read model in for a given subject
     for model in models_list:
         m = pickle.load(open(model, 'rb'))
-### Step 2: Get fitstat for read in model
-        fitstat, ppc_data = get_fitstats(m)
-### Step 3: Extract sub id from file name
+        
+        ### Step 2: Get fitstat for read in model
+        fitstat = get_fitstats(m)
+        
+        ### Step 3: Extract sub id from file name
         sub_id = re.search(model_dir+task+ subset+'(.+?)_flat.model', model).group(1)
-### Step 4: Update flat fitstat dict with sub_id
-        fitstat[sub_id] = fitstat.pop(0)
-### Step 5: Add individual output to dict with all subjects
-        fitstats.update(fitstat)
-### Step 6: Convert list to df
-    fitstats = pd.DataFrame.from_dict(fitstats, orient='index').rename(index=str, columns={0:"KL"})
-### Step 7: Output df with task, subset, model type (flat or hierarchical)
+        
+        ### Step 4: Update flat fitstat dict with sub_id
+        fitstat['sub_id'] = sub_id
+        
+        ### Step 5: Add individual output to dict with all subjects
+        fitstats = fitstats.append(fitstat)
+
+    ### Step 6: Output df with task, subset, model type (flat or hierarchical)
     fitstats.to_csv(path.join(output_dir, task+subset+hddm_type+'_fitstats.csv'))
 
 
 # Case 2: fitstat for all subjects for hierarchical models
 if hddm_type == 'hierarchical':
-## Case 2a: with parallelization
+
+    ## Case 2a: with parallelization
     if parallel == 'yes':
-### Step 1a: Concatenate all model outputs from parallelization
+
+        ### Step 1a: Concatenate all model outputs from parallelization
         model_path = path.join(model_dir, task+'_parallel_output','*.model')
         loaded_models = load_parallel_models(model_path)
         m_concat = concat_models(loaded_models)
-### Step 2a: Get fitstat for all subjects from concatenated model
+
+        ### Step 2a: Get fitstat for all subjects from concatenated model
         fitstats = get_fitstats(m_concat)
-## Case 2b: without parallelization
+
+    ## Case 2b: without parallelization
     elif parallel == 'no':
-### Step 1b: Read model in
+
+        ### Step 1b: Read model in
         m = pickle.load(open(path.join(model_dir,task+'.model'), 'rb'))
-### Step 2b: Get fitstats
+
+        ### Step 2b: Get fitstats
         fitstats = get_fitstats(m)
-### Step 3: Extract sub id from correct df that was used for hddm
+
+    ### Step 3: Extract sub id from correct df that was used for hddm
     subid_fun = get_subids_fun(task)
     sub_df = pd.read_csv(path.join(sub_id_dir, task+'.csv.gz'), compression='gzip')
     subids = subid_fun(sub_df)
-### Step 4: Change keys in fitstats dic
+
+    ### Step 4: Change keys in fitstats dic
     fitstats[['subj_id']] = fitstats[['subj_id']].apply(pd.to_numeric, errors='coerce')
     fitstats = fitstats.replace({'subj_id': subids})
-### Step 5: Output df with task, subset, model type (flat or hierarchical)
+
+    ### Step 5: Output df with task, subset, model type (flat or hierarchical)
     fitstats.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_fitstats.csv'))
 
 ##############################################
