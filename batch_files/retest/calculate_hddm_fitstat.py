@@ -1,5 +1,4 @@
 from glob import glob
-#import hddm
 import inspect
 from kabuki.utils import concat_models
 import numpy as np
@@ -10,8 +9,6 @@ import pickle
 import re
 import statsmodels.formula.api as sm
 import sys
-
-#from expanalysis.experiments.ddm_utils import load_concat_models
 
 sys.path.append(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))))
 from post_pred_gen_debug import post_pred_gen
@@ -29,7 +26,7 @@ samples = int(float(sys.argv[8]))
 #Test for hierarchical, flat and refit
 
 #model_dir = '/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/'
-#task = 'adaptive_n_back'
+#task = 'threebytwo'
 #subset = 'retest_'
 #output_dir = '/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/'
 #hddm_type = 'hierarchical'
@@ -304,6 +301,7 @@ if hddm_type == 'hierarchical':
     sub_df = pd.read_csv(path.join(sub_id_dir, task+'.csv.gz'), compression='gzip')
     subids = subid_fun(sub_df)
 ### Step 4: Change keys in fitstats dic
+    fitstats[['subj_id']] = fitstats[['subj_id']].apply(pd.to_numeric, errors='coerce')
     fitstats = fitstats.replace({'subj_id': subids})
 ### Step 5: Output df with task, subset, model type (flat or hierarchical)
     fitstats.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_fitstats.csv'))
