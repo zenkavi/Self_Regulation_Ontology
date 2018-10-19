@@ -44,21 +44,27 @@ samples = int(float(sys.argv[8]))
 ##############################################
 
 # Define helper function to get fitstat
-def get_fitstats(m, samples = samples, groupby=None, append_data = True):
+def get_fitstats(m, samples = samples, groupby=None, append_data = True, output_dir = output_dir, task = task, subset = subset, hddm_type=hddm_type):
     
     #Sample from posterior predictive and generate data
     ppc_data_append = post_pred_gen(m, samples = samples, append_data = append_data, groupby=groupby)
+    
+    ppc_data_append.reset_index(inplace=True) 
+    
+    if(all(v is not None for v in [output_dir, task, subset, hddm_type])):
+        ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_data.csv'))
     
     ppc_data_append['log_rt'] = np.log(ppc_data_append.rt)
     ppc_data_append['log_rt_sampled'] = np.log(ppc_data_append.rt_sampled)
     
     #This loop should output n*condition*sample regression (e.g. 2*2*100)
     #level 0 = 'node' referring to subject
-    #level 1 = 'sample' referring to condition
+    #level 1 = 'sample' referring to correct vs incorrect (?)
     #will this work with flat?
     ppc_regression_samples = {}
     #for (node, sample), sim_data in ppc_data_append.groupby(level=(0,1)):
-    for (node, sample), sim_data in ppc_data_append.groupby(['node', 'sample']):    
+   # for (node, sample), sim_data in ppc_data_append.groupby(['node', 'sample']):    
+    for (node), sim_data in ppc_data_append.groupby(['node']):        
         sample_out = {}
         model = sm.ols(formula='rt ~ rt_sampled', data=sim_data)
         log_model = sm.ols(formula='log_rt ~ log_rt_sampled', data=sim_data)
@@ -76,7 +82,8 @@ def get_fitstats(m, samples = samples, groupby=None, append_data = True):
         sample_out['log_slope_pval'] = log_fitted.pvalues[1]
         sample_out['log_rsq'] = log_fitted.rsquared
         sample_out['log_rsq_adj'] = log_fitted.rsquared_adj
-        ppc_regression_samples.update({node+'_'+str(sample): sample_out})
+        #ppc_regression_samples.update({node+'_'+str(sample): sample_out})
+        ppc_regression_samples.update({node+'_': sample_out})
 
     #Convert sample*subject length dict to dataframe
     ppc_regression_samples = pd.DataFrame.from_dict(ppc_regression_samples, orient="index")
@@ -90,7 +97,7 @@ def get_fitstats(m, samples = samples, groupby=None, append_data = True):
     else:
         ppc_regression_samples['subj_id'] = 0
                        
-    return ppc_regression_samples, ppc_data_append
+    return ppc_regression_samples
 
 ##############################################
 ############# For Model Loading ##############
@@ -287,15 +294,13 @@ if hddm_type == 'hierarchical':
         loaded_models = load_parallel_models(model_path)
         m_concat = concat_models(loaded_models)
 ### Step 2a: Get fitstat for all subjects from concatenated model
-        fitstats, ppc_data = get_fitstats(m_concat)
-        ppc_data.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_data.csv'))
+        fitstats = get_fitstats(m_concat)
 ## Case 2b: without parallelization
     elif parallel == 'no':
 ### Step 1b: Read model in
         m = pickle.load(open(path.join(model_dir,task+'.model'), 'rb'))
 ### Step 2b: Get fitstats
-        fitstats, ppc_data = get_fitstats(m)
-        ppc_data.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_data.csv'))
+        fitstats = get_fitstats(m)
 ### Step 3: Extract sub id from correct df that was used for hddm
     subid_fun = get_subids_fun(task)
     sub_df = pd.read_csv(path.join(sub_id_dir, task+'.csv.gz'), compression='gzip')
