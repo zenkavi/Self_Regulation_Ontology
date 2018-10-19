@@ -23,7 +23,7 @@ output_dir = sys.argv[4]
 hddm_type = sys.argv[5] #(flat or hierarhical)
 parallel = sys.argv[6]
 sub_id_dir = sys.argv[7]
-samples = float(sys.argv[8])
+samples = int(float(sys.argv[8]))
 
 #Test for all tasks
 #Test for hierarchical, flat and refit
