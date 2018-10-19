@@ -23,7 +23,7 @@ output_dir = sys.argv[4]
 hddm_type = sys.argv[5] #(flat or hierarhical)
 parallel = sys.argv[6]
 sub_id_dir = sys.argv[7]
-samples = sys.argv[8]
+samples = float(sys.argv[8])
 
 #Test for all tasks
 #Test for hierarchical, flat and refit
@@ -47,7 +47,7 @@ samples = sys.argv[8]
 ##############################################
 
 # Define helper function to get fitstat
-def get_fitstats(m, samples, groupby=None, append_data = True):
+def get_fitstats(m, samples = samples, groupby=None, append_data = True):
     
     #Sample from posterior predictive and generate data
     ppc_data_append = post_pred_gen(m, samples = samples, append_data = append_data, groupby=groupby)
@@ -93,7 +93,7 @@ def get_fitstats(m, samples, groupby=None, append_data = True):
     else:
         ppc_regression_samples['subj_id'] = 0
                        
-    return(ppc_regression_samples)
+    return ppc_regression_samples, ppc_data_append
 
 ##############################################
 ############# For Model Loading ##############
@@ -268,7 +268,7 @@ if hddm_type == 'flat':
     for model in models_list:
         m = pickle.load(open(model, 'rb'))
 ### Step 2: Get fitstat for read in model
-        fitstat = get_fitstats(m)
+        fitstat, ppc_data = get_fitstats(m)
 ### Step 3: Extract sub id from file name
         sub_id = re.search(model_dir+task+ subset+'(.+?)_flat.model', model).group(1)
 ### Step 4: Update flat fitstat dict with sub_id
@@ -290,13 +290,15 @@ if hddm_type == 'hierarchical':
         loaded_models = load_parallel_models(model_path)
         m_concat = concat_models(loaded_models)
 ### Step 2a: Get fitstat for all subjects from concatenated model
-        fitstats = get_fitstats(m_concat)
+        fitstats, ppc_data = get_fitstats(m_concat)
+        ppc_data.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_data.csv'))
 ## Case 2b: without parallelization
     elif parallel == 'no':
 ### Step 1b: Read model in
         m = pickle.load(open(path.join(model_dir,task+'.model'), 'rb'))
 ### Step 2b: Get fitstats
-        fitstats = get_fitstats(m)
+        fitstats, ppc_data = get_fitstats(m)
+        ppc_data.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_data.csv'))
 ### Step 3: Extract sub id from correct df that was used for hddm
     subid_fun = get_subids_fun(task)
     sub_df = pd.read_csv(path.join(sub_id_dir, task+'.csv.gz'), compression='gzip')
