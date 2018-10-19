@@ -14,6 +14,14 @@ docker run --rm  \
 -ti sro_dataprep \
 python batch_files/helper_funcs/calculate_exp_DVs.py grit_scale_survey mturk_complete --out_dir /output
 
+# download data
+data_loc=$HOME/tmp
+expfactory_loc=$HOME/tmp/expfactory
+docker run --rm  \
+--mount type=bind,src=$data_loc,dst=/Data \
+--mount type=bind,src=$expfactory_loc/docs,dst=/expfactory_token
+-ti sro_dataprep python data_preparation/fmri_followup_download_data.py --job all
+
 # save data
 data_loc=$HOME/tmp
 output_loc=$HOME/tmp

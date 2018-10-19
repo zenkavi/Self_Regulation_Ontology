@@ -62,7 +62,8 @@ if job in ['extras', 'all']:
     # ********* Add extras to data **********************
     #**************************************************  
     #anonymize data
-    id_file = path.join('samples', 'fmri_followup_expfactory_id_conversion.json')
+    id_file = path.join(get_info('base_directory'), 'data_preparation', 
+                        'samples', 'fmri_followup_expfactory_id_conversion.json')
     convert_fmri_ids(data, id_file=id_file)
     
     # record subject completion statistics
