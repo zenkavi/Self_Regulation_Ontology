@@ -65,35 +65,33 @@ def get_fitstats(m, samples = samples, groupby=None, append_data = True, output_
     #for (node, sample), sim_data in ppc_data_append.groupby(level=(0,1)):
    # for (node, sample), sim_data in ppc_data_append.groupby(['node', 'sample']):    
     for (node), sim_data in ppc_data_append.groupby(['node']):        
-        sample_out = {}
+        sub_out = {}
         model = sm.ols(formula='rt ~ rt_sampled', data=sim_data)
         log_model = sm.ols(formula='log_rt ~ log_rt_sampled', data=sim_data)
         fitted = model.fit()
         log_fitted = log_model.fit()
-        sample_out['int_val'] = fitted.params[0]
-        sample_out['int_pval'] = fitted.pvalues[0]
-        sample_out['slope_val'] = fitted.params[1]
-        sample_out['slope_pval'] = fitted.pvalues[1]
-        sample_out['rsq'] = fitted.rsquared
-        sample_out['rsq_adj'] = fitted.rsquared_adj
-        sample_out['log_int_val'] = log_fitted.params[0]
-        sample_out['log_int_pval'] = log_fitted.pvalues[0]
-        sample_out['log_slope_val'] = log_fitted.params[1]
-        sample_out['log_slope_pval'] = log_fitted.pvalues[1]
-        sample_out['log_rsq'] = log_fitted.rsquared
-        sample_out['log_rsq_adj'] = log_fitted.rsquared_adj
-        #ppc_regression_samples.update({node+'_'+str(sample): sample_out})
-        ppc_regression_samples.update({node+'_': sample_out})
+        sub_out['int_val'] = fitted.params[0]
+        sub_out['int_pval'] = fitted.pvalues[0]
+        sub_out['slope_val'] = fitted.params[1]
+        sub_out['slope_pval'] = fitted.pvalues[1]
+        sub_out['rsq'] = fitted.rsquared
+        sub_out['rsq_adj'] = fitted.rsquared_adj
+        sub_out['log_int_val'] = log_fitted.params[0]
+        sub_out['log_int_pval'] = log_fitted.pvalues[0]
+        sub_out['log_slope_val'] = log_fitted.params[1]
+        sub_out['log_slope_pval'] = log_fitted.pvalues[1]
+        sub_out['log_rsq'] = log_fitted.rsquared
+        sub_out['log_rsq_adj'] = log_fitted.rsquared_adj
+        ppc_regression_samples.update({node: sub_out})
 
     #Convert sample*subject length dict to dataframe
     ppc_regression_samples = pd.DataFrame.from_dict(ppc_regression_samples, orient="index")
+    
+    ppc_regression_samples.reset_index(inplace=True)
 
-#Add subj_id and condition columns
-    if ppc_regression_samples.index.tolist()[0].find("(") != -1:
-        ppc_regression_samples['condition'] = [s[s.find("_")+1] for s in ppc_regression_samples.index.tolist()]
-
-    if ppc_regression_samples.index.tolist()[0].find(".") != -1:
-        ppc_regression_samples['subj_id'] = [s[s.find(".")+1:s.find(")")] for s in ppc_regression_samples.index.tolist()]
+#Add subj_id column
+    if ppc_regression_samples['index'].str.contains("."):
+        ppc_regression_samples['subj_id'] = [s[s.find(".")+1:s.find(")")] for s in ppc_regression_samples['index']]
     else:
         ppc_regression_samples['subj_id'] = 0
                        
