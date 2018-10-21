@@ -28,7 +28,7 @@ output_loc=$HOME/tmp
 docker run --rm  \
 --mount type=bind,src=$data_loc,dst=/Data \
 --mount type=bind,src=$output_loc,dst=/SRO/Data \
--ti sro_dataprep python data_preparation/mturk_save_data.py
+-ti sro_dataprep python data_preparation/save_data.py
 
 # run analysis with example data
 output_loc=$HOME/tmp 
