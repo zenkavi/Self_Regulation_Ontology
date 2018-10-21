@@ -41,7 +41,10 @@ for label in data_labels:
     except FileNotFoundError:
         print("Couldn't find %s" % label + '_data_post.pkl')
         continue
-    directory = path.join(output_dir,label.split('mturk_')[1].title() + '_' + date)
+    if 'mturk' in label:
+        directory = path.join(output_dir,label.split('mturk_')[1].title() + '_' + date)
+    else:
+        directory = path.join(output_dir,label.title() + '_' + date)
     if not path.exists(directory):
         makedirs(directory)
     try:
