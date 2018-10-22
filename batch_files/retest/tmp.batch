@@ -1,0 +1,13 @@
+#!/bin/bash
+#SBATCH --job-name=calculate_hddm_fitstat_retest_flat_local_global_letter
+#SBATCH --output=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/.out/calculate_hddm_fitstat_retest_flat_local_global_letter.job.out
+#SBATCH --error=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/.err/calculate_hddm_fitstat_retest_flat_local_global_letter.job.err
+#SBATCH -p russpold,owners,normal
+#SBATCH --time=60:00:00
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=16000
+#SBATCH --mail-type=FAIL,END
+#SBATCH --mail-user=zenkavi@stanford.edu
+source activate SRO
+python calculate_hddm_fitstat.py /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/subject_fits/ local_global_letter retest /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/ flat no /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_03-29-2018/Individual_Measures/ 500
