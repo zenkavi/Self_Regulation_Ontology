@@ -22,18 +22,6 @@ parallel = sys.argv[6]
 sub_id_dir = sys.argv[7]
 samples = int(float(sys.argv[8]))
 
-#Test for all tasks
-#Test for hierarchical, flat and refit
-
-#model_dir = '/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/subject_fits/'
-#task = 'shape_matching'
-#subset = 'retest_'
-#output_dir = '/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/'
-#hddm_type = 'flat'
-#parallel = 'no'
-#sub_id_dir = '/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_03-29-2018/Individual_Measures/'
-#samples = 2
-
 ##############################################
 ############ HELPER FUNCTIONS ################
 ##############################################
@@ -285,7 +273,7 @@ if hddm_type == 'flat':
         fitstat = get_fitstats(m)
         
         ### Step 3: Extract sub id from file name
-        sub_id = re.search(model_dir+task+ subset+'(.+?)_flat.model', model).group(1)
+        sub_id = re.search(model_dir+task+ '_'+subset+'(.+?)_flat.model', model).group(1)
         
         ### Step 4: Update flat fitstat dict with sub_id
         fitstat['sub_id'] = sub_id
@@ -294,7 +282,7 @@ if hddm_type == 'flat':
         fitstats = fitstats.append(fitstat)
 
     ### Step 6: Output df with task, subset, model type (flat or hierarchical)
-    fitstats.to_csv(path.join(output_dir, task+subset+hddm_type+'_fitstats.csv'))
+    fitstats.to_csv(path.join(output_dir, task+'_'+subset+hddm_type+'_fitstats.csv'))
 
 
 # Case 2: fitstat for all subjects for hierarchical models
@@ -331,22 +319,3 @@ if hddm_type == 'hierarchical':
 
     ### Step 5: Output df with task, subset, model type (flat or hierarchical)
     fitstats.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_fitstats.csv'))
-
-##############################################
-############### Test Commands ################
-##############################################
-
-#test
-#python calculate_hddm_fitstat.py /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_complete_output/ choice_reaction_time t1 /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/ hierarchical yes /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Complete_01-22-2018/Individual_Measures/ 20
-
-#retest
-#python calculate_hddm_fitstat.py /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/ choice_reaction_time retest /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/ hierarchical yes /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_01-23-2018/Individual_Measures/ 20
-
-#refits
-#python calculate_hddm_fitstat.py /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_refits/ choice_reaction_time refit /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/ hierarchical yes /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_01-23-2018/t1_data/Individual_Measures/ 20
-
-#test flat
-#python calculate_hddm_fitstat.py /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/subject_fits/ choice_reaction_time t1 /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/ flat no /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_01-23-2018/t1_data/Individual_Measures/ 20
-
-#retest flat
-#python calculate_hddm_fitstat.py /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_flat/subject_fits/ choice_reaction_time retest /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/ flat no /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_01-23-2018/Individual_Measures/ 20
