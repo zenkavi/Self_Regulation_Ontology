@@ -103,7 +103,15 @@ def load_parallel_models(model_path):
     loadfile = sorted(glob(model_path))
     models = []
     for l in loadfile:
+        
+        #For some reason the refit model db names are stored in path names different that where they actually are
+        #So loading the model directly doesn't work
+        #Instead I create a temporary copy of the traces.db files in the path where the model object thinks it should be
+        #Thought about loading the traces and regenerating the model but couldn't be sure if it would be the same
+        
         m = pickle.load(open(l, 'rb'))
+        
+        
         models.append(m)
     return models
 
