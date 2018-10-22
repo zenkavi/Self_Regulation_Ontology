@@ -16,6 +16,9 @@ import warnings
 from kabuki.utils import flatten
 from . import analyze
 
+sys.path.append('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/batch_files/retest/')
+from calculate_hddm_fitstat import get_dbpath
+
 class LnProb(object):
     def __init__(self, model):
         self.model = model
@@ -821,8 +824,10 @@ class Hierarchical(object):
         # Open database
         try:
             db = db_loader(dbname)
-        except (FileNotFoundError):
-            dbname = 
+        except FileNotFoundError:
+            dbname = dbname.split('/')[-1]
+            dbpath = get_dbpath()
+            db = db_loader(dbpath+dbname)
 
         # Create mcmc instance reading from the opened database
         self.mc = pm.MCMC(self.nodes_db.node, db=db, verbose=verbose)

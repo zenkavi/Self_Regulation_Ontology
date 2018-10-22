@@ -99,6 +99,11 @@ def get_fitstats(m, samples = samples, groupby=None, append_data = True, output_
 ############# For Model Loading ##############
 ##############################################
 
+def get_dbpath():
+    db_path = path.join(model_dir, task+'_parallel_output/')
+    return db_path
+
+
 def load_parallel_models(model_path):
     loadfile = sorted(glob(model_path))
     models = []
@@ -110,10 +115,8 @@ def load_parallel_models(model_path):
         #Thought about loading the traces and regenerating the model but couldn't be sure if it would be the same
         
         m = pickle.load(open(l, 'rb'))
-        
-        
         models.append(m)
-    return models
+    return models    
 
 ##############################################
 ############### Groupby lookup ################
