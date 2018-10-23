@@ -50,9 +50,9 @@ docker run --rm  \
 
 # DATA ANALYSIS SCRIPTS
 # enter into docker environment for development
-scripts_loc=~/Experiments/expfactory/Self_Regulation_Ontology/dimensional_structure
-data_loc=~/Experiments/expfactory/Self_Regulation_Ontology/Data
-results_loc=~/Experiments/expfactory/Self_Regulation_Ontology/Results
+scripts_loc=~/Experiments/Self_Regulation_Ontology/dimensional_structure
+data_loc=~/Experiments/Self_Regulation_Ontology/Data
+results_loc=~/Experiments/Self_Regulation_Ontology/Results
 
 docker run --rm  \
 --mount type=bind,src=$scripts_loc,dst=/SRO/dimensional_structure \
@@ -62,8 +62,8 @@ docker run --rm  \
 
 
 # enter into docker environment with mounted data
-data_loc=~/Experiments/expfactory/Self_Regulation_Ontology/Data
-results_loc=~/Experiments/expfactory/Self_Regulation_Ontology/Results
+data_loc=~/Experiments/Self_Regulation_Ontology/Data
+results_loc=~/Experiments/Self_Regulation_Ontology/Results
 
 docker run --rm  \
 --mount type=bind,src=$data_loc,dst=/SRO/Data \
@@ -71,8 +71,8 @@ docker run --rm  \
 -ti sro_dataprep 
 
 # generate dimensional results
-data_loc=~/Experiments/expfactory/Self_Regulation_Ontology/Data
-results_loc=~/Experiments/expfactory/Self_Regulation_Ontology/Results
+data_loc=~/Experiments/Self_Regulation_Ontology/Data
+results_loc=~/Experiments/Self_Regulation_Ontology/Results
 
 docker run --rm  \
 --mount type=bind,src=$data_loc,dst=/SRO/Data \

@@ -40,7 +40,7 @@ conda install gxx_linux-64
 conda install gfortran_linux-64
 
 ### data preparation requires install expfactory-analysis, as below:
-git+https://github.com/IanEisenberg/expfactory-analysis
+pip install git+https://github.com/IanEisenberg/expfactory-analysis
 
 ### R setup
 install:
@@ -58,6 +58,7 @@ mpath
 * pip install -r requirements2.txt
 * conda install -c r rpy2 --no-update-dependencies
 * conda install -c r r-essentials --no-update-dependencies
+* pip install git+https://github.com/IanEisenberg/expfactory-analysis
 
 ## Docker usage
 
