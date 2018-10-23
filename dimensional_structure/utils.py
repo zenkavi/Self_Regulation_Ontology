@@ -9,14 +9,15 @@ from scipy.cluster.hierarchy import leaves_list, linkage, cut_tree
 from scipy.spatial.distance import pdist, squareform
 from sklearn.decomposition import FactorAnalysis
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import (adjusted_mutual_info_score, adjusted_rand_score,
-                             r2_score, silhouette_samples, silhouette_score)
+from sklearn.metrics import (adjusted_mutual_info_score, r2_score, 
+                             silhouette_samples, silhouette_score)
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, scale
 
-from selfregulation.utils.plot_utils import dendroheatmap
-from selfregulation.utils.r_to_py_utils import psychFA
+from selfregulation.utils.data_preparation_utils import (remove_outliers, 
+                                                         transform_remove_skew)
+from selfregulation.utils.r_to_py_utils import get_attr, missForest, psychFA
 
 def set_seed(seed):
     def seeded_fun_decorator(fun):
@@ -443,8 +444,33 @@ def quantify_lower_nesting(factor_tree):
         relationships[(higher_c,lower_c)] = relationship
     return relationships
 
-
-
+# ****************************************************************************
+# Helper functions for factor analysis
+# ****************************************************************************
+def transfer_scores(data, results):
+    """ calculates factor scores in a new dataset based on a reference results object """
+    ref_data = results.data
+    EFA = results.EFA
+    c = EFA.results['num_factors']
+    loadings = EFA.get_loading(c=c)
+    # transform data
+    positive_skewed = [i.replace('.logTr', '') for i in ref_data.columns if ".logTr" in i]
+    negative_skewed = [i.replace('.ReflogTr', '') for i in ref_data.columns if ".ReflogTr" in i]
+    DVs = [i.replace('.logTr','').replace('.ReflogTr','') for i in ref_data.columns]
+    data = data.loc[:, DVs]
+    data = remove_outliers(data)
+    data = transform_remove_skew(data,
+                                 positive_skewed=positive_skewed,
+                                 negative_skewed=negative_skewed)
+    data_imputed, error = missForest(data)
+    subset = data_imputed.loc[:, loadings.index]
+    scaled_data = scale(subset)
+    # calculate scores
+    weights = get_attr(EFA.results['factor_tree_Rout_oblimin'][c], 'weights')
+    scores = pd.DataFrame(scaled_data.dot(weights),
+                          index=data_imputed.index,
+                          columns=loadings.columns)
+    return scores
 
 # ****************************************************************************
 # Helper functions for visualization of component loadings
