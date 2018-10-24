@@ -66,16 +66,11 @@ class Database(base.Database):
 
 
 def load(filename):
-    """Load a pickled database.
-
-    Return a Database instance.
-    """
-    
+    #New addition
     if not 'container' in locals() or not 'container' in globals():
         file = open(filename, 'rb')
         container = std_pickle.load(file)
         file.close()
-    
     db = Database(file.name)        
     chains = 0
     funs = set()

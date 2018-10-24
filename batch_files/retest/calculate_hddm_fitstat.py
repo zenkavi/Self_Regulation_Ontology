@@ -102,13 +102,10 @@ def get_fitstats(m, samples = samples, groupby=None, append_data = True, output_
 def load_parallel_models(model_path):
     loadfile = sorted(glob(model_path))
     models = []
-    for l in loadfile:
-        
-        #For some reason the refit model db names are stored in path names different that where they actually are
-        #So loading the model directly doesn't work
-        #Instead I create a temporary copy of the traces.db files in the path where the model object thinks it should be
-        #Thought about loading the traces and regenerating the model but couldn't be sure if it would be the same
-        
+    #When db names are stored in path names different that where they actually are loading the model directly doesn't work
+    #One could instead create a temporary copy of the traces.db files in the path where the model object thinks it should be (I did this for the refits because it took longer to find a better solution)
+    #Now instead of this I define the object 'container' which pymc.database.pickle uses to load the db. I also modify pymc.database.pickle as detailed in pickle_debug.py
+    for l in loadfile:  
         try:
             m = pickle.load(open(l, 'rb'))
         except FileNotFoundError:
