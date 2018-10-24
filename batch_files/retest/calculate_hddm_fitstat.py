@@ -109,13 +109,15 @@ def load_parallel_models(model_path):
         try:
             m = pickle.load(open(l, 'rb'))
         except FileNotFoundError:
-            db_path = path.dir(l)
+            try:
+                db_path = path.dir(l)
+            except:
+                db_path = path.dirname(l)
             tmp = l.split('/')[-1].split('.')[0].split('_')
             tmp = [tmp[0], '_traces', tmp[1], '.db']
             db_name = ''.join(tmp)
             container = pickle.load(open(db_path+db_name,'rb'))
             m = pickle.load(open(l, 'rb'))
-        
         models.append(m)
     return models    
 
@@ -279,7 +281,13 @@ if hddm_type == 'flat':
 
     ### Step 1: Read model in for a given subject
     for model in models_list:
-        m = pickle.load(open(model, 'rb'))
+        
+        try:
+            m = pickle.load(open(model, 'rb'))
+        except FileNotFoundError:
+            db_path = model.split('.')[0]+'_traces.db'
+            container = pickle.load(open(db_path,'rb'))
+            m = pickle.load(open(model, 'rb'))
         
         ### Step 2: Get fitstat for read in model
         fitstat = get_fitstats(m)
