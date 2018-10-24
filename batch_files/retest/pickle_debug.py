@@ -66,10 +66,10 @@ class Database(base.Database):
 
 
 def load(filename):
-    file = open(filename, 'rb')
-    if not 'container' in locals() or not 'container' in globals():
+    if (not 'container' in locals() or not 'container' in globals()) and (not 'file' in locals() or not 'file' in globals()):
+        file = open(filename, 'rb')
         container = std_pickle.load(file)
-    file.close()
+        file.close()
     db = Database(file.name)        
     chains = 0
     funs = set()

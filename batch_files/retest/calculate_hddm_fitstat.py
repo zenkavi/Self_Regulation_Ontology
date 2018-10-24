@@ -117,6 +117,8 @@ def load_parallel_models(model_path):
             tmp = [tmp[0], '_traces', tmp[1], '.db']
             db_name = ''.join(tmp)
             container = pickle.load(open(db_path+db_name,'rb'))
+            file = pd.DataFrame()
+            file.name = l
             m = pickle.load(open(l, 'rb'))
         models.append(m)
     return models    
@@ -287,6 +289,8 @@ if hddm_type == 'flat':
         except FileNotFoundError:
             db_path = model.split('.')[0]+'_traces.db'
             container = pickle.load(open(db_path,'rb'))
+            file = pd.DataFrame()
+            file.name = model
             m = pickle.load(open(model, 'rb'))
         
         ### Step 2: Get fitstat for read in model
