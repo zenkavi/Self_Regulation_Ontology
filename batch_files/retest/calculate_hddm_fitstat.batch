@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=calculate_hddm_fitstat_{SUBSET}_{HDDM_TYPE}_{TASK}
-#SBATCH --output=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/.out/calculate_hddm_fitstat_{SUBSET}_{HDDM_TYPE}_{TASK}.job.out
-#SBATCH --error=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/.err/calculate_hddm_fitstat_{SUBSET}_{HDDM_TYPE}_{TASK}.job.err
+#SBATCH --output={OUT_DIR}.out/calculate_hddm_fitstat_{SUBSET}_{HDDM_TYPE}_{TASK}.job.out
+#SBATCH --error={OUT_DIR}.err/calculate_hddm_fitstat_{SUBSET}_{HDDM_TYPE}_{TASK}.job.err
 #SBATCH -p russpold,owners,normal
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=4
