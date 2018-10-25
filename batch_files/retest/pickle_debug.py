@@ -66,10 +66,17 @@ class Database(base.Database):
 
 
 def load(filename):
-    if (not 'container' in locals() or not 'container' in globals()) and (not 'file' in locals() or not 'file' in globals()):
+    try:
+        global container
+        global file
+    except NameError:
+        pass
+    try:
         file = open(filename, 'rb')
         container = std_pickle.load(file)
         file.close()
+    except FileNotFoundError:
+        print('Using for global container and file.name')
     db = Database(file.name)        
     chains = 0
     funs = set()

@@ -286,7 +286,7 @@ if hddm_type == 'flat':
         
         try:
             m = pickle.load(open(model, 'rb'))
-        except FileNotFoundError:
+        except NameError:
             db_path = model.split('.')[0]+'_traces.db'
             container = pickle.load(open(db_path,'rb'))
             file = pd.DataFrame()
