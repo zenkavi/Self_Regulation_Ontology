@@ -108,7 +108,7 @@ def load_parallel_models(model_path):
     for l in loadfile:  
         try:
             m = pickle.load(open(l, 'rb'))
-        except FileNotFoundError:
+        except NameError:
             try:
                 db_path = path.dir(l)
             except:
