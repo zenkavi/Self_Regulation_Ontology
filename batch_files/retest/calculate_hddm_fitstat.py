@@ -40,7 +40,7 @@ def get_fitstats(m, samples = samples, groupby=None, append_data = True, output_
     
     if(all(v is not None for v in [output_dir, task, hddm_type]) and subset != 'flat'):
         if(samples != 500):
-            ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_data_' + samples +'.csv'))
+            ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_data_' + str(samples) +'.csv'))
         ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_data.csv'))
     
     #Adding 3 to avoid negatives
@@ -94,7 +94,7 @@ def get_fitstats(m, samples = samples, groupby=None, append_data = True, output_
     
     if(all(v is not None for v in [output_dir, task, hddm_type]) and subset != 'flat'):
         if(samples != 500):
-            ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_regression_samples_'+samples+'.csv'))
+            ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_regression_samples_'+str(samples)+'.csv'))
         ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_regression_samples.csv'))
     
     return ppc_regression_samples
@@ -311,7 +311,7 @@ if hddm_type == 'flat':
 
     ### Step 6: Output df with task, subset, model type (flat or hierarchical)
     if(samples != 500):
-        fitstats.to_csv(path.join(output_dir, task+'_'+subset+hddm_type+'_fitstats_'+samples+'.csv'))
+        fitstats.to_csv(path.join(output_dir, task+'_'+subset+hddm_type+'_fitstats_'+str(samples)+'.csv'))
     else:
         fitstats.to_csv(path.join(output_dir, task+'_'+subset+hddm_type+'_fitstats.csv'))
 
@@ -350,6 +350,6 @@ if hddm_type == 'hierarchical':
 
     ### Step 5: Output df with task, subset, model type (flat or hierarchical)
     if(samples != 500):
-        fitstats.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_fitstats'+ samples +'.csv'))
+        fitstats.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_fitstats'+ str(samples) +'.csv'))
     else:
         fitstats.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_fitstats.csv'))
