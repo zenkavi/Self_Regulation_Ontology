@@ -117,10 +117,13 @@ def load_parallel_models(model_path):
                 db_path = path.dir(l)
             except:
                 db_path = path.dirname(l)
+            
             tmp = l.split('/')[-1].split('.')[0].split('_')
-            tmp = [tmp[0], '_traces', tmp[1], '.db']
-            db_name = ''.join(tmp)
-            container = pickle.load(open(db_path+'/'+db_name,'rb'))
+            m_num = [s for s in tmp if s.isdigit()]
+            tmp.remove(m_num[0])
+            task_name = '_'.join(tmp)
+            db_name = task_name+'_traces'+ m_num[0] +'.db'
+            container = pickle.load(open(path.join(db_path,db_name),'rb'))
             file = pd.DataFrame()
             file.name = l
             m = pickle.load(open(l, 'rb'))
