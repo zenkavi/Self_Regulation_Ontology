@@ -70,13 +70,12 @@ def load(filename):
         global container
         global file
     except NameError:
-        pass
-    try:
-        file = open(filename, 'rb')
-        container = std_pickle.load(file)
-        file.close()
-    except FileNotFoundError:
-        print('Using for global container and file.name')
+        try:
+            file = open(filename, 'rb')
+            container = std_pickle.load(file)
+            file.close()
+        except FileNotFoundError:
+            print('Using for global container and file.name')
     db = Database(file.name)        
     chains = 0
     funs = set()
