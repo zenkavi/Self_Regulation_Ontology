@@ -31,7 +31,7 @@ task_scores = transfer_scores(data, results['task'])
 survey_scores = transfer_scores(data, results['survey'])
 
 # save the scores
-basename = 'factorscores_results-%s.pkl' % results_dataset
+basename = 'factorscores_results-%s.csv' % results_dataset
 task_scores.to_csv(path.join(get_info('base_directory'),
                              'Data',
                              fmri_dataset,
