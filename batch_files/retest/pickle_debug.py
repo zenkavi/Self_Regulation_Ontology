@@ -65,17 +65,19 @@ class Database(base.Database):
             pass
 
 
+import sys
+sys.path.append('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/batch_files/retest')
+from calculate_hddm_fitstat import get_dbpath
+db_path = get_dbpath()
+
 def load(filename):
     try:
-        global container
-        global file
-    except NameError:
-        try:
-            file = open(filename, 'rb')
-            container = std_pickle.load(file)
-            file.close()
-        except FileNotFoundError:
-            print('Using for global container and file.name')
+        file = open(filename, 'rb')
+    except FileNotFoundError:
+        db_name = filename.split('/')[-1]
+        file = open(sys.path.join(db_path, db_name), 'rb')
+    container = std_pickle.load(file)
+    file.close()
     db = Database(file.name)        
     chains = 0
     funs = set()

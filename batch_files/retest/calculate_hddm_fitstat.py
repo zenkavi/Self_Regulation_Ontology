@@ -1,3 +1,14 @@
+import sys
+
+model_dir = sys.argv[1]
+task = sys.argv[2]
+subset = sys.argv[3] +'_'
+output_dir = sys.argv[4]
+hddm_type = sys.argv[5] #(flat or hierarhical)
+parallel = sys.argv[6]
+sub_id_dir = sys.argv[7]
+samples = int(float(sys.argv[8]))
+
 from glob import glob
 import inspect
 from kabuki.utils import concat_models
@@ -8,19 +19,11 @@ import pandas as pd
 import pickle
 import re
 import statsmodels.formula.api as sm
-import sys
+
 
 sys.path.append(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))))
 from post_pred_gen_debug import post_pred_gen
 
-model_dir = sys.argv[1]
-task = sys.argv[2]
-subset = sys.argv[3] +'_'
-output_dir = sys.argv[4]
-hddm_type = sys.argv[5] #(flat or hierarhical)
-parallel = sys.argv[6]
-sub_id_dir = sys.argv[7]
-samples = int(float(sys.argv[8]))
 
 ##############################################
 ############ HELPER FUNCTIONS ################
@@ -103,31 +106,38 @@ def get_fitstats(m, samples = samples, groupby=None, append_data = True, output_
 ############# For Model Loading ##############
 ##############################################
 
+#When db names are stored in path names different that where they actually are loading the model directly doesn't work
+    #One could instead create a temporary copy of the traces.db files in the path where the model object thinks it should be (I did this for the refits because it took longer to find a better solution)
+    #Now instead of this I define the object 'container' which pymc.database.pickle uses to load the db. I also modify pymc.database.pickle as detailed in pickle_debug.py
+
+def get_dbpath():
+    if model_dir is None or task is None:
+        print('Assigning default values for model_dir and task')
+        model_dir = '/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_complete_output/'
+        task = 'test'
+
+    model_path = path.join(model_dir, task+'_parallel_output')
+    
+    return model_path
+
 def load_parallel_models(model_path):
     loadfile = sorted(glob(model_path))
     models = []
-    #When db names are stored in path names different that where they actually are loading the model directly doesn't work
-    #One could instead create a temporary copy of the traces.db files in the path where the model object thinks it should be (I did this for the refits because it took longer to find a better solution)
-    #Now instead of this I define the object 'container' which pymc.database.pickle uses to load the db. I also modify pymc.database.pickle as detailed in pickle_debug.py
     for l in loadfile:
-        try:
-            m = pickle.load(open(l, 'rb'))
-        except NameError:
-            try:
-                db_path = path.dir(l)
-            except:
-                db_path = path.dirname(l)
-            
-            tmp = l.split('/')[-1].split('.')[0].split('_')
-            m_num = [s for s in tmp if s.isdigit()]
-            tmp.remove(m_num[0])
-            task_name = '_'.join(tmp)
-            db_name = task_name+'_traces'+ m_num[0] +'.db'
-            container = pickle.load(open(path.join(db_path,db_name),'rb'))
-            file = pd.DataFrame()
-            file.name = l
-            m = pickle.load(open(l, 'rb'))
+        db_path = path.dirname(l)    
+        tmp = l.split('/')[-1].split('.')[0].split('_')
+        m_num = [s for s in tmp if s.isdigit()]
+        tmp.remove(m_num[0])
+        task_name = '_'.join(tmp)
+        db_name = task_name+'_traces'+ m_num[0] +'.db'
+        #container = pickle.load(open(path.join(db_path,db_name),'rb'))
+        #file = pd.DataFrame()
+        #file.name = l
+        fn = path.join(db_path,db_name)
+        m = pickle.load(open(l, 'rb'))
         models.append(m)
+        #del file, container, fn
+        del fn
     return models
 
 ##############################################
