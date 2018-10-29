@@ -32,27 +32,27 @@ samples = int(float(sys.argv[8]))
 
 # Define helper function to get fitstat
 def get_fitstats(m, samples = samples, groupby=None, append_data = True, output_dir = output_dir, task = task, subset = subset, hddm_type=hddm_type):
-    
+
     #Sample from posterior predictive and generate data
     ppc_data_append = post_pred_gen(m, samples = samples, append_data = append_data, groupby=groupby)
-    
-    ppc_data_append.reset_index(inplace=True) 
-    
+
+    ppc_data_append.reset_index(inplace=True)
+
     if(all(v is not None for v in [output_dir, task, hddm_type]) and subset != 'flat'):
         if(samples != 500):
             ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_data_' + str(samples) +'.csv'))
         ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_data.csv'))
-    
+
     #Adding 3 to avoid negatives
     ppc_data_append['log_rt'] = np.log(ppc_data_append.rt+3)
     ppc_data_append['log_rt_sampled'] = np.log(ppc_data_append.rt_sampled+3)
-    
+
     #This loop should output n*condition*sample regression (e.g. 2*2*100)
     #level 0 = 'node' referring to subject
     #level 1 = 'sample' referring to correct vs incorrect (?)
     #will this work with flat?
     ppc_regression_samples = {}
-    for (node), sim_data in ppc_data_append.groupby(['node']):        
+    for (node), sim_data in ppc_data_append.groupby(['node']):
         sub_out = {}
         model = sm.ols(formula='rt ~ rt_sampled', data=sim_data)
         fitted = model.fit()
@@ -62,7 +62,7 @@ def get_fitstats(m, samples = samples, groupby=None, append_data = True, output_
         sub_out['slope_pval'] = fitted.pvalues[1]
         sub_out['rsq'] = fitted.rsquared
         sub_out['rsq_adj'] = fitted.rsquared_adj
-        
+
         try:
             log_model = sm.ols(formula='log_rt ~ log_rt_sampled', data=sim_data)
             log_fitted = log_model.fit()
@@ -79,24 +79,24 @@ def get_fitstats(m, samples = samples, groupby=None, append_data = True, output_
             sub_out['log_slope_pval'] = np.nan
             sub_out['log_rsq'] = np.nan
             sub_out['log_rsq_adj'] = np.nan
-        
+
         ppc_regression_samples.update({node: sub_out})
-    
+
     #Convert sample*subject length dict to dataframe
     ppc_regression_samples = pd.DataFrame.from_dict(ppc_regression_samples, orient="index")
-    
+
     ppc_regression_samples.reset_index(inplace=True)
-    
+
     if ppc_regression_samples['index'].str.contains("\\.")[0]:
         ppc_regression_samples['subj_id'] = [s[s.find(".")+1:s.find(")")] for s in ppc_regression_samples['index']]
     else:
         ppc_regression_samples['subj_id'] = 0
-    
+
     if(all(v is not None for v in [output_dir, task, hddm_type]) and subset != 'flat'):
         if(samples != 500):
             ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_regression_samples_'+str(samples)+'.csv'))
         ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_regression_samples.csv'))
-    
+
     return ppc_regression_samples
 
 ##############################################
@@ -109,7 +109,7 @@ def load_parallel_models(model_path):
     #When db names are stored in path names different that where they actually are loading the model directly doesn't work
     #One could instead create a temporary copy of the traces.db files in the path where the model object thinks it should be (I did this for the refits because it took longer to find a better solution)
     #Now instead of this I define the object 'container' which pymc.database.pickle uses to load the db. I also modify pymc.database.pickle as detailed in pickle_debug.py
-    for l in loadfile:  
+    for l in loadfile:
         try:
             m = pickle.load(open(l, 'rb'))
         except NameError:
@@ -125,7 +125,7 @@ def load_parallel_models(model_path):
             file.name = l
             m = pickle.load(open(l, 'rb'))
         models.append(m)
-    return models    
+    return models
 
 ##############################################
 ############### Groupby lookup ################
@@ -134,7 +134,7 @@ def load_parallel_models(model_path):
 def get_groupby_array(task=None):
     groupby_array_dict = \
     {
-        'adaptive_n_back': None, 
+        'adaptive_n_back': None,
         'attention_network_task': ['flanker_type', 'cue'],
         'choice_reaction_time': None,
         'directed_forgetting': ['probe_type'],
@@ -161,7 +161,7 @@ def get_groupby_array(task=None):
 def get_hddm_subids(df):
     # set up data
     data = (df.loc[:,'rt']/1000).astype(float).to_frame()
-    # add subject ids 
+    # add subject ids
     data.insert(0,'subj_idx', df['worker_id'])
     # remove missed responses and extremely short response
     data = data.query('rt > .05')
@@ -234,7 +234,7 @@ def SS_subids(df):
     return subids
 
 def threebytwo_subids(df):
-    df = df.copy()  
+    df = df.copy()
     df.loc[:,'cue_switch_binary'] = df.cue_switch.map(lambda x: ['cue_stay','cue_switch'][x!='stay'])
     df.loc[:,'task_switch_binary'] = df.task_switch.map(lambda x: ['task_stay','task_switch'][x!='stay'])
     subids = get_hddm_subids(df)
@@ -255,16 +255,16 @@ def get_subids_fun(task=None):
         'attention_network_task': lambda df: get_hddm_subids(df),
         'choice_reaction_time': lambda df: get_hddm_subids(df),
         'directed_forgetting': lambda df: directed_subids(df),
-        'dot_pattern_expectancy': lambda df: DPX_subids(df), 
-                                                      
+        'dot_pattern_expectancy': lambda df: DPX_subids(df),
+
         'local_global_letter': lambda df: get_hddm_subids(df),
         'motor_selective_stop_signal': lambda df: motor_SS_subids(df),
         'recent_probes': lambda df: recent_subids(df),
-        'shape_matching': lambda df: shape_matching_subids(df), 
-        'simon': lambda df: get_hddm_subids(df), 
+        'shape_matching': lambda df: shape_matching_subids(df),
+        'simon': lambda df: get_hddm_subids(df),
         'stim_selective_stop_signal': lambda df: stim_SS_subids(df),
         'stop_signal': lambda df: SS_subids(df),
-        'stroop': lambda df: get_hddm_subids(df), 
+        'stroop': lambda df: get_hddm_subids(df),
         'threebytwo': lambda df: threebytwo_subids(df),
         'twobytwo': lambda df: twobytwo_subids(df)
     }
@@ -287,7 +287,7 @@ if hddm_type == 'flat':
 
     ### Step 1: Read model in for a given subject
     for model in models_list:
-        
+
         try:
             m = pickle.load(open(model, 'rb'))
         except NameError:
@@ -296,16 +296,16 @@ if hddm_type == 'flat':
             file = pd.DataFrame()
             file.name = model
             m = pickle.load(open(model, 'rb'))
-        
+
         ### Step 2: Get fitstat for read in model
         fitstat = get_fitstats(m)
-        
+
         ### Step 3: Extract sub id from file name
         sub_id = re.search(model_dir+task+ '_'+subset+'(.+?)_flat.model', model).group(1)
-        
+
         ### Step 4: Update flat fitstat dict with sub_id
         fitstat['sub_id'] = sub_id
-        
+
         ### Step 5: Add individual output to dict with all subjects
         fitstats = fitstats.append(fitstat)
 
@@ -350,6 +350,6 @@ if hddm_type == 'hierarchical':
 
     ### Step 5: Output df with task, subset, model type (flat or hierarchical)
     if(samples != 500):
-        fitstats.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_fitstats'+ str(samples) +'.csv'))
+        fitstats.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_fitstats_'+ str(samples) +'.csv'))
     else:
         fitstats.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_fitstats.csv'))
