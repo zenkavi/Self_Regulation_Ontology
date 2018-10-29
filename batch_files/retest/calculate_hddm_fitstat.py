@@ -110,16 +110,6 @@ def get_fitstats(m, samples = samples, groupby=None, append_data = True, output_
     #One could instead create a temporary copy of the traces.db files in the path where the model object thinks it should be (I did this for the refits because it took longer to find a better solution)
     #Now instead of this I define the object 'container' which pymc.database.pickle uses to load the db. I also modify pymc.database.pickle as detailed in pickle_debug.py
 
-def get_dbpath():
-    if model_dir is None or task is None:
-        print('Assigning default values for model_dir and task')
-        model_dir = '/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_complete_output/'
-        task = 'test'
-
-    model_path = path.join(model_dir, task+'_parallel_output')
-    
-    return model_path
-
 def load_parallel_models(model_path):
     loadfile = sorted(glob(model_path))
     models = []

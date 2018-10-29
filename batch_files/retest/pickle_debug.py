@@ -67,7 +67,7 @@ class Database(base.Database):
 
 import sys
 sys.path.append('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/batch_files/retest')
-from calculate_hddm_fitstat import get_dbpath
+import get_dbpath
 db_path = get_dbpath()
 
 def load(filename):
