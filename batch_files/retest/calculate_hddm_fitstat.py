@@ -120,7 +120,7 @@ def load_parallel_models(model_path):
             tmp = l.split('/')[-1].split('.')[0].split('_')
             tmp = [tmp[0], '_traces', tmp[1], '.db']
             db_name = ''.join(tmp)
-            container = pickle.load(open(db_path+db_name,'rb'))
+            container = pickle.load(open(db_path+'/'+db_name,'rb'))
             file = pd.DataFrame()
             file.name = l
             m = pickle.load(open(l, 'rb'))
