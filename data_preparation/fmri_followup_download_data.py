@@ -6,7 +6,8 @@ from expanalysis.results import get_filters
 from os import path
 import pandas as pd
 from selfregulation.utils.data_preparation_utils import calc_trial_order, \
-    convert_date, convert_fmri_ids, download_data, get_bonuses, get_fmri_pay
+    convert_date, convert_fmri_ids, download_data, get_bonuses, get_fmri_pay, \
+    quality_check_correction
 from selfregulation.utils.utils import get_info
 
 parser = argparse.ArgumentParser(description='fMRI Analysis Entrypoint Script.')
@@ -97,4 +98,6 @@ if job in ['post', 'all']:
     #************************************************** 
     
     post_process_data(data)
+    # correct for bugged stop signal quality correction
+    quality_check_correction(data)
     data.to_pickle(path.join(data_dir,'fmri_followup_data_post.pkl'))

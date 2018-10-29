@@ -6,6 +6,8 @@ imbalanced-learn>=0.3.0
 ipdb
 IPython>=6.2.1
 Jinja2>=2.9.6
+joblib>=0.12.5
+lmfit>=0.9.11
 marshmallow>=3.0.0b4
 matplotlib>=2.1.0
 networkx>=2.0
