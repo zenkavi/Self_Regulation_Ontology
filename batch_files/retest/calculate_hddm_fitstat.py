@@ -1,4 +1,5 @@
 import sys
+from os import path
 
 model_dir = sys.argv[1]
 task = sys.argv[2]
@@ -14,7 +15,6 @@ import inspect
 from kabuki.utils import concat_models
 import numpy as np
 import os
-from os import path
 import pandas as pd
 import pickle
 import re
