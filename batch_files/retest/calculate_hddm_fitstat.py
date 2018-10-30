@@ -1,8 +1,11 @@
 import sys
 from os import path
+import os
 
 model_dir = sys.argv[1]
+os.environ['MODEL_DIR'] = model_dir
 task = sys.argv[2]
+os.environ['TASK'] = task
 subset = sys.argv[3] +'_'
 output_dir = sys.argv[4]
 hddm_type = sys.argv[5] #(flat or hierarhical)
@@ -14,7 +17,6 @@ from glob import glob
 import inspect
 from kabuki.utils import concat_models
 import numpy as np
-import os
 import pandas as pd
 import pickle
 import re
@@ -114,20 +116,20 @@ def load_parallel_models(model_path):
     loadfile = sorted(glob(model_path))
     models = []
     for l in loadfile:
-        db_path = path.dirname(l)    
-        tmp = l.split('/')[-1].split('.')[0].split('_')
-        m_num = [s for s in tmp if s.isdigit()]
-        tmp.remove(m_num[0])
-        task_name = '_'.join(tmp)
-        db_name = task_name+'_traces'+ m_num[0] +'.db'
+        #db_path = path.dirname(l)    
+        #tmp = l.split('/')[-1].split('.')[0].split('_')
+        #m_num = [s for s in tmp if s.isdigit()]
+        #tmp.remove(m_num[0])
+        #task_name = '_'.join(tmp)
+        #db_name = task_name+'_traces'+ m_num[0] +'.db'
         #container = pickle.load(open(path.join(db_path,db_name),'rb'))
         #file = pd.DataFrame()
         #file.name = l
-        fn = path.join(db_path,db_name)
+        #fn = path.join(db_path,db_name)
         m = pickle.load(open(l, 'rb'))
         models.append(m)
         #del file, container, fn
-        del fn
+        #del fn
     return models
 
 ##############################################
