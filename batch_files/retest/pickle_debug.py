@@ -68,7 +68,7 @@ class Database(base.Database):
 import sys
 from os import path
 sys.path.append('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/batch_files/retest')
-import get_dbpath
+from get_dbpath import get_dbpath
 
 def load(filename):
     try:

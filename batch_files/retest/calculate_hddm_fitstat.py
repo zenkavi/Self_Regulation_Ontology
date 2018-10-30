@@ -21,7 +21,6 @@ import pandas as pd
 import pickle
 import re
 import statsmodels.formula.api as sm
-
 sys.path.append(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))))
 from post_pred_gen_debug import post_pred_gen
 
@@ -115,20 +114,8 @@ def load_parallel_models(model_path):
     loadfile = sorted(glob(model_path))
     models = []
     for l in loadfile:
-        #db_path = path.dirname(l)    
-        #tmp = l.split('/')[-1].split('.')[0].split('_')
-        #m_num = [s for s in tmp if s.isdigit()]
-        #tmp.remove(m_num[0])
-        #task_name = '_'.join(tmp)
-        #db_name = task_name+'_traces'+ m_num[0] +'.db'
-        #container = pickle.load(open(path.join(db_path,db_name),'rb'))
-        #file = pd.DataFrame()
-        #file.name = l
-        #fn = path.join(db_path,db_name)
         m = pickle.load(open(l, 'rb'))
         models.append(m)
-        #del file, container, fn
-        #del fn
     return models
 
 ##############################################
