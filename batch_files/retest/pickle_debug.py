@@ -66,6 +66,7 @@ class Database(base.Database):
 
 
 import sys
+from os import path
 sys.path.append('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/batch_files/retest')
 import get_dbpath
 
@@ -75,7 +76,7 @@ def load(filename):
     except FileNotFoundError:
         db_name = filename.split('/')[-1]
         db_path = get_dbpath()
-        file = open(sys.path.join(db_path, db_name), 'rb')
+        file = open(path.join(db_path, db_name), 'rb')
     container = std_pickle.load(file)
     file.close()
     db = Database(file.name)        

@@ -22,7 +22,6 @@ import pickle
 import re
 import statsmodels.formula.api as sm
 
-
 sys.path.append(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))))
 from post_pred_gen_debug import post_pred_gen
 
