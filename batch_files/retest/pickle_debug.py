@@ -68,13 +68,13 @@ class Database(base.Database):
 import sys
 sys.path.append('/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/batch_files/retest')
 import get_dbpath
-db_path = get_dbpath()
 
 def load(filename):
     try:
         file = open(filename, 'rb')
     except FileNotFoundError:
         db_name = filename.split('/')[-1]
+        db_path = get_dbpath()
         file = open(sys.path.join(db_path, db_name), 'rb')
     container = std_pickle.load(file)
     file.close()
