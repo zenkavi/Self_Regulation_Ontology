@@ -8,7 +8,7 @@ output_loc = '/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontol
 
 for subset in ['mturk_complete', 'mturk_retest']:
     print('*'*79)
-    print('Extrracting Subset %s' % subset)
+    print('Extracting Subset %s' % subset)
     print('*'*79)
     DVs = pandas.DataFrame()
     valence = pandas.DataFrame()

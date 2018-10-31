@@ -14,13 +14,21 @@ docker run --rm  \
 -ti sro_dataprep \
 python batch_files/helper_funcs/calculate_exp_DVs.py grit_scale_survey mturk_complete --out_dir /output
 
+# download data
+data_loc=$HOME/tmp
+expfactory_loc=$HOME/tmp/expfactory
+docker run --rm  \
+--mount type=bind,src=$data_loc,dst=/Data \
+--mount type=bind,src=$expfactory_loc/docs,dst=/expfactory_token
+-ti sro_dataprep python data_preparation/fmri_followup_download_data.py --job all
+
 # save data
 data_loc=$HOME/tmp
 output_loc=$HOME/tmp
 docker run --rm  \
 --mount type=bind,src=$data_loc,dst=/Data \
 --mount type=bind,src=$output_loc,dst=/SRO/Data \
--ti sro_dataprep python data_preparation/mturk_save_data.py
+-ti sro_dataprep python data_preparation/save_data.py
 
 # run analysis with example data
 output_loc=$HOME/tmp 
@@ -42,9 +50,9 @@ docker run --rm  \
 
 # DATA ANALYSIS SCRIPTS
 # enter into docker environment for development
-scripts_loc=~/Experiments/expfactory/Self_Regulation_Ontology/dimensional_structure
-data_loc=~/Experiments/expfactory/Self_Regulation_Ontology/Data
-results_loc=~/Experiments/expfactory/Self_Regulation_Ontology/Results
+scripts_loc=~/Experiments/Self_Regulation_Ontology/dimensional_structure
+data_loc=~/Experiments/Self_Regulation_Ontology/Data
+results_loc=~/Experiments/Self_Regulation_Ontology/Results
 
 docker run --rm  \
 --mount type=bind,src=$scripts_loc,dst=/SRO/dimensional_structure \
@@ -54,8 +62,8 @@ docker run --rm  \
 
 
 # enter into docker environment with mounted data
-data_loc=~/Experiments/expfactory/Self_Regulation_Ontology/Data
-results_loc=~/Experiments/expfactory/Self_Regulation_Ontology/Results
+data_loc=~/Experiments/Self_Regulation_Ontology/Data
+results_loc=~/Experiments/Self_Regulation_Ontology/Results
 
 docker run --rm  \
 --mount type=bind,src=$data_loc,dst=/SRO/Data \
@@ -63,8 +71,8 @@ docker run --rm  \
 -ti sro_dataprep 
 
 # generate dimensional results
-data_loc=~/Experiments/expfactory/Self_Regulation_Ontology/Data
-results_loc=~/Experiments/expfactory/Self_Regulation_Ontology/Results
+data_loc=~/Experiments/Self_Regulation_Ontology/Data
+results_loc=~/Experiments/Self_Regulation_Ontology/Results
 
 docker run --rm  \
 --mount type=bind,src=$data_loc,dst=/SRO/Data \

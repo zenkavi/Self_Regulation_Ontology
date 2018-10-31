@@ -21,6 +21,6 @@ output_loc=../Data/
 reference_loc=../references
 
 singularity exec -B ${data_loc}:/Data -B ${output_loc}:/SRO/Data -B ${reference_loc}:/SRO/references ${singularity_loc} \
-    python /SRO/data_preparation/fmri_followup_save_data.py
+    python /SRO/data_preparation/save_data.py --labels fmri_followup
 
 
