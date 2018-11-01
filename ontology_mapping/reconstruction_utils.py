@@ -17,7 +17,7 @@ def reorder_FA(ref_FA, new_FA):
     new_FA = new_FA.loc[:,corr.idxmax()]
     new_FA.columns = ref_FA.columns
     # if the correlation is low, the factors are completely off
-    if corr.max() < .9:
+    if corr.max().min() < .9:
         return None
     else:
         return new_FA
@@ -223,11 +223,12 @@ def get_reconstruction_results(results, measure_list, pop_sizes=(100,200),
             if estimated is None:
                 break
             reconstruction_results[pop_size] = [estimated, full]
-        true = loadings.loc[set(full['var'])]
-        true.loc[:,'var'] = true.index
-        reconstruction_results['true'] = true
-        organized = organize_reconstruction(reconstruction_results, scoring_funs=scoring_funs)
-        out[measure.lstrip('^')] = organized  
+        if len(reconstruction_results) > 0:
+            true = loadings.loc[set(full['var'])]
+            true.loc[:,'var'] = true.index
+            reconstruction_results['true'] = true
+            organized = organize_reconstruction(reconstruction_results, scoring_funs=scoring_funs)
+            out[measure.lstrip('^')] = organized  
     return out
     
 # other evaluations

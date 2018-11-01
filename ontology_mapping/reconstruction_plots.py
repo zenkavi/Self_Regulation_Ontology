@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+import scipy
 from sklearn.manifold import MDS, TSNE
 from sklearn.decomposition import PCA
 
@@ -31,11 +32,18 @@ def plot_factor_reconstructions(reconstructions, title=None, size=12,
             factor = str(factor)
             ax = axes[i][j]
             # plot scatter
-            ax.scatter(reconstruction.loc[:,factor+'_GT'],
-                       reconstruction.loc[:,factor],
+            means = reconstruction.groupby('var').mean()
+            std = reconstruction.groupby('var').std()
+            ax.errorbar(means.loc[:,factor+'_GT'],
+                       means.loc[:,factor],
+                       yerr=std[factor],
                        color=colors[j],
-                       s=size*1.5, alpha=.75,
-                       edgecolors='white')
+                       linestyle='',
+                       marker='o',
+                       markersize=size/3,
+                       markeredgecolor='white',
+                       markeredgewidth=size/15,
+                       linewidth=size/10)
             # calculate regression slope
             if plot_regression:
                 slope, intercept, r_value, p_value, std_err = \
@@ -43,10 +51,12 @@ def plot_factor_reconstructions(reconstructions, title=None, size=12,
                                             y=reconstruction[factor])
                 xlims = ax.get_xlim()
                 new_x = np.arange(xlims[0], xlims[1],(xlims[1]-xlims[0])/250.)
-                ax.plot(new_x, intercept + slope *  new_x, color=colors[j], linestyle='-', lw = 2.5)
+                y = intercept + slope *  new_x
+                ax.plot(new_x, y, color=colors[j], 
+                        linestyle='-', lw = size/4, zorder=5)
             # plot diagonal
             if plot_diagonal:
-                ax.plot(ax.get_xlim(), ax.get_ylim(), ls="--", c=".5", zorder=2)
+                ax.plot(ax.get_xlim(), ax.get_ylim(), ls="--", c=".5", zorder=10)
             # labels and ticks
             ax.tick_params(axis='both', labelleft=False, labelbottom=False, bottom=False, left=False)
             if j==(len(pop_sizes)-1) and i==0:
