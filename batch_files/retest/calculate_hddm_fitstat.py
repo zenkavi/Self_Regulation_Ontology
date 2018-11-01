@@ -7,9 +7,12 @@ os.environ['MODEL_DIR'] = model_dir
 task = sys.argv[2]
 os.environ['TASK'] = task
 subset = sys.argv[3] +'_'
+os.environ['SUBSET'] = subset
 output_dir = sys.argv[4]
 hddm_type = sys.argv[5] #(flat or hierarhical)
+os.environ['HDDM_TYPE'] = hddm_type
 parallel = sys.argv[6]
+os.environ['PARALLEL'] = parallel
 sub_id_dir = sys.argv[7]
 samples = int(float(sys.argv[8]))
 
