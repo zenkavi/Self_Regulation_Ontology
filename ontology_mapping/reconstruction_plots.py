@@ -9,8 +9,8 @@ from dimensional_structure.utils import hierarchical_cluster
 from selfregulation.utils.plot_utils import beautify_legend, format_num, save_figure
 
 def plot_factor_reconstructions(reconstructions, title=None, size=12, 
-                                filename=None, dpi=300, max_rep=100,
-                                plot_regression=True, plot_diagonal=False):
+                                plot_regression=True, plot_diagonal=False,
+                                filename=None, dpi=300):
     # construct plotting dataframe
     c = reconstructions.columns.get_loc('var') 
     ground_truth = reconstructions.query('label=="true"')
@@ -40,7 +40,7 @@ def plot_factor_reconstructions(reconstructions, title=None, size=12,
                        color=colors[j],
                        linestyle='',
                        marker='o',
-                       markersize=size/3,
+                       markersize=size/2,
                        markeredgecolor='white',
                        markeredgewidth=size/15,
                        linewidth=size/10)
@@ -56,16 +56,19 @@ def plot_factor_reconstructions(reconstructions, title=None, size=12,
                         linestyle='-', lw = size/4, zorder=5)
             # plot diagonal
             if plot_diagonal:
-                ax.plot(ax.get_xlim(), ax.get_ylim(), ls="--", c=".5", zorder=10)
+                xlim = ax.get_xlim()
+                ylim = ax.get_ylim()
+                ax.plot(xlim, ylim, ls="-", c=".5", zorder=-1)
+                ax.set_xlim(xlim); ax.set_ylim(ylim)
             # labels and ticks
             ax.tick_params(axis='both', labelleft=False, labelbottom=False, bottom=False, left=False)
             if j==(len(pop_sizes)-1) and i==0:
                 ax.set_ylabel('Reconstruction', fontsize=size*1.5)
                 ax.set_xlabel('Ground Truth', fontsize=size*1.5)
             if j==0:
-                ax.set_ylabel(factor, fontsize=size*2)
+                ax.set_ylabel(factor, fontsize=size*1.9)
             if i==(c-1):
-                ax.set_xlabel(format_num(pop_size), fontsize=size*2, color=colors[j])
+                ax.set_xlabel(format_num(pop_size), fontsize=size*1.9, color=colors[j])
             # indicate the correlation
             corr = reconstruction.corr().loc[factor, factor+'_GT']
             s = '$\it{r}=%s$' % format_num(corr)
