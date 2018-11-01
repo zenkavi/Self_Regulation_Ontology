@@ -8,16 +8,16 @@ from dimensional_structure.utils import hierarchical_cluster
 from selfregulation.utils.plot_utils import beautify_legend, format_num, save_figure
 
 def plot_factor_reconstructions(reconstructions, title=None, size=12, 
-                                filename=None, dpi=300):
+                                filename=None, dpi=300, max_rep=100,
+                                plot_regression=True, plot_diagonal=False):
     # construct plotting dataframe
     c = reconstructions.columns.get_loc('var') 
     ground_truth = reconstructions.query('label=="true"')
     ground_truth.index = ground_truth['var']
     ground_truth = ground_truth.iloc[:, :c]
     ground_truth.columns = [str(c) + '_GT' for c in ground_truth.columns]
-    plot_df = reconstructions.query('label=="partial_reconstruct"') \
-                .groupby(['pop_size', 'var']).mean() \
-                .join(ground_truth)
+    
+    plot_df = reconstructions.join(ground_truth, on='var')
     pop_sizes = sorted(reconstructions.pop_size.dropna().unique())
     # plot
     sns.set_context('talk')
@@ -30,11 +30,24 @@ def plot_factor_reconstructions(reconstructions, title=None, size=12,
         for i, factor in enumerate(plot_df.columns[:c]):
             factor = str(factor)
             ax = axes[i][j]
+            # plot scatter
             ax.scatter(reconstruction.loc[:,factor+'_GT'],
                        reconstruction.loc[:,factor],
                        color=colors[j],
-                      s=size*1.5, alpha=.5)
-            ax.plot(ax.get_xlim(), ax.get_ylim(), ls="--", c=".3", zorder=-1)
+                       s=size*1.5, alpha=.75,
+                       edgecolors='white')
+            # calculate regression slope
+            if plot_regression:
+                slope, intercept, r_value, p_value, std_err = \
+                     scipy.stats.linregress(x=reconstruction[factor+'_GT'],
+                                            y=reconstruction[factor])
+                xlims = ax.get_xlim()
+                new_x = np.arange(xlims[0], xlims[1],(xlims[1]-xlims[0])/250.)
+                ax.plot(new_x, intercept + slope *  new_x, color=colors[j], linestyle='-', lw = 2.5)
+            # plot diagonal
+            if plot_diagonal:
+                ax.plot(ax.get_xlim(), ax.get_ylim(), ls="--", c=".5", zorder=2)
+            # labels and ticks
             ax.tick_params(axis='both', labelleft=False, labelbottom=False, bottom=False, left=False)
             if j==(len(pop_sizes)-1) and i==0:
                 ax.set_ylabel('Reconstruction', fontsize=size*1.5)
