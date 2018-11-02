@@ -83,10 +83,12 @@ def post_pred_gen(model, groupby=None, samples=500, append_data=False, progress_
         #New addition: Convert results dict keys to single items for regression models with different conditions
     if list(results.keys())[0] != 'wfpt':
         if isinstance(list(results.keys())[0], str)==False:
-            results={ '('+",".join(map(str,x))+')': results[x] for x in results.keys() }
+            #results={ '('+",".join(map(str,x))+')': results[x] for x in results.keys() }
+            results={ ",".join(map(str,x)): results[x] for x in results.keys() }
             results={key.replace('.0','') : value for key, value in results.items()}
         else:
-            results={ '('+x+')': results[x] for x in results.keys() }
+            #results={ '('+x+')': results[x] for x in results.keys() }
+            results={x: results[x] for x in results.keys() }
 
     if progress_bar:
         bar_iter += 1
