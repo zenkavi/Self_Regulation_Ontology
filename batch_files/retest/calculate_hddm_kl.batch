@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=calculate_hddm_kl_{PPC_DATA_DIR}
-#SBATCH --output={PPC_DATA_DIR}.out/calculate_hddm_kl_{PPC_DATA_DIR}.job.out
-#SBATCH --error={PPC_DATA_DIR}.err/calculate_hddm_kl_{PPC_DATA_DIR}.job.err
+#SBATCH --output=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/.out/calculate_hddm_kl_{PPC_DATA_DIR}.job.out
+#SBATCH --error=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/.err/calculate_hddm_kl_{PPC_DATA_DIR}.job.err
 #SBATCH -p russpold,owners,normal
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=4
