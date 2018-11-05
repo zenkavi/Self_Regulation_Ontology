@@ -15,7 +15,6 @@ parallel = sys.argv[6]
 os.environ['PARALLEL'] = parallel
 sub_id_dir = sys.argv[7]
 samples = int(float(sys.argv[8]))
-
 load_ppc = sys.argv[9]
 
 from glob import glob
@@ -26,7 +25,7 @@ import pandas as pd
 import pickle
 import re
 from scipy.stats import entropy
-import statsmodels.formula.api as sm
+import statsmodels.api as sm
 sys.path.append(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))))
 from post_pred_gen_debug import post_pred_gen
 
@@ -40,8 +39,9 @@ from post_pred_gen_debug import post_pred_gen
 ##############################################
 
 # Define helper function to get fitstat
-def get_fitstats(m, samples = samples, groupby=None, append_data = True, output_dir = output_dir, task = task, subset = subset, hddm_type=hddm_type, load_ppc = load_ppc):
+def get_fitstats(m=None, ppc_data_append=None, samples = samples, groupby=None, append_data = True, output_dir = output_dir, task = task, subset = subset, hddm_type=hddm_type, load_ppc = load_ppc):
 
+    #If ppc data isn't loaded sample it. Otherwise there should be an object named ppc_data_append by default
     if load_ppc == False:
     
         #Sample from posterior predictive and generate data
@@ -53,10 +53,7 @@ def get_fitstats(m, samples = samples, groupby=None, append_data = True, output_
             if(samples != 500):
                 ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_data_' + str(samples) +'.csv'))
             ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_data.csv'))
-
-    if load_ppc == True:
-         ppc_data_append = pd.read_csv(...)
-         
+     
     
     #Adding 3 to avoid negatives
     ppc_data_append['log_rt'] = np.log(ppc_data_append.rt+3)
@@ -65,7 +62,6 @@ def get_fitstats(m, samples = samples, groupby=None, append_data = True, output_
     ppc_data_append['rt'] = np.where(ppc_data_append['rt']<0, 0.00000000001, ppc_data_append['rt'])
     ppc_data_append['rt_sampled'] = np.where(ppc_data_append['rt_sampled']<0, 0.00000000001, ppc_data_append['rt_sampled'])
 
-    #This loop should output n*condition*sample regression (e.g. 2*2*100)
     #level 0 = 'node' referring to subject
     #level 1 = 'sample' referring to number of sample from posterior predictive distribution
     #will this work with flat?
@@ -74,30 +70,29 @@ def get_fitstats(m, samples = samples, groupby=None, append_data = True, output_
         return entropy(sim_data['rt'],sim_data['rt_sampled'])
     
     def get_r_stat(sim_data):
-        sim_data['rt'] = sim_data.rt.sort_values
-        sim_data['rt_sampled'] = sim_data.rt_sampled.sort_values 
         try:
-            model = sm.ols(formula='rt ~ rt_sampled', data=sim_data)
-            fitted = model.fit()
+            x = sm.add_constant(sim_data.rt_sampled.sort_values().reset_index().rt_sampled)
+            y = sim_data.rt.sort_values().reset_index().rt
+            fitted = sm.OLS(y,x).fit()
             
-            log_model = sm.ols(formula='log_rt ~ log_rt_sampled', data=sim_data)
-            log_fitted = log_model.fit()
+            log_x = sm.add_constant(sim_data.log_rt_sampled.sort_values().reset_index().log_rt_sampled)
+            log_y = sim_data.log_rt.sort_values().reset_index().log_rt
+            log_fitted = sm.OLS(log_y,log_x).fit()
             
-            sub_out = pd.DataFrame({'int_val': fitted.params[0],
-                                    'int_pval': fitted.pvalue[0],
-                                    'slope_val': fitted.params[1],
-                                    'slope_pval':fitted.pvalues[1],
+            sub_out = pd.DataFrame([{'int_val': fitted.params.const,
+                                    'int_pval': fitted.pvalues.const,
+                                    'slope_val': fitted.params.rt_sampled,
+                                    'slope_pval':fitted.pvalues.rt_sampled,
                                     'rsq': fitted.rsquared,
                                     'rsq_adj': fitted.rsquared_adj,
-                                    'log_int_val': log_fitted.params[0],
-                                    'log_int_pval': log_fitted.pvalue[0],
-                                    'log_slope_val': log_fitted.params[1],
-                                    'log_slope_pval': log_fitted.pvalues[1],
+                                    'log_int_val': log_fitted.params.const,
+                                    'log_int_pval': log_fitted.pvalues.const,
+                                    'log_slope_val': log_fitted.params.log_rt_sampled,
+                                    'log_slope_pval': log_fitted.pvalues.log_rt_sampled,
                                     'log_rsq': log_fitted.rsquared,
-                                    'log_rsq_adj': log_fitted.rsquared_adj},
-            index=[0])
+                                    'log_rsq_adj': log_fitted.rsquared_adj}], index=[0])
         except:
-            sub_out = pd.DataFrame({'int_val': np.nan,
+            sub_out = pd.DataFrame([{'int_val': np.nan,
                                     'int_pval': np.nan,
                                     'slope_val': np.nan,
                                     'slope_pval': np.nan,
@@ -108,28 +103,25 @@ def get_fitstats(m, samples = samples, groupby=None, append_data = True, output_
                                     'log_slope_val': np.nan,
                                     'log_slope_pval': np.nan,
                                     'log_rsq': np.nan,
-                                    'log_rsq_adj': np.nan},
-                index=[0])
+                                    'log_rsq_adj': np.nan}], index=[0])
         return sub_out
     
-   
+    kls = ppc_data_append.groupby(['node']).apply(get_rt_kl)
+    kls = kls.reset_index()
+    kls.rename(columns={0:'kl'}, inplace=True)
 
-    #Convert sample*subject length dict to dataframe
-    ppc_regression_samples = pd.DataFrame.from_dict(ppc_regression_samples, orient="index")
-
-    ppc_regression_samples.reset_index(inplace=True)
-
-    if ppc_regression_samples['index'].str.contains("\\.")[0]:
-        ppc_regression_samples['subj_id'] = [s[s.find(".")+1:s.find(")")] for s in ppc_regression_samples['index']]
+    r_stats = ppc_data_append.groupby(['node']).apply(get_r_stat)
+    r_stats = r_stats.reset_index()
+    r_stats = r_stats.drop(['level_1'], axis=1)
+    
+    fit_stats = pd.merge(kls, r_stats,  how='left', on=['node']).head()
+    
+    if fit_stats['node'].str.contains("\\.")[0]:
+        fit_stats['subj_id'] = [s[s.find(".")+1:s.find(")")] for s in fit_stats['node']]
     else:
-        ppc_regression_samples['subj_id'] = 0
+        fit_stats['subj_id'] = 0
 
-    if(all(v is not None for v in [output_dir, task, hddm_type]) and subset != 'flat'):
-        if(samples != 500):
-            ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_regression_samples_'+str(samples)+'.csv'))
-        ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_regression_samples.csv'))
-
-    return ppc_regression_samples
+    return fitstats
 
 ##############################################
 ############# For Model Loading ##############
@@ -319,7 +311,7 @@ if hddm_type == 'flat':
                 m = pickle.load(open(model, 'rb'))
     
             ### Step 2: Get fitstat for read in model
-            fitstat = get_fitstats(m)
+            fitstat = get_fitstats(m=m)
     
             ### Step 3: Extract sub id from file name
             sub_id = re.search(model_dir+task+ '_'+subset+'(.+?)_flat.model', model).group(1)
@@ -332,8 +324,8 @@ if hddm_type == 'flat':
     
     elif load_ppc == True:
         
-        ppc_data = pd.read_csv(...)
-        fitstats = fitstats(ppc_data)
+        ppc_data = pd.read_csv(path.join(output_dir, task + '_' + subset + '_' + hddm_type + '_ppc_data.csv'))
+        fitstats = fitstats(ppc_data_append = ppc_data)
 
     ### Step 6: Output df with task, subset, model type (flat or hierarchical)
     if(samples != 500):
@@ -356,7 +348,7 @@ if hddm_type == 'hierarchical':
             m_concat = concat_models(loaded_models)
     
             ### Step 2a: Get fitstat for all subjects from concatenated model
-            fitstats = get_fitstats(m_concat)
+            fitstats = get_fitstats(m=m_concat)
     
         ## Case 2b: without parallelization
         elif parallel == 'no':
@@ -365,7 +357,7 @@ if hddm_type == 'hierarchical':
             m = pickle.load(open(path.join(model_dir,task+'.model'), 'rb'))
     
             ### Step 2b: Get fitstats
-            fitstats = get_fitstats(m)
+            fitstats = get_fitstats(m=m)
     
         ### Step 3: Extract sub id from correct df that was used for hddm
         subid_fun = get_subids_fun(task)
@@ -378,8 +370,8 @@ if hddm_type == 'hierarchical':
 
     elif load_ppc == True:
         
-        ppc_data = pd.read_csv(...)
-        fitstats = fitstats(ppc_data)
+        ppc_data = pd.read_csv(path.join(output_dir, task + '_' + subset + '_' + hddm_type + '_ppc_data.csv'))
+        fitstats = fitstats(ppc_data_append = ppc_data)
     
     ### Step 5: Output df with task, subset, model type (flat or hierarchical)
     if(samples != 500):
