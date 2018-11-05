@@ -38,78 +38,62 @@ from post_pred_gen_debug import post_pred_gen
 ############### For Fitstats #################
 ##############################################
 
-# Define helper function to get fitstat
+def get_rt_kl(sim_data):
+    return entropy(sim_data['rt'],sim_data['rt_sampled'])
+    
+def get_r_stat(sim_data):
+    try:
+        x = sm.add_constant(sim_data.rt_sampled.sort_values().reset_index().rt_sampled)
+        y = sim_data.rt.sort_values().reset_index().rt
+        fitted = sm.OLS(y,x).fit()
+        log_x = sm.add_constant(sim_data.log_rt_sampled.sort_values().reset_index().log_rt_sampled)
+        log_y = sim_data.log_rt.sort_values().reset_index().log_rt
+        log_fitted = sm.OLS(log_y,log_x).fit()
+        sub_out = pd.DataFrame([{'int_val': fitted.params.const,
+                                'int_pval': fitted.pvalues.const,
+                                'slope_val': fitted.params.rt_sampled,
+                                'slope_pval':fitted.pvalues.rt_sampled,
+                                'rsq': fitted.rsquared,
+                                'rsq_adj': fitted.rsquared_adj,
+                                'log_int_val': log_fitted.params.const,
+                                'log_int_pval': log_fitted.pvalues.const,
+                                'log_slope_val': log_fitted.params.log_rt_sampled,
+                                'log_slope_pval': log_fitted.pvalues.log_rt_sampled,
+                                'log_rsq': log_fitted.rsquared,
+                                'log_rsq_adj': log_fitted.rsquared_adj}], index=[0])
+    except:
+        sub_out = pd.DataFrame([{'int_val': np.nan,
+                                'int_pval': np.nan,
+                                'slope_val': np.nan,
+                                'slope_pval': np.nan,
+                                'rsq': np.nan,
+                                'rsq_adj': np.nan,
+                                'log_int_val': np.nan,
+                                'log_int_pval': np.nan,
+                                'log_slope_val': np.nan,
+                                'log_slope_pval': np.nan,
+                                'log_rsq': np.nan,
+                                'log_rsq_adj': np.nan}], index=[0])
+    return sub_out
+
 def get_fitstats(m=None, ppc_data_append=None, samples = samples, groupby=None, append_data = True, output_dir = output_dir, task = task, subset = subset, hddm_type=hddm_type, load_ppc = load_ppc):
-
-    #If ppc data isn't loaded sample it. Otherwise there should be an object named ppc_data_append by default
     if load_ppc == False:
-    
-        #Sample from posterior predictive and generate data
         ppc_data_append = post_pred_gen(m, samples = samples, append_data = append_data, groupby=groupby)
-    
         ppc_data_append.reset_index(inplace=True)
-
         if(all(v is not None for v in [output_dir, task, hddm_type]) and subset != 'flat'):
             if(samples != 500):
                 ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_data_' + str(samples) +'.csv'))
-            ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_data.csv'))
-     
-    
-    #Adding 3 to avoid negatives
+                ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_data.csv'))
+                
     ppc_data_append['log_rt'] = np.log(ppc_data_append.rt+3)
     ppc_data_append['log_rt_sampled'] = np.log(ppc_data_append.rt_sampled+3)
-    
     ppc_data_append['rt'] = np.where(ppc_data_append['rt']<0, 0.00000000001, ppc_data_append['rt'])
     ppc_data_append['rt_sampled'] = np.where(ppc_data_append['rt_sampled']<0, 0.00000000001, ppc_data_append['rt_sampled'])
-
-    #level 0 = 'node' referring to subject
-    #level 1 = 'sample' referring to number of sample from posterior predictive distribution
-    #will this work with flat?
-    
-    def get_rt_kl(sim_data):
-        return entropy(sim_data['rt'],sim_data['rt_sampled'])
-    
-    def get_r_stat(sim_data):
-        try:
-            x = sm.add_constant(sim_data.rt_sampled.sort_values().reset_index().rt_sampled)
-            y = sim_data.rt.sort_values().reset_index().rt
-            fitted = sm.OLS(y,x).fit()
-            
-            log_x = sm.add_constant(sim_data.log_rt_sampled.sort_values().reset_index().log_rt_sampled)
-            log_y = sim_data.log_rt.sort_values().reset_index().log_rt
-            log_fitted = sm.OLS(log_y,log_x).fit()
-            
-            sub_out = pd.DataFrame([{'int_val': fitted.params.const,
-                                    'int_pval': fitted.pvalues.const,
-                                    'slope_val': fitted.params.rt_sampled,
-                                    'slope_pval':fitted.pvalues.rt_sampled,
-                                    'rsq': fitted.rsquared,
-                                    'rsq_adj': fitted.rsquared_adj,
-                                    'log_int_val': log_fitted.params.const,
-                                    'log_int_pval': log_fitted.pvalues.const,
-                                    'log_slope_val': log_fitted.params.log_rt_sampled,
-                                    'log_slope_pval': log_fitted.pvalues.log_rt_sampled,
-                                    'log_rsq': log_fitted.rsquared,
-                                    'log_rsq_adj': log_fitted.rsquared_adj}], index=[0])
-        except:
-            sub_out = pd.DataFrame([{'int_val': np.nan,
-                                    'int_pval': np.nan,
-                                    'slope_val': np.nan,
-                                    'slope_pval': np.nan,
-                                    'rsq': np.nan,
-                                    'rsq_adj': np.nan,
-                                    'log_int_val': np.nan,
-                                    'log_int_pval': np.nan,
-                                    'log_slope_val': np.nan,
-                                    'log_slope_pval': np.nan,
-                                    'log_rsq': np.nan,
-                                    'log_rsq_adj': np.nan}], index=[0])
-        return sub_out
     
     kls = ppc_data_append.groupby(['node']).apply(get_rt_kl)
     kls = kls.reset_index()
     kls.rename(columns={0:'kl'}, inplace=True)
-
+    
     r_stats = ppc_data_append.groupby(['node']).apply(get_r_stat)
     r_stats = r_stats.reset_index()
     r_stats = r_stats.drop(['level_1'], axis=1)
@@ -120,8 +104,8 @@ def get_fitstats(m=None, ppc_data_append=None, samples = samples, groupby=None, 
         fit_stats['subj_id'] = [s[s.find(".")+1:s.find(")")] for s in fit_stats['node']]
     else:
         fit_stats['subj_id'] = 0
-
-    return fitstats
+        
+    return fit_stats
 
 ##############################################
 ############# For Model Loading ##############
@@ -297,31 +281,22 @@ if hddm_type == 'flat':
     fitstats = pd.DataFrame()
 
     ### Step 1: Read model in for a given subject
-    if load_ppc == False:
-    
-        for model in models_list:
+    for model in models_list:
+        
+        ### Extract sub id from file name
+        sub_id = re.search(model_dir+task+ '_'+subset+'(.+?)_flat.model', model).group(1)
+        
+        m = pickle.load(open(model, 'rb'))
+        
+        ### Step 2: Get fitstat for read in model
+        fitstat = get_fitstats(m=m)
+        
+        ### Step 4: Update flat fitstat dict with sub_id
+        fitstat['sub_id'] = sub_id
+        
+        ### Step 5: Add individual output to dict with all subjects
+        fitstats = fitstats.append(fitstat)           
             
-            ### Extract sub id from file name
-            sub_id = re.search(model_dir+task+ '_'+subset+'(.+?)_flat.model', model).group(1)
-            
-            if load_ppc == False:
-                m = pickle.load(open(model, 'rb'))
-                ### Step 2: Get fitstat for read in model
-                fitstat = get_fitstats(m=m)
-                
-            elif load_ppc == True:
-                ppc_data = pd.read_csv(path.join(output_dir, task + '_' + subset + '_' + hddm_type + '_ppc_data.csv'))
-                fitstats
-    
-            
-            
-    
-            ### Step 4: Update flat fitstat dict with sub_id
-            fitstat['sub_id'] = sub_id
-    
-            ### Step 5: Add individual output to dict with all subjects
-            fitstats = fitstats.append(fitstat)
-    
     ### Step 6: Output df with task, subset, model type (flat or hierarchical)
     if(samples != 500):
         fitstats.to_csv(path.join(output_dir, task+'_'+subset+hddm_type+'_fitstats_'+str(samples)+'.csv'))
