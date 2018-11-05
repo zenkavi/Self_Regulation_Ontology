@@ -325,7 +325,7 @@ if hddm_type == 'flat':
     elif load_ppc == True:
         
         ppc_data = pd.read_csv(path.join(output_dir, task + '_' + subset + '_' + hddm_type + '_ppc_data.csv'))
-        fitstats = fitstats(ppc_data_append = ppc_data)
+        fitstats = 
 
     ### Step 6: Output df with task, subset, model type (flat or hierarchical)
     if(samples != 500):
@@ -369,8 +369,11 @@ if hddm_type == 'hierarchical':
         fitstats = fitstats.replace({'subj_id': subids})
 
     elif load_ppc == True:
+        if(samples == 500):        
+            ppc_data = pd.read_csv(path.join(output_dir, task + '_' + subset + '_' + hddm_type + '_ppc_data.csv'))
+        else:
+            ppc_data = pd.read_csv(path.join(output_dir, task + '_' + subset + '_' + hddm_type + '_ppc_data_'+samples+'.csv'))
         
-        ppc_data = pd.read_csv(path.join(output_dir, task + '_' + subset + '_' + hddm_type + '_ppc_data.csv'))
         fitstats = fitstats(ppc_data_append = ppc_data)
     
     ### Step 5: Output df with task, subset, model type (flat or hierarchical)
