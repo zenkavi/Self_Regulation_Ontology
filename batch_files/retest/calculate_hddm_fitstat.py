@@ -300,21 +300,21 @@ if hddm_type == 'flat':
     if load_ppc == False:
     
         for model in models_list:
-    
-            try:
-                m = pickle.load(open(model, 'rb'))
-            except NameError:
-                db_path = model.split('.')[0]+'_traces.db'
-                container = pickle.load(open(db_path,'rb'))
-                file = pd.DataFrame()
-                file.name = model
-                m = pickle.load(open(model, 'rb'))
-    
-            ### Step 2: Get fitstat for read in model
-            fitstat = get_fitstats(m=m)
-    
-            ### Step 3: Extract sub id from file name
+            
+            ### Extract sub id from file name
             sub_id = re.search(model_dir+task+ '_'+subset+'(.+?)_flat.model', model).group(1)
+            
+            if load_ppc == False:
+                m = pickle.load(open(model, 'rb'))
+                ### Step 2: Get fitstat for read in model
+                fitstat = get_fitstats(m=m)
+                
+            elif load_ppc == True:
+                ppc_data = pd.read_csv(path.join(output_dir, task + '_' + subset + '_' + hddm_type + '_ppc_data.csv'))
+                fitstats
+    
+            
+            
     
             ### Step 4: Update flat fitstat dict with sub_id
             fitstat['sub_id'] = sub_id
@@ -322,11 +322,6 @@ if hddm_type == 'flat':
             ### Step 5: Add individual output to dict with all subjects
             fitstats = fitstats.append(fitstat)
     
-    elif load_ppc == True:
-        
-        ppc_data = pd.read_csv(path.join(output_dir, task + '_' + subset + '_' + hddm_type + '_ppc_data.csv'))
-        fitstats = 
-
     ### Step 6: Output df with task, subset, model type (flat or hierarchical)
     if(samples != 500):
         fitstats.to_csv(path.join(output_dir, task+'_'+subset+hddm_type+'_fitstats_'+str(samples)+'.csv'))
