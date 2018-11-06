@@ -80,6 +80,10 @@ def get_fitstats(m=None, ppc_data_append=None, samples = samples, groupby=None, 
     if load_ppc == False:
         ppc_data_append = post_pred_gen(m, samples = samples, append_data = append_data, groupby=groupby)
         ppc_data_append.reset_index(inplace=True)
+        
+        if(hddm_type=='flat'):
+            ppc_data_append['subj_id'] = re.findall('\d+',m.dbname).pop()
+        
         if(all(v is not None for v in [output_dir, task, hddm_type]) and subset != 'flat'):
             if(samples != 500):
                 ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_data_' + str(samples) +'.csv'))
