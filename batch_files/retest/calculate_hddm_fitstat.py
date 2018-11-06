@@ -348,11 +348,11 @@ if hddm_type == 'hierarchical':
 
     elif load_ppc == True:
         if(samples == 500):        
-            ppc_data = pd.read_csv(path.join(output_dir, task + '_' + subset + '_' + hddm_type + '_ppc_data.csv'))
+            ppc_data = pd.read_csv(path.join(output_dir, task + '_' + subset + hddm_type + '_ppc_data.csv'))
         else:
-            ppc_data = pd.read_csv(path.join(output_dir, task + '_' + subset + '_' + hddm_type + '_ppc_data_'+samples+'.csv'))
+            ppc_data = pd.read_csv(path.join(output_dir, task + '_' + subset + hddm_type + '_ppc_data_'+samples+'.csv'))
         
-        fitstats, fitstats_sum = fitstats(ppc_data_append = ppc_data)
+        fitstats, fitstats_sum = get_fitstats(ppc_data_append = ppc_data)
         
         ### Step 3: Extract sub id from correct df that was used for hddm
         subid_fun = get_subids_fun(task)
