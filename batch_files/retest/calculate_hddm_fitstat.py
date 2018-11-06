@@ -77,6 +77,7 @@ def get_r_stat(sim_data):
     return sub_out
 
 def get_fitstats(m=None, ppc_data_append=None, samples = samples, groupby=None, append_data = True, output_dir = output_dir, task = task, subset = subset, hddm_type=hddm_type, load_ppc = load_ppc):
+    
     if load_ppc == False:
         ppc_data_append = post_pred_gen(m, samples = samples, append_data = append_data, groupby=groupby)
         ppc_data_append.reset_index(inplace=True)
@@ -94,22 +95,33 @@ def get_fitstats(m=None, ppc_data_append=None, samples = samples, groupby=None, 
     ppc_data_append['rt'] = np.where(ppc_data_append['rt']<0, 0.00000000001, ppc_data_append['rt'])
     ppc_data_append['rt_sampled'] = np.where(ppc_data_append['rt_sampled']<0, 0.00000000001, ppc_data_append['rt_sampled'])
     
-    kls = ppc_data_append.groupby(['node']).apply(get_rt_kl)
+    kls = ppc_data_append.groupby(['node', 'sample']).apply(get_rt_kl)
     kls = kls.reset_index()
     kls.rename(columns={0:'kl'}, inplace=True)
     
-    r_stats = ppc_data_append.groupby(['node']).apply(get_r_stat)
+    r_stats = ppc_data_append.groupby(['node', 'sample']).apply(get_r_stat)
     r_stats = r_stats.reset_index()
-    r_stats = r_stats.drop(['level_1'], axis=1)
     
-    fit_stats = pd.merge(kls, r_stats,  how='left', on=['node']).head()
+    fit_stats = pd.merge(kls, r_stats,  how='left', on=['node', 'sample'])
+                
+    fit_stats_means = fit_stats.groupby(['node']).mean()
+    fit_stats_means.columns = ['m_'+ str(col) for col in fit_stats_means.columns]
+    fit_stats_means= fit_stats_means.reset_index()
+    fit_stats_sems = fit_stats.groupby(['node']).sem()
+    fit_stats_sems.columns = ['sem_'+str(col) for col in fit_stats_sems.columns]
+    fit_stats_sems= fit_stats_sems.reset_index()
+    
+    fit_stats_summary = pd.merge(fit_stats_means, fit_stats_sems,  how='left', on=['node'])
     
     if fit_stats['node'].str.contains("\\.")[0]:
         fit_stats['subj_id'] = [s[s.find(".")+1:s.find(")")] for s in fit_stats['node']]
+        fit_stats_summary['subj_id'] = [s[s.find(".")+1:s.find(")")] for s in fit_stats_summary['node']]
     else:
-        fit_stats['subj_id'] = 0
-        
-    return fit_stats
+        sub_id= re.findall('\d+',m.dbname).pop()
+        fit_stats['subj_id'] = sub_id
+        fit_stats_summary['subj_id'] = sub_id
+    
+    return fit_stats, fit_stats_summary
 
 ##############################################
 ############# For Model Loading ##############
@@ -277,35 +289,35 @@ def get_subids_fun(task=None):
 ##############################################
 
 # Case 1: fitstat for all subjects of flat models (no hierarchy)
+# Currently no load_ppc true option
 if hddm_type == 'flat':
 
     ## Strategy: looping through all model files for task, subset
     model_path = path.join(model_dir, task+'_'+ subset+ '*_flat.model')
     models_list = sorted(glob(model_path))
     fitstats = pd.DataFrame()
+    fitstats_sums = pd.DataFrame()
 
     ### Step 1: Read model in for a given subject
     for model in models_list:
         
-        ### Extract sub id from file name
-        sub_id = re.search(model_dir+task+ '_'+subset+'(.+?)_flat.model', model).group(1)
-        
         m = pickle.load(open(model, 'rb'))
         
         ### Step 2: Get fitstat for read in model
-        fitstat = get_fitstats(m=m)
-        
-        ### Step 4: Update flat fitstat dict with sub_id
-        fitstat['sub_id'] = sub_id
+        fitstat, fitstat_sum = get_fitstats(m=m)
         
         ### Step 5: Add individual output to dict with all subjects
-        fitstats = fitstats.append(fitstat)           
+        fitstats = fitstats.append(fitstat)
+        fitstats_sums = fitstats_sums.append(fitstat_sum)  
+         
             
     ### Step 6: Output df with task, subset, model type (flat or hierarchical)
     if(samples != 500):
         fitstats.to_csv(path.join(output_dir, task+'_'+subset+hddm_type+'_fitstats_'+str(samples)+'.csv'))
+        fitstats_sums.to_csv(path.join(output_dir, task+'_'+subset+hddm_type+'_fitstats_summary'+str(samples)+'.csv'))
     else:
         fitstats.to_csv(path.join(output_dir, task+'_'+subset+hddm_type+'_fitstats.csv'))
+        fitstats_sums.to_csv(path.join(output_dir, task+'_'+subset+hddm_type+'_fitstats_summary.csv'))
 
 
 # Case 2: fitstat for all subjects for hierarchical models
@@ -322,7 +334,7 @@ if hddm_type == 'hierarchical':
             m_concat = concat_models(loaded_models)
     
             ### Step 2a: Get fitstat for all subjects from concatenated model
-            fitstats = get_fitstats(m=m_concat)
+            fitstats, fitstats_sum = get_fitstats(m=m_concat)
     
         ## Case 2b: without parallelization
         elif parallel == 'no':
@@ -331,16 +343,8 @@ if hddm_type == 'hierarchical':
             m = pickle.load(open(path.join(model_dir,task+'.model'), 'rb'))
     
             ### Step 2b: Get fitstats
-            fitstats = get_fitstats(m=m)
+            fitstats, fitstats_sum = get_fitstats(m=m)
     
-        ### Step 3: Extract sub id from correct df that was used for hddm
-        subid_fun = get_subids_fun(task)
-        sub_df = pd.read_csv(path.join(sub_id_dir, task+'.csv.gz'), compression='gzip')
-        subids = subid_fun(sub_df)
-    
-        ### Step 4: Change keys in fitstats dic
-        fitstats[['subj_id']] = fitstats[['subj_id']].apply(pd.to_numeric, errors='coerce')
-        fitstats = fitstats.replace({'subj_id': subids})
 
     elif load_ppc == True:
         if(samples == 500):        
@@ -348,10 +352,21 @@ if hddm_type == 'hierarchical':
         else:
             ppc_data = pd.read_csv(path.join(output_dir, task + '_' + subset + '_' + hddm_type + '_ppc_data_'+samples+'.csv'))
         
-        fitstats = fitstats(ppc_data_append = ppc_data)
+        fitstats, fitstats_sum = fitstats(ppc_data_append = ppc_data)
+        
+        ### Step 3: Extract sub id from correct df that was used for hddm
+        subid_fun = get_subids_fun(task)
+        sub_df = pd.read_csv(path.join(sub_id_dir, task+'.csv.gz'), compression='gzip')
+        subids = subid_fun(sub_df)
+    
+        ### Step 4: Change keys in fitstats dic
+        fitstats_sum[['subj_id']] = fitstats_sum[['subj_id']].apply(pd.to_numeric, errors='coerce')
+        fitstats_sum = fitstats_sum.replace({'subj_id': subids})
     
     ### Step 5: Output df with task, subset, model type (flat or hierarchical)
     if(samples != 500):
         fitstats.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_fitstats_'+ str(samples) +'.csv'))
+        fitstats_sum.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_fitstats_summary'+ str(samples) +'.csv'))
     else:
         fitstats.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_fitstats.csv'))
+        fitstats_sum.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_fitstats_summary.csv'))
