@@ -19,7 +19,7 @@ load_ppc = sys.argv[9]
 if load_ppc == "False":
     load_ppc = False
 elif load_ppc == "True":
-    load_ppc == True
+    load_ppc = True
 
 from glob import glob
 import inspect
@@ -44,7 +44,7 @@ from post_pred_gen_debug import post_pred_gen
 
 def get_rt_kl(sim_data):
     return entropy(sim_data['rt'],sim_data['rt_sampled'])
-    
+
 def get_r_stat(sim_data):
     try:
         x = sm.add_constant(sim_data.rt_sampled.sort_values().reset_index().rt_sampled)
@@ -81,42 +81,42 @@ def get_r_stat(sim_data):
     return sub_out
 
 def get_fitstats(m=None, ppc_data_append=None, samples = samples, groupby=None, append_data = True, output_dir = output_dir, task = task, subset = subset, hddm_type=hddm_type, load_ppc = load_ppc):
-    
+
     if load_ppc == False:
         ppc_data_append = post_pred_gen(m, samples = samples, append_data = append_data, groupby=groupby)
         ppc_data_append.reset_index(inplace=True)
-        
+
         if(hddm_type=='flat'):
             ppc_data_append['subj_id'] = re.findall('\d+',m.dbname).pop()
-        
+
         if(all(v is not None for v in [output_dir, task, hddm_type]) and subset != 'flat'):
             if(samples != 500):
                 ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_data_' + str(samples) +'.csv'))
                 ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_data.csv'))
-                
+
     ppc_data_append['log_rt'] = np.log(ppc_data_append.rt+3)
     ppc_data_append['log_rt_sampled'] = np.log(ppc_data_append.rt_sampled+3)
     ppc_data_append['rt'] = np.where(ppc_data_append['rt']<0, 0.00000000001, ppc_data_append['rt'])
     ppc_data_append['rt_sampled'] = np.where(ppc_data_append['rt_sampled']<0, 0.00000000001, ppc_data_append['rt_sampled'])
-    
+
     kls = ppc_data_append.groupby(['node', 'sample']).apply(get_rt_kl)
     kls = kls.reset_index()
     kls.rename(columns={0:'kl'}, inplace=True)
-    
+
     r_stats = ppc_data_append.groupby(['node', 'sample']).apply(get_r_stat)
     r_stats = r_stats.reset_index()
-    
+
     fit_stats = pd.merge(kls, r_stats,  how='left', on=['node', 'sample'])
-                
+
     fit_stats_means = fit_stats.groupby(['node']).mean()
     fit_stats_means.columns = ['m_'+ str(col) for col in fit_stats_means.columns]
     fit_stats_means= fit_stats_means.reset_index()
     fit_stats_sems = fit_stats.groupby(['node']).sem()
     fit_stats_sems.columns = ['sem_'+str(col) for col in fit_stats_sems.columns]
     fit_stats_sems= fit_stats_sems.reset_index()
-    
+
     fit_stats_summary = pd.merge(fit_stats_means, fit_stats_sems,  how='left', on=['node'])
-    
+
     if fit_stats['node'].str.contains("\\.")[0]:
         fit_stats['subj_id'] = [s[s.find(".")+1:s.find(")")] for s in fit_stats['node']]
         fit_stats_summary['subj_id'] = [s[s.find(".")+1:s.find(")")] for s in fit_stats_summary['node']]
@@ -124,7 +124,7 @@ def get_fitstats(m=None, ppc_data_append=None, samples = samples, groupby=None, 
         sub_id= re.findall('\d+',m.dbname).pop()
         fit_stats['subj_id'] = sub_id
         fit_stats_summary['subj_id'] = sub_id
-    
+
     return fit_stats, fit_stats_summary
 
 ##############################################
@@ -304,17 +304,17 @@ if hddm_type == 'flat':
 
     ### Step 1: Read model in for a given subject
     for model in models_list:
-        
+
         m = pickle.load(open(model, 'rb'))
-        
+
         ### Step 2: Get fitstat for read in model
         fitstat, fitstat_sum = get_fitstats(m=m)
-        
+
         ### Step 5: Add individual output to dict with all subjects
         fitstats = fitstats.append(fitstat)
-        fitstats_sums = fitstats_sums.append(fitstat_sum)  
-         
-            
+        fitstats_sums = fitstats_sums.append(fitstat_sum)
+
+
     ### Step 6: Output df with task, subset, model type (flat or hierarchical)
     if(samples != 500):
         fitstats.to_csv(path.join(output_dir, task+'_'+subset+hddm_type+'_fitstats_'+str(samples)+'.csv'))
@@ -328,45 +328,45 @@ if hddm_type == 'flat':
 if hddm_type == 'hierarchical':
 
     if load_ppc == False:
-    
+
         ## Case 2a: with parallelization
         if parallel == 'yes':
-    
+
             ### Step 1a: Concatenate all model outputs from parallelization
             model_path = path.join(model_dir, task+'_parallel_output','*.model')
             loaded_models = load_parallel_models(model_path)
             m_concat = concat_models(loaded_models)
-    
+
             ### Step 2a: Get fitstat for all subjects from concatenated model
             fitstats, fitstats_sum = get_fitstats(m=m_concat)
-    
+
         ## Case 2b: without parallelization
         elif parallel == 'no':
-    
+
             ### Step 1b: Read model in
             m = pickle.load(open(path.join(model_dir,task+'.model'), 'rb'))
-    
+
             ### Step 2b: Get fitstats
             fitstats, fitstats_sum = get_fitstats(m=m)
-    
+
 
     elif load_ppc == True:
-        if(samples == 500):        
+        if(samples == 500):
             ppc_data = pd.read_csv(path.join(output_dir, task + '_' + subset + hddm_type + '_ppc_data.csv'))
         else:
             ppc_data = pd.read_csv(path.join(output_dir, task + '_' + subset + hddm_type + '_ppc_data_'+samples+'.csv'))
-        
+
         fitstats, fitstats_sum = get_fitstats(ppc_data_append = ppc_data)
-        
+
         ### Step 3: Extract sub id from correct df that was used for hddm
         subid_fun = get_subids_fun(task)
         sub_df = pd.read_csv(path.join(sub_id_dir, task+'.csv.gz'), compression='gzip')
         subids = subid_fun(sub_df)
-    
+
         ### Step 4: Change keys in fitstats dic
         fitstats_sum[['subj_id']] = fitstats_sum[['subj_id']].apply(pd.to_numeric, errors='coerce')
         fitstats_sum = fitstats_sum.replace({'subj_id': subids})
-    
+
     ### Step 5: Output df with task, subset, model type (flat or hierarchical)
     if(samples != 500):
         fitstats.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_fitstats_'+ str(samples) +'.csv'))
