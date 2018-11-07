@@ -355,7 +355,7 @@ if hddm_type == 'hierarchical':
         if(samples == 500):
             ppc_data = pd.read_csv(path.join(output_dir, task + '_' + subset + hddm_type + '_ppc_data.csv'))
         else:
-            ppc_data = pd.read_csv(path.join(output_dir, task + '_' + subset + hddm_type + '_ppc_data_'+samples+'.csv'))
+            ppc_data = pd.read_csv(path.join(output_dir, task + '_' + subset + hddm_type + '_ppc_data_'+str(samples)+'.csv'))
 
         fitstats, fitstats_sum = get_fitstats(ppc_data_append = ppc_data)
 
