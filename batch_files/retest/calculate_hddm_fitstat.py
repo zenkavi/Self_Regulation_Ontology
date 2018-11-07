@@ -92,6 +92,7 @@ def get_fitstats(m=None, ppc_data_append=None, samples = samples, groupby=None, 
         if(all(v is not None for v in [output_dir, task, hddm_type]) and subset != 'flat'):
             if(samples != 500):
                 ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_data_' + str(samples) +'.csv'))
+            else:
                 ppc_data_append.to_csv(path.join(output_dir, task+ '_'+subset+hddm_type+'_ppc_data.csv'))
 
     ppc_data_append['log_rt'] = np.log(ppc_data_append.rt+3)
