@@ -16,6 +16,10 @@ os.environ['PARALLEL'] = parallel
 sub_id_dir = sys.argv[7]
 samples = int(float(sys.argv[8]))
 load_ppc = sys.argv[9]
+if load_ppc == "False":
+    load_ppc = False
+elif load_ppc == "True":
+    load_ppc == True
 
 from glob import glob
 import inspect
