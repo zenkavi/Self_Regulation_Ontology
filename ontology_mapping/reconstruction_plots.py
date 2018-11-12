@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+import scipy
 from sklearn.manifold import MDS, TSNE
 from sklearn.decomposition import PCA
 
@@ -8,6 +9,7 @@ from dimensional_structure.utils import hierarchical_cluster
 from selfregulation.utils.plot_utils import beautify_legend, format_num, save_figure
 
 def plot_factor_reconstructions(reconstructions, title=None, size=12, 
+                                plot_regression=True, plot_diagonal=False,
                                 filename=None, dpi=300):
     # construct plotting dataframe
     c = reconstructions.columns.get_loc('var') 
@@ -15,9 +17,8 @@ def plot_factor_reconstructions(reconstructions, title=None, size=12,
     ground_truth.index = ground_truth['var']
     ground_truth = ground_truth.iloc[:, :c]
     ground_truth.columns = [str(c) + '_GT' for c in ground_truth.columns]
-    plot_df = reconstructions.query('label=="partial_reconstruct"') \
-                .groupby(['pop_size', 'var']).mean() \
-                .join(ground_truth)
+    
+    plot_df = reconstructions.join(ground_truth, on='var')
     pop_sizes = sorted(reconstructions.pop_size.dropna().unique())
     # plot
     sns.set_context('talk')
@@ -30,19 +31,44 @@ def plot_factor_reconstructions(reconstructions, title=None, size=12,
         for i, factor in enumerate(plot_df.columns[:c]):
             factor = str(factor)
             ax = axes[i][j]
-            ax.scatter(reconstruction.loc[:,factor+'_GT'],
-                       reconstruction.loc[:,factor],
+            # plot scatter
+            means = reconstruction.groupby('var').mean()
+            std = reconstruction.groupby('var').std()
+            ax.errorbar(means.loc[:,factor+'_GT'],
+                       means.loc[:,factor],
+                       yerr=std[factor],
                        color=colors[j],
-                      s=size*1.5, alpha=.5)
-            ax.plot(ax.get_xlim(), ax.get_ylim(), ls="--", c=".3", zorder=-1)
+                       linestyle='',
+                       marker='o',
+                       markersize=size/2,
+                       markeredgecolor='white',
+                       markeredgewidth=size/15,
+                       linewidth=size/10)
+            # calculate regression slope
+            if plot_regression:
+                slope, intercept, r_value, p_value, std_err = \
+                     scipy.stats.linregress(x=reconstruction[factor+'_GT'],
+                                            y=reconstruction[factor])
+                xlims = ax.get_xlim()
+                new_x = np.arange(xlims[0], xlims[1],(xlims[1]-xlims[0])/250.)
+                y = intercept + slope *  new_x
+                ax.plot(new_x, y, color=colors[j], 
+                        linestyle='-', lw = size/4, zorder=5)
+            # plot diagonal
+            if plot_diagonal:
+                xlim = ax.get_xlim()
+                ylim = ax.get_ylim()
+                ax.plot(xlim, ylim, ls="-", c=".5", zorder=-1)
+                ax.set_xlim(xlim); ax.set_ylim(ylim)
+            # labels and ticks
             ax.tick_params(axis='both', labelleft=False, labelbottom=False, bottom=False, left=False)
             if j==(len(pop_sizes)-1) and i==0:
                 ax.set_ylabel('Reconstruction', fontsize=size*1.5)
                 ax.set_xlabel('Ground Truth', fontsize=size*1.5)
             if j==0:
-                ax.set_ylabel(factor, fontsize=size*2)
+                ax.set_ylabel(factor, fontsize=size*1.9)
             if i==(c-1):
-                ax.set_xlabel(format_num(pop_size), fontsize=size*2, color=colors[j])
+                ax.set_xlabel(format_num(pop_size), fontsize=size*1.9, color=colors[j])
             # indicate the correlation
             corr = reconstruction.corr().loc[factor, factor+'_GT']
             s = '$\it{r}=%s$' % format_num(corr)

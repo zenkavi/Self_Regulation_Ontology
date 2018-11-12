@@ -16,7 +16,11 @@ def reorder_FA(ref_FA, new_FA):
     corr = pd.concat([ref_FA, new_FA], axis=1, sort=False).corr().iloc[c:, :c]
     new_FA = new_FA.loc[:,corr.idxmax()]
     new_FA.columns = ref_FA.columns
-    return new_FA
+    # if the correlation is low, the factors are completely off
+    if corr.max().min() < .9:
+        return None
+    else:
+        return new_FA
 
 def run_linear(scores, test_vars, clf=LinearRegression(fit_intercept=False)):
     """
@@ -54,6 +58,9 @@ def linear_reconstruction(results, drop_regex,
     drop_vars = list(data.filter(regex=drop_regex).columns)
     subset = data.drop(drop_vars, axis=1)
     scores = run_EFA(subset, c, EFA_rotation, orig_scores)
+    # check to see if scores are problematic (not highly correlated with original scores)
+    if scores is None:
+        return None, None
     if verbose:
         print('*'*79)
         print('Reconstructing', drop_vars)
@@ -131,6 +138,9 @@ def k_nearest_reconstruction(results, drop_regex, available_vars=None,
     drop_vars = list(data.filter(regex=drop_regex).columns)
     subset = data.drop(drop_vars, axis=1)
     loadings = run_EFA(subset, c, EFA_rotation, orig_loadings)
+    # check to see if loadings are problematic (not highly correlated with original scores)
+    if loadings is None:
+        return None, None
     weightings = ['uniform', 'distance']
     if available_vars is not None:
         data = data.loc[:, set(available_vars) | set(drop_vars)]
@@ -210,17 +220,18 @@ def get_reconstruction_results(results, measure_list, pop_sizes=(100,200),
             estimated, full = recon_fun(results, drop_regex=measure, 
                                         pseudo_pop_size=pop_size, 
                                         EFA_rotation=EFA_rotation, **kwargs)
-
+            if estimated is None:
+                break
             reconstruction_results[pop_size] = [estimated, full]
-        true = loadings.loc[set(full['var'])]
-        true.loc[:,'var'] = true.index
-        reconstruction_results['true'] = true
-        organized = organize_reconstruction(reconstruction_results, scoring_funs=scoring_funs)
-        out[measure.lstrip('^')] = organized  
+        if len(reconstruction_results) > 0:
+            true = loadings.loc[set(full['var'])]
+            true.loc[:,'var'] = true.index
+            reconstruction_results['true'] = true
+            organized = organize_reconstruction(reconstruction_results, scoring_funs=scoring_funs)
+            out[measure.lstrip('^')] = organized  
     return out
     
 # other evaluations
-
 def CV_predict(reconstruction, labels, cv=10, clf=LinearSVC(), test_set=None):
     """
     Run cross-validated classification of reconstruction
