@@ -133,7 +133,7 @@ def plot_reconstruction_hist(reconstructions, title=None, size=12,
         save_figure(f, filename, {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
         
-def plot_distance_recon(reconstruction_distances, orig_distances, size=10, filename=None, dpi=300):
+def plot_distance_recon(reconstructed_distances, orig_distances, size=10, filename=None, dpi=300):
     # convert distances to flat array
     flattened_distances = {k:squareform(v) for k,v in reconstructed_distances.items()}
     flattened_distances = pd.DataFrame(flattened_distances)
