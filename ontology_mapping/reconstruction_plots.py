@@ -135,9 +135,9 @@ def plot_reconstruction_hist(reconstructions, title=None, size=12,
         
 def plot_distance_recon(reconstructed_distances, orig_distances, size=10, filename=None, dpi=300):
     # convert distances to flat array
-    flattened_distances = {k:squareform(v) for k,v in reconstructed_distances.items()}
+    flattened_distances = {k:scipy.spatial.distance.squareform(v) for k,v in reconstructed_distances.items()}
     flattened_distances = pd.DataFrame(flattened_distances)
-    flattened_distances.insert(0, 'orig', squareform(orig_distances))
+    flattened_distances.insert(0, 'orig', scipy.spatial.distance.squareform(orig_distances))
     # clustered order
     out = hierarchical_cluster(orig_distances, compute_dist=False)
     orig_clustering = out['clustered_df']
