@@ -41,7 +41,7 @@ class EFA_Analysis:
     # private methods
     def _get_attr(self, attribute, c=None, rotate='oblimin'):
         if c is None:
-            c = self.results['num_factors']
+            c = self.get_c()
             print('# of components not specified, using BIC determined #')
         return get_attr(self.results['factor_tree_Rout_%s' % rotate][c],
                         attribute)
@@ -76,7 +76,7 @@ class EFA_Analysis:
     def compute_higher_order_factors(self, c=None, rotate='oblimin'):
         """ Return higher order EFA """
         if c is None:
-            c = self.results['num_factors']
+            c = self.get_c()
             print('# of components not specified, using BIC determined #')
         if ('factor_tree_%s' % rotate in self.results.keys() and 
             c in self.results['factor_tree_Rout_%s' % rotate].keys()):
@@ -107,7 +107,7 @@ class EFA_Analysis:
             
     def create_factor_tree(self, start=1, end=None, rotate='oblimin'):
         if end is None:
-            end = max(self.results['num_factors'], start)
+            end = max(self.get_c(), start)
         ftree, ftree_rout = create_factor_tree(self.data,  (start, end),
                                                rotate=rotate)
         self.results['factor_tree_%s' % rotate] = ftree
@@ -115,7 +115,7 @@ class EFA_Analysis:
     
     def get_boot_stats(self, c=None, rotate='oblimin'):
         if c is None:
-            c = self.results['num_factors']
+            c = self.get_c()
             print('# of components not specified, using BIC determined #')
         if c in self.results['factor_tree_Rout_%s' % rotate].keys():
             bootstrap_Rout = self.results['factor_tree_Rout_%s' % rotate][c]
@@ -180,7 +180,7 @@ class EFA_Analysis:
                     recompute=False, copy=True):
         """ Return the loading for an EFA solution at the specified c """
         if c is None:
-            c = self.results['num_factors']
+            c = self.get_c()
             print('# of components not specified, using BIC determined #')
         n_iter = 1
         if bootstrap:
@@ -209,7 +209,7 @@ class EFA_Analysis:
     
     def get_loading_entropy(self, c=None, rotate='oblimin'):
         if c is None:
-            c = self.results['num_factors']
+            c = self.get_c()
             print('# of components not specified, using BIC determined #')
         assert c>1
         loading = self.get_loading(c, rotate=rotate)
@@ -220,7 +220,7 @@ class EFA_Analysis:
     
     def get_null_loading_entropy(self, c=None, reps=50, rotate='oblimin'):
         if c is None:
-            c = self.results['num_factors']
+            c = self.get_c()
             print('# of components not specified, using BIC determined #')
         assert c>1
         # get absolute loading
@@ -255,13 +255,16 @@ class EFA_Analysis:
     
     def get_factor_names(self, c=None, rotate='oblimin'):
         if c is None:
-            c = self.results['num_factors']
+            c = self.get_c()
             print('# of components not specified, using BIC determined #')
         return self.get_loading(c, rotate=rotate).columns
     
+    def get_c(self):
+        return self.results['num_factors']
+    
     def get_scores(self, c=None, rotate='oblimin'):
         if c is None:
-            c = self.results['num_factors']
+            c = self.get_c()
             print('# of components not specified, using BIC determined #')
         scores = self._get_attr('scores', c, rotate=rotate)
         names = self.get_factor_names(c, rotate=rotate)
@@ -272,7 +275,7 @@ class EFA_Analysis:
     def get_task_representations(self, tasks, c=None, rotate='oblimin'):
         """Take a list of tasks and reconstructs factor scores"""   
         if c is None:
-            c = self.results['num_factors']
+            c = self.get_c()
             print('# of components not specified, using BIC determined #')         
         fa_output = self.results['factor_tree_Rout_%s' % rotate][c]
         output = {'weights': get_attr(fa_output, 'weights'),
@@ -301,7 +304,7 @@ class EFA_Analysis:
     
     def print_top_factors(self, c=None, n=5, rotate='oblimin'):
         if c is None:
-            c = self.results['num_factors']
+            c = self.get_c()
             print('# of components not specified, using BIC determined #')
         tmp = get_top_factors(self.get_loading(c, rotate=rotate), n=n, verbose=True)
       
@@ -330,7 +333,7 @@ class EFA_Analysis:
             
         # create factor tree
         if verbose: print('Creating Factor Tree')
-        self.get_loading(c=self.results['num_factors'], rotate=rotate,
+        self.get_loading(c=self.get_c(), rotate=rotate,
                          bootstrap=bootstrap)
         # optional threshold
         if loading_thresh is not None:
@@ -415,7 +418,10 @@ class HCA_Analysis():
                 graphs.append(np.nan)
         return graphs
     
-    def get_cluster_loading(self, EFA, inp, c, rotate='oblimin'):
+    def get_cluster_loading(self, EFA, c=None, rotate='oblimin'):
+        if c is None:
+            c = EFA.get_c()
+        inp = 'EFA%s_%s' % (c, rotate)
         cluster_labels = self.get_cluster_DVs(inp)
         cluster_loadings = []
         for cluster in cluster_labels:
@@ -424,7 +430,7 @@ class HCA_Analysis():
             cluster_loadings.append((cluster, cluster_vec))
         return cluster_loadings
     
-    def get_cluster_names(self, inp):
+    def get_cluster_names(self, inp='data'):
         cluster = self.results['%s' % inp]
         num_clusters = np.max(cluster['labels'])
         if 'cluster_names' in cluster.keys():
@@ -453,7 +459,7 @@ class HCA_Analysis():
         self.cluster_data(data)
         if cluster_EFA:
             if verbose: print("Clustering EFA")
-            self.cluster_EFA(EFA, EFA.results['num_factors'],
+            self.cluster_EFA(EFA, EFA.get_c(),
                              rotate=rotate)
         if run_graphs == True:
             # run graph analysis on raw data
@@ -487,7 +493,7 @@ class Demographic_Analysis(EFA_Analysis):
         retest = retest.loc[common_index, common_columns]
         raw_change = retest-demographics
         # convert to scores
-        c = self.results['num_factors']
+        c = self.get_c()
         demographic_factor_weights = get_attr(self.results['factor_tree_Rout_oblimin'][c],'weights')
         demographic_scores = scale(demographics).dot(demographic_factor_weights)
         retest_scores = scale(retest).dot(demographic_factor_weights)

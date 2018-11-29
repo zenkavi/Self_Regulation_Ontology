@@ -259,12 +259,20 @@ def plot_subbranches(results, c=None,  rotate='oblimin', inp=None,
     plot_loc = None
     if cluster_range is None:
         cluster_range = range(len(cluster_labels))
+    # get cluster titles
+    cluster_names = clustering.get('cluster_names', None)
+    if cluster_names:
+        cluster_names = [cluster_names[i] for i in cluster_range]
+    else:
+        cluster_names = [None] * len(cluster_range)
+    # titles = 
     figs = []
     for cluster_i in cluster_range:
         if plot_dir:
             filey = 'cluster_%s.%s' % (str(cluster_i).zfill(2), ext)
             plot_loc = path.join(plot_dir, function_directory, filey)
         fig = plot_subbranch(cluster_i, tree, ordered_loading, cluster_sizes,
+                             title=cluster_names.pop(), 
                              size=size, plot_loc=plot_loc)
         figs.append(fig)
     return figs
@@ -496,7 +504,7 @@ def MDS_visualization(results, c, rotate='oblimin', plot_dir=None,
     HCA = results.HCA
     EFA = results.EFA
     
-    cluster_loadings = HCA.get_cluster_loading(EFA, 'data', c)
+    cluster_loadings = HCA.get_cluster_loading(EFA, rotate=rotate)
     cluster_loadings_mat = np.vstack([i[1] for i in cluster_loadings])
     EFA_loading = abs(EFA.get_loading(c, rotate=rotate))
     EFA_loading_mat = EFA_loading.values
@@ -584,7 +592,7 @@ def visualize_importance(importance, ax, xticklabels=True,
     if legend:
         ax.legend(loc='upper center', bbox_to_anchor=(.5,-.15))
         
-def plot_cluster_factors(results, c, inp='data', ext='png', plot_dir=None):
+def plot_cluster_factors(results, c, rotate='oblimin',  ext='png', plot_dir=None):
     """
     Args:
         EFA: EFA_Analysis object
@@ -596,7 +604,7 @@ def plot_cluster_factors(results, c, inp='data', ext='png', plot_dir=None):
     HCA = results.HCA
     EFA = results.EFA
     
-    cluster_loadings = HCA.get_cluster_loading(EFA, inp, c)
+    cluster_loadings = HCA.get_cluster_loading(EFA, rotate=rotate)
     max_loading = max([max(abs(i[1])) for i in cluster_loadings])
     # plot
     colors = sns.hls_palette(len(cluster_loadings))
@@ -622,7 +630,7 @@ def plot_cluster_factors(results, c, inp='data', ext='png', plot_dir=None):
         axes[j].set_visible(False)
     plt.subplots_adjust(hspace=.5, wspace=.5)
     
-    filename = 'polar_factors_EFA%s_inp-%s.%s' % (c, inp, ext)
+    filename = 'polar_factors_EFA%s_%s.%s' % (c, rotate, ext)
     if plot_dir is not None:
         save_figure(f, path.join(plot_dir, filename),
                     {'bbox_inches': 'tight'})
@@ -782,7 +790,7 @@ def plot_cluster_sankey(results):
     
 
 def plot_HCA(results, plot_dir=None, size=10, dpi=300, verbose=False, ext='png'):
-    c = results.EFA.results['num_factors']
+    c = results.EFA.get_c()
     # plots, woo
 #    if verbose: print("Plotting dendrogram heatmaps")
 #    plot_clusterings(results, inp='data', plot_dir=plot_dir, verbose=verbose, ext=ext)

@@ -65,7 +65,7 @@ def plot_BIC_SABIC(results, size=2.3, dpi=300, ext='png', plot_dir=None):
 
 def get_communality(EFA, rotate='oblimin', c=None):
     if c is None:
-        c = EFA.results['num_factors']
+        c = EFA.get_c()
     loading = EFA.get_loading(c, rotate=rotate)
     # get communality from psych out
     fa = EFA.results['factor_tree_Rout_%s' % rotate][c]
@@ -698,7 +698,7 @@ def plot_DDM(results, c, rotate='oblimin',
 def plot_EFA(results, plot_dir=None, verbose=False, size=4.6, dpi=300, ext='png',
              plot_task_kws={}):
 
-    c = results.EFA.results['num_factors']
+    c = results.EFA.get_c()
     #if verbose: print("Plotting BIC/SABIC")
     #plot_BIC_SABIC(EFA, plot_dir)
     if verbose: print("Plotting communality")

@@ -276,9 +276,9 @@ class BehavPredict:
                                 lambda_preset=None)
 
             else:
-                clf=LassoCV(max_iter=5000)
+                clf=LassoCV(cv=5, max_iter=5000)
         elif self.classifier=='ridge':
-            clf = RidgeCV()    
+            clf = RidgeCV(cv=5)    
         elif self.classifier=='svm':
             clf = svm.LinearSVR()
         else:
@@ -436,9 +436,9 @@ class BehavPredict:
                            self.n_jobs,
                            nlambda=None)
             else:
-                clf=LassoCV(max_iter=5000)
+                clf=LassoCV(cv=5, max_iter=5000)
         elif self.classifier=='ridge':
-            clf = RidgeCV()      
+            clf = RidgeCV(cv=5)      
         elif self.classifier=='svm':
             clf = svm.LinearSVR()
         else:

@@ -10,6 +10,7 @@ parser.add_argument('-no_prediction', action='store_false')
 parser.add_argument('-no_plot', action='store_false')
 parser.add_argument('-no_group_analysis', action='store_false')
 parser.add_argument('-no_group_plot', action='store_false')
+parser.add_argument('-run_change', action='store_true')
 parser.add_argument('-bootstrap', action='store_true')
 parser.add_argument('-boot_iter', type=int, default=1000)
 parser.add_argument('-shuffle_repeats', type=int, default=1)
@@ -25,6 +26,7 @@ args = parser.parse_args()
 dataset = args.dataset
 run_analysis = args.no_analysis
 run_prediction = args.no_prediction
+run_change = args.run_change
 run_plot = args.no_plot
 group_analysis = args.no_group_analysis
 group_plot = args.no_group_plot
@@ -100,17 +102,80 @@ demographic_factor_names = ['Drug Use',
                             'Income / Life Milestones']
 subsets = [{'name': 'task', 
             'regex': 'task',
-            'oblimin_cluster_names': [],
+            'oblimin_cluster_names': ['response_inhibition_thresh',
+                                      'general_thresh',
+                                      'conflict_drift',
+                                      'general_drift',
+                                      'updating_drift',
+                                      'discounting',
+                                      'holt/nback',
+                                      'cold/explicit_reasoning/IQ',
+                                      'hot/implicit_reasoning/IQ',
+                                      'default_decision_making', #but not two-stage perseverance?
+                                      'SSRT',
+                                      'non-decision',
+                                      'slough'
+                                      ],
             'oblimin_factor_names': ['Speeded IP', 'Strategic IP', 'Discounting',
-                             'Perc / Resp', 'Caution'],
+                                     'Perc / Resp', 'Caution'],
+            'varimax_cluster_names': ['conflict_drift',
+                                      '1',
+                                      'response_inhibition_thresh',
+                                      'general_thresh',
+                                      'non_decision',
+                                      'holt/nback',
+                                      'writing',
+                                      'default_decision_making',
+                                      'hot/implicit_reasoning/IQ',
+                                      'discounting',
+                                      'cold/explicit_reasoning/IQ',
+                                      '11',
+                                      'updating_IP',
+                                       'SSRT+',
+                                       'general_drift',
+                                      ],
+            'varimax_factor_names': ['Speeded IP', 'Strategic IP', 'Perc / Resp',
+                                     'Discounting', 'Caution'],
             'predict': True},
             {'name': 'survey',
              'regex': 'survey',
-             'oblimin_cluster_names': [],
-             'oblimin_factor_names':  ['Sensation Seeking', 'Mindfulness', 'Impulsivity', 
-                               'Emotional Control', 'Reward Sensitivity', 'Goal-Directedness', 
-                               'Risk Perception', 'Eating Control', 'Ethical Risk-Taking', 
-                               'Social Risk-Taking', 'Financial Risk-Taking', 'Agreeableness'],
+             'oblimin_cluster_names': ['Sensation Seeking',
+                                       'Mindfulness',
+                                       'Self-Control',
+                                       'Goal-Directedness',
+                                       'Behavioral Approach',
+                                       'Behavioral Inhibit',
+                                       'FTP',
+                                       'Eating+',
+                                       'Reward Sensitivity',
+                                       'Sociability',
+                                       'Financial Risk Taking',
+                                       'Ethical/Health Risk Taking',
+                                       'Risk Perception'
+                                       ],
+             'oblimin_factor_names':  ['Sensation Seeking', 'Mindfulness', 
+                                   'Impulsivity',  'Emotional Control',
+                                   'Reward Sensitivity', 'Goal-Directedness', 
+                                   'Risk Perception', 'Eating Control', 
+                                   'Ethical Risk-Taking', 'Social Risk-Taking',
+                                   'Financial Risk-Taking', 'Agreeableness'],
+            'varimax_cluster_names': ['Financial Risk Taking',
+                                      'Risk Perception',
+                                      'Ethical/health Risk Taking',
+                                      'Sociability',
+                                      'Behavioral Approach/FTP',
+                                      'Self-Control',
+                                      '6',
+                                      'Social Risk Taking',
+                                      'Sensation Seeking',
+                                      'Reward Sensitivity'
+                                      ],
+            'varimax_factor_names': ['Impulsivity', 'Sensation Seeking', 
+                                     'Emotional Control',  'Reward Sensitivity', 
+                                     'Ethical Risk-Taking', 'Risk-Perception', 
+                                     'Social Risk-Taking',  'Eating Control',
+                                     'Financial Risk-Taking', 'Agreeableness', 
+                                     'Mindfulness',  'Goal-Directedness'],
              'predict': True},
              {'name': 'main_subset', 
             'regex': 'main',
@@ -157,13 +222,14 @@ for subset in subsets:
             results.run_clustering_analysis(rotate=rotate, 
                                             verbose=verbose, 
                                             run_graphs=False)
+            c = results.EFA.get_c()
             # name factors and clusters
             factor_names = subset.get('%s_factor_names' % rotate, None)
             cluster_names = subset.get('%s_cluster_names' % rotate, None)
             if factor_names:
                 results.EFA.name_factors(factor_names)
             if cluster_names:
-                results.HCA.name_clusters(cluster_names)
+                results.HCA.name_clusters(cluster_names, inp='EFA%s_%s' % (c, rotate))
         ID = results.ID.split('_')[1]
         results.DA.name_factors(demographic_factor_names)
         if verbose: print('Saving Subset: %s' % name)
@@ -173,32 +239,37 @@ for subset in subsets:
         copyfile(id_file, path.join(path.dirname(results.get_output_dir()), 
                                     '%s_results.pkl' % name))
 
-    if run_prediction == True:   
-        if verbose:
-            print('*'*79)
-            print('Running prediction: %s' % name)
-        if results is None or name not in results.ID:
-            results = load_results(datafile, name=name)[name]
-        # run behavioral prediction using the factor results determined by BIC
-        for classifier in classifiers:
-            results.run_prediction(classifier=classifier, verbose=verbose)
-            results.run_prediction(classifier=classifier, shuffle=shuffle_repeats, verbose=verbose) # shuffled
-            # predict demographic changes
-            results.run_change_prediction(classifier=classifier, verbose=verbose)
-            results.run_change_prediction(classifier=classifier, shuffle=shuffle_repeats, verbose=verbose) # shuffled
+        if run_prediction == True:   
+            if verbose:
+                print('*'*79)
+                print('Running prediction: %s' % name)
+            if results is None or name not in results.ID:
+                results = load_results(datafile, name=name)[name]
+            # run behavioral prediction using the factor results determined by BIC
+            for classifier in classifiers:
+                for rotate in ['oblimin', 'varimax']:
+                    results.run_prediction(classifier=classifier, rotate=rotate, verbose=verbose)
+                    results.run_prediction(classifier=classifier, rotate=rotate, shuffle=shuffle_repeats, verbose=verbose) # shuffled
+                    # predict demographic changes
+                    if run_change:
+                        results.run_change_prediction(classifier=classifier, rotate=rotate, verbose=verbose)
+                        results.run_change_prediction(classifier=classifier, rotate=rotate, shuffle=shuffle_repeats, verbose=verbose) # shuffled
         # ***************************** saving ****************************************
         prediction_dir = path.join(results.get_output_dir(), 'prediction_outputs')
         for classifier in classifiers:
             for change_flag in [False, True]:
-                prediction_files = glob(path.join(prediction_dir, '*%s*' % classifier))
-                # filter by change
-                prediction_files = filter(lambda x: ('change' in x) == change_flag, prediction_files)
-                # sort by creation time and get last two files
-                prediction_files = sorted(prediction_files, key = path.getmtime)[-4:]
-                for filey in prediction_files:
-                    filename = '_'.join(path.basename(filey).split('_')[:-1])
-                    copyfile(filey, path.join(path.dirname(results.get_output_dir()), 
-                                              '%s_%s.pkl' % (name, filename)))
+                for rotate in ['varimax', 'oblimin']:
+                    prediction_files = glob(path.join(prediction_dir, '*%s*' % classifier))
+                    # filter by change
+                    prediction_files = filter(lambda x: ('change' in x) == change_flag, prediction_files)
+                    # filter by rorate
+                    prediction_files = filter(lambda x: rotate in x, prediction_files)
+                    # sort by creation time and get last two files
+                    prediction_files = sorted(prediction_files, key = path.getmtime)[-4:]
+                    for filey in prediction_files:
+                        filename = '_'.join(path.basename(filey).split('_')[:-1])
+                        copyfile(filey, path.join(path.dirname(results.get_output_dir()), 
+                                                  '%s_%s.pkl' % (name, filename)))
 
     # ****************************************************************************
     # Plotting
