@@ -100,25 +100,27 @@ demographic_factor_names = ['Drug Use',
                             'Income / Life Milestones']
 subsets = [{'name': 'task', 
             'regex': 'task',
-            'factor_names': ['Speeded IP', 'Strategic IP', 'Discounting',
+            'oblimin_cluster_names': [],
+            'oblimin_factor_names': ['Speeded IP', 'Strategic IP', 'Discounting',
                              'Perc / Resp', 'Caution'],
-            'cluster_names': [],
             'predict': True},
             {'name': 'survey',
              'regex': 'survey',
-             'factor_names':  ['Sensation Seeking', 'Mindfulness', 'Impulsivity', 
+             'oblimin_cluster_names': [],
+             'oblimin_factor_names':  ['Sensation Seeking', 'Mindfulness', 'Impulsivity', 
                                'Emotional Control', 'Reward Sensitivity', 'Goal-Directedness', 
                                'Risk Perception', 'Eating Control', 'Ethical Risk-Taking', 
                                'Social Risk-Taking', 'Financial Risk-Taking', 'Agreeableness'],
              'predict': True},
              {'name': 'main_subset', 
             'regex': 'main',
-            'factor_names': [],
-            'cluster_names': [],
+            'oblimin_cluster_names': [],
+            'oblimin_factor_names': [],
             'predict': False},
              {'name': 'all', 
               'regex': '.',
-              'factor_names': [],
+              'oblimin_cluster_names': [],
+              'oblimin_factor_names': [],
               'predict': False}]
 results = None
 all_results = None
@@ -155,14 +157,14 @@ for subset in subsets:
             results.run_clustering_analysis(rotate=rotate, 
                                             verbose=verbose, 
                                             run_graphs=False)
+            # name factors and clusters
+            factor_names = subset.get('%s_factor_names' % rotate, None)
+            cluster_names = subset.get('%s_cluster_names' % rotate, None)
+            if factor_names:
+                results.EFA.name_factors(factor_names)
+            if cluster_names:
+                results.HCA.name_clusters(cluster_names)
         ID = results.ID.split('_')[1]
-        # name factors and clusters
-        factor_names = subset.get('factor_names', None)
-        cluster_names = subset.get('cluster_names', None)
-        if factor_names:
-            results.EFA.name_factors(factor_names)
-        if cluster_names:
-            results.HCA.name_clusters(cluster_names)
         results.DA.name_factors(demographic_factor_names)
         if verbose: print('Saving Subset: %s' % name)
         id_file = results.save_results()

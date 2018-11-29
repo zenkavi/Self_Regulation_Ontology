@@ -49,7 +49,7 @@ class UserSchema(Schema):
 class BehavPredict:
     def __init__(self,
                  behavdata,
-                 demogdata,
+                 targetdata,
                  reliabilities=None,
                  output_dir='prediction_outputs',
                  outfile=None,
@@ -68,12 +68,13 @@ class BehavPredict:
                  imputer='SoftImpute'):
         # set up arguments
         self.behavdata = behavdata
-        self.demogdata = demogdata
+        self.targetdata = targetdata
         self.reliabilities = reliabilities
         self.hostname = socket.gethostname()
         self.verbose = verbose
         self.shuffle = int(shuffle)
         self.classifier = classifier
+        self.binary_classifier = binary_classifier
         self.output_dir = output_dir
         self.outfile = outfile
         self.freq_threshold=freq_threshold
@@ -85,7 +86,6 @@ class BehavPredict:
 
         # define internal variables
         self.finished_at=None
-        self.predictor_set=None
         self.dropped_na_columns=None
         self.binary_cutoffs={}
         self.clfs={}
@@ -100,7 +100,7 @@ class BehavPredict:
         
         # initialize
         self.get_joint_datasets()
-        self.get_demogdata_vartypes()
+        self.get_targetdata_vartypes()
 
     def dump(self):
         schema = UserSchema()
@@ -119,20 +119,20 @@ class BehavPredict:
         if vars is None:
             if self.verbose:
                 print('binarizing all appropriate variables')
-            vars=list(self.demogdata.columns)
+            vars=list(self.targetdata.columns)
         elif not isinstance(vars,list):
             vars=[vars]
         if self.verbose:
             print('binarizing demographic data...')
         if self.data_models is None:
-            self.get_demogdata_vartypes()
+            self.get_targetdata_vartypes()
 
         vars=[v for v in vars if not self.data_models[v]=='binary']
 
         newvars=[]
         for v in vars:
-            m=self.demogdata[v].dropna().min()
-            pct_min=numpy.mean(self.demogdata[v].dropna()==m)
+            m=self.targetdata[v].dropna().min()
+            pct_min=numpy.mean(self.targetdata[v].dropna()==m)
             if pct_min<=self.freq_threshold or pct_min>=(1-self.freq_threshold):
                 if self.verbose:
                     print('not binarizing %s: pct min too small (%f)'%(v,pct_min))
@@ -141,16 +141,16 @@ class BehavPredict:
             newv=v+'.binarized'
             newvars.append(newv)
 
-            self.binary_cutoffs[v]=[m,numpy.sum(self.demogdata[v]<=m),
-                    numpy.sum(self.demogdata[v]>m)]
-            self.demogdata[newv]=(self.demogdata[v]>m).astype('int')
+            self.binary_cutoffs[v]=[m,numpy.sum(self.targetdata[v]<=m),
+                    numpy.sum(self.targetdata[v]>m)]
+            self.targetdata[newv]=(self.targetdata[v]>m).astype('int')
             self.data_models[newv]='binary'
             if replace:
-                del self.demogdata[v]
+                del self.targetdata[v]
             if (1-pct_min)<self.drop_threshold:
                 if self.verbose:
                     print('dropping %s due to too few nonzero vals'%v)
-                    del self.demogdata[v]
+                    del self.targetdata[v]
 
         return newvars
     
@@ -176,21 +176,21 @@ class BehavPredict:
         if verbose:
             print('removed %d columns'%int(orig_shape - new_shape))
             
-    def get_demogdata_vartypes(self):
+    def get_targetdata_vartypes(self):
         # for each variable, get info on how it is distributed
-        model_types = get_demographic_model_type(self.demogdata)
+        model_types = get_demographic_model_type(self.targetdata)
         self.data_models = {k:v for i, (k,v) in model_types.iterrows()}
 
     def get_joint_datasets(self):
-        demog_index=set(self.demogdata.index)
+        demog_index=set(self.targetdata.index)
         behav_index=set(self.behavdata.index)
         inter=list(demog_index.intersection(behav_index))
-        self.demogdata=self.demogdata.loc[inter,:]
+        self.targetdata=self.targetdata.loc[inter,:]
         self.behavdata=self.behavdata.loc[inter,:]
-        assert all(self.demogdata.index==self.behavdata.index)
+        assert all(self.targetdata.index==self.behavdata.index)
         if self.verbose:
             print('datasets successfully aligned')
-            print('%d subjects in joint dataset'%self.demogdata.shape[0])
+            print('%d subjects in joint dataset'%self.targetdata.shape[0])
 
     
     # linear models without cross validation for testing
@@ -225,7 +225,7 @@ class BehavPredict:
         else:
             binary_clf = self.binary_classifier
 
-        Ydata=self.demogdata[v].dropna().copy()
+        Ydata=self.targetdata[v].dropna().copy()
         idx=Ydata.index
         Xdata=self.behavdata.loc[idx,:].copy()
         Ydata=Ydata.values
@@ -284,7 +284,7 @@ class BehavPredict:
         else:
             clf = self.classifier
         # run regression
-        Ydata=self.demogdata[v].dropna().copy()
+        Ydata=self.targetdata[v].dropna().copy()
         Xdata=self.behavdata.loc[Ydata.index,:].copy()
         Ydata=Ydata.values
         if self.shuffle:
@@ -351,7 +351,7 @@ class BehavPredict:
 
 
         if self.verbose:
-            print('classifying',v,numpy.mean(self.demogdata[v]))
+            print('classifying',v,numpy.mean(self.targetdata[v]))
             print('using classifier:',self.classifier)
         if self.binary_classifier=='rf':
             clf=ExtraTreesClassifier()
@@ -365,7 +365,7 @@ class BehavPredict:
         if not outer_cv:
             outer_cv=StratifiedKFold(n_splits=self.n_outer_splits,shuffle=True)
         # set up data
-        Ydata=self.demogdata[v].dropna().copy()
+        Ydata=self.targetdata[v].dropna().copy()
         Xdata=self.behavdata.loc[Ydata.index,:].copy()
 
         Ydata=Ydata.values
@@ -423,7 +423,7 @@ class BehavPredict:
         """
 
         if self.verbose:
-            print('%s regression on'%self.data_models[v],v,numpy.mean(self.demogdata[v]>0))
+            print('%s regression on'%self.data_models[v],v,numpy.mean(self.targetdata[v]>0))
             print('using classifier:',self.classifier)
         if self.classifier=='rf':
             clf=ExtraTreesRegressor()
@@ -445,7 +445,7 @@ class BehavPredict:
             clf = self.classifier
         # set up crossvalidation
         # set up data
-        Ydata=self.demogdata[v].dropna().copy()
+        Ydata=self.targetdata[v].dropna().copy()
         Xdata=self.behavdata.loc[Ydata.index,:].copy()
         Ydata=Ydata.values
         if self.shuffle:
@@ -516,8 +516,7 @@ class BehavPredict:
             except AttributeError:
                 classifier_name = 'Unknown'
         if self.outfile is None:
-            outfile='prediction_%s_%s_%s%s%s.pkl' % (self.predictor_set,
-                                                     classifier_name,
+            outfile='prediction_%s_%s_%s%s%s.pkl' % (classifier_name,
                                                      shuffle_flag,
                                                      h)
         else:

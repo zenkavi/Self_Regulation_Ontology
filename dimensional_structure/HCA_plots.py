@@ -268,12 +268,34 @@ def plot_subbranches(results, c=None,  rotate='oblimin', inp=None,
                              size=size, plot_loc=plot_loc)
         figs.append(fig)
     return figs
-                           
+                
+def plot_results_dendrogram(results, c=None, rotate='oblimin', inp=None,
+                            title=None, size=4.6,  ext='png', plot_dir=None,
+                            **kwargs):
+    subset = results.ID.split('_')[0]
+    HCA = results.HCA
+    EFA = results.EFA     
+    loading = EFA.reorder_factors(EFA.get_loading(c, rotate=rotate))
+    clustering = HCA.results[inp]
+    name = inp
+    if title is None:
+        title = subset.title() + " Dependent Variable Structure"
+    if plot_dir:
+        filename =  path.join(plot_dir, 'dendrogram_%s.%s' % (name, ext))
+    else:
+        filename = None
 
-def plot_dendrogram(results, c=None,  rotate='oblimin', inp=None, titles=None, 
+    plot_dendrogram(loading, clustering, 
+                    title=title, 
+                    size=size, 
+                    filename=filename,
+                    **kwargs)
+    
+    
+def plot_dendrogram(loading, clustering, title=None, 
                     labels=None, var_labels=False, break_lines=True, 
-                    absolute_loading=False,  size=4.6,  dpi=300, ext='png', 
-                    plot_dir=None):
+                    absolute_loading=False,  size=4.6,  dpi=300, 
+                    filename=None):
     """ Plots HCA results as dendrogram with loadings underneath
     
     Args:
@@ -284,17 +306,9 @@ def plot_dendrogram(results, c=None,  rotate='oblimin', inp=None, titles=None,
         titles: list of titles. Should correspond to number of clusters in
                 results object if "inp" is not set. Otherwise should be a list of length 1.
     """
-    subset = results.ID.split('_')[0]
-    HCA = results.HCA
-    EFA = results.EFA
-    loading = EFA.reorder_factors(EFA.get_loading(c, rotate=rotate))
-    clustering = HCA.results[inp]
-    name = inp
 
-    if titles is None:
-        title = subset.title() + " Dependent Variable Structure"
-    elif titles != False:
-        title=titles.pop(0)
+
+    c = loading.shape[1]
     # extract cluster vars
     link = clustering['linkage']
     DVs = clustering['clustered_df'].columns
@@ -343,9 +357,8 @@ def plot_dendrogram(results, c=None,  rotate='oblimin', inp=None, titles=None,
         ax2 = fig.add_axes(heatmap_size)
         cbar_ax = fig.add_axes(cbar_size)
         max_val = np.max(abs(loading.values))
-        # if max_val is high, just make it 1
-        if max_val > .9:
-            max_val = 1
+        # bring to closest .25
+        max_val = ceil(max_val*4)/4
         sns.heatmap(ordered_loading, ax=ax2, 
                     cbar=True, cbar_ax=cbar_ax,
                     yticklabels=True,
@@ -417,13 +430,12 @@ def plot_dendrogram(results, c=None,  rotate='oblimin', inp=None, titles=None,
                 ax3.spines['left'].set_visible(False)
             
         # add title
-        if titles != False:
+        if title:
             ax1.set_title(title, fontsize=size*2, y=1.05)
             
         
-    if plot_dir is not None:
-        save_figure(fig, path.join(plot_dir, 
-                                  'dendrogram_%s.%s' % (name, ext)),
+    if filename is not None:
+        save_figure(fig, filename,
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
     
@@ -776,10 +788,10 @@ def plot_HCA(results, plot_dir=None, size=10, dpi=300, verbose=False, ext='png')
 #    plot_clusterings(results, inp='data', plot_dir=plot_dir, verbose=verbose, ext=ext)
 #    plot_clusterings(results, inp='EFA%s' % c, plot_dir=plot_dir, verbose=verbose, ext=ext)
     if verbose: print("Plotting dendrograms")
-    plot_dendrogram(results, c, size=size, inp='data', var_labels=False,
-                    titles=False,  plot_dir=plot_dir, ext=ext, dpi=dpi)
-    plot_dendrogram(results, c, inp='EFA%s_oblimin' % c, var_labels=False,
-                    titles=False, plot_dir=plot_dir, ext=ext, dpi=dpi)
+    plot_results_dendrogram(results, c, size=size, inp='data', var_labels=False,
+                    title=False,  plot_dir=plot_dir, ext=ext, dpi=dpi)
+    plot_results_dendrogram(results, c, inp='EFA%s_oblimin' % c, var_labels=False,
+                    title=False, plot_dir=plot_dir, ext=ext, dpi=dpi)
     if verbose: print("Plotting dendrogram subbranches")
     plot_subbranches(results, c,  size=size/2, inp='data', 
                      plot_dir=plot_dir, ext=ext, dpi=dpi)
