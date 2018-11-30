@@ -12,6 +12,7 @@ from selfregulation.utils.r_to_py_utils import psychFA
 
 # utils for deriving and evaluating ontological factors for out-of-model tasks
 def reorder_FA(ref_FA, new_FA):
+    """ Reorder FA to correspond to old FA, and check that there is such a correspondence"""
     c = len(ref_FA.columns)
     corr = pd.concat([ref_FA, new_FA], axis=1, sort=False).corr().iloc[c:, :c]
     new_FA = new_FA.loc[:,corr.idxmax()]
@@ -68,7 +69,7 @@ def linear_reconstruction(results, drop_regex,
         
     if verbose: print('Starting full reconstruction')
     full_reconstruction = run_linear(scores, data.loc[:, drop_vars], clf)
-    full_reconstruction.reset_index(drop=True)
+    full_reconstruction.reset_index(drop=True, inplace=True)
 
     if verbose: print('Starting partial reconstruction, pop size:', pseudo_pop_size)
     estimated_loadings = pd.DataFrame()
@@ -98,8 +99,8 @@ def run_kNeighbors(distances, loadings, test_vars,
         weightings: (optional) list of weightings to pass to KNeighbors
         k_list: list of k values to pass to KNeighbors as n_neighbors
     """
-    train_distances = distances.loc[loadings.index, :]
-    test_distances = distances.loc[test_vars, :]
+    train_distances = distances.loc[loadings.index, loadings.index]
+    test_distances = distances.loc[test_vars, loadings.index]
     to_return = pd.DataFrame()
     for weighting in weightings:
         for k in k_list:
@@ -155,7 +156,7 @@ def k_nearest_reconstruction(results, drop_regex, available_vars=None,
                              columns=data.columns).drop(drop_vars, axis=1)
 
     full_reconstruction = run_kNeighbors(distances, loadings, drop_vars, weightings, k_list)
-    full_reconstruction.reset_index(drop=True)
+    full_reconstruction.reset_index(drop=True, inplace=True)
 
     if verbose: print('Starting partial reconstruction, pop size:', pseudo_pop_size)
     estimated_loadings = pd.DataFrame()
@@ -271,3 +272,6 @@ def CV_predict(reconstruction, labels, cv=10, clf=LinearSVC(), test_set=None):
         predicted = clf.predict(test_set[0])
         scores['true_confusion'] = confusion_matrix(le.transform(test_set[1]), predicted)
     return scores
+
+
+# reconstruction with fewer variables
