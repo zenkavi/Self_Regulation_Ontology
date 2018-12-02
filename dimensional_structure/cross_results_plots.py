@@ -400,7 +400,7 @@ def plot_BIC(all_results, size=4.6, dpi=300, ext='png', plot_dir=None):
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
             
-def plot_cross_silhouette(all_results, size=4.6,  dpi=300, 
+def plot_cross_silhouette(all_results, rotate, size=4.6,  dpi=300, 
                     ext='png', plot_dir=None):
     with sns.axes_style('white'):
         fig, axes =  plt.subplots(len(all_results), 2, 
@@ -411,7 +411,7 @@ def plot_cross_silhouette(all_results, size=4.6,  dpi=300,
     for i, (name, results) in enumerate(all_results.items()):
         ax = axes[i*2]
         ax2 = axes[i*2+1]
-        inp = 'EFA%s_oblimin' % results.EFA.results['num_factors']
+        inp = 'EFA%s_%s' % (results.EFA.get_c(), rotate)
         plot_silhouette(results, inp=inp, axes=(ax,ax2), size=size)
         ax.set_ylabel('%s cluster separated DVs' % name.title(), fontsize=size*1.2)
         ax2.set_ylabel('%s average silhouette score' % name.title(), fontsize=size*1.2)
@@ -437,7 +437,7 @@ def plot_cross_silhouette(all_results, size=4.6,  dpi=300,
         place_letter(ax2, letters.pop(0), fontsize=size*9/4.6)
         
     if plot_dir is not None:
-        save_figure(fig, path.join(plot_dir, 
+        save_figure(fig, path.join(plot_dir, rotate,
                                          'silhouette_analysis.%s' % ext),
                     {'dpi': dpi})
         plt.close()
@@ -457,7 +457,7 @@ def plot_cross_communality(all_results, rotate='oblimin', retest_threshold=.2,
             retest_data = get_retest_data(dataset=results.dataset.replace('Complete','Retest'))
             if retest_data is None:
                 print('No retest data found for datafile: %s' % results.dataset)
-        c = results.EFA.results['num_factors']
+        c = results.EFA.get_c()
         EFA = results.EFA
         loading = EFA.get_loading(c, rotate=rotate)
         # get communality from psych out
@@ -528,7 +528,7 @@ def plot_cross_communality(all_results, rotate='oblimin', retest_threshold=.2,
                     
         if plot_dir:
             filename = 'communality_adjustment.%s' % ext
-            save_figure(f, path.join(plot_dir, filename), 
+            save_figure(f, path.join(plot_dir, rotate, filename), 
                         {'bbox_inches': 'tight', 'dpi': dpi})
             plt.close()
         

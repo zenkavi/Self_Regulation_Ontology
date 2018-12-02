@@ -189,7 +189,7 @@ def get_constant_height_labels(clustering, n_clusters=None):
             labels = cut_tree(clustering['linkage'], n_clusters=k_clusters)
             try:
                 score = silhouette_score(clustering['distance_df'], 
-                                         labels, metric='precomputed')
+                                         labels.ravel(), metric='precomputed')
             except ValueError:
                 continue
             scores.append((k_clusters,score))

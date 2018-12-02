@@ -215,7 +215,7 @@ def plot_factor_correlation(results, c, rotate='oblimin', title=True,
         ax1 = f.add_axes([0,0,.9,.9])
         cbar_ax = f.add_axes([.91, .05, .03, .8])
         sns.heatmap(phi, ax=ax1, square=True, vmax=1, vmin=-1,
-                    cbar_ax=cbar_ax, 
+                    cbar_ax=cbar_ax, annot=True, annot_kws={"size": size*4},
                     cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
         yticklabels = ax1.get_yticklabels()
         ax1.set_yticklabels(yticklabels, rotation=0, ha="right")
@@ -695,26 +695,27 @@ def plot_DDM(results, c, rotate='oblimin',
 
 
         
-def plot_EFA(results, plot_dir=None, verbose=False, size=4.6, dpi=300, ext='png',
+def plot_EFA(results, plot_dir, rotate='oblimin', 
+             verbose=False, size=4.6, dpi=300, ext='png',
              plot_task_kws={}):
-
+    plot_dir = path.join(plot_dir, rotate)
     c = results.EFA.get_c()
     #if verbose: print("Plotting BIC/SABIC")
     #plot_BIC_SABIC(EFA, plot_dir)
     if verbose: print("Plotting communality")
-    plot_communality(results, c, size=size, plot_dir=plot_dir, dpi=dpi,  ext=ext)
+    plot_communality(results, c, rotate=rotate, size=size, plot_dir=plot_dir, dpi=dpi,  ext=ext)
 #    if verbose: print("Plotting entropies")
 #    plot_entropies(results, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting factor bars")
-    plot_bar_factors(results, c, size=size, plot_dir=plot_dir, dpi=dpi,  ext=ext)
+    plot_bar_factors(results, c, rotate=rotate, size=size, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting factor heatmap")
-    plot_heatmap_factors(results, c=c, thresh=0, size=size, plot_dir=plot_dir, dpi=dpi, ext=ext)
+    plot_heatmap_factors(results, c=c, rotate=rotate, thresh=0, size=size, plot_dir=plot_dir, dpi=dpi, ext=ext)
 #    if verbose: print("Plotting task factors")
 #    plot_task_factors(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)
 #    plot_task_factors(results, c, normalize_loadings=True, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)
     if verbose: print("Plotting factor correlations")
-    plot_factor_correlation(results, c, title=False, plot_dir=plot_dir, dpi=dpi,  ext=ext)
+    plot_factor_correlation(results, c, rotate=rotate, title=False, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting DDM factors")
     if 'task' in results.ID:
-        plot_DDM(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext)
+        plot_DDM(results, c, rotate=rotate, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     

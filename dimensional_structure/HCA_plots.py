@@ -215,7 +215,7 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
     else:
         return fig
     
-def plot_subbranches(results, c=None,  rotate='oblimin', inp=None, 
+def plot_subbranches(results, c=None,  rotate='oblimin', EFA_clustering=True,
                      cluster_range=None, absolute_loading=False,
                      size=2.3, dpi=300, ext='png', plot_dir=None):
     """ Plots HCA results as dendrogram with loadings underneath
@@ -234,6 +234,10 @@ def plot_subbranches(results, c=None,  rotate='oblimin', inp=None,
     EFA = results.EFA
     loading = EFA.reorder_factors(EFA.get_loading(c, rotate=rotate))
     loading.index = format_variable_names(loading.index)
+    if EFA_clustering:
+        inp = 'EFA%s_%s' % (c, rotate)
+    else:
+        inp = 'data'
     clustering = HCA.results[inp]
     name = inp
     
@@ -277,13 +281,18 @@ def plot_subbranches(results, c=None,  rotate='oblimin', inp=None,
         figs.append(fig)
     return figs
                 
-def plot_results_dendrogram(results, c=None, rotate='oblimin', inp=None,
-                            title=None, size=4.6,  ext='png', plot_dir=None,
+def plot_results_dendrogram(results, c=None, rotate='oblimin', 
+                            EFA_clustering=True, title=None, size=4.6,  
+                            ext='png', plot_dir=None,
                             **kwargs):
     subset = results.ID.split('_')[0]
     HCA = results.HCA
     EFA = results.EFA     
     loading = EFA.reorder_factors(EFA.get_loading(c, rotate=rotate))
+    if EFA_clustering:
+        inp = 'EFA%s_%s' % (c, rotate)
+    else:
+        inp = 'data'
     clustering = HCA.results[inp]
     name = inp
     if title is None:
@@ -789,25 +798,28 @@ def plot_cluster_sankey(results):
         print("Plotly wasn't found, can't plot!")
     
 
-def plot_HCA(results, plot_dir=None, size=10, dpi=300, verbose=False, ext='png'):
+def plot_HCA(results, plot_dir, rotate='oblimin',  size=10, dpi=300, verbose=False, ext='png'):
+    plot_rotate_dir = path.join(plot_dir, rotate)
     c = results.EFA.get_c()
     # plots, woo
 #    if verbose: print("Plotting dendrogram heatmaps")
 #    plot_clusterings(results, inp='data', plot_dir=plot_dir, verbose=verbose, ext=ext)
 #    plot_clusterings(results, inp='EFA%s' % c, plot_dir=plot_dir, verbose=verbose, ext=ext)
     if verbose: print("Plotting dendrograms")
-    plot_results_dendrogram(results, c, size=size, inp='data', var_labels=False,
-                    title=False,  plot_dir=plot_dir, ext=ext, dpi=dpi)
-    plot_results_dendrogram(results, c, inp='EFA%s_oblimin' % c, var_labels=False,
-                    title=False, plot_dir=plot_dir, ext=ext, dpi=dpi)
+    plot_results_dendrogram(results, c, rotate=rotate, EFA_clustering=False,
+                        var_labels=False, title=False,  plot_dir=plot_dir, 
+                        size=size, ext=ext, dpi=dpi)
+    plot_results_dendrogram(results, c, rotate=rotate, EFA_clustering=True,
+                        var_labels=False, title=False, plot_dir=plot_rotate_dir, 
+                        size=size, ext=ext, dpi=dpi)
     if verbose: print("Plotting dendrogram subbranches")
-    plot_subbranches(results, c,  size=size/2, inp='data', 
-                     plot_dir=plot_dir, ext=ext, dpi=dpi)
-    plot_subbranches(results, c,  size=size/2, inp='EFA%s_oblimin' % c, 
-                     plot_dir=plot_dir, ext=ext, dpi=dpi)
+    plot_subbranches(results, c,  rotate=rotate,  EFA_clustering=False,
+                     size=size/2, plot_dir=plot_dir, ext=ext, dpi=dpi)
+    plot_subbranches(results, c,  rotate=rotate,  EFA_clustering=True,
+                     size=size/2, plot_dir=plot_rotate_dir, ext=ext, dpi=dpi)
     if verbose: print("Plotting silhouette analysis")
-    plot_silhouette(results, inp='EFA%s_oblimin' % c, size=size,
-                    plot_dir=plot_dir, ext=ext, dpi=dpi)
+    plot_silhouette(results, inp='EFA%s_%s' % (c, rotate), size=size,
+                    plot_dir=plot_rotate_dir, ext=ext, dpi=dpi)
 #    if verbose: print("Plotting clustering similarity")
 #    plot_clustering_similarity(results, plot_dir=plot_dir, verbose=verbose, ext=ext)
 #    if verbose: print("Plotting cluster polar plots")
@@ -815,7 +827,7 @@ def plot_HCA(results, plot_dir=None, size=10, dpi=300, verbose=False, ext='png')
 #    plot_cluster_factors(results, c, inp='EFA%s' % c, plot_dir=plot_dir, ext=ext)
     if verbose: print("Plotting MDS space")
     for metric in ['abs_correlation']:
-        MDS_visualization(results, c, plot_dir=plot_dir,
+        MDS_visualization(results, c, rotate=rotate, plot_dir=plot_rotate_dir,
                           dist_metric=metric, ext=ext)
 
 
