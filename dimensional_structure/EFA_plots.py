@@ -237,7 +237,7 @@ def plot_factor_correlation(results, c, rotate='oblimin', title=True,
         
 
 def plot_bar_factor(loading, ax=None, bootstrap_err=None, grouping=None,
-                    width=4, height=8, label_loc='left', title=None,
+                    width=4, height=8, label_rows=True, title=None,
                     color_grouping=False, separate_ticklabels=True):
     """ Plots one factor loading as a vertical bar plot
     
@@ -248,17 +248,17 @@ def plot_bar_factor(loading, ax=None, bootstrap_err=None, grouping=None,
             to plot confidence intervals on bars
         grouping: optional, output of "get_factor_groups", used to plot separating
             horizontal lines
-        label_loc: 'left', 'right', or None. Plots half the variables names, either
-            on the left or the right
+        label_rows: boolean, whether to put ylabels
     """
     
     # longest label for drawing lines
     DV_fontsize = height/(loading.shape[0]//2)*20
-    longest_label = max([len(i) for i in loading.index])
-    line_length = DV_fontsize*longest_label*.013/width
     # set up plot variables
     if ax is None:
         f, ax = plt.subplots(1,1, figsize=(width, height))
+    # change axis border width
+    for axis in ['top','bottom','left','right']:
+        ax.spines[axis].set_linewidth(height/8)
     with sns.plotting_context(font_scale=1.3):
         # plot optimal factor breakdown in bar format to better see labels
         # plot actual values
@@ -269,20 +269,14 @@ def plot_bar_factor(loading, ax=None, bootstrap_err=None, grouping=None,
                                 width=.7)
         else:
             abs(loading).plot(kind='barh', ax=ax, color=ordered_colors,
-                                width=.7, xerr=bootstrap_err, error_kw={'linewidth': height/10})
+                                width=.7, xerr=bootstrap_err,
+                                error_kw={'linewidth': height/10})
         # draw lines separating groups
         if grouping is not None:
             factor_breaks = np.cumsum([len(i[1]) for i in grouping])[:-1]
             for y_val in factor_breaks:
                 ax.hlines(y_val-.5, 0, 1.1, lw=height/10, 
                           color='grey', linestyle='dashed')
-                if separate_ticklabels:
-                    if label_loc in ['left', 'leftall']:
-                        ax.hlines(y_val-.5, -line_length, 0, lw=height/20, 
-                                  clip_on=False)
-                    elif label_loc in ['right']:
-                        ax.hlines(y_val-.5, 1, 1+line_length, lw=height/20, 
-                                  clip_on=False)
         # set axes properties
         ax.set_xlim(0, max(max(abs(loading)), 1.1)); 
         ax.set_yticklabels(''); 
@@ -291,65 +285,23 @@ def plot_bar_factor(loading, ax=None, bootstrap_err=None, grouping=None,
         locs = ax.yaxis.get_ticklocs()
         # add factor label to plot
         if title:
-            ax.set_title(title, ha='left', va='bottom', fontsize=width*8,
-                          weight='bold', rotation=20, y=1, x=0)
-        ax.xaxis.set_tick_params(size=height/4, width=height/10, pad=height/2,
-                                 color='#666666')
+            ax.set_xlabel(title, ha='center', va='top', fontsize=height/2,
+                          weight='bold', rotation=90)
+        ax.tick_params(axis='x', bottom=False, labelbottom=False)
         # add labels of measures to top and bottom
         tick_colors = ['#000000','#444098']
         ax.set_facecolor('#DBDCE7')
         for location in locs[2::3]:
             ax.axhline(y=location, xmin=0, xmax=1, color='w', 
                        zorder=-1, lw=height/10)
-        # if right or both given, plot half labels on the right side
-        if label_loc in ['right', 'both']:
-            for i, label in enumerate(labels):
-                label.set_text('%s  %s' % (i+1, label.get_text()))
-            ax_copy = ax.twinx()
-            ax_copy.set_ybound(ax.get_ybound())
-            ax_copy.set_yticks(locs[::2])
-            right_labels = ax_copy.set_yticklabels(labels[::2], 
-                                                   fontsize=DV_fontsize)
-            ax_copy.yaxis.set_tick_params(size=height/4, width=height/10, pad=width)
-            if grouping is not None and color_grouping:
-                # change colors of ticks based on factor group
-                color_i = 1
-                last_group = None
-                for j, label in enumerate(right_labels):
-                    group = np.digitize(locs[::2][j], factor_breaks)
-                    if last_group is None or group != last_group:
-                        color_i = 1-color_i
-                        last_group = group
-                    color = tick_colors[color_i]
-                    label.set_color(color) 
-        # if left or both given, plot half labels on left size
-        if label_loc in ['left', 'both']:
-            for i, label in enumerate(labels):
-                label.set_text('%s  %s' % (label.get_text(), i+1))
-            # and other half on bottom
-            ax.set_yticks(locs[1::2])
-            left_labels=ax.set_yticklabels(labels[1::2], 
-                                           fontsize=DV_fontsize)
-            ax.yaxis.set_tick_params(size=height/4, width=height/10, pad=width)
-            if grouping is not None and color_grouping:
-                # change colors of ticks based on factor group
-                color_i = 1
-                last_group = None
-                for j, label in enumerate(left_labels):
-                    group = np.digitize(locs[1::2][j], factor_breaks)
-                    if last_group is None or group != last_group:
-                        color_i = 1-color_i
-                        last_group = group
-                    color = tick_colors[color_i]
-                    label.set_color(color) 
         # if leftall given, plot all labels on left
-        if label_loc == 'leftall':
+        if label_rows:
             for i, label in enumerate(labels):
-                label.set_text('%s  %s' % (label.get_text(), i+1))
+                label.set_text('%s ' % (label.get_text()))
             # and other half on bottom
             ax.set_yticks(locs)
             left_labels=ax.set_yticklabels(labels,fontsize=DV_fontsize)
-            ax.yaxis.set_tick_params(size=height/4, width=height/10, pad=width)
+            ax.tick_params(axis='y', size=height/4, width=height/10, pad=width)
             if grouping is not None and color_grouping:
                 # change colors of ticks based on factor group
                 color_i = 1
@@ -363,12 +315,12 @@ def plot_bar_factor(loading, ax=None, bootstrap_err=None, grouping=None,
                     label.set_color(color)             
         else:
             ax.set_yticklabels('')
-            ax.yaxis.set_tick_params(size=0)
+            ax.tick_params(axis='y', size=0)
     if ax is None:
         return f
                 
 def plot_bar_factors(results, c, size=4.6, thresh=75, rotate='oblimin',
-                     dpi=300, ext='png', plot_dir=None):
+                     bar_kws=None, dpi=300, ext='png', plot_dir=None):
     """ Plots factor analytic results as bars
     
     Args:
@@ -420,6 +372,8 @@ def plot_bar_factors(results, c, size=4.6, thresh=75, rotate='oblimin',
     # plot
     n_factors = len(loadings.columns)
     f, axes = plt.subplots(1, n_factors, figsize=(size, size*2))
+    if bar_kws == None:
+        bar_kws = {}
     for i, k in enumerate(loadings.columns):
         loading = loadings[k]
         ax = axes[i]
@@ -427,17 +381,18 @@ def plot_bar_factors(results, c, size=4.6, thresh=75, rotate='oblimin',
             bootstrap_err = bootstrap_CI[k]
         else:
             bootstrap_err = None
-        label_loc=None
+        label_rows=False
         if i==0:
-            label_loc = 'leftall'
+            label_rows = True
         plot_bar_factor(loading, 
                         ax,
                         bootstrap_err, 
                         width=size/n_factors,
                         height=size*2,
                         grouping=grouping,
-                        label_loc=label_loc,
-                        title=k
+                        label_rows=label_rows,
+                        title=k,
+                        **bar_kws
                         )
     if plot_dir:
         filename = 'factor_bars_EFA%s.%s' % (c, ext)
@@ -707,14 +662,15 @@ def plot_EFA(results, plot_dir, rotate='oblimin',
 #    if verbose: print("Plotting entropies")
 #    plot_entropies(results, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting factor bars")
-    plot_bar_factors(results, c, rotate=rotate, size=size, plot_dir=plot_dir, dpi=dpi,  ext=ext)
+    plot_bar_factors(results, c, rotate=rotate, thresh=0, size=size, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting factor heatmap")
     plot_heatmap_factors(results, c=c, rotate=rotate, thresh=0, size=size, plot_dir=plot_dir, dpi=dpi, ext=ext)
 #    if verbose: print("Plotting task factors")
 #    plot_task_factors(results, c, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)
 #    plot_task_factors(results, c, normalize_loadings=True, plot_dir=plot_dir, dpi=dpi,  ext=ext, **plot_task_kws)
-    if verbose: print("Plotting factor correlations")
-    plot_factor_correlation(results, c, rotate=rotate, title=False, plot_dir=plot_dir, dpi=dpi,  ext=ext)
+    if rotate == 'oblimin':
+        if verbose: print("Plotting factor correlations")
+        plot_factor_correlation(results, c, rotate=rotate, title=False, plot_dir=plot_dir, dpi=dpi,  ext=ext)
     if verbose: print("Plotting DDM factors")
     if 'task' in results.ID:
         plot_DDM(results, c, rotate=rotate, plot_dir=plot_dir, dpi=dpi,  ext=ext)

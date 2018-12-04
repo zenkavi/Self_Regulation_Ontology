@@ -173,7 +173,7 @@ subsets = [{'name': 'task',
                                       ],
             'varimax_factor_names': ['Impulsivity', 'Sensation Seeking', 
                                      'Emotional Control',  'Reward Sensitivity', 
-                                     'Ethical Risk-Taking', 'Risk-Perception', 
+                                     'Ethical Risk-Taking', 'Risk Perception', 
                                      'Social Risk-Taking',  'Eating Control',
                                      'Financial Risk-Taking', 'Agreeableness', 
                                      'Mindfulness',  'Goal-Directedness'],
@@ -424,6 +424,8 @@ if group_plot == True:
         plot_cross_silhouette(all_results, rotate=rotate, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
         plot_cross_communality(all_results,rotate=rotate,  size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
         plot_cross_EFA_retest(all_results, rotate=rotate, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+        plot_cross_EFA_retest(all_results, rotate=rotate, annot_heatmap=True, 
+                              size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
     a=subprocess.Popen('python analysis_overview_plot.py -dataset %s -dpi %s -ext %s -size %s' \
                            % (datafile, dpi, ext, 4.6),
                            shell=True)

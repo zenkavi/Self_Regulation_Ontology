@@ -28,7 +28,7 @@ def calc_EFA_retest(results, rotate='oblimin', verbose=True):
                                      file='meaningful_variables.csv')
     shared_ids = set(retest_data_raw.index) & set(results.data.index)
     retest_data_raw = retest_data_raw.loc[shared_ids, :]
-    retest_scores = transfer_scores(retest_data_raw, results)
+    retest_scores = transfer_scores(retest_data_raw, results, rotate=rotate)
     retest_scores.columns = [i+' Retest' for i in retest_scores.columns]
     # scale and perform the factor score transformation
     EFA = results.EFA
@@ -36,7 +36,7 @@ def calc_EFA_retest(results, rotate='oblimin', verbose=True):
     ref_scores = EFA.get_scores(c=c, rotate=rotate).loc[retest_data_raw.index, :]
 
     # reorder scores
-    reorder_vec = EFA.get_factor_reorder(c)
+    reorder_vec = EFA.get_factor_reorder(c, rotate=rotate)
     ref_scores = ref_scores.iloc[:, reorder_vec]
     retest_scores = retest_scores.iloc[:, reorder_vec]
     combined = pd.concat([ref_scores, retest_scores], axis=1)
@@ -104,9 +104,10 @@ def plot_EFA_retest(combined, size=4.6, dpi=300,
     ax = fig.add_axes([.1, .1, .8, .8])
     cbar_ax = fig.add_axes([.92, .15, .04, .7])
     sns.heatmap(corr, square=True, ax=ax, cbar_ax=cbar_ax,
+                vmin=-1, vmax=1,
                 cmap=sns.diverging_palette(220,15,n=100,as_cmap=True),
                 cbar_kws={'orientation': 'vertical',
-                          'ticks': [-max_val, 0, max_val]}); 
+                          'ticks': [-1, 0, 1]}); 
     ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
     ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
     ax.tick_params(labelsize=size/len(corr)*40)
@@ -233,6 +234,7 @@ def plot_cross_EFA_retest(all_results, rotate='oblimin', size=4.6, dpi=300,
                         vmin=-1, vmax=1,
                         cbar_kws={'orientation': 'horizontal',
                                   'ticks': [-1, 0, 1]},
+                        cmap=sns.diverging_palette(220,15,n=100,as_cmap=True),
                         annot=annot,
                         annot_kws={'fontsize': annot_fontsize}); 
             
@@ -241,6 +243,7 @@ def plot_cross_EFA_retest(all_results, rotate='oblimin', size=4.6, dpi=300,
         else:
             sns.heatmap(corr, square=True, ax=ax2, vmin=-1, vmax=1,
                         cbar=False, annot=annot,
+                        cmap=sns.diverging_palette(220,15,n=100,as_cmap=True),
                         annot_kws={'fontsize': annot_fontsize})
         ax2.set_xticklabels('')
         ax2.set_yticklabels(ax2.get_yticklabels(), rotation=0)
@@ -263,7 +266,10 @@ def plot_cross_EFA_retest(all_results, rotate='oblimin', size=4.6, dpi=300,
         [i.set_linewidth(size*.1) for i in ax2.spines.values()]
         
     if plot_dir is not None:
-        save_figure(fig, path.join(plot_dir, rotate, 'EFA_test_retest.%s' % ext),
+        filename = 'EFA_test_retest'
+        if annot_heatmap:
+            filename += '_annot'
+        save_figure(fig, path.join(plot_dir, rotate, '%s.%s' % (filename, ext)),
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
     

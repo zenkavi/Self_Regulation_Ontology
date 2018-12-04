@@ -447,7 +447,7 @@ def quantify_lower_nesting(factor_tree):
 # ****************************************************************************
 # Helper functions for factor analysis
 # ****************************************************************************
-def transfer_scores(data, results):
+def transfer_scores(data, results, rotate='oblimin'):
     """ calculates factor scores in a new dataset based on a reference results object """
     ref_data = results.data
     EFA = results.EFA
@@ -466,7 +466,7 @@ def transfer_scores(data, results):
     subset = data_imputed.loc[:, loadings.index]
     scaled_data = scale(subset)
     # calculate scores
-    weights = get_attr(EFA.results['factor_tree_Rout_oblimin'][c], 'weights')
+    weights = get_attr(EFA.results['factor_tree_Rout_%s' % rotate][c], 'weights')
     scores = pd.DataFrame(scaled_data.dot(weights),
                           index=data_imputed.index,
                           columns=loadings.columns)
