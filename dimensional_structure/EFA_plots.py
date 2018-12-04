@@ -112,13 +112,13 @@ def plot_communality(results, c, rotate='oblimin', retest_threshold=.2,
         f, axes = plt.subplots(1, 3, figsize=(3*(size/10), size))
     
         plot_bar_factor(communality, axes[0], width=size/10, height=size,
-                        label_loc='leftall',  title='Communality')
+                        label_rows=True,  title='Communality')
         plot_bar_factor(noise_ceiling, axes[1], width=size/10, height=size,
-                        label_loc=None,  title='Test-Retest')
+                        label_rows=False,  title='Test-Retest')
         plot_bar_factor(adjusted_communality, axes[2], width=size/10, height=size,
-                        label_loc=None,  title='Adjusted Communality')
+                        label_rows=False,  title='Adjusted Communality')
     else:
-        f = plot_bar_factor(communality, label_loc='both', 
+        f = plot_bar_factor(communality, label_rows=True, 
                             width=size/3, height=size*2, title='Communality')
     if plot_dir:
         filename = 'communality_bars-EFA%s.%s' % (c, ext)
