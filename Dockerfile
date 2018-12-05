@@ -29,6 +29,7 @@ RUN echo 'install.packages(c( \
 
 # installing python packages
 RUN pip install \
+  cython==0.27.3 \ 
   git+https://github.com/IanEisenberg/dynamicTreeCut#eb822ebb32482a81519e32e944fd631fb9176b67 \
   imbalanced-learn==0.3.0 \
   ipdb \ 
@@ -39,7 +40,7 @@ RUN pip install \
   matplotlib==2.1.0 \
   networkx==2.0 \
   nilearn==0.3.0 \
-  numpy==1.13.1 \
+  numpy==1.11.1 \
   pandas==0.20.3 \
   python-igraph==0.7.1.post6 \
   requests==2.14.2 \
@@ -53,7 +54,7 @@ RUN pip install \
 RUN pip install hdbscan==0.8.10 
 # install hddm
 RUN apt-get install -y liblapack-dev
-Run apt-get install -y libopenblas-dev
+RUN apt-get install -y libopenblas-dev
 RUN pip install git+https://github.com/IanEisenberg/kabuki#4119a4c38fd7587109e86b5d12154df017903f7f
 RUN pip install hddm==0.6.1
 
@@ -63,10 +64,15 @@ ENV LD_LIBRARY_PATH /usr/local/lib/R/lib
 ENV IPYTHONDIR /tmp
 # install more python packages that failed in first install
 RUN pip install \
-    fancyimpute==0.2.0 \
+    git+https://github.com/IanEisenberg/expfactory-analysis#8316442e55ab6ce1031bc9f92148dae0283cfa9a \
+    cvxpy==0.4.11 \
+    fancyimpute==0.3.1 \
+    joblib==0.11 \
+    multiprocess==0.70.05 \
     rpy2==2.8.5
+# packages just for analysis
+RUN pip install bctpy==0.5.0
 
-  
 # Copy the directory (except Data and Results) into the docker container
 ADD . /SRO
 RUN mkdir /SRO/Data
@@ -74,6 +80,7 @@ RUN mkdir /SRO/Results
 RUN mkdir /expfactory_token
 RUN mkdir /Data
 RUN mkdir /output
+COPY example_data /Data/
 
 # Create a settings file
 RUN echo "expfactory_token:/expfactory_token/expfactory_token.txt" >> /SRO/Self_Regulation_Settings.txt
@@ -89,6 +96,9 @@ RUN echo "c.NotebookApp.allow_root = True" >> ~/.jupyter/jupyter_notebook_config
 WORKDIR /SRO
 
 # install the selfregulation directory 
-RUN python setup.py install
+RUN pip install -e /SRO
+
+# Ensure user site-package directory isn't added to environment
+RUN export PYTHONNOUSERSITE=1
 
 CMD ["/bin/bash"]
