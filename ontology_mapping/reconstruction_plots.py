@@ -191,7 +191,7 @@ def plot_distance_recon(reconstructed_distances, orig_distances, size=10, filena
 
             if j==0:
                 axes[-1].set_title(recon_name, size=size*1.5, y=1.05)
-            if i==len(reconstructions.keys())-1:
+            if i==len(reconstructed_distances.keys())-1:
                 axes[-1].set_ylabel(pop, rotation=-90, labelpad=size*1.5, size=size*1.5)
                 axes[-1].yaxis.set_label_position("right")
     if filename is not None:
