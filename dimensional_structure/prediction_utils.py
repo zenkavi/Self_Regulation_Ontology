@@ -38,16 +38,16 @@ def run_prediction(predictors, targets, output_base='',
         insample_scores, importances, clf = bp.run_prediction(v)
         if verbose:
             print('Predicting %s' % v)
-            if pd.isnull(cv_scores[0]['R2']):
-                print('No predictor variance in CV model!')
-            if pd.isnull(insample_scores[0]['R2']):
-                print('No predictor variance in insample model!')
+            if 'R2' in cv_scores[0].keys():
+                if pd.isnull(cv_scores[0]['R2']):
+                    print('No predictor variance in CV model!')
+                if pd.isnull(insample_scores[0]['R2']):
+                    print('No predictor variance in insample model!')
         bp.scores[v], bp.importances[v], bp.clfs[v] = cv_scores, importances, clf
         bp.scores_insample[v] = insample_scores
-        
     if save == True:
         bp.write_data(vars_to_test)
-    return bp
+    return bp.get_output(vars_to_test)
 
 def print_prediction_performance(results, EFA=True):
     for classifier in ['ridge', 'lasso', 'rf', 'svm']:
