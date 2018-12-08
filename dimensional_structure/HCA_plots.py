@@ -215,7 +215,7 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
     else:
         return fig
     
-def plot_subbranches(results, c=None,  rotate='oblimin', EFA_clustering=True,
+def plot_subbranches(results, rotate='oblimin', EFA_clustering=True,
                      cluster_range=None, absolute_loading=False,
                      size=2.3, dpi=300, ext='png', plot_dir=None):
     """ Plots HCA results as dendrogram with loadings underneath
@@ -232,10 +232,10 @@ def plot_subbranches(results, c=None,  rotate='oblimin', EFA_clustering=True,
     """
     HCA = results.HCA
     EFA = results.EFA
-    loading = EFA.reorder_factors(EFA.get_loading(c, rotate=rotate))
+    loading = EFA.reorder_factors(EFA.get_loading(rotate=rotate))
     loading.index = format_variable_names(loading.index)
     if EFA_clustering:
-        inp = 'EFA%s_%s' % (c, rotate)
+        inp = 'EFA%s_%s' % (EFA.get_c(), rotate)
     else:
         inp = 'data'
     clustering = HCA.results[inp]
@@ -281,13 +281,14 @@ def plot_subbranches(results, c=None,  rotate='oblimin', EFA_clustering=True,
         figs.append(fig)
     return figs
                 
-def plot_results_dendrogram(results, c=None, rotate='oblimin', 
+def plot_results_dendrogram(results, rotate='oblimin', 
                             EFA_clustering=True, title=None, size=4.6,  
                             ext='png', plot_dir=None,
                             **kwargs):
     subset = results.ID.split('_')[0]
     HCA = results.HCA
     EFA = results.EFA     
+    c = EFA.get_c()
     loading = EFA.reorder_factors(EFA.get_loading(c, rotate=rotate))
     if EFA_clustering:
         inp = 'EFA%s_%s' % (c, rotate)
@@ -302,7 +303,7 @@ def plot_results_dendrogram(results, c=None, rotate='oblimin',
     else:
         filename = None
 
-    plot_dendrogram(loading, clustering, 
+    return plot_dendrogram(loading, clustering, 
                     title=title, 
                     size=size, 
                     filename=filename,
@@ -385,18 +386,7 @@ def plot_dendrogram(loading, clustering, title=None,
                               'ticks': [-max_val, 0, max_val]},
                     cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
         ax2.set_yticklabels(ax2.get_yticklabels(), rotation=0)
-        ax2.tick_params(axis='y', labelsize=size*heat_size[1]*40/c, pad=size/2)
-        ax2.tick_params(axis='x', pad=size/4, length=size/4, width=size/6)
-        # change tick colors
-        xlabels=ax2.get_xticklabels()
-        cum_clusters = np.cumsum(cluster_sizes)
-        var_colors = []
-        for i, l in enumerate(ax2.xaxis.get_ticklines()[::2]):
-            color_index = np.digitize(int(l.get_xdata()[0]), cum_clusters)
-            var_colors.append(colors[color_index])
-            l.set_visible(False)
-            xlabels[i].set_visible(False)
-            
+        ax2.tick_params(axis='y', labelsize=size*heat_size[1]*40/c, pad=size/2)            
         # format cbar axis
         cbar_ax.set_yticklabels([format_num(-max_val), 0, format_num(max_val)])
         cbar_ax.tick_params(labelsize=size*heat_size[1]*40/c, length=0, pad=size/2)
@@ -411,50 +401,28 @@ def plot_dendrogram(loading, clustering, title=None,
             ax2.vlines(cluster_breaks[:-1], ylim[0], ylim[1], linestyles='dashed',
                        linewidth=size*.1, colors=[.5,.5,.5])
         # **********************************
-        # plot variable identity
+        # plot cluster names
         # **********************************
-        if var_labels:
-            groups = [get_var_group(c) for c in ordered_loading.columns]
-            group_indices = np.array([g[0] for g in groups])
-            if len(np.unique(group_indices))>1:
-                ax3 = fig.add_axes([.12,heat_size[0]*.2, .82, heat_size[0]*.7])
-                ax3.scatter(np.arange(len(groups))+.4, np.max(group_indices)-group_indices, 
-                         c=var_colors, s=size**2*.1)
-                ax3.set_xlim(0,len(groups))
-                for i in range(max(group_indices)+1):
-                    ax3.hlines(i, 0, len(groups), colors=[.5,.5,.5], 
-                               linestyle=':', linewidth=size/20, 
-                               alpha=.5, zorder=-1)
-                if break_lines == True:
-                    xlim = ax3.get_xlim(); 
-                    ylim = ax3.get_ylim()
-                    step = xlim[1]/len(labels)
-                    cluster_breaks = np.cumsum(cluster_sizes)
-                    ax3.vlines(cluster_breaks[:-1], 0, max(group_indices), 
-                               linestyle=':', linewidth=size/20, colors=[.5,.5,.5])
-                # label groups
-                group_labels = sorted(set(groups))[::-1]
-                if group_labels[0][1] is None:
-                    group_labels[0] = (group_labels[0][0], 'Other')
-                ax3.set_yticks(range(max(group_indices)+1))
-                ax3.set_yticklabels([i[1] for i in group_labels],
-                                    fontsize=size/len(group_labels)*5)
-                ax3.tick_params('y', length=0)
-                ax3.get_xaxis().set_visible(False)
-                ax3.spines['top'].set_visible(False)
-                ax3.spines['right'].set_visible(False)
-                ax3.spines['bottom'].set_visible(False)
-                ax3.spines['left'].set_visible(False)
-            
+        centers = np.cumsum(cluster_sizes)-np.array(cluster_sizes)//2
+        if 'cluster_names' in clustering.keys():
+            ax2.tick_params(axis='x', reset=True, top=False)
+            names = ['\n'.join(i.split()) for i in clustering['cluster_names']]
+            ax2.set_xticks(centers)
+            ax2.set_xticklabels(names, rotation=0)
+            for i, label in enumerate(ax2.get_xticklabels()):
+                label.set_color(colors[i])
+                if i%2==0:
+                    label.set_y(-.2)
         # add title
         if title:
             ax1.set_title(title, fontsize=size*2, y=1.05)
             
-        
     if filename is not None:
         save_figure(fig, filename,
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
+    else:
+        return fig
     
 def plot_graphs(HCA_graphs, plot_dir=None, ext='png'):
     if plot_dir is not None:
@@ -806,10 +774,10 @@ def plot_HCA(results, plot_dir, rotate='oblimin',  size=10, dpi=300, verbose=Fal
 #    plot_clusterings(results, inp='data', plot_dir=plot_dir, verbose=verbose, ext=ext)
 #    plot_clusterings(results, inp='EFA%s' % c, plot_dir=plot_dir, verbose=verbose, ext=ext)
     if verbose: print("Plotting dendrograms")
-    plot_results_dendrogram(results, c, rotate=rotate, EFA_clustering=False,
+    plot_results_dendrogram(results, rotate=rotate, EFA_clustering=False,
                         var_labels=False, title=False,  plot_dir=plot_dir, 
                         size=size, ext=ext, dpi=dpi)
-    plot_results_dendrogram(results, c, rotate=rotate, EFA_clustering=True,
+    plot_results_dendrogram(results, rotate=rotate, EFA_clustering=True,
                         var_labels=False, title=False, plot_dir=plot_rotate_dir, 
                         size=size, ext=ext, dpi=dpi)
     if verbose: print("Plotting dendrogram subbranches")
