@@ -399,20 +399,25 @@ def plot_dendrogram(loading, clustering, title=None,
             step = xlim[1]/len(labels)
             cluster_breaks = [i*step for i in np.cumsum(cluster_sizes)]
             ax2.vlines(cluster_breaks[:-1], ylim[0], ylim[1], linestyles='dashed',
-                       linewidth=size*.1, colors=[.5,.5,.5])
+                       linewidth=size*.1, colors=[.5,.5,.5], zorder=10)
         # **********************************
         # plot cluster names
         # **********************************
-        centers = np.cumsum(cluster_sizes)-np.array(cluster_sizes)//2
+        beginnings = np.hstack([[0],np.cumsum(cluster_sizes)[:-1]])
+        centers = beginnings+np.array(cluster_sizes)//2
         if 'cluster_names' in clustering.keys():
-            ax2.tick_params(axis='x', reset=True, top=False)
+            ax2.tick_params(axis='x', reset=True, top=False, width=size/8, length=size)
             names = ['\n'.join(i.split()) for i in clustering['cluster_names']]
             ax2.set_xticks(centers)
             ax2.set_xticklabels(names, rotation=0)
+            ticks = ax2.xaxis.get_ticklines()[::2]
             for i, label in enumerate(ax2.get_xticklabels()):
+                ax2.hlines(c,beginnings[i],beginnings[i]+cluster_sizes[i], clip_on=False, color=colors[i], linewidth=size/5)
                 label.set_color(colors[i])
+                ticks[i].set_color(colors[i])
                 if i%2==0:
                     label.set_y(-.2)
+
         # add title
         if title:
             ax1.set_title(title, fontsize=size*2, y=1.05)
