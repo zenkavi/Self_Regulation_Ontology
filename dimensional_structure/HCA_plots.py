@@ -311,7 +311,7 @@ def plot_results_dendrogram(results, rotate='oblimin',
     
     
 def plot_dendrogram(loading, clustering, title=None, 
-                    labels=None, var_labels=False, break_lines=True, 
+                    labels=None,  break_lines=True, 
                     absolute_loading=False,  size=4.6,  dpi=300, 
                     filename=None):
     """ Plots HCA results as dendrogram with loadings underneath
@@ -386,12 +386,12 @@ def plot_dendrogram(loading, clustering, title=None,
                               'ticks': [-max_val, 0, max_val]},
                     cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
         ax2.set_yticklabels(ax2.get_yticklabels(), rotation=0)
-        ax2.tick_params(axis='y', labelsize=size*heat_size[1]*40/c, pad=size/2)            
+        ax2.tick_params(axis='y', labelsize=size*heat_size[1]*30/c, pad=size/2)            
         # format cbar axis
         cbar_ax.set_yticklabels([format_num(-max_val), 0, format_num(max_val)])
-        cbar_ax.tick_params(labelsize=size*heat_size[1]*40/c, length=0, pad=size/2)
+        cbar_ax.tick_params(labelsize=size*heat_size[1]*25/c, length=0, pad=size/2)
         cbar_ax.set_ylabel('Factor Loading', rotation=-90, 
-                       fontsize=size*heat_size[1]*40/c, labelpad=size*2)
+                       fontsize=size*heat_size[1]*30/c, labelpad=size*2)
         # add lines to heatmap to distinguish clusters
         if break_lines == True:
             xlim = ax2.get_xlim(); 
@@ -404,19 +404,32 @@ def plot_dendrogram(loading, clustering, title=None,
         # plot cluster names
         # **********************************
         beginnings = np.hstack([[0],np.cumsum(cluster_sizes)[:-1]])
-        centers = beginnings+np.array(cluster_sizes)//2
+        centers = beginnings+np.array(cluster_sizes)//2+.5
+        offset = .05
         if 'cluster_names' in clustering.keys():
-            ax2.tick_params(axis='x', reset=True, top=False, width=size/8, length=size)
+           # ax2.tick_params(axis='x', reset=True, top=False, width=size/8, length=size)
             names = ['\n'.join(i.split()) for i in clustering['cluster_names']]
             ax2.set_xticks(centers)
-            ax2.set_xticklabels(names, rotation=0)
+            ax2.set_xticklabels(names, rotation=0, ha='center', 
+                                fontsize=heatmap_size[2]*size*1.05)
             ticks = ax2.xaxis.get_ticklines()[::2]
             for i, label in enumerate(ax2.get_xticklabels()):
-                ax2.hlines(c,beginnings[i],beginnings[i]+cluster_sizes[i], clip_on=False, color=colors[i], linewidth=size/5)
+                ax2.hlines(c+offset,beginnings[i]+.5,beginnings[i]+cluster_sizes[i]-.5, 
+                           clip_on=False, color=colors[i], linewidth=size/5)
                 label.set_color(colors[i])
                 ticks[i].set_color(colors[i])
                 if i%2==0:
-                    label.set_y(-.2)
+                    label.set_y(-(.06/heatmap_height+heatmap_height/c*offset))
+                    ax2.vlines(beginnings[i]+cluster_sizes[i]/2, 
+                               c+offset, c+offset+1.6,
+                               clip_on=False, color=colors[i], 
+                               linewidth=size/7.5)
+                else:
+                    label.set_y(-(.01/heatmap_height+heatmap_height/c*offset))
+                    ax2.vlines(beginnings[i]+cluster_sizes[i]/2, 
+                               c+offset, c+.3+offset,
+                               clip_on=False, color=colors[i], 
+                               linewidth=size/7.5)
 
         # add title
         if title:
