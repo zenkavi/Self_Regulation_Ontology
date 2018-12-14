@@ -4,7 +4,7 @@ args = commandArgs(trailingOnly=TRUE)
 path <- args[1]
 t1_df <- args[2]
 t2_df <- args[3]
-var_lisr <- args[4]
+var_list <- args[4]
 output_dir <- args[6]
 n <- as.numeric(args[6])
 job_num <- as.numeric(args[7])
