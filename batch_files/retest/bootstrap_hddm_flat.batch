@@ -1,13 +1,15 @@
 #!/bin/bash
-#SBATCH --job-name=bootstrap_flat_{VAR_ID}
-#SBATCH --output=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/bootstrap_output/.out/bootstrap_flat_{VAR_ID}.job.out
-#SBATCH --error=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/bootstrap_output/.err/bootstrap_flatt_{VAR_ID}.job.err
-#SBATCH --time=2:00:00
+#SBATCH --job-name=bootstrap_flat
+#SBATCH --array=1-10%10
+#SBATCH --output=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/bootstrap_output/.out/bootstrap_flat.job.out
+#SBATCH --error=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/bootstrap_output/.err/bootstrap_flat.job.err
+#SBATCH --time=04:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=4
 # #SBATCH --mem=16000
-# #SBATCH --mail-type=FAIL
+# #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=zenkavi@stanford.edu
 source activate SRO
-Rscript --vanilla bootstrap_retest.R /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_02-03-2018/t1_data/t1_hddm_flat.csv /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_02-03-2018/retest_hddm_flat.csv /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/bootstrap_output/hddm_flat/ 1000 {VAR_ID}
+
+eval $( sed "${SLURM_ARRAY_TASK_ID}q;d" bootstrap_hddm_flat_tasklist )

@@ -1,9 +1,13 @@
 #!/usr/bin/env Rscript
 args = commandArgs(trailingOnly=TRUE)
 
-data_files <- args[1]
-output_dir <- args[3]
-n <- as.numeric(args[4])
+path <- args[1]
+t1_df <- args[2]
+t2_df <- args[3]
+var_lisr <- args[4]
+output_dir <- args[6]
+n <- as.numeric(args[6])
+job_num <- as.numeric(args[7])
 
 #load packages
 library(tidyverse)
@@ -14,9 +18,23 @@ from_gh = TRUE
 
 #load data
 
-workspace_scripts = 'https://raw.githubusercontent.com/zenkavi/SRO_Retest_Analyses/master/code/workspace_scripts/'
+t1_df = read.csv(paste0(path, t1_df))
+t2_df = read.csv(paste0(path, t2_df))
+var_list = read.table(paste0(var_list, '.txt'))
+var_list = as.character(var_list[,1])
 
-eval(parse(text = getURL(paste0(workspace_scripts,data_files), ssl.verifypeer = FALSE)))
+if('sub_id' %in% names(t1_df)==FALSE){
+  t1_df$X <- as.character(t1_df$X)
+  names(t1_df)[which(names(t1_df) == 'X')] <-'sub_id'
+}
+
+if('sub_id' %in% names(t2_df)==FALSE){
+  t2_df$X <- as.character(t2_df$X)
+  names(t2_df)[which(names(t2_df) == 'X')] <-'sub_id'
+}
+
+t1_df = t1_df %>% select('sub_id', var_list)
+t2_df = t2_df %>% select('sub_id', var_list)
 
 #helper functions
 
@@ -29,7 +47,7 @@ for(file_name in file_names){
 
 # boot function
 
-bootstrap_reliability = function(t1_df=test_data, t2_df=retest_data, metrics = c('spearman', 'pearson', 'var_breakdown', 'partial_eta', 'sem','icc2.1', 'icc3.k'), dv_var, worker_col="sub_id"){
+bootstrap_reliability = function(t1_df=t1_df, t2_df=t2_df, metrics = c('spearman', 'pearson', 'var_breakdown', 'partial_eta', 'sem','icc2.1', 'icc3.k'), dv_var, worker_col="sub_id"){
   
   indices = sample(1:150, 150, replace=T)
   sampled_t1_df = t1_df[indices,]
