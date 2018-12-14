@@ -10,6 +10,8 @@ library(tidyverse)
 library(RCurl)
 library(psych)
 
+from_gh = TRUE
+
 #load data
 
 workspace_scripts = 'https://raw.githubusercontent.com/zenkavi/SRO_Retest_Analyses/master/code/workspace_scripts/'
