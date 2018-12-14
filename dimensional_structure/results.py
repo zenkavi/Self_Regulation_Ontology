@@ -388,12 +388,14 @@ class HCA_Analysis():
         self.results['EFA%s_%s%s' % (c, rotate, label_append)] = output
         
     def get_cluster_DVs(self, inp='data'):
+        names = self.get_cluster_names(inp=inp)
         cluster = self.results['%s' % inp]
         DVs = cluster['clustered_df'].index
         reorder_vec = cluster['reorder_vec']
         cluster_labels = cluster['labels'][reorder_vec]
         cluster_DVs= [[DVs[i] for i,index in enumerate(cluster_labels) \
                            if index == j] for j in np.unique(cluster_labels)]
+        cluster_DVs = {n:dv for n,dv in zip(names, cluster_DVs)}
         return cluster_DVs
     
     def build_graphs(self, inp, graph_data):
@@ -423,11 +425,11 @@ class HCA_Analysis():
             c = EFA.get_c()
         inp = 'EFA%s_%s' % (c, rotate)
         cluster_labels = self.get_cluster_DVs(inp)
-        cluster_loadings = []
-        for cluster in cluster_labels:
+        cluster_loadings = {}
+        for name, cluster in cluster_labels.items():
             subset = abs(EFA.get_loading(c, rotate=rotate).loc[cluster,:])
             cluster_vec = subset.mean(0)
-            cluster_loadings.append((cluster, cluster_vec))
+            cluster_loadings[name] = cluster_vec
         return cluster_loadings
     
     def get_cluster_names(self, inp='data'):

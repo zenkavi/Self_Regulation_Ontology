@@ -1,4 +1,5 @@
 # imports
+from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import numpy as np
 from os import makedirs, path
@@ -209,13 +210,19 @@ def plot_factor_correlation(results, c, rotate='oblimin', title=True,
     phi = get_attr(EFA.results['factor_tree_Rout_%s' % rotate][c],'Phi')
     phi = pd.DataFrame(phi, columns=loading.columns, index=loading.columns)
     phi = phi.iloc[reorder_vec, reorder_vec]
+    mask = np.zeros_like(phi)
+    mask[np.tril_indices_from(mask, -1)] = True
     with sns.plotting_context('notebook', font_scale=2) and sns.axes_style('white'):
         f = plt.figure(figsize=(size*5/4, size))
         ax1 = f.add_axes([0,0,.9,.9])
         cbar_ax = f.add_axes([.91, .05, .03, .8])
         sns.heatmap(phi, ax=ax1, square=True, vmax=1, vmin=-1,
-                    cbar_ax=cbar_ax, annot=True, annot_kws={"size": size*4},
+                    cbar_ax=cbar_ax, 
                     cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
+        sns.heatmap(phi, ax=ax1, square=True, vmax=1, vmin=-1,
+                    cbar_ax=cbar_ax, annot=True, annot_kws={"size": size/c*15},
+                    cmap=sns.diverging_palette(220,15,n=100,as_cmap=True),
+                    mask=mask)
         yticklabels = ax1.get_yticklabels()
         ax1.set_yticklabels(yticklabels, rotation=0, ha="right")
         ax1.set_xticklabels(ax1.get_xticklabels(), rotation=90)

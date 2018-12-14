@@ -15,9 +15,8 @@ from sklearn.preprocessing import MinMaxScaler, scale
 
 from dimensional_structure.utils import (abs_pdist, get_constant_height_labels, 
                                          set_seed, silhouette_analysis)
-from dimensional_structure.plot_utils import (get_short_names, get_var_group,
-                                              plot_loadings, plot_tree)
-from selfregulation.utils.plot_utils import (CurvedText, dendroheatmap, format_num,
+from dimensional_structure.plot_utils import plot_loadings, plot_tree
+from selfregulation.utils.plot_utils import (dendroheatmap, format_num,
                                              format_variable_names, 
                                              get_dendrogram_color_fun,
                                              save_figure)
@@ -46,6 +45,7 @@ def plot_clusterings(results, plot_dir=None, inp='data', figsize=(50,50),
         fig = dendroheatmap(clustering['linkage'], clustering['distance_df'], 
                             figsize=figsize, title=title,
                             filename = filename)
+    return fig
             
 def plot_clustering_similarity(results, plot_dir=None, verbose=False, ext='png'):  
     HCA = results.HCA
@@ -489,8 +489,8 @@ def MDS_visualization(results, c, rotate='oblimin', plot_dir=None,
                     plt.text(x-offset,y-offset,i+1, font_dict)
                 else:
                     plt.text(x-offset*2,y-offset,i+1, font_dict)
-            plt.title(path.basename(filey)[:-4], fontsize=20)
         if filey is not None:
+            plt.title(path.basename(filey)[:-4], fontsize=20)
             save_figure(f, filey)
             plt.close()
             
@@ -499,8 +499,10 @@ def MDS_visualization(results, c, rotate='oblimin', plot_dir=None,
     HCA = results.HCA
     EFA = results.EFA
     
-    cluster_loadings = HCA.get_cluster_loading(EFA, rotate=rotate)
-    cluster_loadings_mat = np.vstack([i[1] for i in cluster_loadings])
+    names, cluster_loadings = zip(*HCA.get_cluster_loading(EFA, rotate=rotate).items())
+    cluster_DVs = HCA.get_cluster_DVs(inp='EFA%s_%s' % (EFA.get_c(), rotate))
+    cluster_DVs = [cluster_DVs[n] for n in names]
+    cluster_loadings_mat = np.vstack(cluster_loadings)
     EFA_loading = abs(EFA.get_loading(c, rotate=rotate))
     EFA_loading_mat = EFA_loading.values
     EFA_space = np.vstack([cluster_loadings_mat, EFA_loading_mat])
@@ -511,11 +513,11 @@ def MDS_visualization(results, c, rotate='oblimin', plot_dir=None,
     colors = []
     for var in EFA_loading.index:
         # find which cluster this variable is in
-        index = [i for i,cluster in enumerate(cluster_loadings) \
-                 if var in cluster[0]][0]
+        index = [i for i,cluster in enumerate(cluster_DVs) \
+                 if var in cluster][0]
         colors.append(color_palette[index])
     # set up cluster sizes proportional to number of members
-    n_members = np.reshape([len(i) for i,j in cluster_loadings], [-1,1])
+    n_members = np.reshape([len(i) for i in cluster_DVs], [-1,1])
     scaler = MinMaxScaler()
     relative_members = scaler.fit_transform(n_members).flatten()
     sizes = 1500+2000*relative_members
@@ -530,7 +532,7 @@ def MDS_visualization(results, c, rotate='oblimin', plot_dir=None,
                                index=data.columns,
                                columns=data.index)
     clusters_raw = []
-    for labels, EFA_vec in cluster_loadings:
+    for labels, name in zip(cluster_DVs, names):
         subset = scaled_data.loc[labels,:]
         cluster_vec = subset.mean(0)
         clusters_raw.append(cluster_vec)
@@ -599,7 +601,9 @@ def plot_cluster_factors(results, c, rotate='oblimin',  ext='png', plot_dir=None
     HCA = results.HCA
     EFA = results.EFA
     
-    cluster_loadings = HCA.get_cluster_loading(EFA, rotate=rotate)
+    names, cluster_loadings = zip(*HCA.get_cluster_loading(EFA, rotate=rotate).items())
+    cluster_DVs = HCA.get_cluster_DVs(inp='EFA%s_%s' % (EFA.get_c(), rotate))
+    cluster_loadings = list(zip([cluster_DVs[n] for n in names], cluster_loadings))
     max_loading = max([max(abs(i[1])) for i in cluster_loadings])
     # plot
     colors = sns.hls_palette(len(cluster_loadings))
@@ -793,15 +797,15 @@ def plot_HCA(results, plot_dir, rotate='oblimin',  size=10, dpi=300, verbose=Fal
 #    plot_clusterings(results, inp='EFA%s' % c, plot_dir=plot_dir, verbose=verbose, ext=ext)
     if verbose: print("Plotting dendrograms")
     plot_results_dendrogram(results, rotate=rotate, EFA_clustering=False,
-                        var_labels=False, title=False,  plot_dir=plot_dir, 
+                        title=False,  plot_dir=plot_dir, 
                         size=size, ext=ext, dpi=dpi)
     plot_results_dendrogram(results, rotate=rotate, EFA_clustering=True,
-                        var_labels=False, title=False, plot_dir=plot_rotate_dir, 
+                        title=False, plot_dir=plot_rotate_dir, 
                         size=size, ext=ext, dpi=dpi)
     if verbose: print("Plotting dendrogram subbranches")
-    plot_subbranches(results, c,  rotate=rotate,  EFA_clustering=False,
+    plot_subbranches(results, rotate=rotate,  EFA_clustering=False,
                      size=size/2, plot_dir=plot_dir, ext=ext, dpi=dpi)
-    plot_subbranches(results, c,  rotate=rotate,  EFA_clustering=True,
+    plot_subbranches(results, rotate=rotate,  EFA_clustering=True,
                      size=size/2, plot_dir=plot_rotate_dir, ext=ext, dpi=dpi)
     if verbose: print("Plotting silhouette analysis")
     plot_silhouette(results, inp='EFA%s_%s' % (c, rotate), size=size,

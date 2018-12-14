@@ -109,13 +109,13 @@ subsets = [{'name': 'task',
                                       'Speeded Information Processing',
                                       'Information Processing',
                                       'Discounting',
-                                      'Misc',
+                                      'Misc-1',
                                       'Cold/Strategy',
                                       'Hot/WM',
                                       'Model-Free Decision Making',
                                       'Response Inhibition',
                                       'Non-Decision',
-                                      'Misc'
+                                      'Misc-2'
                                       ],
             'oblimin_factor_names': ['Speeded IP', 'Strategic IP', 'Discounting',
                                      'Perc / Resp', 'Caution'],
@@ -147,7 +147,7 @@ subsets = [{'name': 'task',
                                        'Behavioral Approach',
                                        'Behavioral Inhibit',
                                        'FTP',
-                                       'Eating+',
+                                       'Eating',
                                        'Reward Sensitivity',
                                        'Sociability',
                                        'Financial Risk-Taking',
@@ -255,22 +255,22 @@ for subset in subsets:
                 if run_change:
                     results.run_change_prediction(classifier=classifier, rotate=rotate, verbose=verbose)
                     results.run_change_prediction(classifier=classifier, rotate=rotate, shuffle=shuffle_repeats, verbose=verbose) # shuffled
-    # ***************************** saving ****************************************
-    prediction_dir = path.join(results.get_output_dir(), 'prediction_outputs')
-    new_dir = path.join(path.dirname(results.get_output_dir()), 'prediction_outputs')
-    for classifier in classifiers:
-        for change_flag in [False, True]:
-            for subset in ['varimax', 'oblimin', 'raw']:
-                prediction_files = glob(path.join(prediction_dir, '*%s*' % classifier))
-                # filter by change
-                prediction_files = filter(lambda x: ('change' in x) == change_flag, prediction_files)
-                # filter by rorate
-                prediction_files = filter(lambda x: subset in x, prediction_files)
-                # sort by creation time and get last two files
-                prediction_files = sorted(prediction_files, key = path.getmtime)[-4:]
-                for filey in prediction_files:
-                    filename = '_'.join(path.basename(filey).split('_')[:-1])
-                    copyfile(filey, path.join(new_dir, '%s_%s.pkl' % (name, filename)))
+        # ***************************** saving ****************************************
+        prediction_dir = path.join(results.get_output_dir(), 'prediction_outputs')
+        new_dir = path.join(path.dirname(results.get_output_dir()), 'prediction_outputs')
+        for classifier in classifiers:
+            for change_flag in [False, True]:
+                for subset in ['varimax', 'oblimin', 'raw']:
+                    prediction_files = glob(path.join(prediction_dir, '*%s*' % classifier))
+                    # filter by change
+                    prediction_files = filter(lambda x: ('change' in x) == change_flag, prediction_files)
+                    # filter by rorate
+                    prediction_files = filter(lambda x: subset in x, prediction_files)
+                    # sort by creation time and get last two files
+                    prediction_files = sorted(prediction_files, key = path.getmtime)[-4:]
+                    for filey in prediction_files:
+                        filename = '_'.join(path.basename(filey).split('_')[:-1])
+                        copyfile(filey, path.join(new_dir, '%s_%s.pkl' % (name, filename)))
 
     # ****************************************************************************
     # Plotting

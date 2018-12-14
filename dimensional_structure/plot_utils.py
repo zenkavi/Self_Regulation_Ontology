@@ -146,7 +146,7 @@ def plot_loadings(ax, component_loadings, groups=None, colors=None,
             bar.set_facecolor(colors[color_index])
     elif kind == 'line':
         if 'linewidth' not in plot_kws.keys():
-            plot_kws['linewidth'] == 5
+            plot_kws['linewidth'] = 5
         theta = np.append(theta, theta[0])
         radii = np.append(radii, radii[0])
         lines = ax.plot(theta, radii, color=colors[0], **plot_kws)
