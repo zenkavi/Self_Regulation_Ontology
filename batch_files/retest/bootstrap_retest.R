@@ -17,10 +17,9 @@ n <- as.numeric(args[4])
 dv_name <- args[5]
 
 #load packages
-library(dplyr)
-library(tidyr)
+library(tidyverse)
+library(RCurl)
 library(psych)
-
 
 #load data
 retest_subs_test_data <- read.csv(t1_data)
@@ -31,171 +30,18 @@ names(retest_data)[which(names(retest_data) == "X")] <- "sub_id"
 
 #bootstrap 1000 times
 
-match_t1_t2 <- function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_data, merge_var = 'sub_id', format = "long", sample = 'full', sample_vec){
+file_names = c('sem.R', 'get_numeric_cols.R', 'match_t1_t2.R', 'get_retest_stats.R', 'make_rel_df.R')
 
-  if(sample == 'full'){
-    df = merge(t1_df[,c(merge_var, dv_var)], t2_df[,c(merge_var, dv_var)], by = merge_var)
-  }
-  else{
-    df = merge(t1_df[t1_df[,merge_var] %in% sample_vec, c(merge_var, dv_var)], t2_df[t2_df[,merge_var] %in% sample_vec, c(merge_var, dv_var)],
-               by=merge_var)
-  }
-
-  df = df %>%
-    na.omit()%>%
-    gather(dv, score, -sub_id) %>%
-    mutate(time = ifelse(grepl('\\.x', dv), 1, ifelse(grepl('\\.y', dv), 2, NA))) %>%
-    separate(dv, c("dv", "drop"), sep='\\.([^.]*)$') %>%
-    select(-drop)
-
-
-  if(format == 'wide'){
-    df = df%>% spread(time, score)
-  }
-
-  return(df)
-}
-
-get_spearman = function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_data, merge_var = 'sub_id', sample='full', sample_vec){
-
-  if(sample=='full'){
-    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var, format='wide')
-  }
-  else if(sample=='bootstrap'){
-    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var, format='wide', sample='bootstrap', sample_vec = sample_vec)
-  }
-
-  rho = cor(df$`1`, df$`2`, method='spearman')
-
-  return(rho)
-}
-
-get_pearson = function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_data, merge_var = 'sub_id', sample='full', sample_vec){
-
-  if(sample=='full'){
-    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var, format='wide')
-  }
-  else if(sample=='bootstrap'){
-    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var, format='wide', sample='bootstrap', sample_vec = sample_vec)
-  }
-
-  r = cor(df$`1`, df$`2`, method='pearson')
-
-  return(r)
-}
-
-get_icc <- function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_data, merge_var = 'sub_id', sample='full', sample_vec){
-  if(sample=='full'){
-    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var, format='wide')
-  }
-  else if(sample=='bootstrap'){
-    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var, format='wide', sample='bootstrap', sample_vec = sample_vec)
-  }
-
-  df = df %>% select(-dv, -sub_id)
-  icc = ICC(df, lmer=FALSE)
-  icc_3k = icc$results['Average_fixed_raters', 'ICC']
-  return(icc_3k)
-}
-
-get_var_breakdown <- function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_data, merge_var = 'sub_id', sample='full', sample_vec){
-  if(sample=='full'){
-    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var, format='wide')
-  }
-  else if(sample=='bootstrap'){
-    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var, format='wide', sample='bootstrap', sample_vec = sample_vec)
-  }
-
-  df = df %>% select(-dv, -sub_id)
-  icc = ICC(df, lmer=FALSE)
-  var_breakdown = data.frame(subs = icc$summary[[1]][1,'Mean Sq'],
-                             ind = icc$summary[[1]][2,'Mean Sq'],
-                             resid = icc$summary[[1]][3,'Mean Sq'])
-  return(var_breakdown)
-  }
-
-get_partial_eta <- function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_data, merge_var = 'sub_id', sample='full', sample_vec){
-  if(sample=='full'){
-    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var)
-  }
-  else if(sample=='bootstrap'){
-    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var, sample='bootstrap', sample_vec = sample_vec)
-  }
-
-  mod = summary(aov(score~Error(sub_id)+time, df))
-  ss_time = as.data.frame(unlist(mod$`Error: Within`))['Sum Sq1',]
-  ss_error = as.data.frame(unlist(mod$`Error: Within`))['Sum Sq2',]
-  partial_eta = ss_time/(ss_time+ss_error)
-  return(partial_eta)
-}
-
-get_eta <- function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_data, merge_var = 'sub_id', sample='full', sample_vec){
-  if(sample=='full'){
-    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var)
-  }
-  else if(sample=='bootstrap'){
-    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var, sample='bootstrap', sample_vec = sample_vec)
-  }
-
-  mod = summary(aov(score~Error(sub_id)+time, df))
-  ss_time = as.data.frame(unlist(mod$`Error: Within`))['Sum Sq1',]
-  ss_error = as.data.frame(unlist(mod$`Error: Within`))['Sum Sq2',]
-  ss_between = as.data.frame(unlist(mod$`Error: sub_id`))['Sum Sq',]
-  eta = ss_time/(ss_time+ss_error+ss_between)
-  return(eta)
-}
-
-get_omega <- function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_data, merge_var = 'sub_id', sample='full', sample_vec){
-  if(sample=='full'){
-    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var)
-  }
-  else if(sample=='bootstrap'){
-    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var, sample='bootstrap', sample_vec = sample_vec)
-  }
-
-  mod = summary(aov(score~Error(sub_id)+time, df))
-  ss_time = as.data.frame(unlist(mod$`Error: Within`))['Sum Sq1',]
-  ss_error = as.data.frame(unlist(mod$`Error: Within`))['Sum Sq2',]
-  ss_between = as.data.frame(unlist(mod$`Error: sub_id`))['Sum Sq',]
-  df_time = as.data.frame(unlist(mod$`Error: Within`))['Df1',]
-  ms_error = as.data.frame(unlist(mod$`Error: Within`))['Mean Sq2',]
-  omega = (ss_time - (df_time*ms_error)) / (ms_error + ss_time + ss_error + ss_between)
-  return(omega)
-}
-
-get_sem <- function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_data, merge_var = 'sub_id', sample='full', sample_vec){
-  if(sample=='full'){
-    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var)
-  }
-  else if(sample=='bootstrap'){
-    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var, sample='bootstrap', sample_vec = sample_vec)
-  }
-  mod = summary(aov(score~Error(sub_id)+time, df))
-  ms_error = as.data.frame(unlist(mod$`Error: Within`))['Mean Sq2',]
-  sem = sqrt(ms_error)
-  return(sem)
-}
-
-get_aov_stats <- function(dv_var, t1_df = retest_subs_test_data, t2_df = retest_data, merge_var = 'sub_id', sample='full', sample_vec){
-  if(sample=='full'){
-    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var)
-  }
-  else if(sample=='bootstrap'){
-    df = match_t1_t2(dv_var, t1_df = t1_df, t2_df = t2_df, merge_var = merge_var, sample='bootstrap', sample_vec = sample_vec)
-  }
-  mod = summary(aov(score~Error(sub_id)+time, df))
-  aov_stats = data.frame(F_time = as.data.frame(unlist(mod$`Error: Within`))['F value1',],
-                             p_time = as.data.frame(unlist(mod$`Error: Within`))['Pr(>F)1',],
-                             df_time = as.data.frame(unlist(mod$`Error: Within`))['Df1',],
-                             df_resid = as.data.frame(unlist(mod$`Error: Within`))['Df2',])
-  return(aov_stats)
+helper_func_path = 'https://raw.githubusercontent.com/zenkavi/SRO_Retest_Analyses/master/code/helper_functions/'
+for(file_name in file_names){
+  eval(parse(text = getURL(paste0(workspace_scripts,file_name), ssl.verifypeer = FALSE)))
 }
 
 sample_workers = function(N = 150, repl= TRUE, df=retest_data, worker_col = "sub_id"){
   return(sample(df[,worker_col], N, replace = repl))
 }
 
-bootstrap_relialibility = function(metric = c('icc', 'spearman','pearson', 'partial_eta_sq', 'eta_sq', 'omega_sq', 'sem', 'var_breakdown', 'aov_stats'), dv_var, worker_col="sub_id"){
+bootstrap_reliability = function(metric = c('icc', 'spearman','pearson', 'partial_eta_sq', 'eta_sq', 'omega_sq', 'sem', 'var_breakdown', 'aov_stats'), dv_var, worker_col="sub_id"){
   tmp_sample = sample_workers(worker_col = worker_col)
   out_df = data.frame(dv = dv_var)
   if('icc' %in% metric){
@@ -248,7 +94,7 @@ cur_seed <- sample(1:2^15, 1)
 set.seed(cur_seed)
 
 # bootstrap given variable for given n times
-output_df = plyr::rdply(n, bootstrap_relialibility(dv_var = dv_name))
+output_df = plyr::rdply(n, bootstrap_reliability(dv_var = dv_name))
 
 # add seed info
 output_df$seed <- cur_seed
