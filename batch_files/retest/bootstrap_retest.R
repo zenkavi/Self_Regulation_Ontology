@@ -20,7 +20,7 @@ from_gh = TRUE
 
 t1_df = read.csv(paste0(path, t1_df))
 t2_df = read.csv(paste0(path, t2_df))
-var_list = read.table(paste0(var_list, '.txt'))
+var_list = read.table(paste0(path, var_list, '.txt'))
 var_list = as.character(var_list[,1])
 
 if('sub_id' %in% names(t1_df)==FALSE){
