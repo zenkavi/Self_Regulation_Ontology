@@ -18,10 +18,11 @@ from dimensional_structure.utils import transfer_scores
 from selfregulation.utils.data_preparation_utils import (remove_outliers, 
                                                          transform_remove_skew)
 from selfregulation.utils.plot_utils import format_num, place_letter, save_figure
-from selfregulation.utils.r_to_py_utils import get_attr, missForest, psychFA
+from selfregulation.utils.r_to_py_utils import get_attr, missForest, psychFA, get_Rpsych
 from selfregulation.utils.utils import get_behav_data
 
-    
+psych = get_Rpsych()
+
 def calc_EFA_retest(results, rotate='oblimin', verbose=True):
     name = results.ID.split('_')[0].title()    
     retest_data_raw = get_behav_data(dataset=results.dataset.replace('Complete','Retest'),
@@ -42,12 +43,17 @@ def calc_EFA_retest(results, rotate='oblimin', verbose=True):
     combined = pd.concat([ref_scores, retest_scores], axis=1)
     cross_diag = [combined.corr().iloc[i,i+len(ref_scores.columns)] 
                     for i in range(len(ref_scores.columns))]
-    
+    # get ICCs
+    ICCs = []
+    for col in ref_scores.columns:
+        tmp = combined.filter(regex=col)
+        out = psych.ICC(tmp)
+        ICCs.append(list(out[0][1])[-1])
     if verbose:
         print('%s, Avg Correlation: %s\n' % (name, format_num(np.mean(cross_diag))))
         for factor, num in zip(ref_scores.columns, cross_diag):
             print('%s: %s' % (factor, format_num(num)))
-    return combined, cross_diag
+    return combined, cross_diag, ICCs
 
 def calc_EFA_retest_held_out(results, rotate='oblimin', verbose=True):
     name = results.ID.split('_')[0].title()
@@ -93,7 +99,13 @@ def calc_EFA_retest_held_out(results, rotate='oblimin', verbose=True):
     combined = pd.concat([scores['T1'], scores['T2']], axis=1)
     cross_diag = [combined.corr().iloc[i,i+len(orig_scores.columns)] 
                     for i in range(len(orig_scores.columns))]
-    return combined, cross_diag, (fa, output)
+        # get ICCs
+    ICCs = []
+    for col in scores['T1'].columns:
+        tmp = combined.filter(regex=col)
+        out = psych.ICC(tmp)
+        ICCs.append(list(out[0][1])[-1])
+    return combined, cross_diag, ICCs, (fa, output)
     
 def plot_EFA_retest(combined, size=4.6, dpi=300, 
                     ext='png', plot_dir=None):
@@ -128,46 +140,49 @@ def plot_EFA_retest(combined, size=4.6, dpi=300,
                         {'bbox_inches': 'tight', 'dpi': dpi})
             plt.close()
             
-
-
-def plot_EFA_change(combined, ax=None, color_on=False,
+def plot_EFA_change(combined, ax=None, color_on=False, method=PCA,
                     size=4.6, dpi=300, ext='png', plot_dir=None):
     n = combined.shape[1]//2
     orig = combined.iloc[:,:n]
     retest = combined.iloc[:,n:]
-    pca = PCA(2)    
-    orig_pca= pca.fit_transform(orig)    
-    retest_pca= pca.transform(retest)
+    retest.columns = orig.columns
+    retest.index = [i+'_retest' for i in retest.index]
+    both = pd.concat([orig, retest])
+    projector = method(2)    
+    projection = projector.fit_transform(both)   
+    orig_projection = projection[:both.shape[0]//2,:]
+    retest_projection = projection[both.shape[0]//2:,:]
     
     color=[.2,.2,.2, .9]
     # get color range
-    mins = np.min(orig_pca)
-    ranges = np.max(orig_pca)-mins
+    mins = np.min(orig_projection)
+    ranges = np.max(orig_projection)-mins
     if ax is None:
         with sns.axes_style('white'):
             fig, ax = plt.subplots(figsize=(size,size))
     markersize = size
     markeredge = size/5
     linewidth = size/3
-    for i in range(len(orig_pca)):
+    for i in range(len(orig_projection)):
         label = [None, None]
         if i==0:
             label=['T1 Scores', 'T2 Scores']
         if color_on == True:
-            color = list((orig_pca[i,:]-mins)/ranges)
+            color = list((orig_projection[i,:]-mins)/ranges)
             color = [color[0]] + [0] + [color[1]]
         elif color_on != False:
             color = color_on
-        ax.plot(*zip(orig_pca[i,:], retest_pca[i,:]), marker='o',
+        ax.plot(*zip(orig_projection[i,:], retest_projection[i,:]), marker='o',
                  markersize=markersize, color=color,
                  markeredgewidth=markeredge, markerfacecolor='w',
                  linewidth=linewidth, label=label[0])
-        ax.plot(retest_pca[i,0], retest_pca[i,1], marker='o', 
+        ax.plot(retest_projection[i,0], retest_projection[i,1], marker='o', 
                  markersize=markersize, color=color, 
                  linewidth=linewidth, label=label[1])
     ax.tick_params(labelsize=0, pad=size/2)
     ax.set_xlabel('PC 1', fontsize=size*2.5)
     ax.set_ylabel('PC 2', fontsize=size*2.5)
+    ax.set_xlim(projection.get_min(), projection.get_max())
     ax.set_ylim(ax.get_xlim())
     ax.legend(fontsize=size*1.5)
         
@@ -176,27 +191,6 @@ def plot_EFA_change(combined, ax=None, color_on=False,
                         {'bbox_inches': 'tight', 'dpi': dpi})
             plt.close()
     
-
-def plot_cross_EFA_change(all_results, size=4.6, dpi=300, 
-                          ext='png', plot_dir=None):
-    keys = list(all_results.keys())
-    num_cols = 2
-    num_rows = math.ceil(len(keys)/num_cols)
-    with sns.axes_style('white'):
-        fig, axes = plt.subplots(num_rows, num_cols, 
-                                 figsize=(size, size/2*num_rows))
-    axes = fig.get_axes()
-    for i, (name,results) in enumerate(all_results.items()):
-        ax = axes[i]
-        plot_EFA_change(results, ax=ax, size=size/2)
-        ax.set_title(name.title(), fontsize=size)
-        if ax != axes[0]:
-            ax.get_legend().set_visible(False)
-            
-    if plot_dir is not None:
-        save_figure(fig, path.join(plot_dir, 'EFA_test_retest_sticks.%s' % ext),
-                    {'bbox_inches': 'tight', 'dpi': dpi})
-        plt.close()
     
 def plot_cross_EFA_retest(all_results, rotate='oblimin', size=4.6, dpi=300, 
                           EFA_retest_fun=None, annot_heatmap=False, 
