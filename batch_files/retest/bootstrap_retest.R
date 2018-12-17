@@ -47,7 +47,7 @@ for(file_name in file_names){
 
 # boot function
 
-bootstrap_reliability = function(t1_df=t1_df, t2_df=t2_df, metrics = c('spearman', 'pearson', 'var_breakdown', 'partial_eta', 'sem','icc2.1', 'icc3.k'), dv_var, worker_col="sub_id"){
+bootstrap_reliability = function(.t1_df=t1_df, .t2_df=t2_df, metrics = c('spearman', 'pearson', 'var_breakdown', 'partial_eta', 'sem','icc2.1', 'icc3.k'), dv_var, worker_col="sub_id"){
   
   indices = sample(1:150, 150, replace=T)
   sampled_t1_df = t1_df[indices,]
