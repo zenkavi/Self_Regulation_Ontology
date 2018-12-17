@@ -30,7 +30,6 @@ motor_selective_stop_signal.hddm_drift
 motor_selective_stop_signal.hddm_non_decision
 motor_selective_stop_signal.hddm_thresh
 motor_selective_stop_signal.proactive_control_hddm_drift
-motor_selective_stop_signal.reactive_control_hddm_drift
 recent_probes.hddm_drift
 recent_probes.hddm_non_decision
 recent_probes.hddm_thresh
