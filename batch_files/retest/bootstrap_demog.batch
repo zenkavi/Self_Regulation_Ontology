@@ -3,6 +3,7 @@
 #SBATCH --array=1-10%10
 #SBATCH --output=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/bootstrap_output/.out/bootstrap_demog.job.out
 #SBATCH --error=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/bootstrap_output/.err/bootstrap_demog.job.err
+#SBATCH -p russpold,owners,normal
 #SBATCH --time=04:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
