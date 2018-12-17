@@ -311,18 +311,20 @@ def plot_results_dendrogram(results, rotate='oblimin',
     
     
 def plot_dendrogram(loading, clustering, title=None, 
-                    labels=None,  break_lines=True, 
+                    break_lines=True, drop_list=None,
                     absolute_loading=False,  size=4.6,  dpi=300, 
                     filename=None):
     """ Plots HCA results as dendrogram with loadings underneath
     
     Args:
-        results: results object
-        c: number of components to use for loadings
+        loading: pandas df, a results EFA loading matrix
+        clustering: pandas df, a results HCA clustering
+        title (optional): str, title to plot
+        break_lines: whether to separate EFA heatmap based on clusters, default=True
+        drop_list (optional): list of cluster indices to drop the cluster label
+        absolute_loading: whether to plot the absolute loading value, default False
         plot_dir: if set, where to save the plot
-        inp: which clustering solution to use
-        titles: list of titles. Should correspond to number of clusters in
-                results object if "inp" is not set. Otherwise should be a list of length 1.
+        
     """
 
 
@@ -334,8 +336,7 @@ def plot_dendrogram(loading, clustering, title=None,
     if absolute_loading:
         ordered_loading = abs(ordered_loading)
     # get cluster sizes
-    if labels is None:
-        labels=clustering['labels']
+    labels=clustering['labels']
     cluster_sizes = [np.sum(labels==(i+1)) for i in range(max(labels))]
     link_function, colors = get_dendrogram_color_fun(link, clustering['reorder_vec'],
                                                      labels)
@@ -418,18 +419,16 @@ def plot_dendrogram(loading, clustering, title=None,
                            clip_on=False, color=colors[i], linewidth=size/5)
                 label.set_color(colors[i])
                 ticks[i].set_color(colors[i])
-                if i%2==0:
-                    label.set_y(-(.06/heatmap_height+heatmap_height/c*offset))
-                    ax2.vlines(beginnings[i]+cluster_sizes[i]/2, 
-                               c+offset, c+offset+1.6,
-                               clip_on=False, color=colors[i], 
-                               linewidth=size/7.5)
-                else:
-                    label.set_y(-(.01/heatmap_height+heatmap_height/c*offset))
-                    ax2.vlines(beginnings[i]+cluster_sizes[i]/2, 
-                               c+offset, c+.3+offset,
-                               clip_on=False, color=colors[i], 
-                               linewidth=size/7.5)
+                y_drop = .01
+                line_drop = .3
+                if drop_list and i in drop_list:
+                    y_drop = .06
+                    line_drop = 1.6
+                label.set_y(-(y_drop/heatmap_height+heatmap_height/c*offset))
+                ax2.vlines(beginnings[i]+cluster_sizes[i]/2, 
+                           c+offset, c+offset+line_drop,
+                           clip_on=False, color=colors[i], 
+                           linewidth=size/7.5)
 
         # add title
         if title:
@@ -788,9 +787,12 @@ def plot_cluster_sankey(results):
         print("Plotly wasn't found, can't plot!")
     
 
-def plot_HCA(results, plot_dir, rotate='oblimin',  size=10, dpi=300, verbose=False, ext='png'):
+def plot_HCA(results, plot_dir, rotate='oblimin', drop_list=None,
+             size=10, dpi=300, verbose=False, ext='png'):
     plot_rotate_dir = path.join(plot_dir, rotate)
     c = results.EFA.get_c()
+    if drop_list is None:
+        drop_list = list(range(0,40,2))
     # plots, woo
 #    if verbose: print("Plotting dendrogram heatmaps")
 #    plot_clusterings(results, inp='data', plot_dir=plot_dir, verbose=verbose, ext=ext)
@@ -800,6 +802,7 @@ def plot_HCA(results, plot_dir, rotate='oblimin',  size=10, dpi=300, verbose=Fal
                         title=False,  plot_dir=plot_dir, 
                         size=size, ext=ext, dpi=dpi)
     plot_results_dendrogram(results, rotate=rotate, EFA_clustering=True,
+                        drop_list = drop_list,
                         title=False, plot_dir=plot_rotate_dir, 
                         size=size, ext=ext, dpi=dpi)
     if verbose: print("Plotting dendrogram subbranches")

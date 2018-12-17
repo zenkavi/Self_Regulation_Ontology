@@ -197,7 +197,7 @@ def plot_nesting(results, thresh=.5, rotate='oblimin', title=True,
         save_figure(fig, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
-        
+    
 def plot_factor_correlation(results, c, rotate='oblimin', title=True,
                             DA=False, size=4.6, dpi=300, ext='png', plot_dir=None):
     if DA:
@@ -241,7 +241,6 @@ def plot_factor_correlation(results, c, rotate='oblimin', title=True,
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
         
-
 def plot_bar_factor(loading, ax=None, bootstrap_err=None, grouping=None,
                     width=4, height=8, label_rows=True, title=None,
                     color_grouping=False, separate_ticklabels=True):
