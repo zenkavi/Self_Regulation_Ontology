@@ -62,11 +62,17 @@ bootstrap_reliability = function(.t1_df=t1_df, .t2_df=t2_df, metrics = c('spearm
 cur_seed <- sample(1:2^15, 1)
 set.seed(cur_seed)
 
+print('Everything imported and defined. Starting output_df...')
+
 # bootstrap sampled dataset for given n times
 output_df = plyr::rdply(n, bootstrap_reliability())
+
+print('Done with output_df. Saving...')
 
 # add seed info
 output_df$seed <- cur_seed
 
 # save output
-write.csv(output_df, paste0(output_dir, 'bootstrap_output',job_num,'.csv'))
+write.csv(output_df, paste0(output_dir, 'bootstrap_output_',job_num,'.csv'))
+
+print(paste0('Output save in ', paste0(output_dir, 'bootstrap_output_',job_num,'.csv')))
