@@ -5,7 +5,7 @@ path <- args[1]
 t1_df <- args[2]
 t2_df <- args[3]
 var_list <- args[4]
-output_dir <- args[6]
+output_dir <- args[5]
 n <- as.numeric(args[6])
 job_num <- as.numeric(args[7])
 
@@ -75,4 +75,4 @@ output_df$seed <- cur_seed
 # save output
 write.csv(output_df, paste0(output_dir, 'bootstrap_output_',job_num,'.csv'))
 
-print(paste0('Output save in ', paste0(output_dir, 'bootstrap_output_',job_num,'.csv')))
+print(paste0('Output saved in ', paste0(output_dir, 'bootstrap_output_',job_num,'.csv')))
