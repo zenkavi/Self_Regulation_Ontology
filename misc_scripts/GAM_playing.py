@@ -26,41 +26,69 @@ from selfregulation.utils.utils import get_recent_dataset
 def get_avg_score(scores, score_type='R2'):
     return np.mean([i[score_type] for i in scores])
 
-def run_GAM(X, Y, n_splines=20):
+def get_importances(X, y, Xtest, ytest):
+    importances = {}
+    for predictor, vals in X.iteritems():
+        gam = LinearGAM(s(0), fit_intercept=False)
+        gam.fit(vals, y)
+        gam.gridsearch(vals, y)
+        pred = gam.predict(Xtest[predictor])
+        # define importances as the R2 for that factor alone
+        R2 = np.corrcoef(ytest,pred)[0,1]**2
+        importances[predictor] = R2
+    return importances
+    
+def run_GAM(X, Y, get_importance=False, n_splines=20, folds=10):
     # set up GAM
     formula = s(0, n_splines)
     for i in range(1, X.shape[1]):
         formula = formula + s(i, n_splines)
     gam = LinearGAM(formula)
     gam.fit(X, X.iloc[:,0])
-
+    
+    # run full model
     GAM_results = {}
     for name, y in Y.iteritems():
         print("\nFitting for %s\n" % name)
-        CV = BalancedKFold(10)
-        in_scores = []
-        cv_scores = []
+        CV = BalancedKFold(folds)
+        importances = {k:[] for k in X.columns}
+        pred=np.zeros(y.shape[0])
         for train,test in CV.split(X,y):
             Xtrain = X.iloc[train,:]
             ytrain = y.iloc[train]
             Xtest = X.iloc[test,:]
             ytest = y.iloc[test]
             gam = LinearGAM(formula)
-            gam.gridsearch(X, y)
-            # insample
-            in_pred = gam.predict(Xtrain)
-            in_scores.append({'r': np.corrcoef(ytrain,in_pred)[0,1],
-                              'R2': np.corrcoef(ytrain,in_pred)[0,1]**2,
-                              'MAE': mean_absolute_error(ytrain,in_pred)})
+            gam.gridsearch(Xtrain, ytrain)
+
             # out of fold
-            pred = gam.predict(Xtest)
-            cv_scores.append({'r': np.corrcoef(ytest,pred)[0,1],
-                              'R2': np.corrcoef(ytest,pred)[0,1]**2,
-                              'MAE': mean_absolute_error(ytest,pred)})
+            p = gam.predict(Xtest)
+            if len(p.shape)>1:
+                p=p[:,0]
+            pred[test]=p
+
+            if get_importance:    
+                # get importances, defined as the predictive ability of each variable on its own
+                importance_out = get_importances(Xtrain, ytrain, Xtest, ytest)
+                for k,v in importance_out.items():
+                    importances[k].append(v)
+                    
+        cv_scores = [{'r': np.corrcoef(y,pred)[0,1],
+                      'R2': np.corrcoef(y,pred)[0,1]**2,
+                      'MAE': mean_absolute_error(y,pred)}]
+        
+        
+        # insample
         gam.gridsearch(X, y)
-        GAM_results[name] = {'cv_scores': cv_scores,
-                              'insample_scores': in_scores,
-                              'model': gam}
+        in_pred = gam.predict(X)
+        in_scores = [{'r': np.corrcoef(y,in_pred)[0,1],
+                          'R2': np.corrcoef(y,in_pred)[0,1]**2,
+                          'MAE': mean_absolute_error(y,in_pred)}]
+        GAM_results[name] = {'scores_cv': cv_scores,
+                             'scores_insample': in_scores,
+                             'pred_vars': X.columns,
+                             'importances': importances,
+                             'model': gam}
     return GAM_results
 
 def plot_term(gam, i, ax=None, color='k', size=10):
@@ -84,14 +112,14 @@ def plot_GAM(gams, X, Y, size=4, dpi=300, ext='png', filename=None):
     for j, (name, out) in enumerate(gams.items()):
         axs = mat_axs[j]
         gam = out['model']
-        R2 = get_avg_score(out['cv_scores'])
+        R2 = get_avg_score(out['scores_cv'])
         p_vals = gam.statistics_['p_values']
         for i, ax in enumerate(axs):
             plot_term(gam, i, ax, colors[j], size=size)
             ax.set_xlabel('')
             ax.text(.5, .95, 'p< %s' % format_num(p_vals[i]), va='center', 
                     fontsize=size*3, transform=ax.transAxes)
-            if j==0:
+            if j%2==0:
                 ax.set_title(titles[i], fontsize=size*4)
             if i==0:
                 ax.set_ylabel(name + ' (%s)' % format_num(R2), 
@@ -127,7 +155,6 @@ def check_gam(gam, X, y, size=5):
 results = load_results(get_recent_dataset())
 Y = results['task'].DA.get_scores()
 
-
 # ********************************************************
 # Fitting
 # ********************************************************
@@ -153,8 +180,8 @@ for k,v in gams.items():
     ridge_r2in = ridge_prediction[k]['scores_insample'][0]['R2']
     print('*'*79)
     print(k)
-    print('GAM CV', get_avg_score(v['cv_scores']))
-    print('GAM Insample', get_avg_score(v['insample_scores']))
+    print('GAM CV', get_avg_score(v['scores_cv']))
+    print('GAM Insample', get_avg_score(v['scores_insample']))
     print('*')
     print('Ridge CV', format_num(ridge_r2cv, 3))
     print('Ridge insample', format_num(ridge_r2in, 3))
