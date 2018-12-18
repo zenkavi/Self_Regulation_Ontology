@@ -13,10 +13,12 @@ retest_workers = c('s198', 's409', 's473', 's286', 's017', 's092', 's403', 's103
 #dv's
 calc_break_dvs = function(df, breaks=c(seq(0, 440, 10)[c(-1, -45)], 439)){
   
+  #filter out pratice trials and do any other preprocessing necessary
   df = df %>%
     filter(exp_stage != "practice") %>%
     mutate(CTI = as.factor(CTI))
   
+  #function to calculate task specific dv's for a given subset of raw response data
   calc_dvs = function(df){
     
     df = df %>%
@@ -103,19 +105,20 @@ calc_break_dvs = function(df, breaks=c(seq(0, 440, 10)[c(-1, -45)], 439)){
   
   out = data.frame()
   
+  #anonymous within function for loop that subset the number of trials for each increment for one subject's data and calculates the dv's for that subset
   for(i in 1:length(breaks)){
     tmp = df[1:breaks[i],]
     dvs = calc_dvs(tmp)
     out = rbind(out, dvs)
   }
   
-  # then calculate the dv's for the remaining trials
+  # calculate dv's for the remaining trials
   if(nrow(df)!=440 & nrow(df)%%10 != 0){
     dvs = calc_dvs(df)
     out = rbind(out, dvs)
   }
   
-  #to keep track for later merge
+  #assign row names to a column to keep track of number of trial increments for later merge
   out$breaks = row.names(out)
   
   return(out)
@@ -123,16 +126,25 @@ calc_break_dvs = function(df, breaks=c(seq(0, 440, 10)[c(-1, -45)], 439)){
 
 if(t=="t1"){
   
+  #read raw task data
   t1_tbt = read.csv(gzfile(paste0(test_data_path,'Individual_Measures/threebytwo.csv.gz'), 'rt'))
+  #filter data for retest workers
   t1_tbt = t1_tbt[as.character(t1_tbt$worker_id) %in% retest_workers,]
   
+  #Create blank output df that will be filled with each subject's dv's 
   t1_dvs = data.frame()
+  #Loop through each subject
   for(i in 1:length(unique(t1_tbt$worker_id))){
+    #Print index to be trace output files progress
     print(i)
+    #extract data for current worker
     cur_worker = unique(t1_tbt$worker_id)[i]
     df = t1_tbt %>% filter(worker_id == cur_worker)
+    #calculate dv's for each 10 trial increment for given subject
     sub_dvs = calc_break_dvs(df)
+    #add subject identifier to output
     sub_dvs$sub_id = cur_worker
+    #append current subject's calculated dv's for each subset of trials to the output dataframe
     t1_dvs = rbind(t1_dvs, sub_dvs)
   }
   

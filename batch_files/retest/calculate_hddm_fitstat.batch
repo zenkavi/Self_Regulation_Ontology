@@ -1,12 +1,12 @@
 #!/bin/bash
 #SBATCH --job-name=calculate_hddm_fitstat_{SUBSET}_{HDDM_TYPE}_{TASK}
-#SBATCH --output=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/.out/calculate_hddm_fitstat_{SUBSET}_{HDDM_TYPE}_{TASK}.job.out
-#SBATCH --error=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_fitstat/.err/calculate_hddm_fitstat_{SUBSET}_{HDDM_TYPE}_{TASK}.job.err
-#SBATCH --time=4:00:00
+#SBATCH --output={OUT_DIR}.out/calculate_hddm_fitstat_{SUBSET}_{HDDM_TYPE}_{TASK}.job.out
+#SBATCH --error={OUT_DIR}.err/calculate_hddm_fitstat_{SUBSET}_{HDDM_TYPE}_{TASK}.job.err
+#SBATCH -p russpold,owners,normal
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=4
-#SBATCH --mem=16000
-#SBATCH --mail-type=FAIL
+#SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=zenkavi@stanford.edu
+#SBATCH --time=80:00:00
 source activate SRO
-python calculate_hddm_fitstat.py {MODEL_DIR} {TASK} {SUBSET} {OUT_DIR} {HDDM_TYPE} {PARALLEL} {SUB_ID_DIR}
+python calculate_hddm_fitstat.py {MODEL_DIR} {TASK} {SUBSET} {OUT_DIR} {HDDM_TYPE} {PARALLEL} {SUB_ID_DIR} {SAMPLES} {LOAD_PPC}

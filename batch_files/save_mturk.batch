@@ -10,15 +10,14 @@
 #SBATCH -p russpold
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ieisenbe@stanford.edu
-module load singularity
 export PYTHONPATH=""
 # scratch is automatically mounted
 img=`sed '2q;d' singularity_config.txt`
 base_singularity=`sed '6q;d' singularity_config.txt`
 singularity_loc=${base_singularity}/$img
 data_loc=`sed '8q;d' singularity_config.txt`
-output_loc=../Data/
-reference_loc=../references
+output_loc=`sed '4q;d' singularity_config.txt`Data/
+reference_loc=`sed '4q;d' singularity_config.txt`references
 
 singularity exec -B ${data_loc}:/Data -B ${output_loc}:/SRO/Data -B ${reference_loc}:/SRO/references ${singularity_loc} \
     python /SRO/data_preparation/save_data.py

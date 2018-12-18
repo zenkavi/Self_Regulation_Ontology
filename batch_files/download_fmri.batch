@@ -28,7 +28,6 @@ python ../data_preparation/fmri_download_data.py --job all
 #SBATCH -p russpold
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ieisenbe@stanford.edu
-module load singularity
 export PYTHONPATH=""
 # scratch is automatically mounted
 img=`sed '2q;d' singularity_config.txt`

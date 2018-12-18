@@ -1,13 +1,16 @@
 #!/bin/bash
-#SBATCH --job-name=bootstrap_retest_{VAR_ID}
-#SBATCH --output=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/bootstrap_output/.out/bootstrap_retest_{VAR_ID}.job.out
-#SBATCH --error=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/bootstrap_output/.err/bootstrap_retest_{VAR_ID}.job.err
-#SBATCH --time=40:00:00
+#SBATCH --job-name=bootstrap_retest
+#SBATCH --array=1-10%10
+#SBATCH --output=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/bootstrap_output/.out/bootstrap_retest.job.out
+#SBATCH --error=/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/bootstrap_output/.err/bootstrap_retest.job.err
+#SBATCH -p russpold,owners,normal
+#SBATCH --time=04:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=4
 # #SBATCH --mem=16000
-# #SBATCH --mail-type=FAIL
+# #SBATCH --mail-type=FAIL, END
 #SBATCH --mail-user=zenkavi@stanford.edu
 source activate SRO
-Rscript --vanilla bootstrap_retest.R /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_03-29-2018/t1_data/variables_exhaustive.csv /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_03-29-2018/variables_exhaustive.csv /oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/bootstrap_output/ 1000 {VAR_ID}
+
+eval $( sed "${SLURM_ARRAY_TASK_ID}q;d" bootstrap_retest_tasklist )

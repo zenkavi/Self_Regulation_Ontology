@@ -13,11 +13,11 @@
 module load singularity
 export PYTHONPATH=""
 # scratch is automatically mounted
-img=`sed '4q;d' singularity_config.txt`
+img=`sed '2q;d' singularity_config.txt`
 base_singularity=`sed '6q;d' singularity_config.txt`
 singularity_loc=${base_singularity}/$img
-data_loc=../Data/
-results_loc=../Results/
+data_loc=`sed '4q;d' singularity_config.txt`Data
+results_loc=`sed '4q;d' singularity_config.txt`Results
 
 if [ "{CLASSIFIER}" == "NONE" ]; then
     singularity exec -B ${data_loc}:/SRO/Data -B ${results_loc}:/Results ${singularity_loc} \

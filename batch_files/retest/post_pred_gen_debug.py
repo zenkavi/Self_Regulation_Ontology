@@ -87,7 +87,7 @@ def post_pred_gen(model, groupby=None, samples=500, append_data=False, progress_
             results={key.replace('.0','') : value for key, value in results.items()}
         else:
             results={ '('+x+')': results[x] for x in results.keys() }
-
+            
     if progress_bar:
         bar_iter += 1
         bar.update(bar_iter)
