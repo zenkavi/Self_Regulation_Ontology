@@ -63,6 +63,17 @@ def run_GAM(X, Y, n_splines=20):
                               'model': gam}
     return GAM_results
 
+def plot_term(gam, i, ax=None, color='k', size=10):
+    if ax is None:
+        f,ax = plt.subplots(1,1, figsize=(size,size*.7))
+    XX = gam.generate_X_grid(i)
+    pdep, confi = gam.partial_dependence(i, X=XX, width=.95)
+    ax.plot(XX[:, i], pdep, c=color, lw=size/2)
+    ax.plot(XX[:, i], confi[:, 0], c='grey', ls='--', lw=size/3)
+    ax.plot(XX[:, i], confi[:, 1], c='grey', ls='--', lw=size/3)
+    ax.set_xlabel('x', fontsize=size*2)
+    ax.set_ylabel(gam.terms[i], fontsize=size*2)
+            
 def plot_GAM(gams, X, Y, size=4, dpi=300, ext='png', filename=None):
     cols = X.shape[1]
     rows = Y.shape[1]
@@ -76,11 +87,8 @@ def plot_GAM(gams, X, Y, size=4, dpi=300, ext='png', filename=None):
         R2 = get_avg_score(out['cv_scores'])
         p_vals = gam.statistics_['p_values']
         for i, ax in enumerate(axs):
-            XX = gam.generate_X_grid(i)
-            pdep, confi = gam.partial_dependence(i, X=XX, width=.95)
-            ax.plot(XX[:, i], pdep, c=colors[j], lw=size)
-            ax.plot(XX[:, i], confi[:, 0], c='grey', ls='--', lw=size/2)
-            ax.plot(XX[:, i], confi[:, 1], c='grey', ls='--', lw=size/2)
+            plot_term(gam, i, ax, colors[j], size=size)
+            ax.set_xlabel('')
             ax.text(.5, .95, 'p< %s' % format_num(p_vals[i]), va='center', 
                     fontsize=size*3, transform=ax.transAxes)
             if j==0:
@@ -88,13 +96,30 @@ def plot_GAM(gams, X, Y, size=4, dpi=300, ext='png', filename=None):
             if i==0:
                 ax.set_ylabel(name + ' (%s)' % format_num(R2), 
                               fontsize=size*4)
+            else:
+                ax.set_ylabel('')
+                
     plt.subplots_adjust(hspace=.4)
     if filename is not None:
         save_figure(fig, '%s.%s' % (filename,ext),
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
 
-# ********************************************************
+def check_gam(gam, X, y, size=5):
+    f, axes = plt.subplots(2,2, figsize=(size*2, size*2))
+    predictions = gam.predict(X)
+    residuals = gam.deviance_residuals(X, y) # same as y-predictions
+    
+    axes[0][1].plot(residuals, predictions, 'o')
+    axes[0][1].set_title('Resids vs. linear pred.', fontweight='bold')
+    
+    axes[1][0].hist(residuals, linewidth=size/5, edgecolor='w', bins=20)
+    axes[1][0].set_title('Histogram of Residuals', fontweight='bold')
+    
+    axes[1][1].plot(y, predictions, 'o')
+    axes[1][1].set_title('Response vs. Fitted Values', fontweight='bold')
+    
+    
 
 # ********************************************************
 # Load Data
@@ -106,24 +131,33 @@ Y = results['task'].DA.get_scores()
 # ********************************************************
 # Fitting
 # ********************************************************
-
-GAM_results = {}
-GAM_results['task'] = run_GAM(results['task'].EFA.get_scores(), Y)
-GAM_results['survey'] = run_GAM(results['survey'].EFA.get_scores(), Y)
-
 output_dir = path.dirname(results['task'].get_output_dir())
-pickle.dump(GAM_results, open(path.join(output_dir, 'GAM_results.pkl'), 'wb'))
+output_file = path.join(output_dir, 'GAM_out.pkl')
+if path.exists(output_file):
+    GAM_results = pickle.load(open(output_file, 'rb'))
+else:
+    GAM_results = {}
+    GAM_results['task'] = run_GAM(results['task'].EFA.get_scores(), Y)
+    GAM_results['survey'] = run_GAM(results['survey'].EFA.get_scores(), Y)
+    pickle.dump(GAM_results, open(output_file, 'wb'))
+
 # ********************************************************
 # Inspect
 # ********************************************************
 gams = GAM_results['task']
 X = results['task'].EFA.get_scores()
+ridge_prediction = results['task'].load_prediction_object(classifier='ridge')['data']
 
 for k,v in gams.items():
+    ridge_r2cv = ridge_prediction[k]['scores_cv'][0]['R2']
+    ridge_r2in = ridge_prediction[k]['scores_insample'][0]['R2']
     print('*'*79)
     print(k)
-    print('CV', get_avg_score(v['cv_scores']))
-    print('Insample', get_avg_score(v['insample_scores']))
+    print('GAM CV', get_avg_score(v['cv_scores']))
+    print('GAM Insample', get_avg_score(v['insample_scores']))
+    print('*')
+    print('Ridge CV', format_num(ridge_r2cv, 3))
+    print('Ridge insample', format_num(ridge_r2in, 3))
     print('*'*79)
     
 
