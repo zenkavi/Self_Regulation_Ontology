@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 import argparse
-from expanalysis.experiments.processing import get_exp_DVs_proptrials
+import sys
+sys.path.append('/oak/stanford/groups/russpold/users/zenkavi/expfactory-analysis/expanalysis/experiment')
+#from expanalysis.experiments.processing import get_exp_DVs_proptrials
+from processing import get_exp_DVs_proptrials
 from glob import glob
 from os import path
 import pandas as pd
