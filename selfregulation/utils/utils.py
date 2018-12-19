@@ -151,7 +151,7 @@ def get_retest_data(dataset):
     if retest_data is None:
         return
     retest_data = retest_data[~retest_data.index.isnull()]
-    retest_data = retest_data.loc[:, ['dv','icc', 'spearman', 'pearson']]
+    retest_data = retest_data.loc[:, ['dv','icc3.k', 'spearman', 'pearson']]
     for column in retest_data.columns[1:]:
         retest_data[column] = pandas.to_numeric(retest_data[column])
     retest_data = retest_data.groupby('dv').mean()    
