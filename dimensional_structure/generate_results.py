@@ -303,12 +303,12 @@ for subset in subsets:
             plot_task_kws={}
          
             # Plot EFA
-        if verbose: print("Plotting EFA")
+        if verbose: print("** Plotting DA **")
         plot_DA(results, DA_plot_dir, verbose=verbose, size=size, dpi=dpi, ext=ext)
         
         for rotate in ['oblimin', 'varimax']:
             # Plot EFA
-            if verbose: print("Plotting EFA")
+            if verbose: print("** Plotting EFA %s **" % rotate)
             plot_EFA(results, EFA_plot_dir, rotate=rotate,
                      verbose=verbose, size=size, dpi=dpi, 
                      ext=ext, plot_task_kws=plot_task_kws)
@@ -323,71 +323,91 @@ for subset in subsets:
                             size=size, dpi=dpi, ext=ext)
             
             # Plot HCA
-            if verbose: print("Plotting HCA")
+            if verbose: print("** Plotting HCA %s **" % rotate)
             drop_list = {('task', 'oblimin'): [0,5,9,11],
                          ('survey', 'oblimin'): [1,4,7, 9,11]}
             plot_HCA(results, HCA_plot_dir, rotate=rotate,
-                     drop_list = drop_list.get((name, results), None),
+                     drop_list = drop_list.get((name, rotate), None),
                      size=size, dpi=dpi, ext=ext)
-        
         # Plot prediction
-        if results.load_prediction_object() is not None:
-            for rotate in ['oblimin', 'varimax']:
-                rotate_plot_dir = path.join(prediction_plot_dir, rotate)
-                target_order = results.DA.reorder_factors(results.DA.get_loading()).columns
-                change_target_order = [i + ' Change' for i in target_order]
-                for classifier in classifiers:
-                    for EFA in [True, False]:
-                        print("Plotting Prediction, classifier: %s, EFA: %s" % (classifier, EFA))
-                        plot_prediction(results, 
-                                        target_order=target_order, 
-                                        EFA=EFA, 
-                                        rotate=rotate,
-                                        classifier=classifier, 
-                                        plot_dir=rotate_plot_dir,
-                                        dpi=dpi,
-                                        ext=ext,
-                                        size=size)
-                        plot_prediction_scatter(results, target_order=target_order, 
-                                                EFA=EFA, 
-                                                rotate=rotate,
-                                                classifier=classifier, 
-                                                plot_dir=rotate_plot_dir,
-                                                dpi=dpi,
-                                                ext=ext,
-                                                size=size)
-                        print("Plotting Change Prediction, classifier: %s, EFA: %s" % (classifier, EFA))
-                        try:
-                            plot_prediction(results, target_order=change_target_order, 
-                                            EFA=EFA, change=True,
-                                            classifier=classifier,
+        if results.get_prediction_files() is not None:
+            target_order = results.DA.reorder_factors(results.DA.get_loading()).columns
+            change_target_order = [i + ' Change' for i in target_order]
+            for classifier in classifiers:
+                for EFA in [True, False]:
+                    if EFA:
+                        for rotate in ['oblimin', 'varimax']:
+                            rotate_plot_dir = path.join(prediction_plot_dir, rotate)
+                            print("** Plotting Prediction, classifier: %s, EFA: %s **" % (classifier, EFA))
+                            plot_prediction(results, 
+                                            target_order=target_order, 
+                                            EFA=EFA, 
                                             rotate=rotate,
+                                            classifier=classifier, 
                                             plot_dir=rotate_plot_dir,
                                             dpi=dpi,
                                             ext=ext,
                                             size=size)
-                            plot_prediction_scatter(results, 
-                                                    target_order=change_target_order, 
+                            plot_prediction_scatter(results, target_order=target_order, 
                                                     EFA=EFA, 
                                                     rotate=rotate,
-                                                    change=True,
                                                     classifier=classifier, 
                                                     plot_dir=rotate_plot_dir,
                                                     dpi=dpi,
                                                     ext=ext,
                                                     size=size)
-                        except AssertionError:
-                            print('No shuffled data was found for %s change predictions, EFA: %s' % (name, EFA))
-                plot_factor_fingerprint(results, change=False, rotate=rotate,
-                                        size=size, ext=ext, dpi=dpi, 
-                                        plot_dir=rotate_plot_dir)
-                plot_factor_fingerprint(results, change=True, rotate=rotate,
-                                        size=size, ext=ext, dpi=dpi, 
-                                        plot_dir=rotate_plot_dir)
+                            """
+                            print("** Plotting Change Prediction, classifier: %s, EFA: %s **" % (classifier, EFA))
+                            try:
+                                plot_prediction(results, target_order=change_target_order, 
+                                                EFA=EFA, change=True,
+                                                classifier=classifier,
+                                                rotate=rotate,
+                                                plot_dir=rotate_plot_dir,
+                                                dpi=dpi,
+                                                ext=ext,
+                                                size=size)
+                                plot_prediction_scatter(results, 
+                                                        target_order=change_target_order, 
+                                                        EFA=EFA, 
+                                                        rotate=rotate,
+                                                        change=True,
+                                                        classifier=classifier, 
+                                                        plot_dir=rotate_plot_dir,
+                                                        dpi=dpi,
+                                                        ext=ext,
+                                                        size=size)
+                            except AssertionError:
+                                print('No shuffled data was found for %s change predictions, EFA: %s' % (name, EFA))
+                            """
+                            plot_factor_fingerprint(results, change=False, rotate=rotate,
+                                                    size=size, ext=ext, dpi=dpi, 
+                                                    plot_dir=rotate_plot_dir)
+                            plot_factor_fingerprint(results, change=True, rotate=rotate,
+                                                    size=size, ext=ext, dpi=dpi, 
+                                                    plot_dir=rotate_plot_dir)
+                    else:
+                        plot_prediction(results, 
+                                            target_order=target_order, 
+                                            EFA=False, 
+                                            rotate=rotate,
+                                            classifier=classifier, 
+                                            plot_dir=prediction_plot_dir,
+                                            dpi=dpi,
+                                            ext=ext,
+                                            size=size)
+                        plot_prediction_scatter(results, target_order=target_order, 
+                                                EFA=False, 
+                                                rotate=rotate,
+                                                classifier=classifier, 
+                                                plot_dir=prediction_plot_dir,
+                                                dpi=dpi,
+                                                ext=ext,
+                                                size=size)
             plot_prediction_comparison(results, change=False, size=size, ext=ext,
                                        dpi=dpi, plot_dir=prediction_plot_dir)
-            plot_prediction_comparison(results, change=True, size=size, ext=ext, 
-                                       dpi=dpi, plot_dir=prediction_plot_dir)
+            #plot_prediction_comparison(results, change=True, size=size, ext=ext, 
+            #                           dpi=dpi, plot_dir=prediction_plot_dir)
 
         
         # copy latest results and prediction to higher directory
@@ -416,7 +436,7 @@ if group_plot == True:
     if verbose:
         print('*'*79)
         print('*'*79)
-        print("Group Plots")
+        print("** Group Plots **")
     all_results = load_results(datafile)
     output_loc = path.dirname(all_results['task'].get_output_dir())
     plot_file = path.dirname(all_results['task'].get_plot_dir())
@@ -424,9 +444,12 @@ if group_plot == True:
     plot_BIC(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
     # rotation dependent
     for rotate in ['oblimin', 'varimax']:
-        plot_cross_silhouette(all_results, rotate=rotate, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
-        plot_cross_communality(all_results,rotate=rotate,  size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
-        plot_cross_EFA_retest(all_results, rotate=rotate, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+        plot_cross_silhouette(all_results, rotate=rotate, size=size, ext=ext, 
+                              dpi=dpi, plot_dir=plot_file)
+        plot_cross_communality(all_results,rotate=rotate,  size=size, ext=ext, 
+                               dpi=dpi, plot_dir=plot_file)
+        plot_cross_EFA_retest(all_results, rotate=rotate, size=size, ext=ext, 
+                              dpi=dpi, plot_dir=plot_file)
         plot_cross_EFA_retest(all_results, rotate=rotate, annot_heatmap=True, 
                               size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
     a=subprocess.Popen('python analysis_overview_plot.py -dataset %s -dpi %s -ext %s -size %s' \
@@ -492,21 +515,21 @@ if run_plot or group_plot:
     
     shortened_lookup = {
             'analysis_overview': 'Fig01_Analysis_Overview',
-            '%s/EFA_test_retest': 'FigS03_EFA_retest',
+            '%s/EFA_test_retest' % rotate: 'Fig03_EFA_retest',
             'survey/HCA/%s/dendrogram_EFA12_%s' % (rotate, rotate): 'Fig04_Survey_Dendrogram',
             'task/HCA/%s/dendrogram_EFA5_%s' % (rotate, rotate): 'Fig05_Task_Dendrogram',
-            'survey/prediction/EFA_ridge_prediction_bar': 'Fig06_Survey_prediction',
-            'task/prediction/EFA_ridge_prediction_bar': 'Fig07_Task_prediction',
+            'survey/prediction/%s/EFA_ridge_prediction_bar' % rotate: 'Fig06_Survey_prediction',
+            'task/prediction/%s/EFA_ridge_prediction_bar' % rotate: 'Fig07_Task_prediction',
             # test-retest
             'cross_relationship': 'FigS02_cross_relationship',
             'BIC_curves': 'FigS03_BIC_curves',
             '%s/communality_adjustment' % rotate: 'FigS04_communality',
-            'task/EFA/%s/factor_heatmap_EFA12' % rotate: 'FigS05a_survey_correlation',
+            'survey/EFA/%s/factor_heatmap_EFA12' % rotate: 'FigS05a_survey_correlation',
             'task/EFA/%s/factor_heatmap_EFA5' % rotate: 'FigS05b_task_correlation',
             '%s/silhouette_analysis' % rotate: 'FigS06_Survey_Silhouette',
             'survey/prediction/IDM_lasso_prediction_bar': 'FigS07_Survey_IDM_prediction',
             'task/prediction/IDM_lasso_prediction_bar': 'FigS08_Task_IDM_prediction',
-            'survey/prediction/EFA_ridge_factor_fingerprint': 'FigS09_Survey_Factor_Fingerprints'
+            'survey/prediction/%s/EFA_ridge_factor_fingerprint' % rotate: 'FigS09_Survey_Factor_Fingerprints'
             }
     
     paper_dir = path.join(basedir, 'Results', 'Psych_Ontology_Paper')
