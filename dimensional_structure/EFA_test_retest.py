@@ -182,7 +182,8 @@ def plot_EFA_change(combined, ax=None, color_on=False, method=PCA,
     ax.tick_params(labelsize=0, pad=size/2)
     ax.set_xlabel('PC 1', fontsize=size*2.5)
     ax.set_ylabel('PC 2', fontsize=size*2.5)
-    ax.set_xlim(projection.get_min(), projection.get_max())
+    ax.set_xlim(np.min(projection)-abs(np.min(projection))*.1, 
+                np.max(projection)+abs(np.max(projection))*.1)
     ax.set_ylim(ax.get_xlim())
     ax.legend(fontsize=size*1.5)
         
