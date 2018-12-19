@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=calc_DV_{EXP_ID}_{PROPTRIALS}_{RAND}
-#SBATCH --output=/oak/stanford/groups/russpold/users/ieisenbe/uh2/behavioral_data/mturk_retest_output/trial_num/.out/calc_DV_{EXP_ID}_{PROPTRIALs}_{RAND}.out
+#SBATCH --output=/oak/stanford/groups/russpold/users/ieisenbe/uh2/behavioral_data/mturk_retest_output/trial_num/.out/calc_DV_{EXP_ID}_{PROPTRIALS}_{RAND}.out
 #SBATCH --error=/oak/stanford/groups/russpold/users/ieisenbe/un2/behavioral_data/mturk_retest_output/trial_num/.err/calc_DV_{EXP_ID}_{PROPTRIALS}_{RAND}.err
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
