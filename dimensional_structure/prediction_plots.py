@@ -280,7 +280,12 @@ def plot_prediction_scatter(results, target_order=None, EFA=True, change=False,
     predictions = results.load_prediction_object(EFA=EFA, 
                                                  change=change,
                                                  classifier=classifier,
-                                                 rotate=rotate)['data']
+                                                 rotate=rotate)
+    if predictions is None:
+        print('No prediction object found!')
+        return
+    else:
+        predictions = predictions['data']
     if EFA:
         predictors = results.EFA.get_scores()
     else:
@@ -340,7 +345,9 @@ def plot_prediction_comparison(results, size=4.6, change=False,
             R2 = np.nan_to_num(R2)
             feature = 'EFA' if EFA else 'IDM'
             R2s[feature+'_'+classifier] = R2
-
+    if len(R2s) == 0:
+        print('No prediction objects found')
+        return
     R2s = pd.DataFrame(R2s).melt(var_name='Classifier', value_name='R2')
     R2s['Feature'], R2s['Classifier'] = R2s.Classifier.str.split('_', 1).str
     f = plt.figure(figsize=(size, size*.62))
@@ -427,7 +434,12 @@ def plot_factor_fingerprint(results, classifier='ridge', rotate='oblimin',
     predictions = results.load_prediction_object(EFA=True, 
                                                  change=change,
                                                  classifier=classifier,
-                                                 rotate=rotate)['data']
+                                                 rotate=rotate)
+    if predictions is None:
+        print('No prediction object found!')
+        return
+    else:
+        predictions = predictions['data']
     factors = predictions[targets[0]]['predvars']
     importances = np.vstack([predictions[k]['importances'] for k in targets])
 

@@ -183,7 +183,7 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
     for spine in ['top','right','bottom','left']:
         text_ax.spines[spine].set_visible(False)
     for i, label in enumerate(subset_loading.columns):
-        text_ax.text(0, 1-i/N, str(i+1)+'.', fontsize=size*3, ha='right')
+        text_ax.text(0, 1-i/N, str(i+1)+'.', fontsize=size*2.8, ha='right')
         text_ax.text(.1, 1-i/N, label, fontsize=size*3)
     text_ax.tick_params(which='both', labelbottom=False, labelleft=False,
                         bottom=False, left=False)
@@ -276,7 +276,7 @@ def plot_subbranches(results, rotate='oblimin', EFA_clustering=True,
             filey = 'cluster_%s.%s' % (str(cluster_i).zfill(2), ext)
             plot_loc = path.join(plot_dir, function_directory, filey)
         fig = plot_subbranch(cluster_i, tree, ordered_loading, cluster_sizes,
-                             title=cluster_names.pop(), 
+                             title=cluster_names.pop(0), 
                              size=size, plot_loc=plot_loc)
         figs.append(fig)
     return figs
@@ -364,7 +364,7 @@ def plot_dendrogram(loading, clustering, title=None,
                        orientation='top')
         # change axis properties
         ax1.tick_params(axis='x', which='major', labelsize=14,
-                        labelbottom='off')
+                        labelbottom=False)
         ax1.get_yaxis().set_visible(False)
         ax1.spines['top'].set_visible(False)
         ax1.spines['right'].set_visible(False)
@@ -406,9 +406,9 @@ def plot_dendrogram(loading, clustering, title=None,
         # **********************************
         beginnings = np.hstack([[0],np.cumsum(cluster_sizes)[:-1]])
         centers = beginnings+np.array(cluster_sizes)//2+.5
-        offset = .05
+        offset = .07
         if 'cluster_names' in clustering.keys():
-           # ax2.tick_params(axis='x', reset=True, top=False, width=size/8, length=size)
+            ax2.tick_params(axis='x', reset=True, top=False, bottom=False, width=size/8, length=0)
             names = ['\n'.join(i.split()) for i in clustering['cluster_names']]
             ax2.set_xticks(centers)
             ax2.set_xticklabels(names, rotation=0, ha='center', 
@@ -419,10 +419,10 @@ def plot_dendrogram(loading, clustering, title=None,
                            clip_on=False, color=colors[i], linewidth=size/5)
                 label.set_color(colors[i])
                 ticks[i].set_color(colors[i])
-                y_drop = .01
+                y_drop = .005
                 line_drop = .3
                 if drop_list and i in drop_list:
-                    y_drop = .06
+                    y_drop = .05
                     line_drop = 1.6
                 label.set_y(-(y_drop/heatmap_height+heatmap_height/c*offset))
                 ax2.vlines(beginnings[i]+cluster_sizes[i]/2, 
