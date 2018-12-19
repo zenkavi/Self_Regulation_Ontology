@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 import argparse
 import sys
-sys.path.append('/oak/stanford/groups/russpold/users/zenkavi/expfactory-analysis/expanalysis/experiment')
+sys.path.append('/oak/stanford/groups/russpold/users/zenkavi/expfactory-analysis/expanalysis/experiments')
 #from expanalysis.experiments.processing import get_exp_DVs_proptrials
 from processing import get_exp_DVs_proptrials
 from glob import glob
 from os import path
 import pandas as pd
 
-from selfregulation.utils.utils import get_info
+#from selfregulation.utils.utils import get_info
 
-try:
-    data_dir=get_info('data_directory')
-except Exception:
-    data_dir=path.join(get_info('base_directory'),'Data')
+#try:
+#    data_dir=get_info('data_directory')
+#except Exception:
+    #data_dir=path.join(get_info('base_directory'),'Data')
+
+data_dir = '/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_03-29-2018'
 
 # parse arguments
 parser = argparse.ArgumentParser()
@@ -49,7 +51,11 @@ proptrials = args.proptrials
 rand = args.rand
 
 #load Data
-dataset = pd.read_csv(path.join(data_dir, 'Individual_Measures', exp_id + '.csv.gz'),compression='gzip')
+if(data=="retest"):
+    dataset = pd.read_csv(path.join(data_dir, 'Individual_Measures', exp_id + '.csv.gz'),compression='gzip')
+
+if(data=="complete"):
+    dataset = pd.read_csv(path.join(data_dir, 't1_data/Individual_Measures', exp_id + '.csv.gz'),compression='gzip')
 
 print('loaded dataset for %s' % exp_id)
 #calculate DVs
@@ -66,12 +72,11 @@ if mode is not None:
 
 DV_df, valence_df, description = get_exp_DVs_proptrials(dataset, proptrials, rand, use_group_fun=use_group, group_kwargs=group_kwargs)
 
-
 num_previous = len(glob(path.join(out_dir, exp_id + '_' + data + '_DV.json')))
 postfix = '' if num_previous==0 else '_'+str(num_previous+1)
 if not DV_df is None:
-    if rand:
-        DV_df.to_json(path.join(out_dir, exp_id + '_' + data + '_' + proptrials '_rand_DV%s.json' % postfix))
+    if(rand):
+        DV_df.to_json(path.join(out_dir, exp_id + '_' + data + '_' + str(proptrials) + '_rand_DV%s.json' % postfix))
     else:
-        DV_df.to_json(path.join(out_dir, exp_id + '_' + data + '_' + proptrials '_DV%s.json' % postfix))
+        DV_df.to_json(path.join(out_dir, exp_id + '_' + data + '_' + str(proptrials) + '_DV%s.json' % postfix))
 print('completed %s %s' % (data, exp_id))
