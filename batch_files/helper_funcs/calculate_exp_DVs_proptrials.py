@@ -76,7 +76,7 @@ num_previous = len(glob(path.join(out_dir, exp_id + '_' + data + '_DV.json')))
 postfix = '' if num_previous==0 else '_'+str(num_previous+1)
 if not DV_df is None:
     if(rand):
-        DV_df.to_json(path.join(out_dir, exp_id + '_' + data + '_' + str(proptrials) + '_rand_DV%s.json' % postfix))
+        DV_df.to_json(path.join(out_dir, 'random',exp_id + '_' + data + '_' + str(proptrials) + '_rand_DV%s.json' % postfix))
     else:
-        DV_df.to_json(path.join(out_dir, exp_id + '_' + data + '_' + str(proptrials) + '_DV%s.json' % postfix))
+        DV_df.to_json(path.join(out_dir, 'ordered',exp_id + '_' + data + '_' + str(proptrials) + '_DV%s.json' % postfix))
 print('completed %s %s' % (data, exp_id))
