@@ -10,7 +10,7 @@
 #SBATCH -p russpold,owners,normal
 module load system
 module load x11
-module load singularity
+#module load singularity
 export PYTHONPATH=""
 # scratch is automatically mounted
 img=`sed '2q;d' singularity_config_copy.txt`
