@@ -70,6 +70,8 @@ if hddm_samples is not None:
 if mode is not None:
     group_kwargs['mode'] = mode
 
+print('Getting DVs for task %s, %s, %s, %s'(exp_id, data, proptrials, rand))
+
 DV_df, valence_df, description = get_exp_DVs_proptrials(dataset, proptrials, rand, use_group_fun=use_group, group_kwargs=group_kwargs)
 
 num_previous = len(glob(path.join(out_dir, exp_id + '_' + data + '_DV.json')))
