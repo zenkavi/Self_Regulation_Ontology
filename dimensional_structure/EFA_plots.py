@@ -30,7 +30,6 @@ def plot_BIC_SABIC(results, size=2.3, dpi=300, ext='png', plot_dir=None):
     # Plot BIC and SABIC curves
     colors = ['c', 'm']
     with sns.axes_style('white'):
-        x = list(EFA.results['cscores_metric-BIC'].keys())
         fig, ax1 = plt.subplots(1,1, figsize=(size, size*.75))
         # BIC
         BIC_scores = [EFA.results['cscores_metric-BIC'][i] for i in x]
@@ -423,8 +422,8 @@ def plot_heatmap_factors(results, c, size=4.6, thresh=75, rotate='oblimin',
         EFA = results.DA
     else:
         EFA = results.EFA
-    loading = EFA.get_loading(c, rotate=rotate)
-    loadings = EFA.reorder_factors(loading, rotate=rotate)           
+    loadings = EFA.get_loading(c, rotate=rotate)
+    loadings = EFA.reorder_factors(loadings, rotate=rotate)           
     grouping = get_factor_groups(loadings)
     flattened_factor_order = []
     for sublist in [i[1] for i in grouping]:
