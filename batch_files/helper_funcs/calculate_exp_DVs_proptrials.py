@@ -31,7 +31,7 @@ parser.add_argument('--no_parallel', action='store_false')
 parser.add_argument('--num_cores', default=None, type=int)
 parser.add_argument('--mode', default=None, type=str)
 parser.add_argument('--proptrials', default=1, type=float)
-parser.add_argument('--rand', default=False type=bool)
+parser.add_argument('--rand', default=False, type=bool)
 
 args = parser.parse_args()
 
