@@ -31,7 +31,7 @@ parser.add_argument('--no_parallel', action='store_false')
 parser.add_argument('--num_cores', default=None, type=int)
 parser.add_argument('--mode', default=None, type=str)
 parser.add_argument('--proptrials', default=1, type=float)
-parser.add_argument('--rand', default=False, type=bool)
+parser.add_argument('--rand', default='no', type=str)
 
 args = parser.parse_args()
 
@@ -70,14 +70,14 @@ if hddm_samples is not None:
 if mode is not None:
     group_kwargs['mode'] = mode
 
-print('Getting DVs for task %s %s %s %s' %(exp_id, data, str(proptrials), str(rand)))
+print('Getting DVs for task %s %s %s %s' %(exp_id, data, str(proptrials), rand))
 
 DV_df, valence_df, description = get_exp_DVs_proptrials(dataset, proptrials, rand, use_group_fun=use_group, group_kwargs=group_kwargs)
 
 num_previous = len(glob(path.join(out_dir, exp_id + '_' + data + '_DV.json')))
 postfix = '' if num_previous==0 else '_'+str(num_previous+1)
 if not DV_df is None:
-    if(rand):
+    if(rand=='yes'):
         DV_df.to_json(path.join(out_dir, 'random',exp_id + '_' + data + '_' + str(proptrials) + '_rand_DV%s.json' % postfix))
         print('save complete in %s' % path.join(out_dir, 'random',exp_id + '_' + data + '_' + str(proptrials) + '_rand_DV%s.json' % postfix))
     else:
