@@ -19,4 +19,4 @@ singularity_loc=${base_singularity}/$img
 data_loc=`sed '8q;d' singularity_config_copy.txt`
 output_loc=/oak/stanford/groups/russpold/users/ieisenbe/uh2/behavioral_data/mturk_retest_output/trial_num
 singularity exec -B ${data_loc}:/Data ${singularity_loc} \
-    python /SRO/batch_files/helper_funcs/calculate_exp_DVs_proptrials.py {EXP_ID} {SUBSET} --out_dir ${output_loc} --hddm_samples 90000 --hddm_burn 10000 --hddm_thin 1 --num_cores 7 --mode both --proptrials {PROPTRIALS} --rand {RAND}
+    python /oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/batch_files/helper_funcs/calculate_exp_DVs_proptrials.py {EXP_ID} {SUBSET} --out_dir ${output_loc} --hddm_samples 90000 --hddm_burn 10000 --hddm_thin 1 --num_cores 7 --mode both --proptrials {PROPTRIALS} --rand {RAND}
