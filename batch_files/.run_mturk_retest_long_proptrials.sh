@@ -5,7 +5,7 @@ do
   do
     for subset in retest complete
     do
-      sed -e "s/{EXP_ID}/$exp_id/g" -e "s/{SUBSET}/$subset/g" -e "s/{PROPTRIALS}/$proptrials/g" -e "s/{RAND}/$rand/g" calculate_exp_DVs_proptrials.batch | sbatch --time=48:00:00 --cpus-per-task=8
+      sed -e "s/{EXP_ID}/$exp_id/g" -e "s/{SUBSET}/$subset/g" -e "s/{PROPTRIALS}/$proptrials/g" -e "s/{RAND}/no/g" calculate_exp_DVs_proptrials.batch | sbatch --time=48:00:00 --cpus-per-task=8
     done
   done
 done
