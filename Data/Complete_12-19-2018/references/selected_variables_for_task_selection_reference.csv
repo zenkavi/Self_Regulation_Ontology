@@ -4,7 +4,9 @@ adaptive_n_back.hddm_non_decision,NA
 adaptive_n_back.hddm_thresh,Pos
 adaptive_n_back.mean_load,Pos
 angling_risk_task_always_sunny.keep_adjusted_clicks,NA
+angling_risk_task_always_sunny.keep_coef_of_variation,NA
 angling_risk_task_always_sunny.release_adjusted_clicks,NA
+angling_risk_task_always_sunny.release_coef_of_variation,NA
 attention_network_task.alerting_hddm_drift,Pos
 attention_network_task.conflict_hddm_drift,Pos
 attention_network_task.hddm_drift,Pos
