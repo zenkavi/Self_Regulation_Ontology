@@ -3,7 +3,7 @@ for exp_id in shift_task two_stage_decision
 do
   for proptrials in 0.25 0.5 0.75
   do
-    for rand in True False
+    for rand in yes no
     do
       for subset in retest complete
       do

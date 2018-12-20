@@ -3,7 +3,7 @@ for exp_id in angling_risk_task_always_sunny bickel_titrator columbia_card_task_
 do
   for proptrials in 0.25 0.5 0.75
   do
-    for rand in True False
+    for rand in yes no
     do
       for subset in retest complete
       do

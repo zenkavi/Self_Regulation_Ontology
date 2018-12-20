@@ -2,7 +2,7 @@ for exp_id in adaptive_n_back attention_network_task choice_reaction_time direct
 do
   for proptrials in 0.25 0.5 0.75
   do
-    for rand in True False
+    for rand in yes no
     do
       for subset in retest complete
       do
