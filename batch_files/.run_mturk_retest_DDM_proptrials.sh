@@ -2,12 +2,9 @@ for exp_id in adaptive_n_back attention_network_task choice_reaction_time direct
 do
   for proptrials in 0.25 0.5 0.75
   do
-    for rand in yes no
+    for subset in retest complete
     do
-      for subset in retest complete
-      do
-        sed -e "s/{EXP_ID}/$exp_id/g" -e "s/{SUBSET}/$subset/g" -e "s/{PROPTRIALS}/$proptrials/g" -e "s/{RAND}/$rand/g" calculate_exp_DVs_proptrials.batch | sbatch --qos=long --time=168:00:00
-      done
+      sed -e "s/{EXP_ID}/$exp_id/g" -e "s/{SUBSET}/$subset/g" -e "s/{PROPTRIALS}/$proptrials/g" -e "s/{RAND}/$rand/g" calculate_exp_DVs_proptrials.batch | sbatch --qos=long --time=168:00:00
     done
   done
 done
