@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=calc_DV_{EXP_ID}_{SUBSET}_{PROPTRIALS}_{RAND}
 #SBATCH --output=/oak/stanford/groups/russpold/users/ieisenbe/uh2/behavioral_data/mturk_retest_output/trial_num/.out/calc_DV_{EXP_ID}_{SUBSET}_{PROPTRIALS}_{RAND}.out
-#SBATCH --error=/oak/stanford/groups/russpold/users/ieisenbe/un2/behavioral_data/mturk_retest_output/trial_num/.err/calc_DV_{EXP_ID}_{SUBSET}_{PROPTRIALS}_{RAND}.err
+#SBATCH --error=/oak/stanford/groups/russpold/users/ieisenbe/uh2/behavioral_data/mturk_retest_output/trial_num/.err/calc_DV_{EXP_ID}_{SUBSET}_{PROPTRIALS}_{RAND}.err
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=8
