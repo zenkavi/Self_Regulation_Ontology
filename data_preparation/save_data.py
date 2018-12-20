@@ -74,7 +74,7 @@ for data,directory, DV_df, valence_df in datasets:
     alcohol_drug_data = process_alcohol_drug(alcohol_drug_data, directory, meta_dir)
     health_data = extract_experiment(data,'k6_survey')
     health_data = process_health(health_data, directory, meta_dir)
-    activity_level = DVs.pop('leisure_time_activity_survey.activity_level')
+    activity_level = DV_df.pop('leisure_time_activity_survey.activity_level')
     # concatenate targets
     target_data = pd.concat([demog_data, alcohol_drug_data, 
                              health_data, activity_level], axis = 1)
