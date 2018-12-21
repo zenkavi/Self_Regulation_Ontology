@@ -19,5 +19,4 @@ for subset in ['complete', 'retest']:
             exp_DVs = pandas.read_json(exp_file)
             exp_DVs.columns = [exp + '.' + c for c in exp_DVs.columns]
             DVs = pandas.concat([DVs,exp_DVs], axis = 1)
-
-DVs.to_json(os.path.join(output_loc, '%s_%s_DV.json' % (subset, proptrials)))
+        DVs.to_json(os.path.join(output_loc, '%s_%s_DV.json' % (subset, proptrials)))
