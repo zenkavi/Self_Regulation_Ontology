@@ -100,21 +100,27 @@ demographic_factor_names = ['Drug Use',
                             'Lifetime Smoking',
                             'Obesity',
                             'Income / Life Milestones']
+
+
+
 subsets = [{'name': 'task', 
             'regex': 'task',
-            'oblimin_cluster_names': ['Inhibition-Related Threshold',
-                                      'Caution',
-                                      'Conflict Drift',
-                                      'Speeded Information Processing',
-                                      'Information Processing',
-                                      'Discounting',
-                                      'Misc-1',
-                                      'Cold/Strategy',
-                                      'Hot/WM',
-                                      'Model-Free Decision Making',
-                                      'Response Inhibition',
-                                      'Non-Decision',
-                                      'Misc-2'
+            'oblimin_cluster_names': ['Speeded Information Processing',
+                                        'Information Processing',
+                                        'Task Updating',
+                                        'Conflict Processing',
+                                        'Reactive Control',
+                                        'Caution',
+                                        'Inhibition-Related Threshold',
+                                        'Misc-1',
+                                        'Response Inhibition',
+                                        'Non-Decision',
+                                        'Discounting',
+                                        'Misc-2',
+                                        'Decisiveness', 
+                                        'Misc-3',
+                                        'Cold/Model-Based',
+                                        'Hot/Model-Free'
                                       ],
             'oblimin_factor_names': ['Speeded IP', 'Strategic IP', 'Discounting',
                                      'Perc / Resp', 'Caution'],
@@ -288,13 +294,13 @@ for subset in subsets:
             plot_EFA_change(combined=combined, 
                             plot_dir=path.join(EFA_plot_dir, rotate),
                             size=size, dpi=dpi, ext=ext)
-            
             # Plot HCA
             if verbose: print("** Plotting HCA %s **" % rotate)
-            drop_list = {('task', 'oblimin'): [0,5,9,11],
-                         ('survey', 'oblimin'): [1,3,5,7, 9,11]}
+            drop_list = {('task', 'oblimin'): ([1,3,5,7,9,11,13,15],[2,6,10,14]) ,
+                         ('survey', 'oblimin'): ([1,3,5,7, 9,11], None)}
+            drop1, drop2 = drop_list.get((name, rotate), (None, None))
             plot_HCA(results, HCA_plot_dir, rotate=rotate,
-                     drop_list = drop_list.get((name, rotate), None),
+                     drop_list = drop1, double_drop_list=drop2,
                      size=size, dpi=dpi, ext=ext)
         # Plot prediction
         if results.get_prediction_files() is not None:
