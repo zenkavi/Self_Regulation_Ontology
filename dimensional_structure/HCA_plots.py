@@ -249,8 +249,8 @@ def plot_subbranches(results, rotate='oblimin', EFA_clustering=True,
     if absolute_loading:
         ordered_loading = abs(ordered_loading)
     # get cluster sizes
-    cluster_labels = HCA.get_cluster_DVs(inp=name)
-    cluster_sizes = [len(i) for i in cluster_labels]
+    cluster_labels, DVs= list(zip(*HCA.get_cluster_DVs(inp=name).items()))
+    cluster_sizes = [len(i) for i in DVs]
     link_function, colors = get_dendrogram_color_fun(link, clustering['reorder_vec'],
                                                      clustering['labels'])
     tree = dendrogram(link,  link_color_func=link_function, no_plot=True,
@@ -263,12 +263,6 @@ def plot_subbranches(results, rotate='oblimin', EFA_clustering=True,
     plot_loc = None
     if cluster_range is None:
         cluster_range = range(len(cluster_labels))
-    # get cluster titles
-    cluster_names = clustering.get('cluster_names', None)
-    if cluster_names:
-        cluster_names = [cluster_names[i] for i in cluster_range]
-    else:
-        cluster_names = [None] * len(cluster_range)
     # titles = 
     figs = []
     for cluster_i in cluster_range:
@@ -276,7 +270,7 @@ def plot_subbranches(results, rotate='oblimin', EFA_clustering=True,
             filey = 'cluster_%s.%s' % (str(cluster_i).zfill(2), ext)
             plot_loc = path.join(plot_dir, function_directory, filey)
         fig = plot_subbranch(cluster_i, tree, ordered_loading, cluster_sizes,
-                             title=cluster_names.pop(0), 
+                             title=cluster_labels[cluster_i], 
                              size=size, plot_loc=plot_loc)
         figs.append(fig)
     return figs
@@ -309,9 +303,16 @@ def plot_results_dendrogram(results, rotate='oblimin',
                     filename=filename,
                     **kwargs)
     
+def transform_name(name):
+    """ helper function to transform names for plotting dendrogram """
+    if name == 'Decisiveness':
+        name= 'Decis.'
+    elif name == 'Response Inhibition':
+        name= 'Resp. Inhib.'
+    return '\n'.join(name.split())
     
 def plot_dendrogram(loading, clustering, title=None, 
-                    break_lines=True, drop_list=None,
+                    break_lines=True, drop_list=None, double_drop_list=None,
                     absolute_loading=False,  size=4.6,  dpi=300, 
                     filename=None):
     """ Plots HCA results as dendrogram with loadings underneath
@@ -322,6 +323,7 @@ def plot_dendrogram(loading, clustering, title=None,
         title (optional): str, title to plot
         break_lines: whether to separate EFA heatmap based on clusters, default=True
         drop_list (optional): list of cluster indices to drop the cluster label
+        drop_list (optional): list of cluster indices to drop the cluster label twice
         absolute_loading: whether to plot the absolute loading value, default False
         plot_dir: if set, where to save the plot
         
@@ -409,10 +411,10 @@ def plot_dendrogram(loading, clustering, title=None,
         offset = .07
         if 'cluster_names' in clustering.keys():
             ax2.tick_params(axis='x', reset=True, top=False, bottom=False, width=size/8, length=0)
-            names = ['\n'.join(i.split()) for i in clustering['cluster_names']]
+            names = [transform_name(i) for i in clustering['cluster_names']]
             ax2.set_xticks(centers)
             ax2.set_xticklabels(names, rotation=0, ha='center', 
-                                fontsize=heatmap_size[2]*size*1.05)
+                                fontsize=heatmap_size[2]*size*1)
             ticks = ax2.xaxis.get_ticklines()[::2]
             for i, label in enumerate(ax2.get_xticklabels()):
                 ax2.hlines(c+offset,beginnings[i]+.5,beginnings[i]+cluster_sizes[i]-.5, 
@@ -424,6 +426,9 @@ def plot_dendrogram(loading, clustering, title=None,
                 if drop_list and i in drop_list:
                     y_drop = .05
                     line_drop = 1.6
+                if double_drop_list and i in double_drop_list:
+                    y_drop = .1
+                    line_drop = 2.9
                 label.set_y(-(y_drop/heatmap_height+heatmap_height/c*offset))
                 ax2.vlines(beginnings[i]+cluster_sizes[i]/2, 
                            c+offset, c+offset+line_drop,

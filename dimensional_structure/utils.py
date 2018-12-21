@@ -104,14 +104,14 @@ def shorten_labels(labels, conversions={}):
 # ****************************************************************************
 # helper functions for hierarchical clustering
 # ****************************************************************************
-def reorder_labels(labels, linkage):
+def reorder_labels(labels, link):
     """ reorder labels based on a linkage matrix
     
     reorder labels based on dendrogram position
     reindex so the clusters are in order based on their proximity
     in the dendrogram
     """
-    reorder_vec = leaves_list(linkage)
+    reorder_vec = leaves_list(link)
     cluster_swap = {}
     last_group = 1
     for i in labels[reorder_vec]:
@@ -122,7 +122,8 @@ def reorder_labels(labels, linkage):
     return cluster_reindex
     
 def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None, 
-                         method='average', cluster_kws=None):
+                         method='average', min_cluster_size=3,
+                         cluster_kws=None):
     """
     plot hierarchical clustering and heatmap
     :df: a correlation matrix
@@ -157,7 +158,7 @@ def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None,
     clustered_df = dist_df.iloc[reorder_vec, reorder_vec]
     # clustering
     if cluster_kws is None:
-        cluster_kws = {'minClusterSize': 3}
+        cluster_kws = {'minClusterSize': min_cluster_size}
     clustering = cutreeHybrid(link, dist_vec, **cluster_kws)
     labels = reorder_labels(clustering['labels'], link)
     return {'linkage': link, 
@@ -166,7 +167,7 @@ def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None,
             'reorder_vec': reorder_vec,
             'clustering': clustering,
             'labels': labels}
-
+    
 def silhouette_analysis(clustering, labels=None):
     distance_df = clustering['distance_df']
     if labels is None:
