@@ -792,12 +792,13 @@ def plot_cluster_sankey(results):
         print("Plotly wasn't found, can't plot!")
     
 
-def plot_HCA(results, plot_dir, rotate='oblimin', drop_list=None,
-             size=10, dpi=300, verbose=False, ext='png'):
-    plot_rotate_dir = path.join(plot_dir, rotate)
+def plot_HCA(results, plot_dir=None, rotate='oblimin', 
+             size=10, dpi=300, verbose=False, ext='png', **dendrogram_kws):
+    if plot_dir:
+        plot_rotate_dir = path.join(plot_dir, rotate)
+    else:
+        plot_rotate_dir = None
     c = results.EFA.get_c()
-    if drop_list is None:
-        drop_list = list(range(0,40,2))
     # plots, woo
 #    if verbose: print("Plotting dendrogram heatmaps")
 #    plot_clusterings(results, inp='data', plot_dir=plot_dir, verbose=verbose, ext=ext)
@@ -807,9 +808,9 @@ def plot_HCA(results, plot_dir, rotate='oblimin', drop_list=None,
                         title=False,  plot_dir=plot_dir, 
                         size=size, ext=ext, dpi=dpi)
     plot_results_dendrogram(results, rotate=rotate, EFA_clustering=True,
-                        drop_list = drop_list,
                         title=False, plot_dir=plot_rotate_dir, 
-                        size=size, ext=ext, dpi=dpi)
+                        size=size, ext=ext, dpi=dpi,
+                        **dendrogram_kws)
     if verbose: print("Plotting dendrogram subbranches")
     plot_subbranches(results, rotate=rotate,  EFA_clustering=False,
                      size=size/2, plot_dir=plot_dir, ext=ext, dpi=dpi)

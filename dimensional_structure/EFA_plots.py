@@ -654,7 +654,7 @@ def plot_DDM(results, c, rotate='oblimin',
 
 
         
-def plot_EFA(results, plot_dir, rotate='oblimin', 
+def plot_EFA(results, plot_dir=None, rotate='oblimin', 
              verbose=False, size=4.6, dpi=300, ext='png',
              plot_task_kws={}):
     plot_dir = path.join(plot_dir, rotate)
