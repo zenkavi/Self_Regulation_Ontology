@@ -347,7 +347,7 @@ def plot_bar_factors(results, c, size=4.6, thresh=75, rotate='oblimin',
         flattened_factor_order += sublist
     loadings = loadings.loc[flattened_factor_order]
     # bootstrap CI
-    bootstrap_CI = EFA.get_boot_stats(c)
+    bootstrap_CI = EFA.get_boot_stats(c, rotate=rotate)
     if bootstrap_CI is not None:
         bootstrap_CI = bootstrap_CI['sds'] * 1.96
         bootstrap_CI = bootstrap_CI.loc[flattened_factor_order]
