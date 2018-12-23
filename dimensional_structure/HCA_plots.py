@@ -389,7 +389,7 @@ def plot_dendrogram(loading, clustering, title=None,
                               'ticks': [-max_val, 0, max_val]},
                     cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
         ax2.set_yticklabels(ax2.get_yticklabels(), rotation=0)
-        ax2.tick_params(axis='y', labelsize=size*heat_size[1]*30/c, pad=size/2)            
+        ax2.tick_params(axis='y', labelsize=size*heat_size[1]*30/c, pad=size/4, length=0)            
         # format cbar axis
         cbar_ax.set_yticklabels([format_num(-max_val), 0, format_num(max_val)])
         cbar_ax.tick_params(labelsize=size*heat_size[1]*25/c, length=0, pad=size/2)
@@ -660,19 +660,21 @@ def plot_silhouette(results, inp='data', labels=None, axes=None,
     y_lower = 5
     ax.grid(False)
     ax2.grid(linewidth=size/10)
-    for i in range(1,n_clusters+1):
+    cluster_names = HCA.get_cluster_names(inp=inp)
+    for i in range(n_clusters):
         # Aggregate the silhouette scores for samples belonging to
         # cluster i, and sort them
-        ith_cluster_silhouette_values = sample_scores[labels == i]
+        ith_cluster_silhouette_values = sample_scores[labels == i+1]
         ith_cluster_silhouette_values.sort()
         size_cluster_i = ith_cluster_silhouette_values.shape[0]
         # update y range and plot
         y_upper = y_lower + size_cluster_i
         ax.fill_betweenx(np.arange(y_lower, y_upper),
                           0, ith_cluster_silhouette_values,
-                          alpha=0.7, color=colors[i-1])
+                          alpha=0.7, color=colors[i],
+                          linewidth=size/10)
         # Label the silhouette plots with their cluster numbers at the middle
-        ax.text(-0.05, y_lower + 0.25 * size_cluster_i, str(i), fontsize=size/1.6)
+        ax.text(-0.02, y_lower + 0.25 * size_cluster_i, cluster_names[i], fontsize=size/1.7, ha='right')
         # Compute the new y_lower for next plot
         y_lower = y_upper + 5  # 10 for the 0 samples
     ax.axvline(x=avg_score, color="red", linestyle="--", linewidth=size*.1)
@@ -680,7 +682,8 @@ def plot_silhouette(results, inp='data', labels=None, axes=None,
     ax.set_ylabel('Cluster Separated DVs', fontsize=size)
     ax.set_yticklabels([]); ax.set_yticks([])
     ax.tick_params(axis='x', labelsize=size*.8, pad=size/2)
-    ax.set_title('Dynamic tree cut', fontsize=size*1.2)
+    ax.set_title('Dynamic tree cut', fontsize=size*1.2, y=1.02)
+    ax.set_xlim(-1, 1)
     # plot silhouettes for constant thresholds
     _, scores, _ = get_constant_height_labels(clustering)
     ax2.plot(*zip(*scores), 'o', color='b', 
@@ -696,7 +699,7 @@ def plot_silhouette(results, inp='data', labels=None, axes=None,
     ax2.xaxis.set_major_locator(MaxNLocator(integer=True))
     ax2.set_xlabel('Number of clusters', fontsize=size)
     ax2.set_ylabel('Average Silhouette Score', fontsize=size)
-    ax2.set_title('Single cut height', fontsize=size*1.2)
+    ax2.set_title('Single cut height', fontsize=size*1.2, y=1.02)
     ax2.tick_params(labelsize=size*.8, pad=size/2)
     ax2.legend(loc='center right', fontsize=size*.8)
     plt.subplots_adjust(wspace=.3)

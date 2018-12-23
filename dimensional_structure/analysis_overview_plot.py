@@ -66,8 +66,8 @@ with sns.axes_style("white"):
     participant_ax1 = f.add_axes([.25,.555,.28,.16]) 
     participant_ax2 = f.add_axes([.25,.75,.28,.2]) 
     
-    loading_ax1 = f.add_axes([.625,.555,.25,.1625]) 
-    loading_ax2 = f.add_axes([.625,.753,.25,.193]) 
+    loading_ax1 = f.add_axes([.625,.545,.25,.1625]) 
+    loading_ax2 = f.add_axes([.625,.743,.25,.193]) 
     
     participant_distance = f.add_axes([.3,.29,.16,.16]) 
     loading_distance = f.add_axes([.675,.29,.16,.16]) 
@@ -105,7 +105,7 @@ for task_i in range(len(tasks)):
             name = 'SSRT'
         tick_names.append(name)
         tick_colors.append(color)
-        plot_vals = scale(vals[20:40])*.25+i*1.5
+        plot_vals = scale(vals[20:40].values)*.25+i*1.5
         # add mean line
         ax.hlines(i*1.5, 0, len(plot_vals)*.8, alpha=.6,
                   linestyle='--', color=color,
@@ -153,8 +153,8 @@ for task_i in range(len(tasks)):
                     facecolor='white', edgecolor='white', 
                     linewidth=basewidth, clip_on=False))
     # add boxes
-    for i, t in enumerate(tick_names[::-1]):
-        box_color = tick_colors[i]
+    for i in range(len(tick_names)):
+        box_color = tick_colors[len(tick_names)-(i+1)]
         box_pos = [-.15, i+.2]
         loading_axes[task_i].add_patch(Rectangle(box_pos, 
                     width=.15, height=.4, zorder=100,
@@ -260,7 +260,7 @@ else:
     mds_index = range(len(mds_colors))
     
 # plot raw MDS
-np.random.seed(700)
+np.random.seed(1300)
 mds = MDS(dissimilarity='precomputed')
 mds_out = mds.fit_transform(participant_distances)
 participant_mds.scatter(mds_out[mds_index,0], mds_out[mds_index,1], 
@@ -381,7 +381,7 @@ cbar_ax2.set_ylabel('Distance', rotation=-90, fontsize=basefont, labelpad=basefo
 back.text(.375, .535, 'Participants (n=522)', fontsize=basefont, horizontalalignment='center')
 
 # loading ticks
-loading_ax2.tick_params('x', length=basewidth*2, which='major', pad=basefont*.5)
+loading_ax2.tick_params('x', length=basewidth*2, width=basewidth, which='major', pad=basefont*.5)
 loading_ax2.xaxis.set_ticks_position('top')
 loading_ax2.set_xticks(np.arange(.5,5.5,1))
 loading_ax2.set_xticklabels(['Factor %s' % i for i in range(1,nfactors+1)],

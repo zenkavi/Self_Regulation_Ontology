@@ -76,6 +76,22 @@ def get_communality(EFA, rotate='oblimin', c=None):
     communality.name = "communality"
     return communality
 
+def get_adjusted_communality(communality, retest_data, retest_threshold=.2):
+    # noise ceiling
+    noise_ceiling = retest_data.pearson
+    # remove very low reliabilities
+    if retest_threshold:
+        noise_ceiling[noise_ceiling<retest_threshold]= np.nan
+    # adjust
+    adjusted_communality = communality/noise_ceiling
+    # correlation
+    correlation = pd.concat([communality, noise_ceiling], axis=1).corr().iloc[0,1]
+    kept_vars = np.logical_not(noise_ceiling.isnull())
+    noise_ceiling = noise_ceiling[kept_vars]
+    communality = communality[kept_vars]
+    adjusted_communality = adjusted_communality[kept_vars]
+    return adjusted_communality, correlation, noise_ceiling
+    
 def plot_communality(results, c, rotate='oblimin', retest_threshold=.2,
                      size=4.6, dpi=300, ext='png', plot_dir=None):
     EFA = results.EFA
@@ -92,19 +108,10 @@ def plot_communality(results, c, rotate='oblimin', retest_threshold=.2,
     communality.index = format_variable_names(communality.index)
     retest_data.index = format_variable_names(retest_data.index)
     if len(retest_data) > 0:
-        # noise ceiling
-        noise_ceiling = retest_data.pearson
-        # remove very low reliabilities
-        if retest_threshold:
-            noise_ceiling[noise_ceiling<retest_threshold]= np.nan
-        # adjust
-        adjusted_communality = communality/noise_ceiling
-        # correlation
-        correlation = pd.concat([communality, noise_ceiling], axis=1).corr().iloc[0,1]
-        kept_vars = np.logical_not(noise_ceiling.isnull())
-        noise_ceiling = noise_ceiling[kept_vars]
-        communality = communality[kept_vars]
-        adjusted_communality = adjusted_communality[kept_vars]
+        adjusted_communality,correlation, noise_ceiling = \
+                get_adjusted_communality(communality, 
+                                         retest_data,
+                                         retest_threshold)
         
     # plot communality bars woo!
     if len(retest_data)>0:
@@ -675,7 +682,3 @@ def plot_EFA(results, plot_dir=None, rotate='oblimin',
     if rotate == 'oblimin':
         if verbose: print("Plotting factor correlations")
         plot_factor_correlation(results, c, rotate=rotate, title=False, plot_dir=plot_dir, dpi=dpi,  ext=ext)
-    if verbose: print("Plotting DDM factors")
-    if 'task' in results.ID:
-        plot_DDM(results, c, rotate=rotate, plot_dir=plot_dir, dpi=dpi,  ext=ext)
-    

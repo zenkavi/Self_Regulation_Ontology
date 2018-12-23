@@ -453,7 +453,7 @@ def transfer_scores(data, results, rotate='oblimin'):
     ref_data = results.data
     EFA = results.EFA
     c = EFA.results['num_factors']
-    loadings = EFA.get_loading(c=c)
+    loadings = EFA.get_loading(c=c, rotate=rotate)
     # transform data
     positive_skewed = [i.replace('.logTr', '') for i in ref_data.columns if ".logTr" in i]
     negative_skewed = [i.replace('.ReflogTr', '') for i in ref_data.columns if ".ReflogTr" in i]

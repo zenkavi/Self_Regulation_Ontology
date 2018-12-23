@@ -30,23 +30,23 @@ def calc_EFA_retest(results, rotate='oblimin', verbose=True):
     shared_ids = set(retest_data_raw.index) & set(results.data.index)
     retest_data_raw = retest_data_raw.loc[shared_ids, :]
     retest_scores = transfer_scores(retest_data_raw, results, rotate=rotate)
-    retest_scores.columns = [i+' Retest' for i in retest_scores.columns]
+    retest_scores.columns = [str(i)+' Retest' for i in retest_scores.columns]
     # scale and perform the factor score transformation
     EFA = results.EFA
     c = EFA.get_c()
     ref_scores = EFA.get_scores(c=c, rotate=rotate).loc[retest_data_raw.index, :]
 
     # reorder scores
-    reorder_vec = EFA.get_factor_reorder(c, rotate=rotate)
-    ref_scores = ref_scores.iloc[:, reorder_vec]
-    retest_scores = retest_scores.iloc[:, reorder_vec]
+    if rotate == 'oblimin':
+        reorder_vec = EFA.get_factor_reorder(c, rotate=rotate)
+        ref_scores = ref_scores.iloc[:, reorder_vec]
+        retest_scores = retest_scores.iloc[:, reorder_vec]
     combined = pd.concat([ref_scores, retest_scores], axis=1)
-    cross_diag = [combined.corr().iloc[i,i+len(ref_scores.columns)] 
-                    for i in range(len(ref_scores.columns))]
+    cross_diag = np.diag(combined.corr().iloc[c:, :c])
     # get ICCs
     ICCs = []
     for col in ref_scores.columns:
-        tmp = combined.filter(regex=col)
+        tmp = combined.filter(regex=str(col))
         out = psych.ICC(tmp)
         ICCs.append(list(out[0][1])[-1])
     if verbose:
@@ -179,13 +179,14 @@ def plot_EFA_change(combined, ax=None, color_on=False, method=PCA,
         ax.plot(retest_projection[i,0], retest_projection[i,1], marker='o', 
                  markersize=markersize, color=color, 
                  linewidth=linewidth, label=label[1])
-    ax.tick_params(labelsize=0, pad=size/2)
+    ax.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
     ax.set_xlabel('PC 1', fontsize=size*2.5)
     ax.set_ylabel('PC 2', fontsize=size*2.5)
     ax.set_xlim(np.min(projection)-abs(np.min(projection))*.1, 
                 np.max(projection)+abs(np.max(projection))*.1)
     ax.set_ylim(ax.get_xlim())
     ax.legend(fontsize=size*1.5)
+    ax.get_legend().get_frame().set_linewidth(linewidth/2)
         
     if plot_dir is not None:
             save_figure(fig, path.join(plot_dir, 'EFA_test_retest_sticks.%s' % ext),
@@ -234,16 +235,18 @@ def plot_cross_EFA_retest(all_results, rotate='oblimin', size=4.6, dpi=300,
                         annot_kws={'fontsize': annot_fontsize}); 
             
             cbar_ax.set_xlabel('Pearson Correlation', fontsize=size*1.5)
-            cbar_ax.tick_params(labelsize=size, pad=size/2)
+            cbar_ax.tick_params(labelsize=size, pad=size/2, length=0)
         else:
             sns.heatmap(corr, square=True, ax=ax2, vmin=-1, vmax=1,
                         cbar=False, annot=annot,
                         cmap=sns.diverging_palette(220,15,n=100,as_cmap=True),
                         annot_kws={'fontsize': annot_fontsize})
         ax2.set_xticklabels('')
-        ax2.set_yticklabels(ax2.get_yticklabels(), rotation=0)
-        ax2.tick_params(labelsize=min(size/num_labels/num_rows*20, size*1.6), 
-                        pad=size/2)
+        ax2.set_yticks(np.arange(.5, num_labels+.5))
+        ax2.set_yticklabels(combined.columns[:num_labels], rotation=0, va='center')
+        ax2.tick_params(axis='y', labelsize=min(size/num_labels/num_rows*24, size*1.6), 
+                        pad=size/2, length=0)
+        ax2.tick_params(axis='x', length=0, pad=size/2)
         ax2.set_xlabel('Retest (T2)', fontsize=size*1.8)
         ax2.set_ylabel('Test (T1)', fontsize=size*1.8)
         # add text for measurement category
@@ -259,7 +262,7 @@ def plot_cross_EFA_retest(all_results, rotate='oblimin', size=4.6, dpi=300,
         place_letter(ax, letters.pop(0), fontsize=size*9/4.6)
         [i.set_linewidth(size*.1) for i in ax.spines.values()]
         [i.set_linewidth(size*.1) for i in ax2.spines.values()]
-        
+    
     if plot_dir is not None:
         filename = 'EFA_test_retest'
         if annot_heatmap:

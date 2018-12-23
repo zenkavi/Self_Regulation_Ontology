@@ -174,8 +174,8 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
     ymax = r2_max*1.5
     ax1.set_ylim(ylim[0], ymax)
     # change yticks
-    if ymax<.08:
-        ax1.set_ylim(ylim[0], .08)
+    if ymax<.1:
+        ax1.set_ylim(ylim[0], .1)
         ax1.yaxis.set_major_locator(ticker.MultipleLocator(.025))
     else:
         ax1.yaxis.set_major_locator(ticker.MultipleLocator(.05))
