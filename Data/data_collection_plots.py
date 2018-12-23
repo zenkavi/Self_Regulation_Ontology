@@ -113,12 +113,12 @@ def plot_retest_data(retest_data, size=4.6, save_dir=None):
     dist_ax.set_ylim((0, dist_ax.get_ylim()[1]))
     dist_ax.axis('off')
     if save_dir:
-        plt.savefig(save_dir, dpi=dpi)
+        plt.savefig(save_dir, dpi=dpi, bbox_inches='tight')
 
 save_dir = path.join(base_dir, 'Results', 'data_collection', 'Plots', 'ICC_distplot.%s' % ext)
 size=4.6
 plot_retest_data(retest_data, size, save_dir)
 
 # also save to psych ontology folder
-paper_dir = path.join(base_dir, 'Results', 'Psych_Ontology_Paper', 'Plots', 'FigS01: test-retest.%s' % ext)
+paper_dir = path.join(base_dir, 'Results', 'Psych_Ontology_Paper', 'Plots', 'FigS01_test-retest.%s' % ext)
 copyfile(save_dir, paper_dir)
