@@ -107,18 +107,18 @@ subsets = [{'name': 'task',
             'regex': 'task',
             'oblimin_cluster_names': ['Speeded Information Processing',
                                         'Information Processing',
-                                        'Task Updating',
+                                        'State Flexibility',
                                         'Conflict Processing',
-                                        'Reactive Control',
+                                        'Misc-1',
                                         'Caution',
                                         'Inhibition-Related Threshold',
-                                        'Misc-1',
+                                        'Misc-2',
                                         'Response Inhibition',
                                         'Non-Decision',
                                         'Discounting',
-                                        'Misc-2',
-                                        'Decisiveness', 
                                         'Misc-3',
+                                        'Decisiveness', 
+                                        'Misc-4',
                                         'Cold/Model-Based',
                                         'Hot/Model-Free'
                                       ],
@@ -455,7 +455,7 @@ if run_plot or group_plot:
     if all_results is not None:
         plot_file = path.dirname(all_results['task'].get_plot_dir())
     else:
-        plot_file = results.get_plot_dir()
+        plot_file = path.dirname(results.get_plot_dir())
     
     rotate = 'oblimin'
     exhaustive_lookup = {
