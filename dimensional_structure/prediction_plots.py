@@ -43,8 +43,8 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
         size = ax.get_position().expanded(scale, scale)
         ax2=ax.get_figure().add_axes(size,zorder=2)
         for i, var in enumerate(importance_vars):
-            arc_start = (i+.1)*2*np.pi/len(importance_vars)
-            arc_end = (i+.9)*2*np.pi/len(importance_vars)
+            arc_start = (i+.2)*2*np.pi/len(importance_vars)
+            arc_end = (i+.8)*2*np.pi/len(importance_vars)
             curve = [
                 .85*np.cos(np.linspace(arc_start,arc_end,100)),
                 .85*np.sin(np.linspace(arc_start,arc_end,100))
@@ -236,7 +236,8 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
         if len([True for t in text if t[1] is not None]) > 0:
             pad = .05
             text_ax = fig.add_axes([.8,.56,.1,.34]) 
-            text_ax.tick_params(labelsize=0, length=0)
+            text_ax.tick_params(labelleft=False, left=False, 
+                                labelbottom=False, bottom=False)
             for spine in ['top','right','bottom','left']:
                 text_ax.spines[spine].set_visible(False)
             for i, (val, abr) in enumerate(text):
@@ -458,8 +459,8 @@ def plot_factor_fingerprint(results, classifier='ridge', rotate='oblimin',
         visualize_importance(label_importance, axes[i], yticklabels=False,
                              xticklabels=True,
                              title=factor,
-                             label_size=size,
-                             label_scale=.23,
+                             label_size=size*1.2,
+                             label_scale=.17,
                              color=colors[0],
                              ymax=math.ceil(np.max(importances)*10)/10)
     
