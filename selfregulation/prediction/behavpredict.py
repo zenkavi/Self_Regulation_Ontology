@@ -15,7 +15,7 @@ import warnings
 
 from sklearn.ensemble import ExtraTreesClassifier,ExtraTreesRegressor
 from sklearn.model_selection import cross_val_score,StratifiedKFold,ShuffleSplit
-from sklearn.metrics import roc_auc_score,mean_absolute_error
+from sklearn.metrics import roc_auc_score,mean_absolute_error, r2_score
 from sklearn.linear_model import (LassoCV,LogisticRegressionCV,
                                   LogisticRegression,RidgeCV)
 from sklearn.preprocessing import StandardScaler
@@ -310,7 +310,7 @@ class BehavPredict:
             pred=clf.predict(Xdata)
     
             if numpy.var(pred)>0:
-                scores.append({'R2': numpy.corrcoef(Ydata,pred)[0,1]**2,
+                scores.append({'R2': r2_score(Ydata,pred),
                                'MAE': mean_absolute_error(Ydata,pred)})
                 
             else:
@@ -487,7 +487,7 @@ class BehavPredict:
                 pred[test]=p
     
             if numpy.var(pred)>0:
-                scores.append({'R2': numpy.corrcoef(Ydata,pred)[0,1]**2,
+                scores.append({'R2': r2_score(Ydata,pred),
                                'MAE': mean_absolute_error(Ydata,pred)})
             else:
                if self.verbose:
