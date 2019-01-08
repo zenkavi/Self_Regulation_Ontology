@@ -275,7 +275,7 @@ def plot_subbranches(results, rotate='oblimin', EFA_clustering=True,
         figs.append(fig)
     return figs
                 
-def plot_results_dendrogram(results, rotate='oblimin', 
+def plot_results_dendrogram(results, rotate='oblimin', hierarchical_EFA=False,
                             EFA_clustering=True, title=None, size=4.6,  
                             ext='png', plot_dir=None,
                             **kwargs):
@@ -283,11 +283,27 @@ def plot_results_dendrogram(results, rotate='oblimin',
     HCA = results.HCA
     EFA = results.EFA     
     c = EFA.get_c()
-    loading = EFA.reorder_factors(EFA.get_loading(c, rotate=rotate))
     if EFA_clustering:
         inp = 'EFA%s_%s' % (c, rotate)
     else:
         inp = 'data'
+    if hierarchical_EFA:
+        loading = EFA.reorder_factors(EFA.get_loading(c, rotate=rotate))
+    else:
+        loading = EFA.get_loading(c, rotate=rotate)
+        cluster_names = HCA.get_cluster_names(inp=inp)
+        cluster_loadings = HCA.get_cluster_loading(EFA, rotate=rotate)
+        loading_order = []
+        i = 0
+        while len(loading_order) < c and i<len(cluster_names):
+            cluster_loading = cluster_loadings[cluster_names[i]]
+            top_factor = cluster_loading.idxmax()
+            if top_factor not in loading_order:
+                loading_order.append(top_factor)
+            i+=1
+        loading_order += list(set(loading.columns)-set(loading_order))
+        loading = loading.loc[:, loading_order]
+            
     clustering = HCA.results[inp]
     name = inp
     if title is None:
