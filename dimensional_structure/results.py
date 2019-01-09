@@ -429,7 +429,7 @@ class HCA_Analysis():
             c = EFA.get_c()
         inp = 'EFA%s_%s' % (c, rotate)
         cluster_labels = self.get_cluster_DVs(inp)
-        cluster_loadings = {}
+        cluster_loadings = odict({})
         for name, cluster in cluster_labels.items():
             subset = abs(EFA.get_loading(c, rotate=rotate).loc[cluster,:])
             cluster_vec = subset.mean(0)
