@@ -554,7 +554,7 @@ def remove_correlated_task_variables(data, threshold=.85):
         i=0
         while True:
             kept_indices = np.where(abs(corr_mat.iloc[:,i])<threshold)[0]
-            corr_mat = task_data.iloc[:,kept_indices].corr().replace({1:0})
+            corr_mat = corr_mat.iloc[kept_indices,kept_indices]
             i+=1
             if i>=corr_mat.shape[0]:
                 break
@@ -588,8 +588,10 @@ def save_task_data(data_loc, data):
 
 def transform_remove_skew(data, threshold=1, 
                           positive_skewed=None,
-                          negative_skewed=None):
+                          negative_skewed=None,
+                          remove_failed=False):
     data = data.copy()
+    # "robustly" evaluate skewness after outliers are removed
     if positive_skewed is None:
         positive_skewed = data.skew()>threshold
     if negative_skewed is None:
@@ -598,33 +600,86 @@ def transform_remove_skew(data, threshold=1,
     negative_subset = data.loc[:,negative_skewed]
     # transform variables
     # log transform for positive skew
-    positive_subset = np.log(positive_subset)
-    # remove outliers
-    positive_tmp = remove_outliers(positive_subset)
-    successful_transforms = positive_subset.loc[:,abs(positive_tmp.skew())<threshold]
-    dropped_vars = set(positive_subset)-set(successful_transforms)
+    # shift negative and zero values in positive subset
+    shift = pd.Series(0, index=positive_subset.columns)
+    shift_variables = positive_subset.min()<=0
+    shift[shift_variables] -= (positive_subset.min()[shift_variables]-1)
+    positive_subset = np.log(positive_subset+shift)
+    print('*'*40)
+    print('** Transforming %s positively skewed variables:' % len(positive_subset.columns))
+    print('\n'.join(positive_subset.columns))
+    print('*'*40)
+    if remove_failed:
+        # successful transforms without outlier removal
+        successful_transforms = positive_subset.loc[:,abs(positive_subset.skew())<threshold]
+        print('*'*40)
+        print('** Successfully transformed %s negatively skewed variables after outlier removal:' % len(successful_transforms.columns))
+        print('\n'.join(successful_transforms.columns))
+        print('*'*40)
+        failed_vars = set(positive_subset)-set(successful_transforms)
+        # try removing outliers
+        positive_no_outliers = remove_outliers(positive_subset.loc[:, failed_vars])
+        success_after_outliers = positive_no_outliers.loc[:,abs(positive_no_outliers.skew())<threshold]
+        successful_transforms = successful_transforms.join(success_after_outliers)
+        print('*'*40)
+        print('** Successfully transformed %s positively skewed variables after outlier removal:' % len(success_after_outliers.columns))
+        print('\n'.join(success_after_outliers.columns))
+        print('*'*40)
+        
+        # remove outliers
+        dropped_vars = set(positive_subset)-set(successful_transforms)
+        print('*'*40)
+        print('** Dropping %s positively skewed data that could not be transformed successfully:' % len(dropped_vars))
+        print('\n'.join(dropped_vars))
+        print('*'*40)
+    else:
+        successful_transforms = positive_subset
     # replace transformed variables
     data.drop(positive_subset, axis=1, inplace = True)
     successful_transforms.columns = [i + '.logTr' for i in successful_transforms]
-    print('*'*40)
-    print('Dropping %s positively skewed data that could not be transformed successfully:' % len(dropped_vars))
-    print('\n'.join(dropped_vars))
-    print('*'*40)
     data = pd.concat([data, successful_transforms], axis = 1)
     # reflected log transform for negative skew
     negative_subset = np.log(negative_subset.max()+1-negative_subset)
-    negative_tmp = remove_outliers(negative_subset)
-    successful_transforms = negative_subset.loc[:,abs(negative_tmp.skew())<threshold]
-    dropped_vars = set(negative_subset)-set(successful_transforms)
+    print('*'*40)
+    print('** Transforming %s negatively skewed variables:' % len(negative_subset.columns))
+    print('\n'.join(negative_subset.columns))
+    print('*'*40)
+    if remove_failed:
+        successful_transforms = negative_subset.loc[:,abs(negative_subset.skew())<threshold]
+        dropped_vars = set(negative_subset)-set(successful_transforms)
+        
+        # successful transforms without outlier removal
+        successful_transforms = negative_subset.loc[:,abs(negative_subset.skew())<threshold]
+        print('*'*40)
+        print('** Successfully transformed %s negatively skewed variables after outlier removal:' % len(successful_transforms.columns))
+        print('\n'.join(successful_transforms.columns))
+        print('*'*40)
+        
+        failed_vars = set(negative_subset)-set(successful_transforms)
+        # try removing outliers
+        negative_no_outliers = remove_outliers(negative_subset.loc[:, failed_vars])
+        success_after_outliers = negative_no_outliers.loc[:,abs(negative_no_outliers.skew())<threshold]
+        successful_transforms = successful_transforms.join(success_after_outliers)
+        print('*'*40)
+        print('** Successfully transformed %s negatively skewed variables after outlier removal:' % len(success_after_outliers.columns))
+        print('\n'.join(success_after_outliers.columns))
+        print('*'*40)
+        
+        # remove outliers
+        dropped_vars = set(negative_subset)-set(successful_transforms)
+        
+        print('*'*40)
+        print('** Dropping %s negatively skewed data that could not be transformed successfully:' % len(dropped_vars))
+        print('\n'.join(dropped_vars))
+        print('*'*40)
+    else:
+        successful_transforms = negative_subset
     # replace transformed variables
     data.drop(negative_subset, axis=1, inplace = True)
     successful_transforms.columns = [i + '.ReflogTr' for i in successful_transforms]
-    print('*'*40)
-    print('Dropping %s negatively skewed data that could not be transformed successfully:' % len(dropped_vars))
-    print('\n'.join(dropped_vars))
-    print('*'*40)
+    
     data = pd.concat([data, successful_transforms], axis=1)
     return data.sort_index(axis = 1)
-    
-    
+        
+        
     
