@@ -207,7 +207,7 @@ class BehavPredict:
 
     def run_binary(self,v,imputer):
         if self.binary_classifier=='rf':
-            binary_clf=ExtraTreesClassifier()
+            binary_clf=ExtraTreesClassifier(n_estimators=10)
         elif self.binary_classifier=='svm':
             binary_clf = svm.LinearSVC()
         elif self.binary_classifier=='lasso':
@@ -266,7 +266,7 @@ class BehavPredict:
                 
     def run_regression(self,v,imputer):
         if self.classifier=='rf':
-            clf=ExtraTreesRegressor()
+            clf=ExtraTreesRegressor(n_estimators=10)
         elif self.classifier=='lasso':
             if not self.data_models[v]=='gaussian':
                 if self.verbose:
@@ -354,7 +354,7 @@ class BehavPredict:
             print('classifying',v,numpy.mean(self.targetdata[v]))
             print('using classifier:',self.classifier)
         if self.binary_classifier=='rf':
-            clf=ExtraTreesClassifier()
+            clf=ExtraTreesClassifier(n_estimators=10)
         elif self.binary_classifier=='svm':
             clf = svm.LinearSVC()
         elif self.binary_classifier=='lasso':
@@ -426,7 +426,7 @@ class BehavPredict:
             print('%s regression on'%self.data_models[v],v,numpy.mean(self.targetdata[v]>0))
             print('using classifier:',self.classifier)
         if self.classifier=='rf':
-            clf=ExtraTreesRegressor()
+            clf=ExtraTreesRegressor(n_estimators=10)
         elif self.classifier=='lasso':
             if not self.data_models[v]=='gaussian':
                 if self.verbose:
