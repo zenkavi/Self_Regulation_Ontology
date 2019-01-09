@@ -151,9 +151,11 @@ for data,directory, DV_df, valence_df in datasets:
         selected_variables.to_csv(path.join(directory, 'meaningful_variables.csv'))
         readme_lines += ["meaningful_variables.csv: Same as meaningful_variables_hddm.csv\n\n"]
         # clean data
-        selected_variables_clean = remove_outliers(selected_variables)
+        selected_variables_clean = transform_remove_skew(selected_variables)
+        selected_variables_clean = remove_outliers(selected_variables_clean)
         selected_variables_clean = remove_correlated_task_variables(selected_variables_clean)
-        selected_variables_clean = transform_remove_skew(selected_variables_clean)
+        
+        
         selected_variables_clean.to_csv(path.join(directory, 'meaningful_variables_clean.csv'))
         readme_lines += ["meaningful_variables_clean.csv: same as meaningful_variables.csv with outliers defined as greater than 2.5 IQR from median removed from each column\n\n"]
         

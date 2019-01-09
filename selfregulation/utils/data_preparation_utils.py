@@ -550,9 +550,15 @@ def remove_correlated_task_variables(data, threshold=.85):
     columns_to_remove = []
     for task in tasks:
         task_data = data.filter(regex = '^%s' % task)
-        corr_mat = np.tril(task_data.corr().values,-1)
-        remove_indices = np.unique(np.where(abs(corr_mat)>threshold)[0])
-        columns_to_remove += list(task_data.columns[remove_indices])
+        corr_mat = task_data.corr().replace({1:0})
+        i=0
+        while True:
+            kept_indices = np.where(abs(corr_mat.iloc[:,i])<threshold)[0]
+            corr_mat = task_data.iloc[:,kept_indices].corr().replace({1:0})
+            i+=1
+            if i>=corr_mat.shape[0]:
+                break
+        columns_to_remove += list(set(task_data.columns)-set(corr_mat.columns))
     print( '*' * 50)
     print('Dropping %s variables with correlations above %s' % (len(columns_to_remove), threshold))
     print( '*' * 50)
@@ -593,7 +599,9 @@ def transform_remove_skew(data, threshold=1,
     # transform variables
     # log transform for positive skew
     positive_subset = np.log(positive_subset)
-    successful_transforms = positive_subset.loc[:,abs(positive_subset.skew())<threshold]
+    # remove outliers
+    positive_tmp = remove_outliers(positive_subset)
+    successful_transforms = positive_subset.loc[:,abs(positive_tmp.skew())<threshold]
     dropped_vars = set(positive_subset)-set(successful_transforms)
     # replace transformed variables
     data.drop(positive_subset, axis=1, inplace = True)
@@ -605,7 +613,8 @@ def transform_remove_skew(data, threshold=1,
     data = pd.concat([data, successful_transforms], axis = 1)
     # reflected log transform for negative skew
     negative_subset = np.log(negative_subset.max()+1-negative_subset)
-    successful_transforms = negative_subset.loc[:,abs(negative_subset.skew())<threshold]
+    negative_tmp = remove_outliers(negative_subset)
+    successful_transforms = negative_subset.loc[:,abs(negative_tmp.skew())<threshold]
     dropped_vars = set(negative_subset)-set(successful_transforms)
     # replace transformed variables
     data.drop(negative_subset, axis=1, inplace = True)
