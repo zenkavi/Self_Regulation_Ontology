@@ -45,7 +45,7 @@ task_subset_data = data.loc[:, task_subset.index]
 task_variables = list(task_subset.index)
 
 # plotting args
-size = args.size
+size = 10 #args.size
 dpi = args.dpi
 ext = args.ext
 if args.plot_file is None:
@@ -66,8 +66,8 @@ with sns.axes_style("white"):
     participant_ax1 = f.add_axes([.25,.555,.28,.16]) 
     participant_ax2 = f.add_axes([.25,.75,.28,.2]) 
     
-    loading_ax1 = f.add_axes([.625,.545,.25,.1625]) 
-    loading_ax2 = f.add_axes([.625,.743,.25,.193]) 
+    loading_ax1 = f.add_axes([.6,.545,.25,.1625]) 
+    loading_ax2 = f.add_axes([.6,.743,.25,.193]) 
     
     participant_distance = f.add_axes([.3,.29,.16,.16]) 
     loading_distance = f.add_axes([.675,.29,.16,.16]) 
@@ -75,7 +75,7 @@ with sns.axes_style("white"):
     participant_mds = f.add_axes([.25,-.02,.25,.25]) 
     loading_mds = f.add_axes([.625,-.02,.25,.25]) 
     # color bars for heatmaps
-    cbar_ax = f.add_axes([.92,.595,.03,.3]) 
+    cbar_ax = f.add_axes([.88,.595,.03,.3]) 
     cbar_ax2 = f.add_axes([.86,.31,.02,.12]) 
     # set background
     back = f.add_axes([0,0,1,1])
@@ -149,7 +149,7 @@ for task_i in range(len(tasks)):
     for i in range(1,loading_data.shape[0]+1):
         #loading_axes[task_i].hlines(i, -.2, 6.1, color='white', linewidth=basewidth*3)
         loading_axes[task_i].add_patch(Rectangle([-.1,i-.2], 
-                    width=5.2, height=.2, zorder=100,
+                    width=loading_data.shape[1]+.2, height=.2, zorder=100,
                     facecolor='white', edgecolor='white', 
                     linewidth=basewidth, clip_on=False))
     # add boxes

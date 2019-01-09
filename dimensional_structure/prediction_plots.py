@@ -38,7 +38,7 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
     ax.set_xticks(xtick_locs+np.pi/len(importance_vars), minor=True)
     if xticklabels:
         if type(importance_vars[0]) != str:
-            importance_vars = ['Fac %s' % str(i+1) for i in importance_vars]
+            importance_vars = [str(i+1) for i in importance_vars]
         scale = 1+label_scale
         size = ax.get_position().expanded(scale, scale)
         ax2=ax.get_figure().add_axes(size,zorder=2)

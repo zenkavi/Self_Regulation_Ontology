@@ -31,6 +31,7 @@ def plot_BIC_SABIC(results, size=2.3, dpi=300, ext='png', plot_dir=None):
     colors = ['c', 'm']
     with sns.axes_style('white'):
         fig, ax1 = plt.subplots(1,1, figsize=(size, size*.75))
+        x = sorted(list(EFA.results['cscores_metric-BIC'].keys()))
         # BIC
         BIC_scores = [EFA.results['cscores_metric-BIC'][i] for i in x]
         BIC_c = EFA.results['c_metric-BIC']

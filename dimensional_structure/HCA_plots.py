@@ -232,7 +232,7 @@ def plot_subbranches(results, rotate='oblimin', EFA_clustering=True,
     """
     HCA = results.HCA
     EFA = results.EFA
-    loading = EFA.reorder_factors(EFA.get_loading(rotate=rotate))
+    loading = EFA.reorder_factors(EFA.get_loading(rotate=rotate), rotate=rotate)
     loading.index = format_variable_names(loading.index)
     if EFA_clustering:
         inp = 'EFA%s_%s' % (EFA.get_c(), rotate)
