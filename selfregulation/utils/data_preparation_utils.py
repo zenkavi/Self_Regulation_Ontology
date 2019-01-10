@@ -589,9 +589,8 @@ def save_task_data(data_loc, data):
 def transform_remove_skew(data, threshold=1, 
                           positive_skewed=None,
                           negative_skewed=None,
-                          remove_failed=False):
+                          remove_failed=True):
     data = data.copy()
-    # "robustly" evaluate skewness after outliers are removed
     if positive_skewed is None:
         positive_skewed = data.skew()>threshold
     if negative_skewed is None:
