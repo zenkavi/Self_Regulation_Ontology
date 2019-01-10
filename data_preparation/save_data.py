@@ -11,7 +11,7 @@ from data_preparation.process_demographics import process_demographics
 from data_preparation.process_health import process_health
 from selfregulation.utils.data_preparation_utils import convert_var_names, drop_failed_QC_vars, drop_vars, get_items
 from selfregulation.utils.data_preparation_utils import remove_correlated_task_variables, remove_outliers, save_task_data
-from selfregulation.utils.data_preparation_utils import transform_remove_skew
+from selfregulation.utils.data_preparation_utils import outlier_remove_skew, transform_remove_skew
 from selfregulation.utils.utils import get_info
 from selfregulation.utils.r_to_py_utils import missForest
 from selfregulation.utils.reference_utils import gen_reference_item_text
@@ -153,19 +153,20 @@ for data,directory, DV_df, valence_df in datasets:
         
         # clean data
         selected_variables_clean = transform_remove_skew(selected_variables)
+        selected_variables_clean = remove_outliers(selected_variables_clean)
         selected_variables_clean = remove_correlated_task_variables(selected_variables_clean)
         selected_variables_clean.to_csv(path.join(directory, 'meaningful_variables_clean.csv'))
-        readme_lines += ["meaningful_variables_clean.csv: same as meaningful_variables.csv with skewed variables transformed. Variables that fail to be transformed are checked to see if outlier removal will normalize them \n\n"]
-        
-        #save selected variables
-        selected_variables_reference = valence_df
-        selected_variables_reference.loc[selected_variables.columns].to_csv(path.join(reference_dir, 'selected_variables_reference.csv'))
+        readme_lines += ["meaningful_variables_clean.csv: same as meaningful_variables.csv with skewed variables transformed and then outliers removed \n\n"]
         
         # imputed data
         selected_variables_imputed, error = missForest(selected_variables_clean)
         selected_variables_imputed.to_csv(path.join(directory, 'meaningful_variables_imputed.csv'))
         readme_lines += ["meaningful_variables_imputed.csv: meaningful_variables_clean.csv after imputation with missForest\n\n"]
-        
+
+        #save selected variables
+        selected_variables_reference = valence_df
+        selected_variables_reference.loc[selected_variables.columns].to_csv(path.join(reference_dir, 'selected_variables_reference.csv'))
+                
         # save task data subset
         task_data = drop_vars(selected_variables, ['survey'], saved_vars = ['holt','cognitive_reflection'])
         task_data.to_csv(path.join(directory, 'taskdata.csv'))
