@@ -1,9 +1,11 @@
 from collections import OrderedDict as odict
+import math
 import numpy as np
 from os import path
 import pandas as pd
 import pickle
 from sklearn.metrics import adjusted_mutual_info_score
+from scipy.spatial.distance import pdist, squareform
 
 from dimensional_structure.utils import get_loadings, hierarchical_cluster
 from ontology_mapping.reconstruction_utils import reorder_FA
@@ -72,51 +74,149 @@ for result in results.values():
     pickle.dump(to_save, open(save_file, 'wb'))
 
 
+
+
+class ConsensusCluster():
+    def __init__(self, results, percent_vars=1,
+                 method='average', distance_metric='abscorrelation'):
+        self.results = results
+        self.total_vars = len(results.data.columns)
+        self.num_vars = math.ceil(percent_vars*len(results.data.columns))
+        self.method = method
+        self.distance_metric = distance_metric
+        # to store consensus clustering
+        self.consensus_clustering = None
+        # get original clustering
+        self.orig_clustering = hierarchical_cluster(results.EFA.get_loading(),
+                                  method=self.method,
+                                  min_cluster_size=3,
+                                  pdist_kws={'metric': self.distance_metric})
+        # adjusted mutual information scores across simulations
+        self.AMI_scores = []
+        
+    def simLoading(self):
+        c = self.results.EFA.get_c()
+        stats = self.results.EFA.get_boot_stats(c=c)
+        loadings = np.random.normal(size=stats['means'].shape)*stats['sds']+stats['means']
+        return loadings
+    
+    def sim_cluster(self):
+        loadings = self.simLoading()
+        kept_vars = np.random.choice(self.total_vars, self.num_vars, replace=False)
+        kept_vars = sorted(kept_vars)
+        loadings = loadings.iloc[kept_vars,:]
+        clustering = hierarchical_cluster(loadings,
+                                  method=self.method,
+                                  min_cluster_size=3,
+                                  pdist_kws={'metric': self.distance_metric})
+        tmp_labels = clustering['labels']
+        labels = np.ones(self.total_vars)*np.nan
+        for i, index in enumerate(kept_vars):
+            labels[index] = tmp_labels[i]
+            
+        cooccurence = self.convert_cooccurence(labels)
+        score = adjusted_mutual_info_score(self.orig_clustering['labels'],labels)
+        self.AMI_scores.append(score)
+        return cooccurence
+    
+    def convert_cooccurence(self, labels):
+        """ Convert a set of labels to a cooccurence matrix
+        
+        labels: class labels
+        new_index: indices of labels (could be subset of total)
+        size: total size of possible cooccurence matrix
+        """
+        mat = np.ones((len(labels), len(labels))) * np.nan
+        kept_indices = np.where(np.logical_not(np.isnan(labels)))[0]
+        for i, val in zip(kept_indices, labels[kept_indices]):
+            mat[i, kept_indices] = (labels[kept_indices]==val)
+        return mat
+        """
+        # extract lower triangle
+        tril_indices = np.tril_indices_from(mat, -1)
+        return mat[tril_indices]
+        """
+    
+    def sim_clusters(self, reps=100):
+        """
+        clusterings = np.zeros((reps, self.total_vars*(self.total_vars-1)//2))
+        for i in range(reps):
+            clusterings[i,:] = self.simCluster()
+        """
+        clusterings = np.zeros((self.total_vars, self.total_vars, reps))
+        for i in range(reps):
+            clusterings[:,:, i] = self.sim_cluster()
+        return clusterings
+    
+    def calc_consensus_cluster(self, reps=100):
+        sims = self.sim_clusters(reps)
+        cooccurence_distance = 1-np.nanmean(sims,2)
+        dist_df = pd.DataFrame(cooccurence_distance,
+                               columns = self.results.data.columns,
+                               index = self.results.data.columns)
+        clustering = hierarchical_cluster(dist_df,
+                          method=self.method,
+                          min_cluster_size=3,
+                          compute_dist=False)
+        self.consensus_clustering = clustering
+    
+    def compare_clusters(self):
+        # compares original to consensus clustering
+        if self.consensus_clustering is None:
+            print("First run consensusCluster!")
+            return
+        else:
+            orig_labels = self.orig_clustering['labels']
+            new_labels = self.consensus_clustering['labels']
+        return adjusted_mutual_info_score(orig_labels, new_labels)
+    
+    def get_orig_cluster(self):
+        return self.orig_clustering
+    
+    def get_consensus_cluster(self):
+        return self.consensus_clustering
+    
+    def evaluate_relative_cooccurence(self):
+        c = self.results.EFA.get_c()
+        inp = 'EFA%s_oblimin' % c
+        HCA = self.results.HCA
+        cooccurence = self.consensus_clustering['distance_df']
+        relative_cooccurence = odict({})
+        for cluster, DVs in HCA.get_cluster_DVs(inp).items():
+            nearest_clusters, nearest_DVs = self._get_nearest_clusters(HCA, inp, cluster)
+            intra_subset = tril(cooccurence.loc[DVs, DVs].values)
+            inter_subset = cooccurence.drop(DVs, axis=1).loc[DVs]
+            nearest_subset = cooccurence.loc[DVs, nearest_DVs]
+            relative_cooccurence[cluster] = (1-np.mean(intra_subset),
+                                             1-np.mean(inter_subset.values.flatten()),
+                                             1-np.mean(nearest_subset.values.flatten()))
+        return relative_cooccurence
+    
+    def _get_nearest_clusters(self, HCA, inp, cluster):
+        names, DVs = zip(*HCA.get_cluster_DVs(inp).items())
+        cluster_i = names.index(cluster)
+        nearest_clusters = []
+        nearest_DVs = []
+        i_1 = cluster_i-1 if cluster_i>0 else cluster_i+2
+        i_2 = cluster_i+1 if cluster_i+1 < len(names) else cluster_i-2
+        nearest_clusters.append(names[i_1])
+        nearest_DVs.extend(DVs[i_1])
+        nearest_clusters.append(names[i_2])
+        nearest_DVs.extend(DVs[i_2])
+        return nearest_clusters, nearest_DVs
+    
+
 # cluster robustness
-# simulate based on EFA bootstraps
-output_dir = path.dirname(results['task'].get_output_dir())
+# simulate based on EFA bootstraps and dropping variables
+output_dir = results['task'].get_output_dir()
 save_file = path.join(output_dir, 'cluster_robustness.pkl')
 sim_reps = 5000
-cluster_robustness = {}
-cooccurences = {}
-relative_cooccurences = {}
 for name, result in results.items():
-    scores = []
-    cooccurence = np.zeros((result.data.shape[1], result.data.shape[1]))
-    c = result.EFA.get_c()
-    inp = 'EFA%s_oblimin' % c
-    orig_clustering = result.HCA.results[inp]['labels']
-    for _ in range(sim_reps):
-        stats = result.EFA.get_boot_stats(c=c)
-        loadings = np.random.normal(size=stats['means'].shape)*stats['sds']+stats['means']
-        clustering = hierarchical_cluster(loadings,
-                                          method='average',
-                                          min_cluster_size=3,
-                                          pdist_kws={'metric': 'abscorrelation'})
-        labels = clustering['labels']
-        score = adjusted_mutual_info_score(orig_clustering,labels)
-        scores.append(score)
-        cooccurence += convert_cooccurence(labels)
-    cluster_robustness[name] = scores
-    cooccurences[name] = pd.DataFrame(cooccurence/sim_reps, index=loadings.index,
-                                       columns=loadings.index)
-    # calculate inter/intra cooccurence
-    
-    relative_cooccurence = odict({})
-    for cluster, DVs in result.HCA.get_cluster_DVs(inp).items():
-        nearest_clusters, nearest_DVs = get_nearest_clusters(result.HCA, inp, cluster)
-        intra_subset = tril(cooccurences[name].loc[DVs, DVs].values)
-        inter_subset = cooccurences[name].drop(DVs, axis=1).loc[DVs]
-        nearest_subset = cooccurences[name].loc[DVs, nearest_DVs]
-        relative_cooccurence[cluster] = (np.mean(intra_subset),
-                                         np.mean(inter_subset.values.flatten()),
-                                         np.mean(nearest_subset.values.flatten()))
-    relative_cooccurences[name] = relative_cooccurence
+    consensusClust = ConsensusCluster(result, percent_vars=.8)
+    consensusClust.calc_consensus_cluster(sim_reps)
+    print(consensusClust.compare_clusters())
+    relative_cooccurence = consensusClust.evaluate_relative_cooccurence()
 
-
-    
-# saving
-pickle.dump({'cluster_robustness': cluster_robustness,
-             'cluster_cooccurence': cooccurences,
-             'relative_cooccurence': relative_cooccurences}, 
-    open(save_file, 'wb'))
+    # saving
+    pickle.dump({'consensusClust': consensusClust}, 
+        open(save_file, 'wb'))

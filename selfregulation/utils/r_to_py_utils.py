@@ -68,6 +68,19 @@ def psychFA(data, n_components, return_attrs=['BIC', 'SABIC', 'RMSEA'],
     else:
         if verbose:  print('Too few DOF to specify model!')
         return None
+
+def M3C(data, ncores=1, iters=100, maxk=20):
+    base = importr('base')
+    M3C = importr('M3C')
+    res = M3C.M3C(data.T, maxK=maxk, distance="abscorr",
+                  clusteralg="hc", removeplots=True,
+                  cores=ncores, iters=iters)
+    k = np.argmax(list(res[1][3]))+2 # k is actuall k+1 because python is zero indexed
+    DV_order = list(base.colnames(res[0][k-2][1]))
+    labels = pd.Series(np.array(res[0][k-2][2]).squeeze(), index=DV_order)
+    consensus_mat = pd.DataFrame(np.matrix(res[0][k-2][0]),
+                                index=DV_order, columns=DV_order)
+    return consensus_mat, labels, res
     
 def glmer(data, formula, verbose=False):
     base = importr('base')
