@@ -665,7 +665,8 @@ def plot_DDM(results, c, rotate='oblimin',
 def plot_EFA(results, plot_dir=None, rotate='oblimin', 
              verbose=False, size=4.6, dpi=300, ext='png',
              plot_task_kws={}):
-    plot_dir = path.join(plot_dir, rotate)
+    if plot_dir:
+        plot_dir = path.join(plot_dir, rotate)
     c = results.EFA.get_c()
     #if verbose: print("Plotting BIC/SABIC")
     #plot_BIC_SABIC(EFA, plot_dir)

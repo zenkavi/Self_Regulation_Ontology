@@ -35,7 +35,7 @@ else:
             if icc.loc[v]<icc_threshold:
                 del behavdata[v]
 
-    behavdata_imputed=fancyimpute.SoftImpute().complete(behavdata.values)
+    behavdata_imputed=fancyimpute.SoftImpute().fit_transform(behavdata.values)
     df=pandas.DataFrame(behavdata_imputed,columns=behavdata.columns)
 
     for dropvar in ['kirby_mturk.percent_patient',

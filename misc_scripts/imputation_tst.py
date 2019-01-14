@@ -18,7 +18,7 @@ def get_rand_index(M, n):
 def impute(data, method):
     sigma = data.std()
     matrix = (data/sigma).as_matrix()
-    complete_matrix = method().complete(matrix)*sigma.tolist()
+    complete_matrix = method().fit_transform(matrix)*sigma.tolist()
     return pd.DataFrame(complete_matrix, index = data.index, columns = data.columns)
     
    
@@ -41,7 +41,7 @@ for method in methods:
         missing_matrix = base_matrix.copy()
         for i in indices:
             missing_matrix[i] = np.nan
-        complete_matrix = method(verbose = False).complete(missing_matrix)
+        complete_matrix = method(verbose = False).fit_transform(missing_matrix)
         imputed = [complete_matrix[i] for i in indices]
         correlations[method].append(pd.DataFrame([imputed,originals]).T.corr().iloc[0,1])
         deviation = np.mean([(abs((o-i)/o)) for o,i in zip(originals,imputed) if o == o and o > .01])
@@ -60,7 +60,7 @@ for k in range(4,15):
         missing_matrix = base_matrix.copy()
         for i in indices:
             missing_matrix[i] = np.nan
-        complete_matrix = fancyimpute.KNN(k = k, verbose = False).complete(missing_matrix)
+        complete_matrix = fancyimpute.KNN(k = k, verbose = False).fit_transform(missing_matrix)
         imputed = [complete_matrix[i] for i in indices]
         correlations[key].append(pd.DataFrame([imputed,originals]).T.corr().iloc[0,1])
         deviation = np.mean([(abs((o-i)/o)) for o,i in zip(originals,imputed) if o == o and o > .01])
