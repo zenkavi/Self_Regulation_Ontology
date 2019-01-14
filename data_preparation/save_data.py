@@ -11,7 +11,7 @@ from data_preparation.process_demographics import process_demographics
 from data_preparation.process_health import process_health
 from selfregulation.utils.data_preparation_utils import convert_var_names, drop_failed_QC_vars, drop_vars, get_items
 from selfregulation.utils.data_preparation_utils import remove_correlated_task_variables, remove_outliers, save_task_data
-from selfregulation.utils.data_preparation_utils import outlier_remove_skew, transform_remove_skew
+from selfregulation.utils.data_preparation_utils import transform_remove_skew
 from selfregulation.utils.utils import get_info
 from selfregulation.utils.r_to_py_utils import missForest
 from selfregulation.utils.reference_utils import gen_reference_item_text
