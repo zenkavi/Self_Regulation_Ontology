@@ -40,7 +40,7 @@ class Imputer(object):
             self.imputer = imputer(verbose=False)
         
     def transform(self, X):
-        transformed = self.imputer.complete(X)
+        transformed = self.imputer.fit_transform(X)
         return transformed
     
     def fit(self, X, y=None):
@@ -158,7 +158,8 @@ def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None,
     clustered_df = dist_df.iloc[reorder_vec, reorder_vec]
     # clustering
     if cluster_kws is None:
-        cluster_kws = {'minClusterSize': min_cluster_size}
+        cluster_kws = {'minClusterSize': min_cluster_size,
+                       'verbose': 0}
     clustering = cutreeHybrid(link, dist_vec, **cluster_kws)
     labels = reorder_labels(clustering['labels'], link)
     return {'linkage': link, 
@@ -484,10 +485,9 @@ def residualize_baseline(df, baseline_vars=[]):
     baseline=df[baseline_vars]
     data=df.copy()
     data.drop(baseline_vars, axis=1, inplace=True)
-    #x=SimpleFill().complete(baseline)
     lr=LinearRegression()
     if data.isnull().sum().sum() > 0:
-        imputed = SimpleFill().complete(data)
+        imputed = SimpleFill().fit_transform(data)
         data = pd.DataFrame(imputed, 
                             index=data.index, 
                             columns=data.columns)
