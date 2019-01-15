@@ -69,18 +69,22 @@ def psychFA(data, n_components, return_attrs=['BIC', 'SABIC', 'RMSEA'],
         if verbose:  print('Too few DOF to specify model!')
         return None
 
-def M3C(data, ncores=1, iters=100, maxk=20):
-    base = importr('base')
-    M3C = importr('M3C')
-    res = M3C.M3C(data.T, maxK=maxk, distance="abscorr",
-                  clusteralg="hc", removeplots=True,
-                  cores=ncores, iters=iters)
-    k = np.argmax(list(res[1][3]))+2 # k is actuall k+1 because python is zero indexed
-    DV_order = list(base.colnames(res[0][k-2][1]))
-    labels = pd.Series(np.array(res[0][k-2][2]).squeeze(), index=DV_order)
-    consensus_mat = pd.DataFrame(np.matrix(res[0][k-2][0]),
-                                index=DV_order, columns=DV_order)
-    return consensus_mat, labels, res
+def dynamicTreeCut(distance_df, func='hybrid', method='average', **cluster_kws):
+    """ uses DynamicTreeCut to find clusters
+    Args:
+        method = "hybrid" or "dyanmic":
+    """
+    stats = importr('stats')
+    dynamicTreeCut = importr('dynamicTreeCut')
+    dist = stats.as_dist(distance_df)
+    link = stats.hclust(dist, method=method)
+    if func == 'hybrid':
+        dist = stats.as_dist(distance_df)
+        clustering = dynamicTreeCut.cutreeHybrid(link, distance_df, **cluster_kws)
+        return np.array(clustering[0])
+    elif func == 'dynamic':
+        clustering = dynamicTreeCut.cutreeDynamic(link, **cluster_kws)
+        return np.array(clustering)
     
 def glmer(data, formula, verbose=False):
     base = importr('base')
@@ -113,6 +117,19 @@ def lmer(data, formula, verbose=False):
     if verbose:
         print(base.summary(rs))
     return rs, random_variance, fixed_effects, random_df
+
+def M3C(data, ncores=1, iters=100, maxk=20):
+    base = importr('base')
+    M3C = importr('M3C')
+    res = M3C.M3C(data.T, maxK=maxk, distance="abscorr",
+                  clusteralg="hc", removeplots=True,
+                  cores=ncores, iters=iters)
+    k = np.argmax(list(res[1][3]))+2 # k is actuall k+1 because python is zero indexed
+    DV_order = list(base.colnames(res[0][k-2][1]))
+    labels = pd.Series(np.array(res[0][k-2][2]).squeeze(), index=DV_order)
+    consensus_mat = pd.DataFrame(np.matrix(res[0][k-2][0]),
+                                index=DV_order, columns=DV_order)
+    return consensus_mat, labels, res
 
 def psychICC(df):
     psych = importr('psych')

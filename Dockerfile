@@ -13,6 +13,7 @@ RUN cd R-3.4.2 && ./configure --enable-R-shlib=yes && make && make install
 RUN echo 'install.packages(c( \
   "doParallel", \
   "dplyr", \
+  "dynamicTreeCut", \
   "foreach", \
   "iterators", \
   "glmnet", \

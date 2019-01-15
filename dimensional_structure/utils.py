@@ -1,5 +1,4 @@
 from collections import OrderedDict as odict
-from dynamicTreeCut import cutreeHybrid
 import fancyimpute
 import functools
 from itertools import combinations
@@ -17,7 +16,8 @@ from sklearn.preprocessing import StandardScaler, scale
 
 from selfregulation.utils.data_preparation_utils import (remove_outliers, 
                                                          transform_remove_skew)
-from selfregulation.utils.r_to_py_utils import get_attr, missForest, psychFA
+from selfregulation.utils.r_to_py_utils import (get_attr, dynamicTreeCut, 
+                                                missForest, psychFA)
 
 def set_seed(seed):
     def seeded_fun_decorator(fun):
@@ -151,24 +151,25 @@ def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None,
         assert df.shape[0] == df.shape[1]
         dist_df = df
         dist_vec = squareform(df.values)
-    #clustering
+    #clustering. This works the same as hclust
     link = linkage(dist_vec, method=method)    
     #dendrogram
+    # same as order.dendrogram(as.dendrogram(hclust output)) in R
     reorder_vec = leaves_list(link)
     clustered_df = dist_df.iloc[reorder_vec, reorder_vec]
     # clustering
     if cluster_kws is None:
-        cluster_kws = {'minClusterSize': min_cluster_size,
-                       'verbose': 0}
-    clustering = cutreeHybrid(link, dist_vec, **cluster_kws)
-    labels = reorder_labels(clustering['labels'], link)
+        cluster_kws = {'minClusterSize': 3,
+                       'verbose': 0,
+                       'pamStage': False}
+    labels = dynamicTreeCut(dist_df, func='hybrid', method=method,  **cluster_kws)
+    labels = reorder_labels(labels, link)
     return {'linkage': link, 
             'distance_df': dist_df, 
             'clustered_df': clustered_df,
             'reorder_vec': reorder_vec,
-            'clustering': clustering,
             'labels': labels}
-    
+
 def silhouette_analysis(clustering, labels=None):
     distance_df = clustering['distance_df']
     if labels is None:
