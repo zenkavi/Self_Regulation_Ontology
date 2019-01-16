@@ -75,10 +75,10 @@ def calc_EFA_retest_held_out(results, rotate='oblimin', verbose=True):
     imputed_data = {}
     for name, data in raw_data.items():  
         tmp_data = data.loc[:, DVs]
-        tmp_data = remove_outliers(tmp_data)
         tmp_data = transform_remove_skew(tmp_data,
                                          positive_skewed=positive_skewed,
                                          negative_skewed=negative_skewed)
+        tmp_data = remove_outliers(tmp_data)
         tmp_data_imputed, error = missForest(tmp_data)  
         scaled_tmp_data = scale(tmp_data_imputed)
         imputed_data[name] = scaled_tmp_data
