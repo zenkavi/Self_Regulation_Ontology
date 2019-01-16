@@ -433,23 +433,24 @@ def plot_dendrogram(loading, clustering, title=None,
                                 fontsize=heatmap_size[2]*size*1)
             ticks = ax2.xaxis.get_ticklines()[::2]
             for i, label in enumerate(ax2.get_xticklabels()):
-                ax2.hlines(c+offset,beginnings[i]+.5,beginnings[i]+cluster_sizes[i]-.5, 
-                           clip_on=False, color=colors[i], linewidth=size/5)
-                label.set_color(colors[i])
-                ticks[i].set_color(colors[i])
-                y_drop = .005
-                line_drop = .3
-                if drop_list and i in drop_list:
-                    y_drop = .05
-                    line_drop = 1.6
-                if double_drop_list and i in double_drop_list:
-                    y_drop = .1
-                    line_drop = 2.9
-                label.set_y(-(y_drop/heatmap_height+heatmap_height/c*offset))
-                ax2.vlines(beginnings[i]+cluster_sizes[i]/2, 
-                           c+offset, c+offset+line_drop,
-                           clip_on=False, color=colors[i], 
-                           linewidth=size/7.5)
+                if label.get_text() != '':
+                    ax2.hlines(c+offset,beginnings[i]+.5,beginnings[i]+cluster_sizes[i]-.5, 
+                               clip_on=False, color=colors[i], linewidth=size/5)
+                    label.set_color(colors[i])
+                    ticks[i].set_color(colors[i])
+                    y_drop = .005
+                    line_drop = .3
+                    if drop_list and i in drop_list:
+                        y_drop = .05
+                        line_drop = 1.6
+                    if double_drop_list and i in double_drop_list:
+                        y_drop = .1
+                        line_drop = 2.9
+                    label.set_y(-(y_drop/heatmap_height+heatmap_height/c*offset))
+                    ax2.vlines(beginnings[i]+cluster_sizes[i]/2, 
+                               c+offset, c+offset+line_drop,
+                               clip_on=False, color=colors[i], 
+                               linewidth=size/7.5)
 
         # add title
         if title:
