@@ -1,6 +1,7 @@
 # imports
 from itertools import combinations
 from math import ceil
+from matplotlib.colors import to_hex
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import numpy as np
@@ -108,23 +109,24 @@ def plot_clustering_similarity(results, plot_dir=None, verbose=False, ext='png')
               % score_consistency)
         
     
-def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
+def plot_subbranch(target_color, cluster_i, tree, loading, cluster_sizes, title=None,
                    size=2.3, dpi=300, plot_loc=None):
     sns.set_style('white')
     colormap = sns.diverging_palette(220,15,n=100,as_cmap=True)
     # get variables in subbranch based on coloring
-    curr_index = 0
     curr_color = tree['color_list'][0]
     start = 0
     for i, color in enumerate(tree['color_list']):
         if color != curr_color:
             end = i
-            if curr_index == cluster_i:
+            if curr_color == to_hex(target_color):
                 break
             if color != "#808080":
-                curr_index += 1
                 start = i
             curr_color = color
+    
+    if (end-start)+1 != cluster_sizes[cluster_i]:
+        return
     
     # get subset of loading
     cumsizes = np.cumsum(cluster_sizes)
@@ -214,7 +216,7 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
         plt.close()
     else:
         return fig
-    
+
 def plot_subbranches(results, rotate='oblimin', EFA_clustering=True,
                      cluster_range=None, absolute_loading=False,
                      size=2.3, dpi=300, ext='png', plot_dir=None):
@@ -269,10 +271,12 @@ def plot_subbranches(results, rotate='oblimin', EFA_clustering=True,
         if plot_dir:
             filey = 'cluster_%s.%s' % (str(cluster_i).zfill(2), ext)
             plot_loc = path.join(plot_dir, function_directory, filey)
-        fig = plot_subbranch(cluster_i, tree, ordered_loading, cluster_sizes,
+        fig = plot_subbranch(colors[cluster_i], cluster_i, tree, 
+                             ordered_loading, cluster_sizes,
                              title=cluster_labels[cluster_i], 
                              size=size, plot_loc=plot_loc)
-        figs.append(fig)
+        if fig:
+            figs.append(fig)
     return figs
                 
 def plot_results_dendrogram(results, rotate='oblimin', hierarchical_EFA=False,
