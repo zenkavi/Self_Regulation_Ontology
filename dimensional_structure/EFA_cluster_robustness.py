@@ -22,29 +22,9 @@ def drop_EFA(data, measures, c):
     loadings = get_loadings(output, labels=subset.columns)
     return loadings
 
-def convert_cooccurence(labels):
-    mat = np.zeros((len(labels), len(labels)))
-    for i, val in enumerate(labels):
-        mat[i] = (labels==val)
-    return mat
-
-
 def tril(square):
     indices = np.tril_indices_from(square, -1)
     return square[indices]
-
-def get_nearest_clusters(HCA, inp, cluster):
-    names, DVs = zip(*HCA.get_cluster_DVs(inp).items())
-    cluster_i = names.index(cluster)
-    nearest_clusters = []
-    nearest_DVs = []
-    i_1 = cluster_i-1 if cluster_i>0 else cluster_i+2
-    i_2 = cluster_i+1 if cluster_i+1 < len(names) else cluster_i-2
-    nearest_clusters.append(names[i_1])
-    nearest_DVs.extend(DVs[i_1])
-    nearest_clusters.append(names[i_2])
-    nearest_DVs.extend(DVs[i_2])
-    return nearest_clusters, nearest_DVs
     
 # EFA robustness
 # Check to see how sensitive the EFA solution is to any single measure
@@ -64,7 +44,7 @@ for result in results.values():
         
         corr = pd.concat([new_loadings, orig_loadings], axis=1, sort=False) \
                 .corr().iloc[:c, c:]
-        diag = {c:i for c,i in zip(new_loadings.columns, np.diag(corr))}
+        diag = {c:abs(i) for c,i in zip(new_loadings.columns, np.diag(corr))}
         factor_correlations[measure] = diag
 
     

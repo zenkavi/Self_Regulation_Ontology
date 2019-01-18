@@ -39,7 +39,6 @@ def get_attr(fa, attr):
             
 def psychFA(data, n_components, return_attrs=['BIC', 'SABIC', 'RMSEA'], 
             rotate='oblimin', method='ml', nobs=0, n_iter=1, verbose=False):
-    
     psych = importr('psych')
     if n_iter==1:
         fa = psych.fa(data, n_components, rotate=rotate, fm=method, n_obs=nobs,
