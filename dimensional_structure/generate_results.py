@@ -402,18 +402,20 @@ if group_analysis == True:
             print('*'*79)
             print('Running group analysis')
     all_results = load_results(datafile)
-    ontology_prediction = run_group_prediction(all_results, 
-                                               shuffle=False, 
-                                               classifier='ridge',
-                                               include_raw_demographics=False,
-                                               rotate='oblimin',
-                                               verbose=False)
-    ontology_prediction_shuffled = run_group_prediction(all_results, 
-                                                        shuffle=2500, 
-                                                        classifier='ridge',
-                                                        include_raw_demographics=False, 
-                                                        rotate='oblimin',
-                                                        verbose=False)
+    for classifier in classifiers:
+        ontology_prediction = run_group_prediction(all_results, 
+                                                   shuffle=False, 
+                                                   classifier=classifier,
+                                                   include_raw_demographics=False,
+                                                   rotate='oblimin',
+                                                   verbose=False)
+    for classifier in classifiers:
+        ontology_prediction_shuffled = run_group_prediction(all_results, 
+                                                            shuffle=shuffle_repeats, 
+                                                            classifier=classifier,
+                                                            include_raw_demographics=False, 
+                                                            rotate='oblimin',
+                                                            verbose=False)
     run_cross_prediction(all_results)
     a=subprocess.Popen('python gephi_graph_plot.py', shell=True)
 

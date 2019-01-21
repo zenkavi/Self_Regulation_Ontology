@@ -103,6 +103,7 @@ def plot_results_prediction(results, EFA=True, classifier='ridge',
             filename = 'EFA%s_%s_prediction_bar.%s' % (changestr, classifier, ext)
         else:
             filename = 'IDM%s_%s_prediction_bar.%s' % (changestr, classifier, ext)
+        filename = path.join(plot_dir, filename)
     else:
         filename = None
     if EFA:
