@@ -46,6 +46,7 @@ if args.plot_backend:
 from glob import glob
 import numpy as np
 from os import makedirs, path
+import pickle
 import random
 from shutil import copyfile, copytree, rmtree
 import subprocess
@@ -67,7 +68,8 @@ from dimensional_structure.EFA_test_retest import (calc_EFA_retest,
                                                    plot_EFA_retest, 
                                                    plot_cross_EFA_retest)
 from dimensional_structure.HCA_plots import plot_HCA
-from dimensional_structure.prediction_plots import (plot_prediction, 
+from dimensional_structure.prediction_plots import (plot_results_prediction,
+                                                    plot_prediction, 
                                                     plot_prediction_scatter,
                                                     plot_prediction_comparison,
                                                     plot_factor_fingerprint)
@@ -111,15 +113,15 @@ subsets = [{'name': 'task',
                                       'Speeded Information Processing',
                                       'Inhibition-Related Threshold',
                                       'Caution',
-                                      '',
+                                      'NA1',
                                       'Perc/Resp',
                                       'Control-Related Perc/Resp',
                                       'Updated-Related Perc/Resp',
-                                      '',
+                                      'NA2',
                                       'Discounting',
                                       'Cold/Model-Based',
-                                      '',
-                                      '',
+                                      'NA3',
+                                      'NA4',
                                       'Hot/Model-Free'],
             'oblimin_factor_names': ['Speeded IP', 'Strategic IP', 
                                      'Perc / Resp','Caution', 
@@ -137,7 +139,7 @@ subsets = [{'name': 'task',
                                        'Mindfulness',
                                        'Impulsivity',
                                        'Goal-Direcedness',
-                                       'Behavioral Inhibit',
+                                       'Behavioral Inhibition',
                                        'Behavioral Approach',
                                        'Ethical/Health Risk-Taking',
                                        'Risk Perception',
@@ -145,7 +147,7 @@ subsets = [{'name': 'task',
                                        'Sociability',
                                        'Reward Sensitivity'],
              'oblimin_factor_names':  ['Sensation Seeking', 'Mindfulness', 
-                                   'Impulsivity',  'Emotional Control',
+                                   'Emotional Control',  'Impulsivity',
                                    'Goal-Directedness', 'Reward Sensitivity', 
                                    'Risk Perception', 'Eating Control', 
                                    'Ethical Risk-Taking', 'Social Risk-Taking',
@@ -298,8 +300,8 @@ for subset in subsets:
                             size=size, dpi=dpi, ext=ext)
             # Plot HCA
             if verbose: print("** Plotting HCA %s **" % rotate)
-            drop_list = {('task', 'oblimin'): ([1,3,5,7,9,11,13,15],[2,6,10,14]) ,
-                         ('survey', 'oblimin'): ([1,3,5,7, 9,11], None)}
+            drop_list = {('task', 'oblimin'): ([1,5,9,12,15],[2,4,6,8,14]) ,
+                         ('survey', 'oblimin'): ([0,2,4,6,8,10], None)}
             drop1, drop2 = drop_list.get((name, rotate), (None, None))
             plot_HCA(results, HCA_plot_dir, rotate=rotate,
                      drop_list = drop1, double_drop_list=drop2,
@@ -314,7 +316,7 @@ for subset in subsets:
                         for rotate in ['oblimin', 'varimax']:
                             rotate_plot_dir = path.join(prediction_plot_dir, rotate)
                             print("** Plotting Prediction, classifier: %s, EFA: %s **" % (classifier, EFA))
-                            plot_prediction(results, 
+                            plot_results_prediction(results, 
                                             target_order=target_order, 
                                             EFA=EFA, 
                                             rotate=rotate,
@@ -362,7 +364,7 @@ for subset in subsets:
                                                     size=size, ext=ext, dpi=dpi, 
                                                     plot_dir=rotate_plot_dir)
                     else:
-                        plot_prediction(results, 
+                        plot_results_prediction(results, 
                                             target_order=target_order, 
                                             EFA=False, 
                                             rotate=rotate,
@@ -400,10 +402,18 @@ if group_analysis == True:
             print('*'*79)
             print('Running group analysis')
     all_results = load_results(datafile)
-    run_group_prediction(all_results, 
-                         shuffle=False, classifier='ridge',
-                         include_raw_demographics=False, rotate='oblimin',
-                         verbose=False)
+    ontology_prediction = run_group_prediction(all_results, 
+                                               shuffle=False, 
+                                               classifier='ridge',
+                                               include_raw_demographics=False,
+                                               rotate='oblimin',
+                                               verbose=False)
+    ontology_prediction_shuffled = run_group_prediction(all_results, 
+                                                        shuffle=2500, 
+                                                        classifier='ridge',
+                                                        include_raw_demographics=False, 
+                                                        rotate='oblimin',
+                                                        verbose=False)
     run_cross_prediction(all_results)
     a=subprocess.Popen('python gephi_graph_plot.py', shell=True)
 
@@ -414,7 +424,32 @@ if group_plot == True:
         print("** Group Plots **")
     all_results = load_results(datafile)
     output_loc = path.dirname(all_results['task'].get_output_dir())
+    prediction_loc = path.join(output_loc, 'prediction_outputs')
     plot_file = path.dirname(all_results['task'].get_plot_dir())
+    # plotting
+    # plot full prediction
+    ontology_prediction_files = glob(path.join(prediction_loc, "EFA_survey_task*"))
+    ontology_prediction_files = sorted(ontology_prediction_files, key=path.getmtime)[-2:]
+    ontology_prediction = open([i for i in ontology_prediction_files if 'shuffle' not in i][0], 'rb')
+    ontology_prediction_shuffled = open([i for i in ontology_prediction_files if 'shuffle' in i][0], 'rb')
+    ontology_prediction = pickle.load(ontology_prediction)
+    ontology_prediction_shuffled = pickle.load(ontology_prediction_shuffled)
+    survey_prediction = all_results['survey'].load_prediction_object(classifier='ridge')
+    filename = path.join(plot_file, 'ontology_prediction.%s' % ext)
+    target_order = all_results['task'].DA.reorder_factors(all_results['task'].DA.get_loading()).columns
+    plot_prediction(ontology_prediction['data'],
+                    ontology_prediction_shuffled['data'],
+                    target_order=target_order,
+                    size=size, dpi=dpi,
+                    filename=filename)
+    filename = path.join(plot_file, 'ontology_vs_survey_prediction.%s' % ext)
+    plot_prediction(ontology_prediction['data'],
+                    survey_prediction['data'],
+                    comparison_label='Survey Prediction',
+                    target_order=target_order,
+                    size=size, dpi=dpi,
+                    filename=filename)
+    # plot other cross results
     plot_corr_heatmap(all_results, size=size*1/2, ext=ext, dpi=dpi, plot_dir=plot_file)
     plot_BIC(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
     # rotation dependent
@@ -427,6 +462,7 @@ if group_plot == True:
                               dpi=dpi, plot_dir=plot_file)
         plot_cross_EFA_retest(all_results, rotate=rotate, annot_heatmap=True, 
                               size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+    # plot analysis overview
     a=subprocess.Popen('python analysis_overview_plot.py -dataset %s -dpi %s -ext %s -size %s' \
                            % (datafile, dpi, ext, 4.6),
                            shell=True)
@@ -504,7 +540,8 @@ if run_plot or group_plot:
             'task/DA/factor_correlations_EFA8': 'FigS05c_demo_correlation',
             '%s/silhouette_analysis' % rotate: 'FigS06_HCA_Silhouettes',
             'survey/prediction/IDM_lasso_prediction_bar': 'FigS07a_Survey_IDM_prediction',
-            'task/prediction/IDM_lasso_prediction_bar': 'FigS07b_Task_IDM_prediction'
+            'task/prediction/IDM_lasso_prediction_bar': 'FigS07b_Task_IDM_prediction',
+            'ontology_vs_survey_prediction': 'FigS08_ontology_prediction'
             }
     
     paper_dir = path.join(basedir, 'Results', 'Psych_Ontology_Paper')
