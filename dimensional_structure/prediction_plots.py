@@ -43,8 +43,8 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
         size = ax.get_position().expanded(scale, scale)
         ax2=ax.get_figure().add_axes(size,zorder=2)
         for i, var in enumerate(importance_vars):
-            arc_start = (i+.2)*2*np.pi/len(importance_vars)
-            arc_end = (i+.8)*2*np.pi/len(importance_vars)
+            arc_start = (i+.15)*2*np.pi/len(importance_vars)
+            arc_end = (i+.85)*2*np.pi/len(importance_vars)
             curve = [
                 .85*np.cos(np.linspace(arc_start,arc_end,100)),
                 .85*np.sin(np.linspace(arc_start,arc_end,100))
@@ -77,17 +77,15 @@ def visualize_importance(importance, ax, xticklabels=True, yticklabels=True,
             labels = [replace_dict.get(i, i) for i in labels]
             ax.set_yticklabels(labels)
 
-def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
-                    rotate='oblimin', change=False, normalize=False, 
-                    metric='R2', size=4.6,  
-                    dpi=300, ext='png', plot_dir=None):
-    colors = ref_colors[results.ID.split('_')[0]]
-    basefont = max(size, 5)
+
+def plot_results_prediction(results, EFA=True, classifier='ridge',
+                            rotate='oblimin', change=False,
+                            size=4.6, ext='png', dpi=300, plot_dir=None,
+                            **kwargs):
     predictions = results.load_prediction_object(EFA=EFA, 
                                                  change=change,
                                                  classifier=classifier,
                                                  rotate=rotate)
-    sns.set_style('white')
     if predictions is None:
         print('No prediction object found!')
         return
@@ -97,10 +95,37 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
                                                           classifier=classifier, 
                                                           change=change,
                                                           rotate=rotate,
-                                                          shuffle=True)
-    assert shuffled_predictions is not None
-    shuffled_predictions = shuffled_predictions['data']
+                                                          shuffle=True)['data']
+    colors = ref_colors[results.ID.split('_')[0]]
+    if plot_dir is not None:
+        changestr = '_change' if change else ''
+        if EFA:
+            filename = 'EFA%s_%s_prediction_bar.%s' % (changestr, classifier, ext)
+        else:
+            filename = 'IDM%s_%s_prediction_bar.%s' % (changestr, classifier, ext)
+    else:
+        filename = None
+    if EFA:
+        EFA = results.EFA
+    else:
+        EFA = None
+        
+    plot_prediction(predictions, shuffled_predictions, colors, EFA=EFA,
+                    size=size, filename=filename, dpi=dpi,
+                    **kwargs)
     
+    
+def plot_prediction(predictions, comparison_predictions, 
+                    colors=None, EFA=None, comparison_label=None,
+                    target_order=None,  normalize=False, 
+                    metric='R2', size=4.6,  
+                    dpi=300, filename=None):
+    if colors is None:
+        colors = [sns.color_palette('Purples_d', 4)[i] for i in [1,3]]
+    if comparison_label is None:
+        comparison_label = '95% shuffled prediction'
+    basefont = max(size, 5)
+    sns.set_style('white')
     if target_order is None:
         target_order = predictions.keys()
     # get prediction success
@@ -111,13 +136,13 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
     insample_shuffled_r2s = []
     for i, k in enumerate(target_order):
         # normalize r2s to significance
-        R2s = [i[metric] for i in shuffled_predictions[k]['scores_cv']]
+        R2s = [i[metric] for i in comparison_predictions[k]['scores_cv']]
         R2_95 = np.percentile(R2s, 95)
         shuffled_r2s.append((k,R2_95))
         if normalize:
             r2s[i] = (r2s[i][0], r2s[i][1]-R2_95)
         # and insample
-        R2s = [i[metric] for i in shuffled_predictions[k]['scores_insample']]
+        R2s = [i[metric] for i in comparison_predictions[k]['scores_insample']]
         R2_95 = np.percentile(R2s, 95)
         insample_shuffled_r2s.append((k,R2_95))
         if normalize:
@@ -145,7 +170,7 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
     if not normalize:
         ax1.bar(ind, [i[1] for i in shuffled_r2s], width, 
                  color='none', edgecolor=shuffled_grey, 
-                linewidth=size/10, linestyle='--', label='95% shuffled prediction')
+                linewidth=size/10, linestyle='--', label=comparison_label)
         ax1.bar(ind+width, [i[1] for i in insample_shuffled_r2s], width, 
                 color='none', edgecolor=shuffled_grey, 
                 linewidth=size/10, linestyle='--')
@@ -175,22 +200,22 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
     ymax = r2_max*1.5
     ax1.set_ylim(ylim[0], ymax)
     # change yticks
-    if ymax<.1:
-        ax1.set_ylim(ylim[0], .1)
+    if ymax<.15:
+        ax1.set_ylim(ylim[0], .15)
         ax1.yaxis.set_major_locator(ticker.MultipleLocator(.025))
     else:
         ax1.yaxis.set_major_locator(ticker.MultipleLocator(.05))
         if normalize:
-            ax1.set_yticks(np.append([-.025, 0, .025, .05, .075], np.arange(.1, .4, .05)))
+            ax1.set_yticks(np.append([-.025, 0, .025, .05, .075], np.arange(.1, .45, .05)))
         else:
-            ax1.set_yticks(np.append([0, .025, .05, .075], np.arange(.1, .4, .05)))
+            ax1.set_yticks(np.append([0, .025, .05, .075, .1, .125], np.arange(.15, .45, .05)))
     # draw grid
     ax1.set_axisbelow(True)
     plt.grid(axis='y', linestyle='dotted', linewidth=size/6)
     plt.setp(list(ax1.spines.values()), linewidth=size/10)
     # Plot Polar Plots for importances
-    if EFA == True:
-        reorder_vec = results.EFA.get_factor_reorder(results.EFA.results['num_factors'])
+    if EFA is not None:
+        reorder_vec = EFA.get_factor_reorder(EFA.results['num_factors'])
         reorder_fun = lambda x: [x[i] for i in reorder_vec]
         # get importances
         vals = [predictions[i] for i in target_order]
@@ -264,16 +289,11 @@ def plot_prediction(results, target_order=None, EFA=True, classifier='ridge',
                              title=best_predictors[-2][1][0],
                              color=colors[0],
                              axes_linewidth=size/10)
-        
-    if plot_dir is not None:
-        changestr = '_change' if change else ''
-        if EFA:
-            filename = 'EFA%s_%s_prediction_bar.%s' % (changestr, classifier, ext)
-        else:
-            filename = 'IDM%s_%s_prediction_bar.%s' % (changestr, classifier, ext)
-        save_figure(fig, path.join(plot_dir, filename), 
-                    {'bbox_inches': 'tight', 'dpi': dpi})
+    if filename is not None:
+        save_figure(fig, filename, 
+            {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
+
 
 def plot_prediction_scatter(results, target_order=None, EFA=True, change=False,
                             classifier='ridge', rotate='oblimin', 

@@ -18,7 +18,7 @@ from selfregulation.utils.utils import get_info, get_recent_dataset
 parser = argparse.ArgumentParser()
 parser.add_argument('-dataset', default=None)
 parser.add_argument('-dpi', type=int, default=300)
-parser.add_argument('-size', type=float, default=4.6)
+parser.add_argument('-size', type=float, default=15)
 parser.add_argument('-ext', default='pdf')
 parser.add_argument('-plot_file', default=None)
 parser.add_argument('-cluster_color', action='store_true')
@@ -45,7 +45,7 @@ task_subset_data = data.loc[:, task_subset.index]
 task_variables = list(task_subset.index)
 
 # plotting args
-size = 10 #args.size
+size = args.size
 dpi = args.dpi
 ext = args.ext
 if args.plot_file is None:
@@ -136,6 +136,11 @@ for task_i in range(len(tasks)):
     # *************************************************************************
     max_val = round(abs(task_subset).max().max(),1)
     loading_data = task_subset.filter(regex=tasks[task_i], axis=0)
+    # for visualization purposes remove "reflections" from loading matrix
+    # by multiplying by -1
+    reflects = [-1 if 'ReflogTr' in i else 1 for i in loading_data.index]
+    loading_data = loading_data.multiply(reflects, axis=0)
+    # plot loadings
     sns.heatmap(loading_data.iloc[::-1,:], ax=loading_axes[task_i], 
                 yticklabels=False, xticklabels=False,
                 linecolor='white', linewidth=basewidth,
@@ -173,11 +178,11 @@ participant_distances = results['task'].HCA.results['data']['clustered_df']
 loading_distances = results['task'].HCA.results['EFA5_oblimin']['clustered_df']
 sns.heatmap(participant_distances, ax=participant_distance,
             cmap=ListedColormap(sns.color_palette('gray', n_colors=100)),
-            xticklabels=False, yticklabels=False, square=True, cbar=False)
+            xticklabels=False, yticklabels=False, square=True, cbar=False, linewidth=0)
 sns.heatmap(loading_distances, ax=loading_distance,
             xticklabels=False, yticklabels=False, square=True, 
             cmap=ListedColormap(sns.color_palette('gray', n_colors=100)),
-            cbar_kws={'ticks': [0, .99]}, cbar_ax=cbar_ax2)
+            cbar_kws={'ticks': [0, .99]}, cbar_ax=cbar_ax2, linewidth=0)
 participant_distance.set_ylabel('DV', fontsize=basefont)
 loading_distance.set_ylabel('DV', fontsize=basefont)
 participant_distance.set_title(r'$\vec{DV}\in \mathrm{\mathbb{R}}^{522}$', fontsize=basefont)
@@ -260,7 +265,7 @@ else:
     mds_index = range(len(mds_colors))
     
 # plot raw MDS
-np.random.seed(1300)
+np.random.seed(2000)
 mds = MDS(dissimilarity='precomputed')
 mds_out = mds.fit_transform(participant_distances)
 participant_mds.scatter(mds_out[mds_index,0], mds_out[mds_index,1], 
@@ -394,7 +399,7 @@ back.text(.3385, .96, 'One Participant', fontsize=basefont,
 
 
 # legend for mds
-back.text(.13, .18, 'All Task DVs (130)', fontsize=basefont, 
+back.text(.13, .18, 'All Task DVs (%s)' % loading_distances.shape[0], fontsize=basefont, 
           horizontalalignment='center')
 back.text(.13, .15, 'Threshold', fontsize=basefont, 
           horizontalalignment='center', color=get_var_color('thresh'))
@@ -427,9 +432,9 @@ back.arrow(.05,.87,.08,-.045, width=basewidth/1000, color=arrowcolor)
 back.arrow(.05,.87,.1,-.075, width=basewidth/1000, color=arrowcolor)
 
 # from participant to EFA
-back.arrow(.53, .725, .05, 0, width=basewidth/200, head_width=basewidth/50, 
+back.arrow(.5, .725, .05, 0, width=basewidth/200, head_width=basewidth/75, 
            facecolor='k')
-back.text(.55, .735, 'EFA', fontsize=basefont, 
+back.text(.52, .735, 'EFA', fontsize=basefont, 
           horizontalalignment='center')
 # from data to heatmap
 back.arrow(.375, .514, 0, -.01, width=basewidth/250, head_width=basewidth/125,
@@ -458,6 +463,7 @@ back.text(.25, .49, 'D', fontsize=basefont*1.56255, fontweight='bold')
 back.text(.85, .49, 'E', fontsize=basefont*1.56255, fontweight='bold')
 back.text(.25, .24, 'F', fontsize=basefont*1.56255, fontweight='bold')
 back.text(.85, .24, 'G', fontsize=basefont*1.56255, fontweight='bold')
+
 
 # save
 f.savefig(path.join(plot_file, 'analysis_overview.%s' % ext), 

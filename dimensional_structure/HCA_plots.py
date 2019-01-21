@@ -291,7 +291,7 @@ def plot_results_dendrogram(results, rotate='oblimin', hierarchical_EFA=False,
         inp = 'EFA%s_%s' % (c, rotate)
     else:
         inp = 'data'
-    if hierarchical_EFA:
+    if hierarchical_EFA or not EFA_clustering:
         loading = EFA.reorder_factors(EFA.get_loading(c, rotate=rotate))
     else:
         loading = EFA.get_loading(c, rotate=rotate)
@@ -329,6 +329,8 @@ def transform_name(name):
         name= 'Decis.'
     elif name == 'Response Inhibition':
         name= 'Resp. Inhib.'
+    elif name[:2] == "NA":
+        name = ""
     return '\n'.join(name.split())
     
 def plot_dendrogram(loading, clustering, title=None, 
@@ -686,6 +688,9 @@ def plot_silhouette(results, inp='data', labels=None, axes=None,
         # Aggregate the silhouette scores for samples belonging to
         # cluster i, and sort them
         ith_cluster_silhouette_values = sample_scores[labels == i+1]
+        # skip "clusters" with one value
+        if len(ith_cluster_silhouette_values) == 1:
+            continue
         ith_cluster_silhouette_values.sort()
         size_cluster_i = ith_cluster_silhouette_values.shape[0]
         # update y range and plot

@@ -24,7 +24,7 @@ def plot_demo_factor_dist(results, c, figsize=12, dpi=300, ext='png', plot_dir=N
     axes[-1].set_xlabel('N: %s, Female Percent: %s' % (len(scores), sex_percent), 
         labelpad=20)
     if plot_dir:
-        filename = 'factor_correlations_DA%s.%s' % (c, ext)
+        filename = 'factor_distributions_DA%s.%s' % (c, ext)
         save_figure(f, path.join(plot_dir, filename), 
                     {'bbox_inches': 'tight', 'dpi': dpi})
         plt.close()
