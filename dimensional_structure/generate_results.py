@@ -19,7 +19,7 @@ parser.add_argument('-classifiers', nargs='+', default=['lasso', 'ridge',  'svm'
 parser.add_argument('-plot_backend', default=None)
 parser.add_argument('-dpi', type=int, default=300)
 parser.add_argument('-size', type=int, default=4.6)
-parser.add_argument('-ext', default='pdf')
+parser.add_argument('-ext', default='eps')
 parser.add_argument('-quiet', action='store_false')
 args = parser.parse_args()
 
