@@ -19,7 +19,7 @@ parser.add_argument('-classifiers', nargs='+', default=['lasso', 'ridge',  'svm'
 parser.add_argument('-plot_backend', default=None)
 parser.add_argument('-dpi', type=int, default=300)
 parser.add_argument('-size', type=int, default=4.6)
-parser.add_argument('-ext', default='pdf')
+parser.add_argument('-ext', default='eps')
 parser.add_argument('-quiet', action='store_false')
 args = parser.parse_args()
 
@@ -46,6 +46,7 @@ if args.plot_backend:
 from glob import glob
 import numpy as np
 from os import makedirs, path
+import pickle
 import random
 from shutil import copyfile, copytree, rmtree
 import subprocess
@@ -67,7 +68,8 @@ from dimensional_structure.EFA_test_retest import (calc_EFA_retest,
                                                    plot_EFA_retest, 
                                                    plot_cross_EFA_retest)
 from dimensional_structure.HCA_plots import plot_HCA
-from dimensional_structure.prediction_plots import (plot_prediction, 
+from dimensional_structure.prediction_plots import (plot_results_prediction,
+                                                    plot_prediction, 
                                                     plot_prediction_scatter,
                                                     plot_prediction_comparison,
                                                     plot_factor_fingerprint)
@@ -92,91 +94,66 @@ dataset = path.join(basedir,'Data',dataset)
 datafile = dataset.split(path.sep)[-1]
 
 # label subsets
-demographic_factor_names = ['Drug Use', 
+demographic_factor_names = ['Drug Use',
                             'Mental Health',
                             'Problem Drinking',
                             'Daily Smoking',
                             'Binge Drinking',
-                            'Obesity',
                             'Lifetime Smoking',
-                            'Unsafe Drinking',
+                            'Obesity',
                             'Income / Life Milestones']
+
+
+                                      
 subsets = [{'name': 'task', 
             'regex': 'task',
-            'oblimin_cluster_names': ['Inhibition-Related Threshold',
-                                      'Caution',
-                                      'Conflict Drift',
-                                      'Speeded Information Processing',
+            'oblimin_cluster_names': ['State Flexibility',
                                       'Information Processing',
+                                      'Conflict Processing',
+                                      'Speeded Information Processing',
+                                      'Inhibition-Related Threshold',
+                                      'Caution',
+                                      'NA1',
+                                      'Perc/Resp',
+                                      'Control-Related Perc/Resp',
+                                      'Updated-Related Perc/Resp',
+                                      'NA2',
                                       'Discounting',
-                                      'Misc-1',
-                                      'Cold/Strategy',
-                                      'Hot/WM',
-                                      'Model-Free Decision Making',
-                                      'Response Inhibition',
-                                      'Non-Decision',
-                                      'Misc-2'
-                                      ],
-            'oblimin_factor_names': ['Speeded IP', 'Strategic IP', 'Discounting',
-                                     'Perc / Resp', 'Caution'],
-            'varimax_cluster_names': ['conflict_drift',
-                                      '1',
-                                      'response_inhibition_thresh',
-                                      'general_thresh',
-                                      'non_decision',
-                                      'holt/nback',
-                                      'writing',
-                                      'default_decision_making',
-                                      'hot/implicit_reasoning/IQ',
-                                      'discounting',
-                                      'cold/explicit_reasoning/IQ',
-                                      '11',
-                                      'updating_IP',
-                                       'SSRT+',
-                                       'general_drift',
-                                      ],
-            'varimax_factor_names': ['Speeded IP', 'Strategic IP', 'Perc / Resp',
-                                     'Discounting', 'Caution'],
+                                      'Cold/Model-Based',
+                                      'NA3',
+                                      'NA4',
+                                      'Hot/Model-Free'],
+            'oblimin_factor_names': ['Speeded IP', 'Strategic IP', 
+                                     'Perc / Resp','Caution', 
+                                     'Discounting']
+                                     ,
+            'varimax_cluster_names': None,
+            'varimax_factor_names': ['Speeded IP', 'Strategic IP', 
+                                     'Perc / Resp',  'Caution', 
+                                     'Discounting'],
             'predict': True},
             {'name': 'survey',
              'regex': 'survey',
-             'oblimin_cluster_names': ['Sensation Seeking',
-                                       'Mindfulness',
-                                       'Self-Control',
-                                       'Goal-Directedness',
-                                       'Behavioral Approach',
-                                       'Behavioral Inhibit',
-                                       'FTP',
+             'oblimin_cluster_names': ['Financial Risk-Taking',
                                        'Eating',
-                                       'Reward Sensitivity',
-                                       'Sociability',
-                                       'Financial Risk-Taking',
+                                       'Mindfulness',
+                                       'Impulsivity',
+                                       'Goal-Direcedness',
+                                       'Behavioral Inhibition',
+                                       'Behavioral Approach',
                                        'Ethical/Health Risk-Taking',
-                                       'Risk Perception'
-                                       ],
+                                       'Risk Perception',
+                                       'Sensation Seeking',
+                                       'Sociability',
+                                       'Reward Sensitivity'],
              'oblimin_factor_names':  ['Sensation Seeking', 'Mindfulness', 
-                                   'Impulsivity',  'Emotional Control',
-                                   'Reward Sensitivity', 'Goal-Directedness', 
+                                   'Emotional Control',  'Impulsivity',
+                                   'Goal-Directedness', 'Reward Sensitivity', 
                                    'Risk Perception', 'Eating Control', 
                                    'Ethical Risk-Taking', 'Social Risk-Taking',
                                    'Financial Risk-Taking', 'Agreeableness'],
-            'varimax_cluster_names': ['Financial Risk Taking',
-                                      'Risk Perception',
-                                      'Ethical/health Risk Taking',
-                                      'Sociability',
-                                      'Behavioral Approach/FTP',
-                                      'Self-Control',
-                                      '6',
-                                      'Social Risk Taking',
-                                      'Sensation Seeking',
-                                      'Reward Sensitivity'
-                                      ],
-            'varimax_factor_names': ['Impulsivity', 'Sensation Seeking', 
-                                     'Emotional Control',  'Reward Sensitivity', 
-                                     'Ethical Risk-Taking', 'Risk Perception', 
-                                     'Social Risk-Taking',  'Eating Control',
-                                     'Financial Risk-Taking', 'Agreeableness', 
-                                     'Mindfulness',  'Goal-Directedness'],
+            'varimax_cluster_names': None,
+            'varimax_factor_names': None,
              'predict': True},
              {'name': 'main_subset', 
             'regex': 'main',
@@ -303,12 +280,12 @@ for subset in subsets:
             plot_task_kws={}
          
             # Plot EFA
-        if verbose: print("Plotting EFA")
+        if verbose: print("** Plotting DA **")
         plot_DA(results, DA_plot_dir, verbose=verbose, size=size, dpi=dpi, ext=ext)
         
         for rotate in ['oblimin', 'varimax']:
             # Plot EFA
-            if verbose: print("Plotting EFA")
+            if verbose: print("** Plotting EFA %s **" % rotate)
             plot_EFA(results, EFA_plot_dir, rotate=rotate,
                      verbose=verbose, size=size, dpi=dpi, 
                      ext=ext, plot_task_kws=plot_task_kws)
@@ -321,73 +298,93 @@ for subset in subsets:
             plot_EFA_change(combined=combined, 
                             plot_dir=path.join(EFA_plot_dir, rotate),
                             size=size, dpi=dpi, ext=ext)
-            
             # Plot HCA
-            if verbose: print("Plotting HCA")
-            drop_list = {('task', 'oblimin'): [0,5,9,11],
-                         ('survey', 'oblimin'): [1,4,7, 9,11]}
+            if verbose: print("** Plotting HCA %s **" % rotate)
+            drop_list = {('task', 'oblimin'): ([1,5,9,12,15],[2,4,6,8,14]) ,
+                         ('survey', 'oblimin'): ([0,2,4,6,8,10], None)}
+            drop1, drop2 = drop_list.get((name, rotate), (None, None))
             plot_HCA(results, HCA_plot_dir, rotate=rotate,
-                     drop_list = drop_list.get((name, results), None),
+                     drop_list = drop1, double_drop_list=drop2,
                      size=size, dpi=dpi, ext=ext)
-        
         # Plot prediction
-        if results.load_prediction_object() is not None:
-            for rotate in ['oblimin', 'varimax']:
-                rotate_plot_dir = path.join(prediction_plot_dir, rotate)
-                target_order = results.DA.reorder_factors(results.DA.get_loading()).columns
-                change_target_order = [i + ' Change' for i in target_order]
-                for classifier in classifiers:
-                    for EFA in [True, False]:
-                        print("Plotting Prediction, classifier: %s, EFA: %s" % (classifier, EFA))
-                        plot_prediction(results, 
-                                        target_order=target_order, 
-                                        EFA=EFA, 
-                                        rotate=rotate,
-                                        classifier=classifier, 
-                                        plot_dir=rotate_plot_dir,
-                                        dpi=dpi,
-                                        ext=ext,
-                                        size=size)
-                        plot_prediction_scatter(results, target_order=target_order, 
-                                                EFA=EFA, 
-                                                rotate=rotate,
-                                                classifier=classifier, 
-                                                plot_dir=rotate_plot_dir,
-                                                dpi=dpi,
-                                                ext=ext,
-                                                size=size)
-                        print("Plotting Change Prediction, classifier: %s, EFA: %s" % (classifier, EFA))
-                        try:
-                            plot_prediction(results, target_order=change_target_order, 
-                                            EFA=EFA, change=True,
-                                            classifier=classifier,
+        if results.get_prediction_files() is not None:
+            target_order = results.DA.reorder_factors(results.DA.get_loading()).columns
+            change_target_order = [i + ' Change' for i in target_order]
+            for classifier in classifiers:
+                for EFA in [True, False]:
+                    if EFA:
+                        for rotate in ['oblimin', 'varimax']:
+                            rotate_plot_dir = path.join(prediction_plot_dir, rotate)
+                            print("** Plotting Prediction, classifier: %s, EFA: %s **" % (classifier, EFA))
+                            plot_results_prediction(results, 
+                                            target_order=target_order, 
+                                            EFA=EFA, 
                                             rotate=rotate,
+                                            classifier=classifier, 
                                             plot_dir=rotate_plot_dir,
                                             dpi=dpi,
                                             ext=ext,
                                             size=size)
-                            plot_prediction_scatter(results, 
-                                                    target_order=change_target_order, 
+                            plot_prediction_scatter(results, target_order=target_order, 
                                                     EFA=EFA, 
                                                     rotate=rotate,
-                                                    change=True,
                                                     classifier=classifier, 
                                                     plot_dir=rotate_plot_dir,
                                                     dpi=dpi,
                                                     ext=ext,
                                                     size=size)
-                        except AssertionError:
-                            print('No shuffled data was found for %s change predictions, EFA: %s' % (name, EFA))
-                plot_factor_fingerprint(results, change=False, rotate=rotate,
-                                        size=size, ext=ext, dpi=dpi, 
-                                        plot_dir=rotate_plot_dir)
-                plot_factor_fingerprint(results, change=True, rotate=rotate,
-                                        size=size, ext=ext, dpi=dpi, 
-                                        plot_dir=rotate_plot_dir)
+                            """
+                            print("** Plotting Change Prediction, classifier: %s, EFA: %s **" % (classifier, EFA))
+                            try:
+                                plot_prediction(results, target_order=change_target_order, 
+                                                EFA=EFA, change=True,
+                                                classifier=classifier,
+                                                rotate=rotate,
+                                                plot_dir=rotate_plot_dir,
+                                                dpi=dpi,
+                                                ext=ext,
+                                                size=size)
+                                plot_prediction_scatter(results, 
+                                                        target_order=change_target_order, 
+                                                        EFA=EFA, 
+                                                        rotate=rotate,
+                                                        change=True,
+                                                        classifier=classifier, 
+                                                        plot_dir=rotate_plot_dir,
+                                                        dpi=dpi,
+                                                        ext=ext,
+                                                        size=size)
+                            except AssertionError:
+                                print('No shuffled data was found for %s change predictions, EFA: %s' % (name, EFA))
+                            """
+                            plot_factor_fingerprint(results, change=False, rotate=rotate,
+                                                    size=size, ext=ext, dpi=dpi, 
+                                                    plot_dir=rotate_plot_dir)
+                            plot_factor_fingerprint(results, change=True, rotate=rotate,
+                                                    size=size, ext=ext, dpi=dpi, 
+                                                    plot_dir=rotate_plot_dir)
+                    else:
+                        plot_results_prediction(results, 
+                                            target_order=target_order, 
+                                            EFA=False, 
+                                            rotate=rotate,
+                                            classifier=classifier, 
+                                            plot_dir=prediction_plot_dir,
+                                            dpi=dpi,
+                                            ext=ext,
+                                            size=size)
+                        plot_prediction_scatter(results, target_order=target_order, 
+                                                EFA=False, 
+                                                rotate=rotate,
+                                                classifier=classifier, 
+                                                plot_dir=prediction_plot_dir,
+                                                dpi=dpi,
+                                                ext=ext,
+                                                size=size)
             plot_prediction_comparison(results, change=False, size=size, ext=ext,
                                        dpi=dpi, plot_dir=prediction_plot_dir)
-            plot_prediction_comparison(results, change=True, size=size, ext=ext, 
-                                       dpi=dpi, plot_dir=prediction_plot_dir)
+            #plot_prediction_comparison(results, change=True, size=size, ext=ext, 
+            #                           dpi=dpi, plot_dir=prediction_plot_dir)
 
         
         # copy latest results and prediction to higher directory
@@ -405,10 +402,20 @@ if group_analysis == True:
             print('*'*79)
             print('Running group analysis')
     all_results = load_results(datafile)
-    run_group_prediction(all_results, 
-                         shuffle=False, classifier='ridge',
-                         include_raw_demographics=False, rotate='oblimin',
-                         verbose=False)
+    for classifier in classifiers:
+        ontology_prediction = run_group_prediction(all_results, 
+                                                   shuffle=False, 
+                                                   classifier=classifier,
+                                                   include_raw_demographics=False,
+                                                   rotate='oblimin',
+                                                   verbose=False)
+    for classifier in classifiers:
+        ontology_prediction_shuffled = run_group_prediction(all_results, 
+                                                            shuffle=shuffle_repeats, 
+                                                            classifier=classifier,
+                                                            include_raw_demographics=False, 
+                                                            rotate='oblimin',
+                                                            verbose=False)
     run_cross_prediction(all_results)
     a=subprocess.Popen('python gephi_graph_plot.py', shell=True)
 
@@ -416,19 +423,48 @@ if group_plot == True:
     if verbose:
         print('*'*79)
         print('*'*79)
-        print("Group Plots")
+        print("** Group Plots **")
     all_results = load_results(datafile)
     output_loc = path.dirname(all_results['task'].get_output_dir())
+    prediction_loc = path.join(output_loc, 'prediction_outputs')
     plot_file = path.dirname(all_results['task'].get_plot_dir())
+    # plotting
+    # plot full prediction
+    ontology_prediction_files = glob(path.join(prediction_loc, "EFA_survey_task*"))
+    ontology_prediction_files = sorted(ontology_prediction_files, key=path.getmtime)[-2:]
+    ontology_prediction = open([i for i in ontology_prediction_files if 'shuffle' not in i][0], 'rb')
+    ontology_prediction_shuffled = open([i for i in ontology_prediction_files if 'shuffle' in i][0], 'rb')
+    ontology_prediction = pickle.load(ontology_prediction)
+    ontology_prediction_shuffled = pickle.load(ontology_prediction_shuffled)
+    survey_prediction = all_results['survey'].load_prediction_object(classifier='ridge')
+    filename = path.join(plot_file, 'ontology_prediction.%s' % ext)
+    target_order = all_results['task'].DA.reorder_factors(all_results['task'].DA.get_loading()).columns
+    plot_prediction(ontology_prediction['data'],
+                    ontology_prediction_shuffled['data'],
+                    target_order=target_order,
+                    size=size, dpi=dpi,
+                    filename=filename)
+    filename = path.join(plot_file, 'ontology_vs_survey_prediction.%s' % ext)
+    plot_prediction(ontology_prediction['data'],
+                    survey_prediction['data'],
+                    comparison_label='Survey Prediction',
+                    target_order=target_order,
+                    size=size, dpi=dpi,
+                    filename=filename)
+    # plot other cross results
     plot_corr_heatmap(all_results, size=size*1/2, ext=ext, dpi=dpi, plot_dir=plot_file)
     plot_BIC(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
     # rotation dependent
     for rotate in ['oblimin', 'varimax']:
-        plot_cross_silhouette(all_results, rotate=rotate, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
-        plot_cross_communality(all_results,rotate=rotate,  size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
-        plot_cross_EFA_retest(all_results, rotate=rotate, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+        plot_cross_silhouette(all_results, rotate=rotate, size=size, ext=ext, 
+                              dpi=dpi, plot_dir=plot_file)
+        plot_cross_communality(all_results,rotate=rotate,  size=size, ext=ext, 
+                               dpi=dpi, plot_dir=plot_file)
+        plot_cross_EFA_retest(all_results, rotate=rotate, size=size, ext=ext, 
+                              dpi=dpi, plot_dir=plot_file)
         plot_cross_EFA_retest(all_results, rotate=rotate, annot_heatmap=True, 
                               size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
+    # plot analysis overview
     a=subprocess.Popen('python analysis_overview_plot.py -dataset %s -dpi %s -ext %s -size %s' \
                            % (datafile, dpi, ext, 4.6),
                            shell=True)
@@ -458,9 +494,8 @@ if run_plot or group_plot:
             print('Moving plots to paper directory')
     if all_results is not None:
         plot_file = path.dirname(all_results['task'].get_plot_dir())
-        
     else:
-        plot_file = results.get_plot_dir()
+        plot_file = path.dirname(results.get_plot_dir())
     
     rotate = 'oblimin'
     exhaustive_lookup = {
@@ -492,21 +527,23 @@ if run_plot or group_plot:
     
     shortened_lookup = {
             'analysis_overview': 'Fig01_Analysis_Overview',
-            '%s/EFA_test_retest': 'FigS03_EFA_retest',
+            '%s/EFA_test_retest' % rotate: 'Fig03_EFA_retest',
             'survey/HCA/%s/dendrogram_EFA12_%s' % (rotate, rotate): 'Fig04_Survey_Dendrogram',
             'task/HCA/%s/dendrogram_EFA5_%s' % (rotate, rotate): 'Fig05_Task_Dendrogram',
-            'survey/prediction/EFA_ridge_prediction_bar': 'Fig06_Survey_prediction',
-            'task/prediction/EFA_ridge_prediction_bar': 'Fig07_Task_prediction',
+            'survey/prediction/%s/EFA_ridge_prediction_bar' % rotate: 'Fig06_Survey_prediction',
+            'task/prediction/%s/EFA_ridge_prediction_bar' % rotate: 'Fig07_Task_prediction',
+            'survey/prediction/%s/EFA_ridge_factor_fingerprint' % rotate: 'Fig08_Survey_Factor_Fingerprints',
             # test-retest
             'cross_relationship': 'FigS02_cross_relationship',
             'BIC_curves': 'FigS03_BIC_curves',
             '%s/communality_adjustment' % rotate: 'FigS04_communality',
-            'task/EFA/%s/factor_heatmap_EFA12' % rotate: 'FigS05a_survey_correlation',
-            'task/EFA/%s/factor_heatmap_EFA5' % rotate: 'FigS05b_task_correlation',
-            '%s/silhouette_analysis' % rotate: 'FigS06_Survey_Silhouette',
-            'survey/prediction/IDM_lasso_prediction_bar': 'FigS07_Survey_IDM_prediction',
-            'task/prediction/IDM_lasso_prediction_bar': 'FigS08_Task_IDM_prediction',
-            'survey/prediction/EFA_ridge_factor_fingerprint': 'FigS09_Survey_Factor_Fingerprints'
+            'survey/EFA/%s/factor_correlations_EFA12' % rotate: 'FigS05a_survey_correlation',
+            'task/EFA/%s/factor_correlations_EFA5' % rotate: 'FigS05b_task_correlation',
+            'task/DA/factor_correlations_EFA8': 'FigS05c_demo_correlation',
+            '%s/silhouette_analysis' % rotate: 'FigS06_HCA_Silhouettes',
+            'survey/prediction/IDM_lasso_prediction_bar': 'FigS07a_Survey_IDM_prediction',
+            'task/prediction/IDM_lasso_prediction_bar': 'FigS07b_Task_IDM_prediction',
+            'ontology_vs_survey_prediction': 'FigS08_ontology_prediction'
             }
     
     paper_dir = path.join(basedir, 'Results', 'Psych_Ontology_Paper')

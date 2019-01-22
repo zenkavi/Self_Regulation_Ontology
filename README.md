@@ -50,6 +50,7 @@ psych
 lme4
 qgraph
 mpath
+dynamicTreeCut
 
 ### Example sequence of installation steps using anaconda
 * conda create -n SRO python=3.5.3

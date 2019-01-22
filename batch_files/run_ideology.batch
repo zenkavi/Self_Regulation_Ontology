@@ -21,6 +21,6 @@ results_loc=`sed '4q;d' singularity_config.txt`Results
 script_loc=`sed '4q;d' singularity_config.txt`ideological_prediction
 
 singularity exec -B ${script_loc}:/SRO/ideological_prediction -B ${data_loc}:/SRO/Data -B ${results_loc}:/Results ${singularity_loc} \
-    python /SRO/ideological_prediction/ideological_prediction.py -skip_raw -shuffle_repeats 1000
+    python /SRO/ideological_prediction/ideological_prediction.py -shuffle_repeats 1000
 
 

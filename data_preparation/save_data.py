@@ -74,8 +74,10 @@ for data,directory, DV_df, valence_df in datasets:
     alcohol_drug_data = process_alcohol_drug(alcohol_drug_data, directory, meta_dir)
     health_data = extract_experiment(data,'k6_survey')
     health_data = process_health(health_data, directory, meta_dir)
+    activity_level = DV_df.pop('leisure_time_activity_survey.activity_level')
     # concatenate targets
-    target_data = pd.concat([demog_data, alcohol_drug_data, health_data], axis = 1)
+    target_data = pd.concat([demog_data, alcohol_drug_data, 
+                             health_data, activity_level], axis = 1)
     target_data.to_csv(path.join(directory,'demographic_health.csv'))
     # save items
     items_df = get_items(data)
@@ -148,22 +150,23 @@ for data,directory, DV_df, valence_df in datasets:
         selected_variables = hddm_subset
         selected_variables.to_csv(path.join(directory, 'meaningful_variables.csv'))
         readme_lines += ["meaningful_variables.csv: Same as meaningful_variables_hddm.csv\n\n"]
-        # clean data
-        selected_variables_clean = remove_outliers(selected_variables)
-        selected_variables_clean = remove_correlated_task_variables(selected_variables_clean)
-        selected_variables_clean = transform_remove_skew(selected_variables_clean)
-        selected_variables_clean.to_csv(path.join(directory, 'meaningful_variables_clean.csv'))
-        readme_lines += ["meaningful_variables_clean.csv: same as meaningful_variables.csv with outliers defined as greater than 2.5 IQR from median removed from each column\n\n"]
         
-        #save selected variables
-        selected_variables_reference = valence_df
-        selected_variables_reference.loc[selected_variables.columns].to_csv(path.join(reference_dir, 'selected_variables_reference.csv'))
+        # clean data
+        selected_variables_clean = transform_remove_skew(selected_variables)
+        selected_variables_clean = remove_outliers(selected_variables_clean)
+        selected_variables_clean = remove_correlated_task_variables(selected_variables_clean)
+        selected_variables_clean.to_csv(path.join(directory, 'meaningful_variables_clean.csv'))
+        readme_lines += ["meaningful_variables_clean.csv: same as meaningful_variables.csv with skewed variables transformed and then outliers removed \n\n"]
         
         # imputed data
         selected_variables_imputed, error = missForest(selected_variables_clean)
         selected_variables_imputed.to_csv(path.join(directory, 'meaningful_variables_imputed.csv'))
         readme_lines += ["meaningful_variables_imputed.csv: meaningful_variables_clean.csv after imputation with missForest\n\n"]
-        
+
+        #save selected variables
+        selected_variables_reference = valence_df
+        selected_variables_reference.loc[selected_variables.columns].to_csv(path.join(reference_dir, 'selected_variables_reference.csv'))
+                
         # save task data subset
         task_data = drop_vars(selected_variables, ['survey'], saved_vars = ['holt','cognitive_reflection'])
         task_data.to_csv(path.join(directory, 'taskdata.csv'))

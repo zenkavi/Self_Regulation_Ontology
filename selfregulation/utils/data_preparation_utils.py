@@ -550,9 +550,15 @@ def remove_correlated_task_variables(data, threshold=.85):
     columns_to_remove = []
     for task in tasks:
         task_data = data.filter(regex = '^%s' % task)
-        corr_mat = np.tril(task_data.corr().values,-1)
-        remove_indices = np.unique(np.where(abs(corr_mat)>threshold)[0])
-        columns_to_remove += list(task_data.columns[remove_indices])
+        corr_mat = task_data.corr().replace({1:0})
+        i=0
+        while True:
+            kept_indices = np.where(abs(corr_mat.iloc[:,i])<threshold)[0]
+            corr_mat = corr_mat.iloc[kept_indices,kept_indices]
+            i+=1
+            if i>=corr_mat.shape[0]:
+                break
+        columns_to_remove += list(set(task_data.columns)-set(corr_mat.columns))
     print( '*' * 50)
     print('Dropping %s variables with correlations above %s' % (len(columns_to_remove), threshold))
     print( '*' * 50)
@@ -582,7 +588,8 @@ def save_task_data(data_loc, data):
 
 def transform_remove_skew(data, threshold=1, 
                           positive_skewed=None,
-                          negative_skewed=None):
+                          negative_skewed=None,
+                          verbose=True):
     data = data.copy()
     if positive_skewed is None:
         positive_skewed = data.skew()>threshold
@@ -592,30 +599,45 @@ def transform_remove_skew(data, threshold=1,
     negative_subset = data.loc[:,negative_skewed]
     # transform variables
     # log transform for positive skew
-    positive_subset = np.log(positive_subset)
-    successful_transforms = positive_subset.loc[:,abs(positive_subset.skew())<threshold]
+    shift = pd.Series(0, index=positive_subset.columns)
+    shift_variables = positive_subset.min()<=0
+    shift[shift_variables] -= (positive_subset.min()[shift_variables]-1)
+    positive_subset = np.log(positive_subset+shift)
+    # remove outliers
+    positive_tmp = remove_outliers(positive_subset)
+    successful_transforms = positive_subset.loc[:,abs(positive_tmp.skew())<threshold]
+    if verbose:
+        print('*'*40)
+        print('** Successfully transformed %s negatively skewed variables:' % len(successful_transforms.columns))
+        print('\n'.join(successful_transforms.columns))
+        print('*'*40)
     dropped_vars = set(positive_subset)-set(successful_transforms)
     # replace transformed variables
     data.drop(positive_subset, axis=1, inplace = True)
     successful_transforms.columns = [i + '.logTr' for i in successful_transforms]
-    print('*'*40)
-    print('Dropping %s positively skewed data that could not be transformed successfully:' % len(dropped_vars))
-    print('\n'.join(dropped_vars))
-    print('*'*40)
+    if verbose:
+        print('*'*40)
+        print('Dropping %s positively skewed data that could not be transformed successfully:' % len(dropped_vars))
+        print('\n'.join(dropped_vars))
+        print('*'*40)
     data = pd.concat([data, successful_transforms], axis = 1)
     # reflected log transform for negative skew
     negative_subset = np.log(negative_subset.max()+1-negative_subset)
-    successful_transforms = negative_subset.loc[:,abs(negative_subset.skew())<threshold]
+    negative_tmp = remove_outliers(negative_subset)
+    successful_transforms = negative_subset.loc[:,abs(negative_tmp.skew())<threshold]
+    if verbose:
+        print('*'*40)
+        print('** Successfully transformed %s negatively skewed variables:' % len(successful_transforms.columns))
+        print('\n'.join(successful_transforms.columns))
+        print('*'*40)
     dropped_vars = set(negative_subset)-set(successful_transforms)
     # replace transformed variables
     data.drop(negative_subset, axis=1, inplace = True)
     successful_transforms.columns = [i + '.ReflogTr' for i in successful_transforms]
-    print('*'*40)
-    print('Dropping %s negatively skewed data that could not be transformed successfully:' % len(dropped_vars))
-    print('\n'.join(dropped_vars))
-    print('*'*40)
+    if verbose:
+        print('*'*40)
+        print('Dropping %s negatively skewed data that could not be transformed successfully:' % len(dropped_vars))
+        print('\n'.join(dropped_vars))
+        print('*'*40)
     data = pd.concat([data, successful_transforms], axis=1)
     return data.sort_index(axis = 1)
-    
-    
-    

@@ -211,12 +211,12 @@ def plot_glasso_edge_strength(all_results, graph_loc,  size=4.6,
         ax.grid(linewidth=size*.15)
         ax.set_xlim([0, max_x])
         ax.text(max_x*.02, -.35, titles[i], color=colors[i], ha='left',
-                fontsize=size*4)
+                fontsize=size*3.5)
         ax.set_xticks(np.arange(0, round(max_x*10)/10,.1))
         if i!=(len(axes)-1):
             ax.set_xticklabels([])
         else:
-            ax.tick_params(labelsize=size*3, pad=size)
+            ax.tick_params(labelsize=size*2.5, pad=size, length=0)
     axes[-1].set_xlabel('Edge Weight', fontsize=size*5)
     plt.subplots_adjust(hspace=0)
     if plot_dir is not None:
@@ -255,13 +255,13 @@ def plot_cross_within_prediction(prediction_loc, size=4.6,
         ax.grid(linewidth=size*.15, which='both')
         ax.set_xlim([min_x, 1])
         ax.text(min_x+(1-min_x)*.02, -.34, titles[i], color=colors[i], ha='left',
-                fontsize=size*4)
+                fontsize=size*3.5)
         xticks = np.arange(math.floor(min_x*10)/10,1,.2)
         ax.set_xticks(xticks)
         if i!=(len(axes)-1):
             ax.set_xticklabels([])
         else:
-            ax.tick_params(labelsize=size*3, pad=size)
+            ax.tick_params(labelsize=size*2.5, pad=size, length=0)
     axes[-1].set_xlabel(r'$R^2$', fontsize=size*5)
     plt.subplots_adjust(hspace=0)
     if plot_dir is not None:
@@ -305,7 +305,7 @@ def plot_cross_relationship(all_results, graph_loc, prediction_loc, size=4.6,
     fig.save(svg_file)
     if ext=='pdf':
         pdf_file = path.join(plot_dir, 'cross_relationship.pdf')
-        a=subprocess.Popen('inkscape %s --export-pdf=%s' % (svg_file, pdf_file),
+        a=subprocess.Popen('cairosvg %s -o %s' % (svg_file, pdf_file),
                             shell=True, 
                             stdout=subprocess.PIPE, 
                             stderr=subprocess.PIPE)
@@ -363,7 +363,7 @@ def plot_BIC(all_results, size=4.6, dpi=300, ext='png', plot_dir=None):
     height= size*.75/len(all_results)
     with sns.axes_style('white'):
         fig, axes = plt.subplots(1, len(all_results), figsize=(size, height))
-    for i, results in enumerate(all_results.values()):
+    for i, results in enumerate([all_results[key] for key in ['task','survey']]):
         ax1 = axes[i]
         name = results.ID.split('_')[0].title()
         EFA = results.EFA
@@ -389,10 +389,12 @@ def plot_BIC(all_results, size=4.6, dpi=300, ext='png', plot_dir=None):
                                      fontsize=height*3, markerscale=0)
                     beautify_legend(leg, colors=colors)
                 else:
-                    ax1.set_ylabel(metric, fontsize=height*5)
-            ax1.set_xlabel('# Factors', fontsize=height*5)
-            ax1.tick_params(labelsize=height*3, pad=size/2)
-            ax1.set_title(name, fontsize=height*5)
+                    ax1.set_ylabel(metric, fontsize=height*4)
+            ax1.set_xlabel('# Factors', fontsize=height*4)
+            ax1.set_xticks(x)
+            ax1.set_xticklabels(x)
+            ax1.tick_params(labelsize=height*2, pad=size/4, length=0)
+            ax1.set_title(name, fontsize=height*4, y=1.01)
             ax1.grid(linewidth=size/8)
             [i.set_linewidth(size*.1) for i in ax1.spines.values()]
     if plot_dir is not None:
@@ -515,8 +517,11 @@ def plot_cross_communality(all_results, rotate='oblimin', retest_threshold=.2,
                 ax.legend().set_visible(False)
             if i%2==0:
                 ax.set_ylabel('Communality', fontsize=size*2)
+                ax.tick_params(labelleft=True, left=True, 
+                               length=size/4, width=size/8)
             else:
-                ax.tick_params(labelsize=0, pad=0)
+                ax.tick_params(labelleft=False, left=True, 
+                               length=0, width=size/8)
             # update max_x
             if ax.get_ylim()[1] > max_y:
                 max_y = ax.get_ylim()[1]

@@ -1,6 +1,7 @@
 # imports
 from itertools import combinations
 from math import ceil
+from matplotlib.colors import to_hex
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import numpy as np
@@ -108,23 +109,24 @@ def plot_clustering_similarity(results, plot_dir=None, verbose=False, ext='png')
               % score_consistency)
         
     
-def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
+def plot_subbranch(target_color, cluster_i, tree, loading, cluster_sizes, title=None,
                    size=2.3, dpi=300, plot_loc=None):
     sns.set_style('white')
     colormap = sns.diverging_palette(220,15,n=100,as_cmap=True)
     # get variables in subbranch based on coloring
-    curr_index = 0
     curr_color = tree['color_list'][0]
     start = 0
     for i, color in enumerate(tree['color_list']):
         if color != curr_color:
             end = i
-            if curr_index == cluster_i:
+            if curr_color == to_hex(target_color):
                 break
             if color != "#808080":
-                curr_index += 1
                 start = i
             curr_color = color
+    
+    if (end-start)+1 != cluster_sizes[cluster_i]:
+        return
     
     # get subset of loading
     cumsizes = np.cumsum(cluster_sizes)
@@ -183,7 +185,7 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
     for spine in ['top','right','bottom','left']:
         text_ax.spines[spine].set_visible(False)
     for i, label in enumerate(subset_loading.columns):
-        text_ax.text(0, 1-i/N, str(i+1)+'.', fontsize=size*3, ha='right')
+        text_ax.text(0, 1-i/N, str(i+1)+'.', fontsize=size*2.8, ha='right')
         text_ax.text(.1, 1-i/N, label, fontsize=size*3)
     text_ax.tick_params(which='both', labelbottom=False, labelleft=False,
                         bottom=False, left=False)
@@ -214,7 +216,7 @@ def plot_subbranch(cluster_i, tree, loading, cluster_sizes, title=None,
         plt.close()
     else:
         return fig
-    
+
 def plot_subbranches(results, rotate='oblimin', EFA_clustering=True,
                      cluster_range=None, absolute_loading=False,
                      size=2.3, dpi=300, ext='png', plot_dir=None):
@@ -232,7 +234,7 @@ def plot_subbranches(results, rotate='oblimin', EFA_clustering=True,
     """
     HCA = results.HCA
     EFA = results.EFA
-    loading = EFA.reorder_factors(EFA.get_loading(rotate=rotate))
+    loading = EFA.reorder_factors(EFA.get_loading(rotate=rotate), rotate=rotate)
     loading.index = format_variable_names(loading.index)
     if EFA_clustering:
         inp = 'EFA%s_%s' % (EFA.get_c(), rotate)
@@ -249,8 +251,8 @@ def plot_subbranches(results, rotate='oblimin', EFA_clustering=True,
     if absolute_loading:
         ordered_loading = abs(ordered_loading)
     # get cluster sizes
-    cluster_labels = HCA.get_cluster_DVs(inp=name)
-    cluster_sizes = [len(i) for i in cluster_labels]
+    cluster_labels, DVs= list(zip(*HCA.get_cluster_DVs(inp=name).items()))
+    cluster_sizes = [len(i) for i in DVs]
     link_function, colors = get_dendrogram_color_fun(link, clustering['reorder_vec'],
                                                      clustering['labels'])
     tree = dendrogram(link,  link_color_func=link_function, no_plot=True,
@@ -263,25 +265,21 @@ def plot_subbranches(results, rotate='oblimin', EFA_clustering=True,
     plot_loc = None
     if cluster_range is None:
         cluster_range = range(len(cluster_labels))
-    # get cluster titles
-    cluster_names = clustering.get('cluster_names', None)
-    if cluster_names:
-        cluster_names = [cluster_names[i] for i in cluster_range]
-    else:
-        cluster_names = [None] * len(cluster_range)
     # titles = 
     figs = []
     for cluster_i in cluster_range:
         if plot_dir:
             filey = 'cluster_%s.%s' % (str(cluster_i).zfill(2), ext)
             plot_loc = path.join(plot_dir, function_directory, filey)
-        fig = plot_subbranch(cluster_i, tree, ordered_loading, cluster_sizes,
-                             title=cluster_names.pop(), 
+        fig = plot_subbranch(colors[cluster_i], cluster_i, tree, 
+                             ordered_loading, cluster_sizes,
+                             title=cluster_labels[cluster_i], 
                              size=size, plot_loc=plot_loc)
-        figs.append(fig)
+        if fig:
+            figs.append(fig)
     return figs
                 
-def plot_results_dendrogram(results, rotate='oblimin', 
+def plot_results_dendrogram(results, rotate='oblimin', hierarchical_EFA=False,
                             EFA_clustering=True, title=None, size=4.6,  
                             ext='png', plot_dir=None,
                             **kwargs):
@@ -289,11 +287,27 @@ def plot_results_dendrogram(results, rotate='oblimin',
     HCA = results.HCA
     EFA = results.EFA     
     c = EFA.get_c()
-    loading = EFA.reorder_factors(EFA.get_loading(c, rotate=rotate))
     if EFA_clustering:
         inp = 'EFA%s_%s' % (c, rotate)
     else:
         inp = 'data'
+    if hierarchical_EFA or not EFA_clustering:
+        loading = EFA.reorder_factors(EFA.get_loading(c, rotate=rotate))
+    else:
+        loading = EFA.get_loading(c, rotate=rotate)
+        cluster_names = HCA.get_cluster_names(inp=inp)
+        cluster_loadings = HCA.get_cluster_loading(EFA, rotate=rotate)
+        loading_order = []
+        i = 0
+        while len(loading_order) < c and i<len(cluster_names):
+            cluster_loading = cluster_loadings[cluster_names[i]]
+            top_factor = cluster_loading.idxmax()
+            if top_factor not in loading_order:
+                loading_order.append(top_factor)
+            i+=1
+        loading_order += list(set(loading.columns)-set(loading_order))
+        loading = loading.loc[:, loading_order]
+            
     clustering = HCA.results[inp]
     name = inp
     if title is None:
@@ -309,9 +323,18 @@ def plot_results_dendrogram(results, rotate='oblimin',
                     filename=filename,
                     **kwargs)
     
+def transform_name(name):
+    """ helper function to transform names for plotting dendrogram """
+    if name == 'Decisiveness':
+        name= 'Decis.'
+    elif name == 'Response Inhibition':
+        name= 'Resp. Inhib.'
+    elif name[:2] == "NA":
+        name = ""
+    return '\n'.join(name.split())
     
 def plot_dendrogram(loading, clustering, title=None, 
-                    break_lines=True, drop_list=None,
+                    break_lines=True, drop_list=None, double_drop_list=None,
                     absolute_loading=False,  size=4.6,  dpi=300, 
                     filename=None):
     """ Plots HCA results as dendrogram with loadings underneath
@@ -322,6 +345,7 @@ def plot_dendrogram(loading, clustering, title=None,
         title (optional): str, title to plot
         break_lines: whether to separate EFA heatmap based on clusters, default=True
         drop_list (optional): list of cluster indices to drop the cluster label
+        drop_list (optional): list of cluster indices to drop the cluster label twice
         absolute_loading: whether to plot the absolute loading value, default False
         plot_dir: if set, where to save the plot
         
@@ -364,7 +388,7 @@ def plot_dendrogram(loading, clustering, title=None,
                        orientation='top')
         # change axis properties
         ax1.tick_params(axis='x', which='major', labelsize=14,
-                        labelbottom='off')
+                        labelbottom=False)
         ax1.get_yaxis().set_visible(False)
         ax1.spines['top'].set_visible(False)
         ax1.spines['right'].set_visible(False)
@@ -387,7 +411,7 @@ def plot_dendrogram(loading, clustering, title=None,
                               'ticks': [-max_val, 0, max_val]},
                     cmap=sns.diverging_palette(220,15,n=100,as_cmap=True))
         ax2.set_yticklabels(ax2.get_yticklabels(), rotation=0)
-        ax2.tick_params(axis='y', labelsize=size*heat_size[1]*30/c, pad=size/2)            
+        ax2.tick_params(axis='y', labelsize=size*heat_size[1]*30/c, pad=size/4, length=0)            
         # format cbar axis
         cbar_ax.set_yticklabels([format_num(-max_val), 0, format_num(max_val)])
         cbar_ax.tick_params(labelsize=size*heat_size[1]*25/c, length=0, pad=size/2)
@@ -406,29 +430,33 @@ def plot_dendrogram(loading, clustering, title=None,
         # **********************************
         beginnings = np.hstack([[0],np.cumsum(cluster_sizes)[:-1]])
         centers = beginnings+np.array(cluster_sizes)//2+.5
-        offset = .05
+        offset = .07
         if 'cluster_names' in clustering.keys():
-           # ax2.tick_params(axis='x', reset=True, top=False, width=size/8, length=size)
-            names = ['\n'.join(i.split()) for i in clustering['cluster_names']]
+            ax2.tick_params(axis='x', reset=True, top=False, bottom=False, width=size/8, length=0)
+            names = [transform_name(i) for i in clustering['cluster_names']]
             ax2.set_xticks(centers)
             ax2.set_xticklabels(names, rotation=0, ha='center', 
-                                fontsize=heatmap_size[2]*size*1.05)
+                                fontsize=heatmap_size[2]*size*1)
             ticks = ax2.xaxis.get_ticklines()[::2]
             for i, label in enumerate(ax2.get_xticklabels()):
-                ax2.hlines(c+offset,beginnings[i]+.5,beginnings[i]+cluster_sizes[i]-.5, 
-                           clip_on=False, color=colors[i], linewidth=size/5)
-                label.set_color(colors[i])
-                ticks[i].set_color(colors[i])
-                y_drop = .01
-                line_drop = .3
-                if drop_list and i in drop_list:
-                    y_drop = .06
-                    line_drop = 1.6
-                label.set_y(-(y_drop/heatmap_height+heatmap_height/c*offset))
-                ax2.vlines(beginnings[i]+cluster_sizes[i]/2, 
-                           c+offset, c+offset+line_drop,
-                           clip_on=False, color=colors[i], 
-                           linewidth=size/7.5)
+                if label.get_text() != '':
+                    ax2.hlines(c+offset,beginnings[i]+.5,beginnings[i]+cluster_sizes[i]-.5, 
+                               clip_on=False, color=colors[i], linewidth=size/5)
+                    label.set_color(colors[i])
+                    ticks[i].set_color(colors[i])
+                    y_drop = .005
+                    line_drop = .3
+                    if drop_list and i in drop_list:
+                        y_drop = .05
+                        line_drop = 1.6
+                    if double_drop_list and i in double_drop_list:
+                        y_drop = .1
+                        line_drop = 2.9
+                    label.set_y(-(y_drop/heatmap_height+heatmap_height/c*offset))
+                    ax2.vlines(beginnings[i]+cluster_sizes[i]/2, 
+                               c+offset, c+offset+line_drop,
+                               clip_on=False, color=colors[i], 
+                               linewidth=size/7.5)
 
         # add title
         if title:
@@ -655,27 +683,33 @@ def plot_silhouette(results, inp='data', labels=None, axes=None,
     y_lower = 5
     ax.grid(False)
     ax2.grid(linewidth=size/10)
-    for i in range(1,n_clusters+1):
+    cluster_names = HCA.get_cluster_names(inp=inp)
+    for i in range(n_clusters):
         # Aggregate the silhouette scores for samples belonging to
         # cluster i, and sort them
-        ith_cluster_silhouette_values = sample_scores[labels == i]
+        ith_cluster_silhouette_values = sample_scores[labels == i+1]
+        # skip "clusters" with one value
+        if len(ith_cluster_silhouette_values) == 1:
+            continue
         ith_cluster_silhouette_values.sort()
         size_cluster_i = ith_cluster_silhouette_values.shape[0]
         # update y range and plot
         y_upper = y_lower + size_cluster_i
         ax.fill_betweenx(np.arange(y_lower, y_upper),
                           0, ith_cluster_silhouette_values,
-                          alpha=0.7, color=colors[i-1])
+                          alpha=0.7, color=colors[i],
+                          linewidth=size/10)
         # Label the silhouette plots with their cluster numbers at the middle
-        ax.text(-0.05, y_lower + 0.25 * size_cluster_i, str(i), fontsize=size/1.6)
+        ax.text(-0.02, y_lower + 0.25 * size_cluster_i, cluster_names[i], fontsize=size/1.7, ha='right')
         # Compute the new y_lower for next plot
         y_lower = y_upper + 5  # 10 for the 0 samples
     ax.axvline(x=avg_score, color="red", linestyle="--", linewidth=size*.1)
     ax.set_xlabel('Silhouette score', fontsize=size, labelpad=5)
     ax.set_ylabel('Cluster Separated DVs', fontsize=size)
-    ax.set_yticklabels([]); ax.set_yticks([])
-    ax.tick_params(axis='x', labelsize=size*.8, pad=size/2)
-    ax.set_title('Dynamic tree cut', fontsize=size*1.2)
+    ax.tick_params(pad=size/4, length=size/4, labelsize=size*.8, 
+                   left=False, labelleft=False)
+    ax.set_title('Dynamic tree cut', fontsize=size*1.2, y=1.02)
+    ax.set_xlim(-1, 1)
     # plot silhouettes for constant thresholds
     _, scores, _ = get_constant_height_labels(clustering)
     ax2.plot(*zip(*scores), 'o', color='b', 
@@ -691,8 +725,8 @@ def plot_silhouette(results, inp='data', labels=None, axes=None,
     ax2.xaxis.set_major_locator(MaxNLocator(integer=True))
     ax2.set_xlabel('Number of clusters', fontsize=size)
     ax2.set_ylabel('Average Silhouette Score', fontsize=size)
-    ax2.set_title('Single cut height', fontsize=size*1.2)
-    ax2.tick_params(labelsize=size*.8, pad=size/2)
+    ax2.set_title('Single cut height', fontsize=size*1.2, y=1.02)
+    ax2.tick_params(labelsize=size*.8, pad=size/4, length=size/4)
     ax2.legend(loc='center right', fontsize=size*.8)
     plt.subplots_adjust(wspace=.3)
     if plot_dir is not None:
@@ -787,12 +821,13 @@ def plot_cluster_sankey(results):
         print("Plotly wasn't found, can't plot!")
     
 
-def plot_HCA(results, plot_dir, rotate='oblimin', drop_list=None,
-             size=10, dpi=300, verbose=False, ext='png'):
-    plot_rotate_dir = path.join(plot_dir, rotate)
+def plot_HCA(results, plot_dir=None, rotate='oblimin', 
+             size=10, dpi=300, verbose=False, ext='png', **dendrogram_kws):
+    if plot_dir:
+        plot_rotate_dir = path.join(plot_dir, rotate)
+    else:
+        plot_rotate_dir = None
     c = results.EFA.get_c()
-    if drop_list is None:
-        drop_list = list(range(0,40,2))
     # plots, woo
 #    if verbose: print("Plotting dendrogram heatmaps")
 #    plot_clusterings(results, inp='data', plot_dir=plot_dir, verbose=verbose, ext=ext)
@@ -802,9 +837,9 @@ def plot_HCA(results, plot_dir, rotate='oblimin', drop_list=None,
                         title=False,  plot_dir=plot_dir, 
                         size=size, ext=ext, dpi=dpi)
     plot_results_dendrogram(results, rotate=rotate, EFA_clustering=True,
-                        drop_list = drop_list,
                         title=False, plot_dir=plot_rotate_dir, 
-                        size=size, ext=ext, dpi=dpi)
+                        size=size, ext=ext, dpi=dpi,
+                        **dendrogram_kws)
     if verbose: print("Plotting dendrogram subbranches")
     plot_subbranches(results, rotate=rotate,  EFA_clustering=False,
                      size=size/2, plot_dir=plot_dir, ext=ext, dpi=dpi)

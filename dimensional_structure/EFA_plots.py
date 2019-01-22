@@ -30,8 +30,8 @@ def plot_BIC_SABIC(results, size=2.3, dpi=300, ext='png', plot_dir=None):
     # Plot BIC and SABIC curves
     colors = ['c', 'm']
     with sns.axes_style('white'):
-        x = list(EFA.results['cscores_metric-BIC'].keys())
         fig, ax1 = plt.subplots(1,1, figsize=(size, size*.75))
+        x = sorted(list(EFA.results['cscores_metric-BIC'].keys()))
         # BIC
         BIC_scores = [EFA.results['cscores_metric-BIC'][i] for i in x]
         BIC_c = EFA.results['c_metric-BIC']
@@ -77,6 +77,22 @@ def get_communality(EFA, rotate='oblimin', c=None):
     communality.name = "communality"
     return communality
 
+def get_adjusted_communality(communality, retest_data, retest_threshold=.2):
+    # noise ceiling
+    noise_ceiling = retest_data.pearson
+    # remove very low reliabilities
+    if retest_threshold:
+        noise_ceiling[noise_ceiling<retest_threshold]= np.nan
+    # adjust
+    adjusted_communality = communality/noise_ceiling
+    # correlation
+    correlation = pd.concat([communality, noise_ceiling], axis=1).corr().iloc[0,1]
+    kept_vars = np.logical_not(noise_ceiling.isnull())
+    noise_ceiling = noise_ceiling[kept_vars]
+    communality = communality[kept_vars]
+    adjusted_communality = adjusted_communality[kept_vars]
+    return adjusted_communality, correlation, noise_ceiling
+    
 def plot_communality(results, c, rotate='oblimin', retest_threshold=.2,
                      size=4.6, dpi=300, ext='png', plot_dir=None):
     EFA = results.EFA
@@ -93,19 +109,10 @@ def plot_communality(results, c, rotate='oblimin', retest_threshold=.2,
     communality.index = format_variable_names(communality.index)
     retest_data.index = format_variable_names(retest_data.index)
     if len(retest_data) > 0:
-        # noise ceiling
-        noise_ceiling = retest_data.pearson
-        # remove very low reliabilities
-        if retest_threshold:
-            noise_ceiling[noise_ceiling<retest_threshold]= np.nan
-        # adjust
-        adjusted_communality = communality/noise_ceiling
-        # correlation
-        correlation = pd.concat([communality, noise_ceiling], axis=1).corr().iloc[0,1]
-        kept_vars = np.logical_not(noise_ceiling.isnull())
-        noise_ceiling = noise_ceiling[kept_vars]
-        communality = communality[kept_vars]
-        adjusted_communality = adjusted_communality[kept_vars]
+        adjusted_communality,correlation, noise_ceiling = \
+                get_adjusted_communality(communality, 
+                                         retest_data,
+                                         retest_threshold)
         
     # plot communality bars woo!
     if len(retest_data)>0:
@@ -348,7 +355,7 @@ def plot_bar_factors(results, c, size=4.6, thresh=75, rotate='oblimin',
         flattened_factor_order += sublist
     loadings = loadings.loc[flattened_factor_order]
     # bootstrap CI
-    bootstrap_CI = EFA.get_boot_stats(c)
+    bootstrap_CI = EFA.get_boot_stats(c, rotate=rotate)
     if bootstrap_CI is not None:
         bootstrap_CI = bootstrap_CI['sds'] * 1.96
         bootstrap_CI = bootstrap_CI.loc[flattened_factor_order]
@@ -423,8 +430,8 @@ def plot_heatmap_factors(results, c, size=4.6, thresh=75, rotate='oblimin',
         EFA = results.DA
     else:
         EFA = results.EFA
-    loading = EFA.get_loading(c, rotate=rotate)
-    loadings = EFA.reorder_factors(loading, rotate=rotate)           
+    loadings = EFA.get_loading(c, rotate=rotate)
+    loadings = EFA.reorder_factors(loadings, rotate=rotate)           
     grouping = get_factor_groups(loadings)
     flattened_factor_order = []
     for sublist in [i[1] for i in grouping]:
@@ -655,10 +662,11 @@ def plot_DDM(results, c, rotate='oblimin',
 
 
         
-def plot_EFA(results, plot_dir, rotate='oblimin', 
+def plot_EFA(results, plot_dir=None, rotate='oblimin', 
              verbose=False, size=4.6, dpi=300, ext='png',
              plot_task_kws={}):
-    plot_dir = path.join(plot_dir, rotate)
+    if plot_dir:
+        plot_dir = path.join(plot_dir, rotate)
     c = results.EFA.get_c()
     #if verbose: print("Plotting BIC/SABIC")
     #plot_BIC_SABIC(EFA, plot_dir)
@@ -676,7 +684,3 @@ def plot_EFA(results, plot_dir, rotate='oblimin',
     if rotate == 'oblimin':
         if verbose: print("Plotting factor correlations")
         plot_factor_correlation(results, c, rotate=rotate, title=False, plot_dir=plot_dir, dpi=dpi,  ext=ext)
-    if verbose: print("Plotting DDM factors")
-    if 'task' in results.ID:
-        plot_DDM(results, c, rotate=rotate, plot_dir=plot_dir, dpi=dpi,  ext=ext)
-    

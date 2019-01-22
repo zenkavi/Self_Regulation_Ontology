@@ -1,5 +1,4 @@
 from collections import OrderedDict as odict
-from dynamicTreeCut import cutreeHybrid
 import fancyimpute
 import functools
 from itertools import combinations
@@ -17,7 +16,8 @@ from sklearn.preprocessing import StandardScaler, scale
 
 from selfregulation.utils.data_preparation_utils import (remove_outliers, 
                                                          transform_remove_skew)
-from selfregulation.utils.r_to_py_utils import get_attr, missForest, psychFA
+from selfregulation.utils.r_to_py_utils import (get_attr, dynamicTreeCut, 
+                                                missForest, psychFA)
 
 def set_seed(seed):
     def seeded_fun_decorator(fun):
@@ -40,7 +40,7 @@ class Imputer(object):
             self.imputer = imputer(verbose=False)
         
     def transform(self, X):
-        transformed = self.imputer.complete(X)
+        transformed = self.imputer.fit_transform(X)
         return transformed
     
     def fit(self, X, y=None):
@@ -104,14 +104,14 @@ def shorten_labels(labels, conversions={}):
 # ****************************************************************************
 # helper functions for hierarchical clustering
 # ****************************************************************************
-def reorder_labels(labels, linkage):
+def reorder_labels(labels, link):
     """ reorder labels based on a linkage matrix
     
     reorder labels based on dendrogram position
     reindex so the clusters are in order based on their proximity
     in the dendrogram
     """
-    reorder_vec = leaves_list(linkage)
+    reorder_vec = leaves_list(link)
     cluster_swap = {}
     last_group = 1
     for i in labels[reorder_vec]:
@@ -122,7 +122,8 @@ def reorder_labels(labels, linkage):
     return cluster_reindex
     
 def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None, 
-                         method='average', cluster_kws=None):
+                         method='average', min_cluster_size=3,
+                         cluster_kws=None):
     """
     plot hierarchical clustering and heatmap
     :df: a correlation matrix
@@ -150,21 +151,23 @@ def hierarchical_cluster(df, compute_dist=True,  pdist_kws=None,
         assert df.shape[0] == df.shape[1]
         dist_df = df
         dist_vec = squareform(df.values)
-    #clustering
+    #clustering. This works the same as hclust
     link = linkage(dist_vec, method=method)    
     #dendrogram
+    # same as order.dendrogram(as.dendrogram(hclust output)) in R
     reorder_vec = leaves_list(link)
     clustered_df = dist_df.iloc[reorder_vec, reorder_vec]
     # clustering
     if cluster_kws is None:
-        cluster_kws = {'minClusterSize': 3}
-    clustering = cutreeHybrid(link, dist_vec, **cluster_kws)
-    labels = reorder_labels(clustering['labels'], link)
+        cluster_kws = {'minClusterSize': 3,
+                       'verbose': 0,
+                       'pamStage': False}
+    labels = dynamicTreeCut(dist_df, func='hybrid', method=method,  **cluster_kws)
+    labels = reorder_labels(labels, link)
     return {'linkage': link, 
             'distance_df': dist_df, 
             'clustered_df': clustered_df,
             'reorder_vec': reorder_vec,
-            'clustering': clustering,
             'labels': labels}
 
 def silhouette_analysis(clustering, labels=None):
@@ -452,16 +455,16 @@ def transfer_scores(data, results, rotate='oblimin'):
     ref_data = results.data
     EFA = results.EFA
     c = EFA.results['num_factors']
-    loadings = EFA.get_loading(c=c)
+    loadings = EFA.get_loading(c=c, rotate=rotate)
     # transform data
     positive_skewed = [i.replace('.logTr', '') for i in ref_data.columns if ".logTr" in i]
     negative_skewed = [i.replace('.ReflogTr', '') for i in ref_data.columns if ".ReflogTr" in i]
     DVs = [i.replace('.logTr','').replace('.ReflogTr','') for i in ref_data.columns]
     data = data.loc[:, DVs]
-    data = remove_outliers(data)
     data = transform_remove_skew(data,
                                  positive_skewed=positive_skewed,
                                  negative_skewed=negative_skewed)
+    data = remove_outliers(data)
     data_imputed, error = missForest(data)
     subset = data_imputed.loc[:, loadings.index]
     scaled_data = scale(subset)
@@ -483,10 +486,9 @@ def residualize_baseline(df, baseline_vars=[]):
     baseline=df[baseline_vars]
     data=df.copy()
     data.drop(baseline_vars, axis=1, inplace=True)
-    #x=SimpleFill().complete(baseline)
     lr=LinearRegression()
     if data.isnull().sum().sum() > 0:
-        imputed = SimpleFill().complete(data)
+        imputed = SimpleFill().fit_transform(data)
         data = pd.DataFrame(imputed, 
                             index=data.index, 
                             columns=data.columns)

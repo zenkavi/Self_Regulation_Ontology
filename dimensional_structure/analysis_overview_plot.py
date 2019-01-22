@@ -18,7 +18,7 @@ from selfregulation.utils.utils import get_info, get_recent_dataset
 parser = argparse.ArgumentParser()
 parser.add_argument('-dataset', default=None)
 parser.add_argument('-dpi', type=int, default=300)
-parser.add_argument('-size', type=float, default=4.6)
+parser.add_argument('-size', type=float, default=15)
 parser.add_argument('-ext', default='pdf')
 parser.add_argument('-plot_file', default=None)
 parser.add_argument('-cluster_color', action='store_true')
@@ -66,8 +66,8 @@ with sns.axes_style("white"):
     participant_ax1 = f.add_axes([.25,.555,.28,.16]) 
     participant_ax2 = f.add_axes([.25,.75,.28,.2]) 
     
-    loading_ax1 = f.add_axes([.625,.555,.25,.1625]) 
-    loading_ax2 = f.add_axes([.625,.753,.25,.193]) 
+    loading_ax1 = f.add_axes([.6,.545,.25,.1625]) 
+    loading_ax2 = f.add_axes([.6,.743,.25,.193]) 
     
     participant_distance = f.add_axes([.3,.29,.16,.16]) 
     loading_distance = f.add_axes([.675,.29,.16,.16]) 
@@ -75,7 +75,7 @@ with sns.axes_style("white"):
     participant_mds = f.add_axes([.25,-.02,.25,.25]) 
     loading_mds = f.add_axes([.625,-.02,.25,.25]) 
     # color bars for heatmaps
-    cbar_ax = f.add_axes([.92,.595,.03,.3]) 
+    cbar_ax = f.add_axes([.88,.595,.03,.3]) 
     cbar_ax2 = f.add_axes([.86,.31,.02,.12]) 
     # set background
     back = f.add_axes([0,0,1,1])
@@ -105,7 +105,7 @@ for task_i in range(len(tasks)):
             name = 'SSRT'
         tick_names.append(name)
         tick_colors.append(color)
-        plot_vals = scale(vals[20:40])*.25+i*1.5
+        plot_vals = scale(vals[20:40].values)*.25+i*1.5
         # add mean line
         ax.hlines(i*1.5, 0, len(plot_vals)*.8, alpha=.6,
                   linestyle='--', color=color,
@@ -136,6 +136,11 @@ for task_i in range(len(tasks)):
     # *************************************************************************
     max_val = round(abs(task_subset).max().max(),1)
     loading_data = task_subset.filter(regex=tasks[task_i], axis=0)
+    # for visualization purposes remove "reflections" from loading matrix
+    # by multiplying by -1
+    reflects = [-1 if 'ReflogTr' in i else 1 for i in loading_data.index]
+    loading_data = loading_data.multiply(reflects, axis=0)
+    # plot loadings
     sns.heatmap(loading_data.iloc[::-1,:], ax=loading_axes[task_i], 
                 yticklabels=False, xticklabels=False,
                 linecolor='white', linewidth=basewidth,
@@ -149,12 +154,12 @@ for task_i in range(len(tasks)):
     for i in range(1,loading_data.shape[0]+1):
         #loading_axes[task_i].hlines(i, -.2, 6.1, color='white', linewidth=basewidth*3)
         loading_axes[task_i].add_patch(Rectangle([-.1,i-.2], 
-                    width=5.2, height=.2, zorder=100,
+                    width=loading_data.shape[1]+.2, height=.2, zorder=100,
                     facecolor='white', edgecolor='white', 
                     linewidth=basewidth, clip_on=False))
     # add boxes
-    for i, t in enumerate(tick_names[::-1]):
-        box_color = tick_colors[i]
+    for i in range(len(tick_names)):
+        box_color = tick_colors[len(tick_names)-(i+1)]
         box_pos = [-.15, i+.2]
         loading_axes[task_i].add_patch(Rectangle(box_pos, 
                     width=.15, height=.4, zorder=100,
@@ -173,11 +178,11 @@ participant_distances = results['task'].HCA.results['data']['clustered_df']
 loading_distances = results['task'].HCA.results['EFA5_oblimin']['clustered_df']
 sns.heatmap(participant_distances, ax=participant_distance,
             cmap=ListedColormap(sns.color_palette('gray', n_colors=100)),
-            xticklabels=False, yticklabels=False, square=True, cbar=False)
+            xticklabels=False, yticklabels=False, square=True, cbar=False, linewidth=0)
 sns.heatmap(loading_distances, ax=loading_distance,
             xticklabels=False, yticklabels=False, square=True, 
             cmap=ListedColormap(sns.color_palette('gray', n_colors=100)),
-            cbar_kws={'ticks': [0, .99]}, cbar_ax=cbar_ax2)
+            cbar_kws={'ticks': [0, .99]}, cbar_ax=cbar_ax2, linewidth=0)
 participant_distance.set_ylabel('DV', fontsize=basefont)
 loading_distance.set_ylabel('DV', fontsize=basefont)
 participant_distance.set_title(r'$\vec{DV}\in \mathrm{\mathbb{R}}^{522}$', fontsize=basefont)
@@ -260,7 +265,7 @@ else:
     mds_index = range(len(mds_colors))
     
 # plot raw MDS
-np.random.seed(700)
+np.random.seed(2000)
 mds = MDS(dissimilarity='precomputed')
 mds_out = mds.fit_transform(participant_distances)
 participant_mds.scatter(mds_out[mds_index,0], mds_out[mds_index,1], 
@@ -381,7 +386,7 @@ cbar_ax2.set_ylabel('Distance', rotation=-90, fontsize=basefont, labelpad=basefo
 back.text(.375, .535, 'Participants (n=522)', fontsize=basefont, horizontalalignment='center')
 
 # loading ticks
-loading_ax2.tick_params('x', length=basewidth*2, which='major', pad=basefont*.5)
+loading_ax2.tick_params('x', length=basewidth*2, width=basewidth, which='major', pad=basefont*.5)
 loading_ax2.xaxis.set_ticks_position('top')
 loading_ax2.set_xticks(np.arange(.5,5.5,1))
 loading_ax2.set_xticklabels(['Factor %s' % i for i in range(1,nfactors+1)],
@@ -394,7 +399,7 @@ back.text(.3385, .96, 'One Participant', fontsize=basefont,
 
 
 # legend for mds
-back.text(.13, .18, 'All Task DVs (130)', fontsize=basefont, 
+back.text(.13, .18, 'All Task DVs (%s)' % loading_distances.shape[0], fontsize=basefont, 
           horizontalalignment='center')
 back.text(.13, .15, 'Threshold', fontsize=basefont, 
           horizontalalignment='center', color=get_var_color('thresh'))
@@ -427,9 +432,9 @@ back.arrow(.05,.87,.08,-.045, width=basewidth/1000, color=arrowcolor)
 back.arrow(.05,.87,.1,-.075, width=basewidth/1000, color=arrowcolor)
 
 # from participant to EFA
-back.arrow(.53, .725, .05, 0, width=basewidth/200, head_width=basewidth/50, 
+back.arrow(.5, .725, .05, 0, width=basewidth/200, head_width=basewidth/75, 
            facecolor='k')
-back.text(.55, .735, 'EFA', fontsize=basefont, 
+back.text(.52, .735, 'EFA', fontsize=basefont, 
           horizontalalignment='center')
 # from data to heatmap
 back.arrow(.375, .514, 0, -.01, width=basewidth/250, head_width=basewidth/125,
@@ -458,6 +463,7 @@ back.text(.25, .49, 'D', fontsize=basefont*1.56255, fontweight='bold')
 back.text(.85, .49, 'E', fontsize=basefont*1.56255, fontweight='bold')
 back.text(.25, .24, 'F', fontsize=basefont*1.56255, fontweight='bold')
 back.text(.85, .24, 'G', fontsize=basefont*1.56255, fontweight='bold')
+
 
 # save
 f.savefig(path.join(plot_file, 'analysis_overview.%s' % ext), 

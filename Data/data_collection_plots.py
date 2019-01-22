@@ -94,7 +94,7 @@ def plot_retest_data(retest_data, size=4.6, save_dir=None):
     # plot boxes
     with sns.axes_style('white'):
         box_ax = f.add_axes([.15,.1,.8,.5]) 
-        sns.boxplot(x='icc', y='Measure Category', ax=box_ax, data=retest_data,
+        sns.boxplot(x='icc3.k', y='Measure Category', ax=box_ax, data=retest_data,
                     palette={'Survey': colors[0], 'Task': colors[1]}, saturation=1,
                     width=.5, linewidth=size/4)
     box_ax.text(0, 1, '%s Task measures' % Task_N, color=colors[1], fontsize=size*2)
@@ -108,17 +108,17 @@ def plot_retest_data(retest_data, size=4.6, save_dir=None):
     dist_ax.set_xticklabels('')
     dist_ax.tick_params(length=0)
     for i, (name, g) in enumerate(retest_data.groupby('Measure Category')):
-        sns.kdeplot(g['icc'], color=colors[i], ax=dist_ax, linewidth=size/3, 
+        sns.kdeplot(g['icc3.k'], color=colors[i], ax=dist_ax, linewidth=size/3, 
                     shade=True, legend=False)
     dist_ax.set_ylim((0, dist_ax.get_ylim()[1]))
     dist_ax.axis('off')
     if save_dir:
-        plt.savefig(save_dir, dpi=dpi)
+        plt.savefig(save_dir, dpi=dpi, bbox_inches='tight')
 
 save_dir = path.join(base_dir, 'Results', 'data_collection', 'Plots', 'ICC_distplot.%s' % ext)
 size=4.6
 plot_retest_data(retest_data, size, save_dir)
 
 # also save to psych ontology folder
-paper_dir = path.join(base_dir, 'Results', 'Psych_Ontology_Paper', 'Plots', 'FigS01: test-retest.%s' % ext)
+paper_dir = path.join(base_dir, 'Results', 'Psych_Ontology_Paper', 'Plots', 'FigS01_test-retest.%s' % ext)
 copyfile(save_dir, paper_dir)

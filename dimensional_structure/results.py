@@ -1,6 +1,7 @@
 # Defines Results and Analysis Classes to run on subsets of data
 
 # imports
+from collections import OrderedDict as odict
 import glob
 from os import makedirs, path
 import pandas as pd
@@ -375,7 +376,7 @@ class HCA_Analysis():
                                       pdist_kws={'metric': dist_metric})
         self.results['data%s' % label_append] = output
         
-    def cluster_EFA(self, EFA, c, dist_metric=None, 
+    def cluster_EFA(self, EFA, c, dist_metric=None, min_cluster_size=3,
                     method='average', rotate='oblimin'):
         if dist_metric is None:
             dist_metric = self.dist_metric
@@ -384,6 +385,7 @@ class HCA_Analysis():
             label_append = '_dist-%s' % dist_metric
         loading = EFA.get_loading(c, rotate=rotate)
         output = hierarchical_cluster(loading, method=method,
+                                      min_cluster_size=min_cluster_size,
                                       pdist_kws={'metric': dist_metric})
         self.results['EFA%s_%s%s' % (c, rotate, label_append)] = output
         
@@ -395,8 +397,10 @@ class HCA_Analysis():
         cluster_labels = cluster['labels'][reorder_vec]
         cluster_DVs= [[DVs[i] for i,index in enumerate(cluster_labels) \
                            if index == j] for j in np.unique(cluster_labels)]
-        cluster_DVs = {n:dv for n,dv in zip(names, cluster_DVs)}
-        return cluster_DVs
+        cluster_DVs_dict = odict()
+        for name, dv in zip(names, cluster_DVs):
+            cluster_DVs_dict[name] = dv
+        return cluster_DVs_dict
     
     def build_graphs(self, inp, graph_data):
         """ Build graphs from clusters from HCA analysis
@@ -425,7 +429,7 @@ class HCA_Analysis():
             c = EFA.get_c()
         inp = 'EFA%s_%s' % (c, rotate)
         cluster_labels = self.get_cluster_DVs(inp)
-        cluster_loadings = {}
+        cluster_loadings = odict({})
         for name, cluster in cluster_labels.items():
             subset = abs(EFA.get_loading(c, rotate=rotate).loc[cluster,:])
             cluster_vec = subset.mean(0)
@@ -450,10 +454,10 @@ class HCA_Analysis():
         return graph_vars
     
     def name_clusters(self, names, inp):
-        cluster_labels = self.results['%s' % inp]['labels']
+        cluster_labels = self.results[inp]['labels']
         num_clusters = np.max(cluster_labels)
         assert len(names) == num_clusters
-        self.results['%s' % inp]['cluster_names'] = names
+        self.results[inp]['cluster_names'] = names
         
     def run(self, data, EFA, cluster_EFA=False, rotate='oblimin',
             run_graphs=False, verbose=False):

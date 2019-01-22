@@ -15,7 +15,7 @@ def reorder_FA(ref_FA, new_FA, thresh=.9):
     """ Reorder FA to correspond to old FA, and check that there is such a correspondence"""
     c = len(ref_FA.columns)
     corr = pd.concat([ref_FA, new_FA], axis=1, sort=False).corr().iloc[c:, :c]
-    new_FA = new_FA.loc[:,corr.idxmax()]
+    new_FA = new_FA.loc[:,abs(corr).idxmax()]
     new_FA.columns = ref_FA.columns
     # if the correlation is low, the factors are completely off
     if corr.max().min() < thresh:

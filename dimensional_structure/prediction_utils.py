@@ -90,6 +90,10 @@ def run_group_prediction(all_results, shuffle=False, classifier='lasso',
     if include_raw_demographics:
         targets.append(('demo_raw', tmp_results.demographics))
     out = {}
+    if shuffle is False:
+        shuffle_flag = '_'
+    else:
+        shuffle_flag = '_shuffled_'
     for target_name, target in targets:
         predictors = ('EFA_%s_%s' % (name, rotate), factor_scores)
         # predicting using best EFA
@@ -97,7 +101,7 @@ def run_group_prediction(all_results, shuffle=False, classifier='lasso',
         prediction = run_prediction(predictors[1], 
                         target, 
                         output_dir,
-                        outfile='%s_%s_prediction' % (predictors[0], target_name), 
+                        outfile='%s_%s%sprediction' % (predictors[0], target_name, shuffle_flag), 
                         shuffle=shuffle,
                         classifier=classifier, 
                         verbose=verbose, 
@@ -111,7 +115,7 @@ def print_group_prediction(prediction_loc):
         files.sort(key=os.path.getmtime)
         out = pickle.load(open(files[-1], 'rb'))['data']
         print(classifier)
-        keys = ['Binge Drinking', 'Problem Drinking', 'Unsafe Drinking',
+        keys = ['Binge Drinking', 'Problem Drinking',
                 'Drug Use', 'Lifetime Smoking', 'Daily Smoking', 
                 'Mental Health', 'Obesity', 'Income / Life Milestones']
         for key in keys:

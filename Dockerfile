@@ -13,6 +13,7 @@ RUN cd R-3.4.2 && ./configure --enable-R-shlib=yes && make && make install
 RUN echo 'install.packages(c( \
   "doParallel", \
   "dplyr", \
+  "dynamicTreeCut", \
   "foreach", \
   "iterators", \
   "glmnet", \
@@ -66,7 +67,7 @@ ENV IPYTHONDIR /tmp
 RUN pip install \
     git+https://github.com/IanEisenberg/expfactory-analysis#8316442e55ab6ce1031bc9f92148dae0283cfa9a \
     cvxpy==0.4.11 \
-    fancyimpute==0.3.1 \
+    fancyimpute==0.4.2 \
     joblib==0.11 \
     multiprocess==0.70.05 \
     rpy2==2.8.5

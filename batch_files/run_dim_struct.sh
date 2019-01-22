@@ -3,7 +3,7 @@ flag=$1
 
 for subset in task survey
 do
-    if [ $flag == "NONE" ]; then
+    if [ ${flag}=="NONE" ]; then
         # first run the subset without classification
         sed  -e "s/{SUBSET}/$subset/g" -e "s/{CLASSIFIER}/NONE/g" dimensional_structure.batch | sbatch
     else
