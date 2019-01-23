@@ -481,7 +481,7 @@ def plot_factor_fingerprint(results, classifier='ridge', rotate='oblimin',
                              xticklabels=True,
                              title=factor,
                              label_size=size*1.2,
-                             label_scale=.17,
+                             label_scale=.2,
                              color=colors[0],
                              ymax=math.ceil(np.max(importances)*10)/10)
     
