@@ -101,7 +101,9 @@ def plot_retest_data(retest_data, size=4.6, save_dir=None):
     box_ax.text(0, 1.2, '%s Survey measures' % Survey_N, color=colors[0], fontsize=size*2)
     box_ax.set_ylabel('Measure category', fontsize=size*2, labelpad=size)
     box_ax.set_xlabel('Intraclass correlation coefficient', fontsize=size*2, labelpad=size)
-    box_ax.tick_params(labelsize=size*1.5, pad=size)
+    box_ax.tick_params(labelsize=size*1.5, pad=size, length=2)
+    [i.set_linewidth(size/5) for i in box_ax.spines.values()]
+
     # plot distributions
     dist_ax = f.add_axes([.15,.6,.8,.4]) 
     dist_ax.set_xlim(*box_ax.get_xlim())

@@ -112,6 +112,7 @@ def run_group_prediction(all_results, shuffle=False, classifier='lasso',
 def print_group_prediction(prediction_loc):
     for classifier in ['ridge', 'lasso', 'rf', 'svm']:
         files = glob.glob(os.path.join(prediction_loc, '*task_survey*%s*' % classifier))
+        files = [f for f in files if 'shuffle' not in f]
         files.sort(key=os.path.getmtime)
         out = pickle.load(open(files[-1], 'rb'))['data']
         print(classifier)
