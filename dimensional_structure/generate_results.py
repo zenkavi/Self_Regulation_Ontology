@@ -19,7 +19,7 @@ parser.add_argument('-classifiers', nargs='+', default=['lasso', 'ridge',  'svm'
 parser.add_argument('-plot_backend', default=None)
 parser.add_argument('-dpi', type=int, default=300)
 parser.add_argument('-size', type=int, default=4.6)
-parser.add_argument('-ext', default='eps')
+parser.add_argument('-ext', default='pdf')
 parser.add_argument('-quiet', action='store_false')
 args = parser.parse_args()
 
@@ -107,7 +107,7 @@ demographic_factor_names = ['Drug Use',
                                       
 subsets = [{'name': 'task', 
             'regex': 'task',
-            'oblimin_cluster_names': ['State Flexibility',
+            'oblimin_cluster_names': ['Shifting',
                                       'Information Processing',
                                       'Conflict Processing',
                                       'Speeded Information Processing',
@@ -115,13 +115,13 @@ subsets = [{'name': 'task',
                                       'Caution',
                                       'NA1',
                                       'Perc/Resp',
-                                      'Control-Related Perc/Resp',
-                                      'Updated-Related Perc/Resp',
+                                      'Inhibition-Related Perc/Resp',
                                       'NA2',
+                                      'NA3',
                                       'Discounting',
                                       'Cold/Model-Based',
-                                      'NA3',
                                       'NA4',
+                                      'NA5',
                                       'Hot/Model-Free'],
             'oblimin_factor_names': ['Speeded IP', 'Strategic IP', 
                                      'Perc / Resp','Caution', 
@@ -300,7 +300,7 @@ for subset in subsets:
                             size=size, dpi=dpi, ext=ext)
             # Plot HCA
             if verbose: print("** Plotting HCA %s **" % rotate)
-            drop_list = {('task', 'oblimin'): ([1,5,9,12,15],[2,4,6,8,14]) ,
+            drop_list = {('task', 'oblimin'): ([1,5,8,9,12,15],[2,4,6,14]) ,
                          ('survey', 'oblimin'): ([0,2,4,6,8,10], None)}
             drop1, drop2 = drop_list.get((name, rotate), (None, None))
             plot_HCA(results, HCA_plot_dir, rotate=rotate,
