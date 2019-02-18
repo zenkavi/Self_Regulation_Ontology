@@ -26,35 +26,6 @@ def tril(square):
     indices = np.tril_indices_from(square, -1)
     return square[indices]
     
-# EFA robustness
-# Check to see how sensitive the EFA solution is to any single measure
-results = load_results(get_recent_dataset())
-for result in results.values():
-    output_dir = result.get_output_dir()
-    c = result.EFA.get_c()
-    orig_loadings = result.EFA.get_loading(c=c)
-    measures = np.unique([c.split('.')[0] for c in result.data.columns])
-    # drop a single measure
-    factor_correlations = {}
-    for measure in measures:
-        data = result.data
-        new_loadings = drop_EFA(data, [measure], c)
-        new_loadings = reorder_FA(orig_loadings.loc[new_loadings.index], 
-                                  new_loadings, thresh=-1)
-        
-        corr = pd.concat([new_loadings, orig_loadings], axis=1, sort=False) \
-                .corr().iloc[:c, c:]
-        diag = {c:abs(i) for c,i in zip(new_loadings.columns, np.diag(corr))}
-        factor_correlations[measure] = diag
-
-    
-    # save pair factor correlations
-    save_file = path.join(output_dir, 'EFAdrop_robustness.pkl')
-    to_save = factor_correlations
-    pickle.dump(to_save, open(save_file, 'wb'))
-
-
-
 
 class ConsensusCluster():
     def __init__(self, results, percent_vars=1,
@@ -95,7 +66,11 @@ class ConsensusCluster():
             labels[index] = tmp_labels[i]
             
         cooccurence = self.convert_cooccurence(labels)
-        score = adjusted_mutual_info_score(self.orig_clustering['labels'],labels)
+        # calculated AMI scores ignoring nan
+        orig = self.orig_clustering['labels']
+        sim = labels
+        not_nans = np.logical_not(np.isnan(sim))
+        score = adjusted_mutual_info_score(orig[not_nans], sim[not_nans])
         self.AMI_scores.append(score)
         return cooccurence
     
@@ -186,17 +161,46 @@ class ConsensusCluster():
         return nearest_clusters, nearest_DVs
     
 
-# cluster robustness
-# simulate based on EFA bootstraps and dropping variables
-output_dir = results['task'].get_output_dir()
-save_file = path.join(output_dir, 'cluster_robustness.pkl')
-sim_reps = 5000
-for name, result in results.items():
-    consensusClust = ConsensusCluster(result, percent_vars=.8)
-    consensusClust.calc_consensus_cluster(sim_reps)
-    print(consensusClust.compare_clusters())
-    relative_cooccurence = consensusClust.evaluate_relative_cooccurence()
-
-    # saving
-    pickle.dump({'consensusClust': consensusClust}, 
-        open(save_file, 'wb'))
+if __name__ == '__main__':
+    # EFA robustness
+    # Check to see how sensitive the EFA solution is to any single measure
+    results = load_results(get_recent_dataset())
+    for result in results.values():
+        output_dir = result.get_output_dir()
+        c = result.EFA.get_c()
+        orig_loadings = result.EFA.get_loading(c=c)
+        measures = np.unique([c.split('.')[0] for c in result.data.columns])
+        # drop a single measure
+        factor_correlations = {}
+        for measure in measures:
+            data = result.data
+            new_loadings = drop_EFA(data, [measure], c)
+            new_loadings = reorder_FA(orig_loadings.loc[new_loadings.index], 
+                                      new_loadings, thresh=-1)
+            
+            corr = pd.concat([new_loadings, orig_loadings], axis=1, sort=False) \
+                    .corr().iloc[:c, c:]
+            diag = {c:abs(i) for c,i in zip(new_loadings.columns, np.diag(corr))}
+            factor_correlations[measure] = diag
+    
+        
+        # save pair factor correlations
+        save_file = path.join(output_dir, 'EFAdrop_robustness.pkl')
+        to_save = factor_correlations
+        pickle.dump(to_save, open(save_file, 'wb'))
+    
+    
+    # cluster robustness
+    # simulate based on EFA bootstraps and dropping variables
+    sim_reps = 5000
+    for name, result in results.items():
+        output_dir = result.get_output_dir()
+        save_file = path.join(output_dir, 'cluster_robustness.pkl')
+        consensusClust = ConsensusCluster(result, percent_vars=.8)
+        consensusClust.calc_consensus_cluster(sim_reps)
+        print(consensusClust.compare_clusters())
+        relative_cooccurence = consensusClust.evaluate_relative_cooccurence()
+    
+        # saving
+        pickle.dump({'consensusClust': consensusClust}, 
+            open(save_file, 'wb'))

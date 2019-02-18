@@ -608,7 +608,7 @@ def transform_remove_skew(data, threshold=1,
     successful_transforms = positive_subset.loc[:,abs(positive_tmp.skew())<threshold]
     if verbose:
         print('*'*40)
-        print('** Successfully transformed %s negatively skewed variables:' % len(successful_transforms.columns))
+        print('** Successfully transformed %s positively skewed variables:' % len(successful_transforms.columns))
         print('\n'.join(successful_transforms.columns))
         print('*'*40)
     dropped_vars = set(positive_subset)-set(successful_transforms)

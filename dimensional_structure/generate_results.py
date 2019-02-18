@@ -19,7 +19,7 @@ parser.add_argument('-classifiers', nargs='+', default=['lasso', 'ridge',  'svm'
 parser.add_argument('-plot_backend', default=None)
 parser.add_argument('-dpi', type=int, default=300)
 parser.add_argument('-size', type=int, default=4.6)
-parser.add_argument('-ext', default='eps')
+parser.add_argument('-ext', default='pdf')
 parser.add_argument('-quiet', action='store_false')
 args = parser.parse_args()
 
@@ -45,7 +45,7 @@ if args.plot_backend:
 # imports
 from glob import glob
 import numpy as np
-from os import makedirs, path
+from os import makedirs, path, remove
 import pickle
 import random
 from shutil import copyfile, copytree, rmtree
@@ -107,22 +107,21 @@ demographic_factor_names = ['Drug Use',
                                       
 subsets = [{'name': 'task', 
             'regex': 'task',
-            'oblimin_cluster_names': ['State Flexibility',
+            'oblimin_cluster_names': ['Conflict Processing',
                                       'Information Processing',
-                                      'Conflict Processing',
+                                      'Shifting',
                                       'Speeded Information Processing',
                                       'Inhibition-Related Threshold',
                                       'Caution',
-                                      'NA1',
                                       'Perc/Resp',
-                                      'Control-Related Perc/Resp',
-                                      'Updated-Related Perc/Resp',
-                                      'NA2',
+                                      'Inhibition-Related Perc/Resp',
+                                      'NA1',
                                       'Discounting',
+                                      'NA2',
                                       'Cold/Model-Based',
+                                      'Hot/Model-Free',
                                       'NA3',
-                                      'NA4',
-                                      'Hot/Model-Free'],
+                                      'NA4'],
             'oblimin_factor_names': ['Speeded IP', 'Strategic IP', 
                                      'Perc / Resp','Caution', 
                                      'Discounting']
@@ -136,19 +135,19 @@ subsets = [{'name': 'task',
              'regex': 'survey',
              'oblimin_cluster_names': ['Financial Risk-Taking',
                                        'Eating',
+                                       'Behavioral Approach',
+                                       'Behavioral Inhibition',
                                        'Mindfulness',
                                        'Impulsivity',
                                        'Goal-Direcedness',
-                                       'Behavioral Inhibition',
-                                       'Behavioral Approach',
                                        'Ethical/Health Risk-Taking',
                                        'Risk Perception',
                                        'Sensation Seeking',
                                        'Sociability',
                                        'Reward Sensitivity'],
-             'oblimin_factor_names':  ['Sensation Seeking', 'Mindfulness', 
-                                   'Emotional Control',  'Impulsivity',
-                                   'Goal-Directedness', 'Reward Sensitivity', 
+             'oblimin_factor_names':  ['Sensation Seeking', 'Emotional Control',  
+                                   'Mindfulness', 'Impulsivity',
+                                   'Reward Sensitivity', 'Goal-Directedness', 
                                    'Risk Perception', 'Eating Control', 
                                    'Ethical Risk-Taking', 'Social Risk-Taking',
                                    'Financial Risk-Taking', 'Agreeableness'],
@@ -300,7 +299,7 @@ for subset in subsets:
                             size=size, dpi=dpi, ext=ext)
             # Plot HCA
             if verbose: print("** Plotting HCA %s **" % rotate)
-            drop_list = {('task', 'oblimin'): ([1,5,9,12,15],[2,4,6,8,14]) ,
+            drop_list = {('task', 'oblimin'): ([1,5,8,9,12,15],[2,4,6,14]) ,
                          ('survey', 'oblimin'): ([0,2,4,6,8,10], None)}
             drop1, drop2 = drop_list.get((name, rotate), (None, None))
             plot_HCA(results, HCA_plot_dir, rotate=rotate,
@@ -324,7 +323,7 @@ for subset in subsets:
                                             plot_dir=rotate_plot_dir,
                                             dpi=dpi,
                                             ext=ext,
-                                            size=size)
+                                            size=10)
                             plot_prediction_scatter(results, target_order=target_order, 
                                                     EFA=EFA, 
                                                     rotate=rotate,
@@ -358,10 +357,12 @@ for subset in subsets:
                                 print('No shuffled data was found for %s change predictions, EFA: %s' % (name, EFA))
                             """
                             plot_factor_fingerprint(results, change=False, rotate=rotate,
+                                                    classifier=classifier,
                                                     size=size, ext=ext, dpi=dpi, 
                                                     plot_dir=rotate_plot_dir)
                             plot_factor_fingerprint(results, change=True, rotate=rotate,
                                                     size=size, ext=ext, dpi=dpi, 
+                                                    classifier=classifier,
                                                     plot_dir=rotate_plot_dir)
                     else:
                         plot_results_prediction(results, 
@@ -430,27 +431,28 @@ if group_plot == True:
     plot_file = path.dirname(all_results['task'].get_plot_dir())
     # plotting
     # plot full prediction
-    ontology_prediction_files = glob(path.join(prediction_loc, "EFA_survey_task*"))
-    ontology_prediction_files = sorted(ontology_prediction_files, key=path.getmtime)[-2:]
-    ontology_prediction = open([i for i in ontology_prediction_files if 'shuffle' not in i][0], 'rb')
-    ontology_prediction_shuffled = open([i for i in ontology_prediction_files if 'shuffle' in i][0], 'rb')
-    ontology_prediction = pickle.load(ontology_prediction)
-    ontology_prediction_shuffled = pickle.load(ontology_prediction_shuffled)
-    survey_prediction = all_results['survey'].load_prediction_object(classifier='ridge')
-    filename = path.join(plot_file, 'ontology_prediction.%s' % ext)
-    target_order = all_results['task'].DA.reorder_factors(all_results['task'].DA.get_loading()).columns
-    plot_prediction(ontology_prediction['data'],
-                    ontology_prediction_shuffled['data'],
-                    target_order=target_order,
-                    size=size, dpi=dpi,
-                    filename=filename)
-    filename = path.join(plot_file, 'ontology_vs_survey_prediction.%s' % ext)
-    plot_prediction(ontology_prediction['data'],
-                    survey_prediction['data'],
-                    comparison_label='Survey Prediction',
-                    target_order=target_order,
-                    size=size, dpi=dpi,
-                    filename=filename)
+    for classifier in classifiers:
+        ontology_prediction_files = glob(path.join(prediction_loc, "EFA_task_survey*%s*" % classifier))
+        ontology_prediction_files = sorted(ontology_prediction_files, key=path.getmtime)[-2:]
+        ontology_prediction = open([i for i in ontology_prediction_files if 'shuffle' not in i][0], 'rb')
+        ontology_prediction_shuffled = open([i for i in ontology_prediction_files if 'shuffle' in i][0], 'rb')
+        ontology_prediction = pickle.load(ontology_prediction)
+        ontology_prediction_shuffled = pickle.load(ontology_prediction_shuffled)
+        survey_prediction = all_results['survey'].load_prediction_object(classifier=classifier)
+        filename = path.join(plot_file, 'ontology_prediction.%s' % ext)
+        target_order = all_results['task'].DA.reorder_factors(all_results['task'].DA.get_loading()).columns
+        plot_prediction(ontology_prediction['data'],
+                        ontology_prediction_shuffled['data'],
+                        target_order=target_order,
+                        size=size, dpi=dpi,
+                        filename=filename)
+        filename = path.join(plot_file, 'ontology_vs_survey_prediction_%s.%s' % (classifier, ext))
+        plot_prediction(ontology_prediction['data'],
+                        survey_prediction['data'],
+                        comparison_label='Survey Prediction',
+                        target_order=target_order,
+                        size=size, dpi=dpi,
+                        filename=filename)
     # plot other cross results
     plot_corr_heatmap(all_results, size=size*1/2, ext=ext, dpi=dpi, plot_dir=plot_file)
     plot_BIC(all_results, size=size, ext=ext, dpi=dpi, plot_dir=plot_file)
@@ -543,15 +545,25 @@ if run_plot or group_plot:
             '%s/silhouette_analysis' % rotate: 'FigS06_HCA_Silhouettes',
             'survey/prediction/IDM_lasso_prediction_bar': 'FigS07a_Survey_IDM_prediction',
             'task/prediction/IDM_lasso_prediction_bar': 'FigS07b_Task_IDM_prediction',
-            'ontology_vs_survey_prediction': 'FigS08_ontology_prediction'
+            'ontology_vs_survey_prediction_ridge': 'FigS08_ontology_prediction'
             }
     
     paper_dir = path.join(basedir, 'Results', 'Psych_Ontology_Paper')
     figure_lookup = shortened_lookup
     for filey in figure_lookup.keys():
+        remove_orig = False
         figure_num = figure_lookup[filey].split('_')[0]
         orig_file = path.join(plot_file, filey+'.'+ext)
         new_file = path.join(paper_dir, 'Plots', figure_lookup[filey]+'.'+ext)
+        if ext == 'eps' and path.exists(orig_file):
+            a=subprocess.Popen('epspdf %s' % (orig_file),
+                             shell=True, 
+                             stdout=subprocess.PIPE, 
+                             stderr=subprocess.PIPE)
+            a.wait()
+            orig_file = orig_file.replace('.eps', '.pdf')
+            new_file = new_file.replace('.eps', '.pdf')
+            remove_orig = True
         if figure_num[-1] in 'abcdefg':
             copyfile(orig_file,  new_file)
         else:
@@ -568,3 +580,5 @@ if run_plot or group_plot:
                     print('%s not found' % filey)
             elif 'No such file or directory' in str(err):
                 print('%s not found' % filey)
+        if remove_orig:
+            remove(orig_file)
