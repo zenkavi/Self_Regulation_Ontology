@@ -10,7 +10,48 @@ from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_
 
 from selfregulation.utils.r_to_py_utils import psychFA
 
-# utils for deriving and evaluating ontological factors for out-of-model tasks
+# *****************************************************************************  
+#utils for loading reconstruction files
+# *****************************************************************************  
+def load_files(reconstruction_files, query_string=None):
+    out = {}
+    for f in reconstruction_files:
+        tmp = pd.read_pickle(f)
+        if query_string:
+            tmp = tmp.query(query_string)
+        name = f.split('-')[-1][:-4]
+        out[name] = tmp
+    return out
+
+def update_files(old, new):
+    for k, df in old.items():
+        if k in new.keys():
+            add = new.pop(k)
+            add = add.query('label == "partial_reconstruct"')
+            add.loc[:,'rep'] += df.rep.max()
+            old[k] = pd.concat([df, add], sort=False).reset_index(drop=True)
+    old.update(new)
+        
+def combine_files(reconstruction_files, query_string=None):
+    if type(reconstruction_files) != dict:
+        out = load_files(reconstruction_files, query_string)
+    else:
+        out = reconstruction_files
+    return pd.concat(out, sort=False).reset_index(drop=True)
+
+# *****************************************************************************  
+# helper functions for reconstrucionts
+# *****************************************************************************  
+
+def normalize_reconstruction(reconstruction, c, inplace=True):
+    """ Ensures reconstructions lie on the unit circle """
+    if not inplace:
+        reconstruction = reconstruction.copy()
+    normed = normalize(reconstruction.iloc[:,:c])
+    reconstruction.iloc[:,:c] = normed
+    if not inplace:
+        return reconstruction
+    
 def reorder_FA(ref_FA, new_FA, thresh=.9):
     """ Reorder FA to correspond to old FA, and check that there is such a correspondence"""
     c = len(ref_FA.columns)
@@ -22,6 +63,10 @@ def reorder_FA(ref_FA, new_FA, thresh=.9):
         return None
     else:
         return new_FA
+    
+# *****************************************************************************   
+# utils for deriving and evaluating ontological factors for out-of-model tasks
+# *****************************************************************************  
 
 def run_linear(scores, test_vars, clf=LinearRegression(fit_intercept=False)):
     """
@@ -118,12 +163,13 @@ def run_kNeighbors(distances, loadings, test_vars,
             to_return = pd.concat([to_return, out], sort=False)
     return to_return
     
-def k_nearest_reconstruction(results, drop_regex, available_vars=None,
+def k_nearest_reconstruction(results, drop_regex, num_available_measures=None,
                              pseudo_pop_size=60, n_reps=100, 
                              k_list=None, EFA_rotation='oblimin', 
                              metric='correlation',
                              independent_EFA=False,
-                             verbose=True):
+                             verbose=True,
+                             weightings = ['uniform', 'distance']):
     def run_EFA(data, c, rotation, orig_loading):
         fa, out = psychFA(data, c, rotate=EFA_rotation)
         loadings = pd.DataFrame(out['loadings'], index=data.columns)
@@ -142,13 +188,22 @@ def k_nearest_reconstruction(results, drop_regex, available_vars=None,
     # check to see if loadings are problematic (not highly correlated with original scores)
     if loadings is None:
         return None, None
-    weightings = ['uniform', 'distance']
-    if available_vars is not None:
+    if num_available_measures is not None:
+        measures = np.unique([i.split('.')[0] for i in results.data.columns])
+        measures = [x for x in measures if x not in drop_regex]
+        available_measures =  np.random.choice(measures, num_available_measures, replace=False)
+        available_vars = results.data.filter(regex='^'+'|^'.join(available_measures)).columns
         data = data.loc[:, set(available_vars) | set(drop_vars)]
         loadings = loadings.loc[available_vars,:]
+        k_list = [k for k in k_list if k<len(available_vars)]
+        if len(k_list) == 0:
+            k_list = [len(available_vars)-1]
     if verbose:
         print('*'*79)
         print('Reconstructing', drop_vars)
+        if num_available_measures is not None:
+            print('*'*79)
+            print('Using subset of measures:', available_measures)
         print('*'*79)
     if verbose: print('Starting full reconstruction')
     distances = pd.DataFrame(squareform(pdist(data.T, metric=metric)), 
@@ -160,20 +215,32 @@ def k_nearest_reconstruction(results, drop_regex, available_vars=None,
 
     if verbose: print('Starting partial reconstruction, pop size:', pseudo_pop_size)
     estimated_loadings = pd.DataFrame()
-    for rep in range(n_reps):
-        if verbose and rep%100==0: 
+    reps_remaining = n_reps
+    while reps_remaining > 0:
+        rep = n_reps-reps_remaining
+        if verbose and rep%50==0: 
             print('Rep', rep)
         random_subset = data.sample(pseudo_pop_size)
         if independent_EFA:
             tmp_subset = subset.drop(random_subset.index)
             loadings = run_EFA(tmp_subset, c, EFA_rotation, orig_loadings)
+            if loadings is None:
+                continue
         distances = pd.DataFrame(squareform(pdist(random_subset.T, metric=metric)), 
                                  index=random_subset.columns, 
                                  columns=random_subset.columns).drop(drop_vars, axis=1)
         out = run_kNeighbors(distances, loadings, drop_vars, weightings, k_list)
         out['rep'] = rep+1
+        out
         estimated_loadings = pd.concat([estimated_loadings, out], sort=False)
+        reps_remaining -= 1
     estimated_loadings.reset_index(drop=True)
+    # add columns to dataframes
+    if num_available_measures is not None:
+        estimated_loadings['num_available_measures'] = num_available_measures
+        estimated_loadings['available_vars'] = ','.join(available_vars)
+        full_reconstruction['num_available_measures'] = num_available_measures
+        full_reconstruction['available_vars'] = ','.join(available_vars)
     return estimated_loadings, full_reconstruction
 
 def corr_scoring(organized_results):
@@ -273,5 +340,82 @@ def CV_predict(reconstruction, labels, cv=10, clf=LinearSVC(), test_set=None):
         scores['true_confusion'] = confusion_matrix(le.transform(test_set[1]), predicted)
     return scores
 
+def summarize_k(k_reconstructions):
+    """ Takes dictionary of k reconstructions and outputs a summary"""
+    var_summary = pd.DataFrame()
+    for measure, reconstruction in k_reconstructions.items():
+        tmp_summary = reconstruction.query('label=="partial_reconstruct"') \
+                        .groupby(['pop_size', 'k', 'weighting','var'])['corr_score'].mean().reset_index()
+        var_summary = pd.concat([var_summary, tmp_summary])
+    
+    k_summary = var_summary.groupby(['pop_size', 'k', 'weighting']).mean()
+    # summarize further
+    # determine best parameters
+    k_best_params = {}
+    for pop_size in k_summary.index.unique(level='pop_size'):
+        tmp=k_summary.query('pop_size == %s' % pop_size)
+        best_params = tmp.idxmax()[0]
+        best_val = tmp.loc[best_params][0]
+        k_best_params[pop_size] = {'k': best_params[1], 
+                                   'weighting': best_params[2],
+                                   'best_val': best_val}
+    # extract values using best parameters
+    reconstruction_list = []
+    for reconstruction in k_reconstructions.values():
+        true = reconstruction.query('label == "true"')
+        reconstruction_list.append(true)
+        for k, v in k_best_params.items():
+            tmp_partial = reconstruction.query('pop_size == %s and \
+                                         k == %s and \
+                                         weighting == "%s"' % (k, v['k'], v['weighting']))
+            full = reconstruction.query('label == "full_reconstruct" and \
+                                         k == %s and \
+                                         weighting == "%s"' % (v['k'], v['weighting']))
+            reconstruction_list += [tmp_partial, full]
 
-# reconstruction with fewer variables
+    k_best_reconstruction = pd.concat(reconstruction_list, axis=0, sort=False)
+    return var_summary, k_best_params, k_best_reconstruction
+
+def summarize_k_partial(k_reconstructions):
+    """ Takes dictionary of k reconstructions and outputs a summary"""
+    var_summary = pd.DataFrame()
+    for measure, reconstruction in k_reconstructions.items():
+        tmp_summary = reconstruction.query('label=="partial_reconstruct"') \
+                        .groupby(['num_available_measures', 'pop_size', 'available_vars', 'var'])['corr_score'].mean().reset_index()
+        var_summary = pd.concat([var_summary, tmp_summary])
+    return var_summary
+
+# *****************************************************************************   
+# wrapper for running reconstructions with different parameters
+# *****************************************************************************  
+
+def run_reconstruction(results, measure_list, pop_sizes, n_reps, recon_fun,
+                       previous_files=None, append=True, verbose=True, **kwargs):
+    regex_list = ['^'+m for m in measure_list]
+    if previous_files is not None and len(previous_files) > 0:
+        previous_recon = load_files(previous_files)
+        if not append:
+            tmp_measures = set(measure_list) - set(k_reconstructions.keys())
+            regex_list = ['^'+m for m in tmp_measures]
+            
+    # run new reconstruction
+    new_recon = get_reconstruction_results(results, 
+                                           regex_list, 
+                                           pop_sizes,  
+                                           n_reps=n_reps, 
+                                           recon_fun=recon_fun, 
+                                           verbose=verbose,
+                                          **kwargs)
+    # determine measures that have been updated
+    updated = list(new_recon.keys())
+    
+    # update previous
+    if previous_files is not None and len(previous_files) > 0:
+        if append:
+            update_files(previous_recon, new_recon)
+        else:
+            previous_recon.update(new_recon)
+        to_return = previous_recon
+    else:
+        to_return = new_recon
+    return updated, to_return
