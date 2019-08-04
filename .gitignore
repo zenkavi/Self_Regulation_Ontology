@@ -1,7 +1,3 @@
-Data/Local
-Data/Retest_*/Local
-Data/Retest_*/batch_output
-data_preparation/old
 .Rhistory
 .fuse*
 *.pyl
@@ -19,6 +15,7 @@ data_preparation/old
 internal_settings.json
 Self_Regulation_*Settings.txt
 dimensional_structure/Output/*/*ID*
+Data/*/Individual_Measures/writing_task.csv.gz
 # directories
 .spyproject/
 batch_files/*csv

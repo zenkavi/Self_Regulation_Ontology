@@ -1,8 +1,8 @@
 from os import path
 import pandas as pd
 
-data_dir = '/oak/stanford/groups/russpold/users/ieisenbe/Self_Regulation_Ontology/behavioral_data/mturk_retest_output/hddm_refits/'
-out_dir = '/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_03-29-2018/Local/'
+data_dir = '/oak/stanford/groups/russpold/users/ieisenbe/uh2/behavioral_data/mturk_retest_output/hddm_refits/'
+out_dir = '/oak/stanford/groups/russpold/users/zenkavi/Self_Regulation_Ontology/Data/Retest_12-19-2018/Local/'
 
 #Read in DVs and valence
 label = 'hddm_refit'
